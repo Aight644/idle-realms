@@ -1,4 +1,13 @@
 import { useState, useCallback, useEffect, useRef } from "react";
+import { auth } from './firebase.js';
+import './storage.js'; // installs window.storage backed by Firestore
+import {
+  signInWithEmailAndPassword,
+  createUserWithEmailAndPassword,
+  signOut,
+  onAuthStateChanged,
+  updateProfile,
+} from 'firebase/auth';
 
 // ─── THEME ───
 const T = {
@@ -96,43 +105,25 @@ const GATHER_NODES = {
 
 const RECIPES = {
   smithing: [
-    // ── Bronze Tier (Lv 1-10) ──
-    { name: "Bronze Dagger", emoji: "🗡️", lvl: 1, time: 4000, xp: 12, desc: "ATK +3", tag: "weapon", mats: [{ n: "Copper Ore", need: 2 }, { n: "Tin Ore", need: 1 }] },
-    { name: "Bronze Shield", emoji: "🛡️", lvl: 5, time: 5000, xp: 20, desc: "DEF +3", tag: "armor", mats: [{ n: "Copper Ore", need: 3 }, { n: "Tin Ore", need: 2 }] },
-    { name: "Bronze Helm", emoji: "🪖", lvl: 3, time: 4000, xp: 14, desc: "DEF +2", tag: "armor", mats: [{ n: "Copper Ore", need: 2 }, { n: "Tin Ore", need: 1 }] },
-    { name: "Bronze Platebody", emoji: "🦺", lvl: 8, time: 6000, xp: 25, desc: "DEF +5", tag: "armor", mats: [{ n: "Copper Ore", need: 4 }, { n: "Tin Ore", need: 3 }] },
-    { name: "Bronze Pickaxe", emoji: "⛏️", lvl: 3, time: 4500, xp: 15, desc: "+5% speed/XP", tag: "tool", mats: [{ n: "Copper Ore", need: 3 }, { n: "Tin Ore", need: 2 }, { n: "Oak Log", need: 1 }] },
-    { name: "Copper Amulet", emoji: "📿", lvl: 5, time: 4000, xp: 18, desc: "+5% XP all skills", tag: "jewelry", mats: [{ n: "Copper Ore", need: 4 }, { n: "Slime Gel", need: 2 }] },
-    // ── Iron Tier (Lv 15-25) ──
-    { name: "Iron Sword", emoji: "⚔️", lvl: 15, time: 6000, xp: 35, desc: "ATK +6, DEF +1", tag: "weapon", mats: [{ n: "Iron Ore", need: 3 }, { n: "Oak Log", need: 1 }] },
-    { name: "Iron Helm", emoji: "🪖", lvl: 16, time: 5500, xp: 32, desc: "DEF +4, +1% XP", tag: "armor", mats: [{ n: "Iron Ore", need: 3 }, { n: "Oak Log", need: 1 }] },
-    { name: "Iron Armor", emoji: "🦺", lvl: 20, time: 8000, xp: 50, desc: "DEF +8, +3% XP", tag: "armor", mats: [{ n: "Iron Ore", need: 5 }, { n: "Oak Log", need: 2 }] },
-    { name: "Iron Shield", emoji: "🛡️", lvl: 18, time: 6500, xp: 38, desc: "DEF +6", tag: "armor", mats: [{ n: "Iron Ore", need: 4 }, { n: "Oak Log", need: 1 }] },
-    { name: "Iron Pickaxe", emoji: "⛏️", lvl: 18, time: 6500, xp: 40, desc: "+10% speed, +8% XP", tag: "tool", mats: [{ n: "Iron Ore", need: 4 }, { n: "Oak Log", need: 2 }] },
-    { name: "Silver Amulet", emoji: "📿", lvl: 22, time: 7000, xp: 55, desc: "+10% XP all skills", tag: "jewelry", mats: [{ n: "Iron Ore", need: 3 }, { n: "Gold Ore", need: 1 }, { n: "Mana Crystal", need: 1 }] },
-    // ── Steel/Gold Tier (Lv 28-40) ──
-    { name: "Steel Axe", emoji: "🪓", lvl: 30, time: 10000, xp: 80, desc: "ATK +10, DEF +2", tag: "weapon", mats: [{ n: "Iron Ore", need: 4 }, { n: "Gold Ore", need: 1 }, { n: "Maple Log", need: 2 }] },
-    { name: "Steel Helm", emoji: "🪖", lvl: 28, time: 9000, xp: 70, desc: "DEF +7, +4% XP", tag: "armor", mats: [{ n: "Iron Ore", need: 3 }, { n: "Gold Ore", need: 1 }, { n: "Maple Log", need: 1 }] },
-    { name: "Steel Armor", emoji: "🦺", lvl: 33, time: 12000, xp: 95, desc: "DEF +14, +5% XP", tag: "armor", mats: [{ n: "Iron Ore", need: 5 }, { n: "Gold Ore", need: 2 }, { n: "Maple Log", need: 3 }] },
-    { name: "Steel Shield", emoji: "🛡️", lvl: 31, time: 10000, xp: 85, desc: "DEF +10", tag: "armor", mats: [{ n: "Iron Ore", need: 4 }, { n: "Gold Ore", need: 2 }, { n: "Maple Log", need: 2 }] },
-    { name: "Steel Pickaxe", emoji: "⛏️", lvl: 32, time: 10000, xp: 90, desc: "+18% speed, +12% XP", tag: "tool", mats: [{ n: "Iron Ore", need: 5 }, { n: "Gold Ore", need: 2 }, { n: "Maple Log", need: 2 }] },
-    { name: "Gold Ring", emoji: "💍", lvl: 35, time: 8000, xp: 70, desc: "ATK +4, DEF +4, +5% XP", tag: "jewelry", mats: [{ n: "Gold Ore", need: 3 }] },
-    { name: "Gold Amulet", emoji: "📿", lvl: 38, time: 10000, xp: 100, desc: "+18% XP all skills", tag: "jewelry", mats: [{ n: "Gold Ore", need: 4 }, { n: "Mana Crystal", need: 2 }] },
-    // ── Mithril Tier (Lv 48-58) ──
-    { name: "Mithril Blade", emoji: "🔱", lvl: 50, time: 15000, xp: 150, desc: "ATK +20, DEF +5", tag: "weapon", mats: [{ n: "Mithril Ore", need: 5 }, { n: "Yew Log", need: 3 }] },
-    { name: "Mithril Helm", emoji: "🪖", lvl: 48, time: 14000, xp: 140, desc: "DEF +12, +7% XP", tag: "armor", mats: [{ n: "Mithril Ore", need: 4 }, { n: "Yew Log", need: 2 }] },
-    { name: "Mithril Armor", emoji: "🦺", lvl: 53, time: 18000, xp: 180, desc: "DEF +20, +8% XP", tag: "armor", mats: [{ n: "Mithril Ore", need: 7 }, { n: "Yew Log", need: 3 }, { n: "Mana Crystal", need: 1 }] },
-    { name: "Mithril Shield", emoji: "🛡️", lvl: 51, time: 16000, xp: 160, desc: "DEF +16, +3% XP", tag: "armor", mats: [{ n: "Mithril Ore", need: 5 }, { n: "Yew Log", need: 2 }] },
-    { name: "Mithril Pickaxe", emoji: "⛏️", lvl: 52, time: 16000, xp: 170, desc: "+28% speed, +20% XP", tag: "tool", mats: [{ n: "Mithril Ore", need: 6 }, { n: "Yew Log", need: 3 }, { n: "Mana Crystal", need: 2 }] },
-    { name: "Mithril Amulet", emoji: "📿", lvl: 55, time: 16000, xp: 180, desc: "+25% XP all skills", tag: "jewelry", mats: [{ n: "Mithril Ore", need: 4 }, { n: "Mana Crystal", need: 3 }, { n: "Shadow Dust", need: 2 }] },
-    // ── Dragon Tier (Lv 58-75) ──
-    { name: "Dragon Blade", emoji: "⚔️", lvl: 70, time: 25000, xp: 400, desc: "ATK +30, DEF +5", tag: "weapon", mats: [{ n: "Dragon Fang", need: 2 }, { n: "Dragon Scale", need: 2 }, { n: "Mithril Ore", need: 5 }] },
-    { name: "Dragon Helm", emoji: "🪖", lvl: 58, time: 18000, xp: 220, desc: "DEF +18, +10% XP", tag: "armor", mats: [{ n: "Dragon Scale", need: 2 }, { n: "Mithril Ore", need: 2 }] },
-    { name: "Dragon Plate", emoji: "🛡️", lvl: 60, time: 20000, xp: 250, desc: "DEF +25, +8% XP", tag: "armor", mats: [{ n: "Dragon Scale", need: 3 }, { n: "Mithril Ore", need: 3 }] },
-    { name: "Dragon Boots", emoji: "👢", lvl: 62, time: 18000, xp: 230, desc: "DEF +15, +12% speed", tag: "armor", mats: [{ n: "Dragon Scale", need: 2 }, { n: "Thick Hide", need: 3 }, { n: "Mithril Ore", need: 2 }] },
-    { name: "Dragon Shield", emoji: "🛡️", lvl: 64, time: 22000, xp: 280, desc: "DEF +22, +5% XP", tag: "armor", mats: [{ n: "Dragon Scale", need: 3 }, { n: "Dragon Fang", need: 1 }, { n: "Mithril Ore", need: 3 }] },
-    { name: "Dragon Pickaxe", emoji: "⛏️", lvl: 65, time: 22000, xp: 350, desc: "+40% speed, +30% XP", tag: "tool", mats: [{ n: "Dragon Fang", need: 1 }, { n: "Dragon Scale", need: 2 }, { n: "Mithril Ore", need: 4 }, { n: "Elder Log", need: 2 }] },
-    { name: "Dragon Amulet", emoji: "📿", lvl: 68, time: 24000, xp: 380, desc: "+35% XP all skills", tag: "jewelry", mats: [{ n: "Dragon Fang", need: 2 }, { n: "Dragon Scale", need: 1 }, { n: "Mana Crystal", need: 4 }] },
+    { name: "Bronze Dagger", emoji: "🗡️", lvl: 1, time: 4000, xp: 12, desc: "ATK +3", mats: [{ n: "Copper Ore", need: 2 }, { n: "Tin Ore", need: 1 }] },
+    { name: "Bronze Pickaxe", emoji: "⛏️", lvl: 3, time: 4500, xp: 15, desc: "+5% speed/XP", mats: [{ n: "Copper Ore", need: 3 }, { n: "Tin Ore", need: 2 }, { n: "Oak Log", need: 1 }] },
+    { name: "Copper Amulet", emoji: "📿", lvl: 5, time: 4000, xp: 18, desc: "+5% XP all skills", mats: [{ n: "Copper Ore", need: 4 }, { n: "Slime Gel", need: 2 }] },
+    { name: "Bronze Shield", emoji: "🛡️", lvl: 5, time: 5000, xp: 20, desc: "DEF +3", mats: [{ n: "Copper Ore", need: 3 }, { n: "Tin Ore", need: 2 }] },
+    { name: "Iron Sword", emoji: "⚔️", lvl: 15, time: 6000, xp: 35, desc: "ATK +6, DEF +1", mats: [{ n: "Iron Ore", need: 3 }, { n: "Oak Log", need: 1 }] },
+    { name: "Iron Pickaxe", emoji: "⛏️", lvl: 18, time: 6500, xp: 40, desc: "+10% speed, +8% XP", mats: [{ n: "Iron Ore", need: 4 }, { n: "Oak Log", need: 2 }] },
+    { name: "Iron Armor", emoji: "🦺", lvl: 20, time: 8000, xp: 50, desc: "DEF +8, +3% XP", mats: [{ n: "Iron Ore", need: 5 }, { n: "Oak Log", need: 2 }] },
+    { name: "Silver Amulet", emoji: "📿", lvl: 22, time: 7000, xp: 55, desc: "+10% XP all skills", mats: [{ n: "Iron Ore", need: 3 }, { n: "Gold Ore", need: 1 }, { n: "Mana Crystal", need: 1 }] },
+    { name: "Steel Axe", emoji: "🪓", lvl: 30, time: 10000, xp: 80, desc: "ATK +10, DEF +2", mats: [{ n: "Iron Ore", need: 4 }, { n: "Gold Ore", need: 1 }, { n: "Maple Log", need: 2 }] },
+    { name: "Steel Pickaxe", emoji: "⛏️", lvl: 32, time: 10000, xp: 90, desc: "+18% speed, +12% XP", mats: [{ n: "Iron Ore", need: 5 }, { n: "Gold Ore", need: 2 }, { n: "Maple Log", need: 2 }] },
+    { name: "Gold Ring", emoji: "💍", lvl: 35, time: 8000, xp: 70, desc: "ATK +4, DEF +4, +5% XP", mats: [{ n: "Gold Ore", need: 3 }] },
+    { name: "Gold Amulet", emoji: "📿", lvl: 38, time: 10000, xp: 100, desc: "+18% XP all skills", mats: [{ n: "Gold Ore", need: 4 }, { n: "Mana Crystal", need: 2 }] },
+    { name: "Mithril Blade", emoji: "🔱", lvl: 50, time: 15000, xp: 150, desc: "ATK +20, DEF +5", mats: [{ n: "Mithril Ore", need: 5 }, { n: "Yew Log", need: 3 }] },
+    { name: "Mithril Pickaxe", emoji: "⛏️", lvl: 52, time: 16000, xp: 170, desc: "+28% speed, +20% XP", mats: [{ n: "Mithril Ore", need: 6 }, { n: "Yew Log", need: 3 }, { n: "Mana Crystal", need: 2 }] },
+    { name: "Mithril Amulet", emoji: "📿", lvl: 55, time: 16000, xp: 180, desc: "+25% XP all skills", mats: [{ n: "Mithril Ore", need: 4 }, { n: "Mana Crystal", need: 3 }, { n: "Shadow Dust", need: 2 }] },
+    { name: "Dragon Plate", emoji: "🛡️", lvl: 60, time: 20000, xp: 250, desc: "DEF +25, +8% XP", mats: [{ n: "Dragon Scale", need: 3 }, { n: "Mithril Ore", need: 3 }] },
+    { name: "Dragon Pickaxe", emoji: "⛏️", lvl: 65, time: 22000, xp: 350, desc: "+40% speed, +30% XP", mats: [{ n: "Dragon Fang", need: 1 }, { n: "Dragon Scale", need: 2 }, { n: "Mithril Ore", need: 4 }, { n: "Elder Log", need: 2 }] },
+    { name: "Dragon Amulet", emoji: "📿", lvl: 68, time: 24000, xp: 380, desc: "+35% XP all skills", mats: [{ n: "Dragon Fang", need: 2 }, { n: "Dragon Scale", need: 1 }, { n: "Mana Crystal", need: 4 }] },
+    { name: "Dragon Blade", emoji: "⚔️", lvl: 70, time: 25000, xp: 400, desc: "ATK +30, DEF +5", mats: [{ n: "Dragon Fang", need: 2 }, { n: "Dragon Scale", need: 2 }, { n: "Mithril Ore", need: 5 }] },
   ],
   cooking: [
     { name: "Cooked Shrimp", emoji: "🍤", lvl: 1, time: 2000, xp: 8, desc: "Heals 5 HP", mats: [{ n: "Raw Shrimp", need: 1 }] },
@@ -189,26 +180,13 @@ const ITEMS = {
   // ── Equipment ──
   "Bronze Dagger":  { emoji: "🗡️", category: "equipment", slot: "weapon", atk: 3,  def: 0,  rarity: "common",    desc: "Basic bronze blade", sell: 15 },
   "Bronze Shield":  { emoji: "🛡️", category: "equipment", slot: "shield", atk: 0,  def: 3,  rarity: "common",    desc: "Simple bronze shield", sell: 20 },
-  "Bronze Helm":    { emoji: "🪖", category: "equipment", slot: "helm",   atk: 0,  def: 2,  rarity: "common",    desc: "Basic bronze helmet", sell: 12 },
-  "Bronze Platebody": { emoji: "🦺", category: "equipment", slot: "armor", atk: 0, def: 5,  rarity: "common",    desc: "Bronze body armor", sell: 30 },
   "Iron Sword":     { emoji: "⚔️", category: "equipment", slot: "weapon", atk: 6,  def: 1,  rarity: "uncommon",  desc: "Sturdy iron sword", sell: 60 },
-  "Iron Helm":      { emoji: "🪖", category: "equipment", slot: "helm",   atk: 0,  def: 4,  xpPct: 1, rarity: "uncommon", desc: "Iron helmet (+1% XP)", sell: 50 },
   "Iron Armor":     { emoji: "🦺", category: "equipment", slot: "armor",  atk: 0,  def: 8,  xpPct: 3,  rarity: "uncommon",  desc: "Solid iron plate (+3% XP)", sell: 75 },
-  "Iron Shield":    { emoji: "🛡️", category: "equipment", slot: "shield", atk: 0,  def: 6,  rarity: "uncommon",  desc: "Iron kite shield", sell: 55 },
   "Steel Axe":      { emoji: "🪓", category: "equipment", slot: "weapon", atk: 10, def: 2,  rarity: "rare",      desc: "Heavy steel axe", sell: 200 },
-  "Steel Helm":     { emoji: "🪖", category: "equipment", slot: "helm",   atk: 0,  def: 7,  xpPct: 4, rarity: "rare", desc: "Steel helmet (+4% XP)", sell: 180 },
-  "Steel Armor":    { emoji: "🦺", category: "equipment", slot: "armor",  atk: 0,  def: 14, xpPct: 5, rarity: "rare", desc: "Steel platebody (+5% XP)", sell: 280 },
-  "Steel Shield":   { emoji: "🛡️", category: "equipment", slot: "shield", atk: 0,  def: 10, rarity: "rare",      desc: "Steel tower shield", sell: 230 },
   "Gold Ring":      { emoji: "💍", category: "equipment", slot: "ring",   atk: 4,  def: 4,  xpPct: 5, rarity: "rare",      desc: "Lucky golden ring (+5% XP)", sell: 250 },
   "Mithril Blade":  { emoji: "🔱", category: "equipment", slot: "weapon", atk: 20, def: 5,  rarity: "epic",      desc: "Legendary mithril edge", sell: 500 },
-  "Mithril Helm":   { emoji: "🪖", category: "equipment", slot: "helm",   atk: 0,  def: 12, xpPct: 7, rarity: "epic", desc: "Mithril helmet (+7% XP)", sell: 450 },
-  "Mithril Armor":  { emoji: "🦺", category: "equipment", slot: "armor",  atk: 0,  def: 20, xpPct: 8, rarity: "epic", desc: "Mithril platebody (+8% XP)", sell: 650 },
-  "Mithril Shield": { emoji: "🛡️", category: "equipment", slot: "shield", atk: 0,  def: 16, xpPct: 3, rarity: "epic", desc: "Mithril shield (+3% XP)", sell: 520 },
-  "Dragon Blade":   { emoji: "⚔️", category: "equipment", slot: "weapon", atk: 30, def: 5,  rarity: "legendary", desc: "Ultimate dragon sword", sell: 2500 },
-  "Dragon Helm":    { emoji: "🪖", category: "equipment", slot: "helm",   atk: 0,  def: 18, xpPct: 10, rarity: "legendary", desc: "Dragonscale helm (+10% XP)", sell: 1200 },
   "Dragon Plate":   { emoji: "🛡️", category: "equipment", slot: "armor",  atk: 0,  def: 25, xpPct: 8, rarity: "legendary", desc: "Dragonscale armor (+8% XP)", sell: 1500 },
-  "Dragon Boots":   { emoji: "👢", category: "equipment", slot: "boots",  atk: 0,  def: 15, speedPct: 12, rarity: "legendary", desc: "Dragon boots (+12% speed)", sell: 1300 },
-  "Dragon Shield":  { emoji: "🛡️", category: "equipment", slot: "shield", atk: 0,  def: 22, xpPct: 5, rarity: "legendary", desc: "Dragon shield (+5% XP)", sell: 1600 },
+  "Dragon Blade":   { emoji: "⚔️", category: "equipment", slot: "weapon", atk: 30, def: 5,  rarity: "legendary", desc: "Ultimate dragon sword", sell: 2500 },
   // ── Tools (equip for gathering/crafting bonuses) ──
   "Bronze Pickaxe":  { emoji: "⛏️", category: "equipment", slot: "tool", atk: 0, def: 0, speedPct: 5,  xpPct: 5,  rarity: "common",    desc: "+5% speed, +5% XP", sell: 20 },
   "Iron Pickaxe":    { emoji: "⛏️", category: "equipment", slot: "tool", atk: 0, def: 0, speedPct: 10, xpPct: 8,  rarity: "uncommon",  desc: "+10% speed, +8% XP", sell: 70 },
@@ -239,7 +217,23 @@ const ITEMS = {
   "Antidote":          { emoji: "💊", category: "consumable", desc: "Cures poison", sell: 10 },
 };
 
-const SLOT_ICONS = { weapon: "⚔️", shield: "🛡️", helm: "🪖", armor: "🦺", boots: "👢", ring: "💍", tool: "⛏️", amulet: "📿" };
+const SLOT_ICONS = { weapon: "⚔️", shield: "🛡️", armor: "🦺", ring: "💍", tool: "⛏️", amulet: "📿" };
+
+// ═══ PET SYSTEM ═══
+const PETS = {
+  "Rocky":       { emoji: "🪨", skill: "mining",      xpPct: 8,  speedPct: 5,  rarity: "common",    desc: "A loyal rock golem. +8% Mining XP, +5% Mining speed", source: "Mine 30 ores quest" },
+  "Timber":      { emoji: "🌿", skill: "woodcutting",  xpPct: 8,  speedPct: 5,  rarity: "common",    desc: "A spritely tree spirit. +8% Woodcutting XP, +5% Woodcutting speed", source: "Chop 30 logs quest" },
+  "Bubbles":     { emoji: "🐟", skill: "fishing",      xpPct: 8,  speedPct: 5,  rarity: "common",    desc: "A shimmering fish companion. +8% Fishing XP, +5% Fishing speed", source: "Catch 25 fish quest" },
+  "Ember":       { emoji: "🔥", skill: "combat",       xpPct: 10, speedPct: 0,  rarity: "uncommon",  desc: "A fierce fire sprite. +10% Combat XP", source: "Kill 25 monsters quest" },
+  "Sizzle":      { emoji: "🍖", skill: "cooking",      xpPct: 8,  speedPct: 5,  rarity: "common",    desc: "A tiny chef imp. +8% Cooking XP, +5% Cooking speed", source: "Cook 20 dishes quest" },
+  "Clink":       { emoji: "🔧", skill: "smithing",     xpPct: 8,  speedPct: 5,  rarity: "common",    desc: "A mechanical helper. +8% Smithing XP, +5% Smithing speed", source: "Smith 12 items quest" },
+  "Mystic":      { emoji: "✨", skill: "alchemy",      xpPct: 8,  speedPct: 5,  rarity: "common",    desc: "A glowing arcane wisp. +8% Alchemy XP, +5% Alchemy speed", source: "Brew 12 potions quest" },
+  "Shadow":      { emoji: "🐈‍⬛", skill: "combat",     xpPct: 5,  speedPct: 0,  rarity: "rare",      desc: "A stealthy shadow cat. +5% Combat XP, +3 ATK", atkBonus: 3, source: "Premium: Slay 50 monsters" },
+  "Phoenix":     { emoji: "🦅", skill: "all",          xpPct: 5,  speedPct: 3,  rarity: "epic",      desc: "A radiant phoenix. +5% XP & +3% speed to ALL skills", source: "Premium: Gather 80 resources" },
+  "Dragon Whelp":{ emoji: "🐲", skill: "all",          xpPct: 8,  speedPct: 5,  rarity: "legendary", desc: "A baby dragon. +8% XP & +5% speed to ALL skills, +5 ATK, +5 DEF", atkBonus: 5, defBonus: 5, source: "Premium: Amass 2000 gold" },
+};
+const PET_IDS = Object.keys(PETS);
+const RARITY_COLORS = { common: T.textDim, uncommon: T.success, rare: T.accent, epic: T.purple, legendary: T.gold };
 
 const RARITY_COLORS = { common: T.textSec, uncommon: T.success, rare: T.info, epic: T.purple, legendary: T.orange };
 
@@ -382,6 +376,8 @@ const DEFAULT_SAVE = () => ({
     "Bronze Dagger": 1, "Cooked Shrimp": 4, "Minor HP Potion": 2,
   },
   equipped: { weapon: null, shield: null, armor: null, ring: null, tool: null, amulet: null },
+  pets: [],       // owned pet names
+  activePet: null, // currently active pet name
   player: { hp: 60, maxHp: 60, mp: 25, maxMp: 25 },
   gold: 0,
   stats: { gathered: 0, totalXpEarned: 0 },
@@ -389,85 +385,72 @@ const DEFAULT_SAVE = () => ({
   craftStats: { crafted: 0 },
 });
 
-// ═══ AUTH SCREEN ═══
+// ═══ AUTH SCREEN (Firebase Auth) ═══
 function AuthScreen({ onLogin }) {
-  const [tab, setTab] = useState("login"); // login | signup | email | guest
-  const [username, setUsername] = useState("");
+  const [tab, setTab] = useState("login"); // login | signup
+  const [displayName, setDisplayName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPw, setConfirmPw] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const clearForm = () => { setUsername(""); setEmail(""); setPassword(""); setConfirmPw(""); setError(""); };
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
-  const handleGuest = async () => {
-    setLoading(true);
-    const guestId = "guest_" + Date.now();
-    const save = DEFAULT_SAVE();
-    try { await window.storage.set(`save:${guestId}`, JSON.stringify(save)); } catch {}
-    onLogin({ username: guestId, displayName: "Adventurer", isGuest: true }, save);
-  };
+  const clearForm = () => { setDisplayName(""); setEmail(""); setPassword(""); setConfirmPw(""); setError(""); };
 
   const handleSignup = async () => {
     setError("");
-    if (!username.trim() || username.length < 3) return setError("Username must be at least 3 characters");
-    if (/[\s\/\\"']/.test(username)) return setError("Username cannot contain spaces or special characters");
-    if (!password || password.length < 4) return setError("Password must be at least 4 characters");
+    if (!displayName.trim() || displayName.length < 3) return setError("Display name must be at least 3 characters");
+    if (!email.trim()) return setError("Please enter an email address");
+    if (!password || password.length < 6) return setError("Password must be at least 6 characters");
     if (password !== confirmPw) return setError("Passwords do not match");
     setLoading(true);
     try {
-      const key = username.toLowerCase();
-      const existing = await window.storage.get(`account:${key}`).catch(() => null);
-      if (existing) { setError("Username already taken"); setLoading(false); return; }
+      const cred = await createUserWithEmailAndPassword(auth, email.trim(), password);
+      await updateProfile(cred.user, { displayName: displayName.trim() });
+      // Save initial game data
       const save = DEFAULT_SAVE();
-      const account = { username: key, displayName: username, password, type: "username", created: Date.now() };
-      await window.storage.set(`account:${key}`, JSON.stringify(account));
-      await window.storage.set(`save:${key}`, JSON.stringify(save));
-      onLogin({ username: key, displayName: username, isGuest: false }, save);
-    } catch { setError("Failed to create account"); setLoading(false); }
-  };
-
-  const handleEmailSignup = async () => {
-    setError("");
-    if (!email.trim() || !emailRegex.test(email)) return setError("Please enter a valid email address");
-    if (!username.trim() || username.length < 3) return setError("Display name must be at least 3 characters");
-    if (!password || password.length < 4) return setError("Password must be at least 4 characters");
-    if (password !== confirmPw) return setError("Passwords do not match");
-    setLoading(true);
-    try {
-      const key = `email:${email.toLowerCase()}`;
-      const existing = await window.storage.get(`account:${key}`).catch(() => null);
-      if (existing) { setError("An account with this email already exists"); setLoading(false); return; }
-      const save = DEFAULT_SAVE();
-      const account = { username: key, displayName: username, email: email.toLowerCase(), password, type: "email", created: Date.now() };
-      await window.storage.set(`account:${key}`, JSON.stringify(account));
-      await window.storage.set(`save:${key}`, JSON.stringify(save));
-      onLogin({ username: key, displayName: username, email: email.toLowerCase(), isGuest: false }, save);
-    } catch { setError("Failed to create account"); setLoading(false); }
+      const uid = cred.user.uid;
+      const username = uid;
+      await window.storage.set(`save:${username}`, JSON.stringify(save));
+      onLogin({ username, displayName: displayName.trim(), email: email.trim(), uid, isGuest: false }, save);
+    } catch (e) {
+      const msg = e.code === "auth/email-already-in-use" ? "An account with this email already exists"
+        : e.code === "auth/invalid-email" ? "Invalid email address"
+        : e.code === "auth/weak-password" ? "Password is too weak"
+        : "Failed to create account";
+      setError(msg);
+      setLoading(false);
+    }
   };
 
   const handleLogin = async () => {
     setError("");
-    const id = username.trim();
-    if (!id || !password) return setError("Enter username/email and password");
+    if (!email.trim() || !password) return setError("Enter email and password");
     setLoading(true);
     try {
-      // Try username first, then email
-      const isEmail = emailRegex.test(id);
-      const key = isEmail ? `email:${id.toLowerCase()}` : id.toLowerCase();
-      const raw = await window.storage.get(`account:${key}`).catch(() => null);
-      if (!raw) { setError(isEmail ? "No account with this email" : "Account not found"); setLoading(false); return; }
-      const account = JSON.parse(raw.value);
-      if (account.password !== password) { setError("Incorrect password"); setLoading(false); return; }
+      const cred = await signInWithEmailAndPassword(auth, email.trim(), password);
+      const uid = cred.user.uid;
+      const username = uid;
       let save;
       try {
-        const saveRaw = await window.storage.get(`save:${key}`);
-        save = JSON.parse(saveRaw.value);
+        const sr = await window.storage.get(`save:${username}`);
+        save = JSON.parse(sr.value);
       } catch { save = DEFAULT_SAVE(); }
-      onLogin({ username: key, displayName: account.displayName, email: account.email, isGuest: false }, save);
-    } catch { setError("Login failed"); setLoading(false); }
+      onLogin({
+        username,
+        displayName: cred.user.displayName || email.split("@")[0],
+        email: cred.user.email,
+        uid,
+        isGuest: false,
+      }, save);
+    } catch (e) {
+      const msg = e.code === "auth/user-not-found" ? "No account with this email"
+        : e.code === "auth/wrong-password" || e.code === "auth/invalid-credential" ? "Incorrect password"
+        : e.code === "auth/invalid-email" ? "Invalid email address"
+        : "Login failed";
+      setError(msg);
+      setLoading(false);
+    }
   };
 
   const inputStyle = {
@@ -491,6 +474,15 @@ function AuthScreen({ onLogin }) {
 
   const submitOnEnter = (fn) => (e) => { if (e.key === "Enter") fn(); };
 
+  const Btn = ({ color, onClick, disabled, children }) => (
+    <button onClick={onClick} disabled={disabled} style={{
+      width: "100%", padding: "11px 0", borderRadius: 8, border: "none",
+      background: disabled ? T.bgDeep : `${color}22`, color: disabled ? T.textDim : color,
+      fontWeight: 700, fontSize: 14, cursor: disabled ? "default" : "pointer",
+      fontFamily: FONT, transition: "all 0.15s", letterSpacing: 0.3,
+    }}>{children}</button>
+  );
+
   return (
     <div style={{
       height: "100vh", display: "flex", alignItems: "center", justifyContent: "center",
@@ -498,143 +490,63 @@ function AuthScreen({ onLogin }) {
     }}>
       <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
       <div style={{
-        width: 400, background: T.card, borderRadius: T.r, border: `1px solid ${T.cardBorder}`,
+        width: 400, maxWidth: "92vw", background: T.card, borderRadius: T.r, border: `1px solid ${T.cardBorder}`,
         overflow: "hidden",
       }}>
         {/* Header */}
         <div style={{ padding: "28px 24px 20px", textAlign: "center", borderBottom: `1px solid ${T.divider}` }}>
           <div style={{ fontSize: 32, marginBottom: 8 }}>⚔️</div>
-          <div style={{ fontSize: 20, fontWeight: 900, color: T.white }}>Idle Realms</div>
-          <div style={{ fontSize: 12, color: T.textDim, marginTop: 4 }}>Idle MMO RPG</div>
+          <div style={{ fontSize: 20, fontWeight: 800, color: T.white, letterSpacing: -0.5 }}>Idle Realms</div>
+          <div style={{ fontSize: 12, color: T.textSec, marginTop: 4 }}>Multiplayer Idle RPG</div>
         </div>
 
         {/* Tabs */}
         <div style={{ display: "flex", borderBottom: `1px solid ${T.divider}` }}>
           {tabBtn("login", "Log In", "🔑")}
-          {tabBtn("signup", "Username", "👤")}
-          {tabBtn("email", "Email", "📧")}
-          {tabBtn("guest", "Guest", "🎮")}
+          {tabBtn("signup", "Sign Up", "✨")}
         </div>
 
-        {/* Content */}
-        <div style={{ padding: 24 }}>
-
-          {/* ── Guest ── */}
-          {tab === "guest" && (
-            <div style={{ textAlign: "center" }}>
-              <div style={{ fontSize: 40, marginBottom: 12 }}>🎮</div>
-              <div style={{ fontSize: 14, fontWeight: 600, color: T.white, marginBottom: 6 }}>Play as Guest</div>
-              <div style={{ fontSize: 12, color: T.textSec, marginBottom: 20, lineHeight: 1.5 }}>
-                Jump right in! Your progress saves automatically.
-                Create an account later to keep your save across devices.
-              </div>
-              <Btn color={T.accent} onClick={handleGuest} disabled={loading}>
-                {loading ? "Loading..." : "⚔️ Start Adventure"}
-              </Btn>
-            </div>
-          )}
-
-          {/* ── Login ── */}
+        {/* Forms */}
+        <div style={{ padding: "20px 24px 24px" }}>
           {tab === "login" && (
-            <div>
-              <div style={{ fontSize: 12, color: T.textSec, marginBottom: 16 }}>
-                Sign in with your username or email address.
+            <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+              <div>
+                <label style={labelStyle}>Email</label>
+                <input style={inputStyle} placeholder="your@email.com" value={email} onChange={e => setEmail(e.target.value)} onKeyDown={submitOnEnter(handleLogin)} />
               </div>
-              <div style={{ marginBottom: 14 }}>
-                <label style={labelStyle}>Username or Email</label>
-                <input type="text" value={username} onChange={e => setUsername(e.target.value)}
-                  placeholder="Enter username or email" style={inputStyle}
-                  onKeyDown={submitOnEnter(handleLogin)} />
-              </div>
-              <div style={{ marginBottom: 18 }}>
+              <div>
                 <label style={labelStyle}>Password</label>
-                <input type="password" value={password} onChange={e => setPassword(e.target.value)}
-                  placeholder="Enter password" style={inputStyle}
-                  onKeyDown={submitOnEnter(handleLogin)} />
+                <input style={inputStyle} type="password" placeholder="••••••••" value={password} onChange={e => setPassword(e.target.value)} onKeyDown={submitOnEnter(handleLogin)} />
               </div>
-              {error && <div style={{ fontSize: 12, color: T.danger, marginBottom: 12, padding: "8px 10px", background: T.dangerMuted, borderRadius: 6 }}>{error}</div>}
+              {error && <div style={{ fontSize: 12, color: T.danger, padding: "8px 10px", background: T.dangerMuted, borderRadius: 6 }}>{error}</div>}
               <Btn color={T.accent} onClick={handleLogin} disabled={loading}>
-                {loading ? "Loading..." : "🔑 Log In"}
+                {loading ? "Logging in..." : "🔑 Log In"}
               </Btn>
-              <div style={{ textAlign: "center", marginTop: 14, fontSize: 11, color: T.textDim }}>
-                Don't have an account? <span onClick={() => { setTab("signup"); clearForm(); }} style={{ color: T.accent, cursor: "pointer", fontWeight: 600 }}>Sign Up</span>
-                {" or "}
-                <span onClick={() => { setTab("email"); clearForm(); }} style={{ color: T.accent, cursor: "pointer", fontWeight: 600 }}>Sign Up with Email</span>
-              </div>
             </div>
           )}
 
-          {/* ── Username Sign Up ── */}
           {tab === "signup" && (
-            <div>
-              <div style={{ fontSize: 12, color: T.textSec, marginBottom: 16 }}>
-                Create an account with a username.
+            <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+              <div>
+                <label style={labelStyle}>Display Name</label>
+                <input style={inputStyle} placeholder="Your character name" value={displayName} onChange={e => setDisplayName(e.target.value)} />
               </div>
-              <div style={{ marginBottom: 12 }}>
-                <label style={labelStyle}>Username</label>
-                <input type="text" value={username} onChange={e => setUsername(e.target.value)}
-                  placeholder="Choose a username (3+ chars)" style={inputStyle}
-                  onKeyDown={submitOnEnter(handleSignup)} />
+              <div>
+                <label style={labelStyle}>Email</label>
+                <input style={inputStyle} placeholder="your@email.com" value={email} onChange={e => setEmail(e.target.value)} />
               </div>
-              <div style={{ marginBottom: 12 }}>
+              <div>
                 <label style={labelStyle}>Password</label>
-                <input type="password" value={password} onChange={e => setPassword(e.target.value)}
-                  placeholder="Choose a password (4+ chars)" style={inputStyle}
-                  onKeyDown={submitOnEnter(handleSignup)} />
+                <input style={inputStyle} type="password" placeholder="At least 6 characters" value={password} onChange={e => setPassword(e.target.value)} />
               </div>
-              <div style={{ marginBottom: 18 }}>
+              <div>
                 <label style={labelStyle}>Confirm Password</label>
-                <input type="password" value={confirmPw} onChange={e => setConfirmPw(e.target.value)}
-                  placeholder="Re-enter password" style={inputStyle}
-                  onKeyDown={submitOnEnter(handleSignup)} />
+                <input style={inputStyle} type="password" placeholder="••••••••" value={confirmPw} onChange={e => setConfirmPw(e.target.value)} onKeyDown={submitOnEnter(handleSignup)} />
               </div>
-              {error && <div style={{ fontSize: 12, color: T.danger, marginBottom: 12, padding: "8px 10px", background: T.dangerMuted, borderRadius: 6 }}>{error}</div>}
-              <Btn color={T.success} onClick={handleSignup} disabled={loading}>
+              {error && <div style={{ fontSize: 12, color: T.danger, padding: "8px 10px", background: T.dangerMuted, borderRadius: 6 }}>{error}</div>}
+              <Btn color={T.teal} onClick={handleSignup} disabled={loading}>
                 {loading ? "Creating..." : "✨ Create Account"}
               </Btn>
-              <div style={{ textAlign: "center", marginTop: 14, fontSize: 11, color: T.textDim }}>
-                Already have an account? <span onClick={() => { setTab("login"); clearForm(); }} style={{ color: T.accent, cursor: "pointer", fontWeight: 600 }}>Log In</span>
-              </div>
-            </div>
-          )}
-
-          {/* ── Email Sign Up ── */}
-          {tab === "email" && (
-            <div>
-              <div style={{ fontSize: 12, color: T.textSec, marginBottom: 16 }}>
-                Create an account with your email address.
-              </div>
-              <div style={{ marginBottom: 12 }}>
-                <label style={labelStyle}>Email Address</label>
-                <input type="email" value={email} onChange={e => setEmail(e.target.value)}
-                  placeholder="you@example.com" style={inputStyle}
-                  onKeyDown={submitOnEnter(handleEmailSignup)} />
-              </div>
-              <div style={{ marginBottom: 12 }}>
-                <label style={labelStyle}>Display Name</label>
-                <input type="text" value={username} onChange={e => setUsername(e.target.value)}
-                  placeholder="Choose a display name (3+ chars)" style={inputStyle}
-                  onKeyDown={submitOnEnter(handleEmailSignup)} />
-              </div>
-              <div style={{ marginBottom: 12 }}>
-                <label style={labelStyle}>Password</label>
-                <input type="password" value={password} onChange={e => setPassword(e.target.value)}
-                  placeholder="Choose a password (4+ chars)" style={inputStyle}
-                  onKeyDown={submitOnEnter(handleEmailSignup)} />
-              </div>
-              <div style={{ marginBottom: 18 }}>
-                <label style={labelStyle}>Confirm Password</label>
-                <input type="password" value={confirmPw} onChange={e => setConfirmPw(e.target.value)}
-                  placeholder="Re-enter password" style={inputStyle}
-                  onKeyDown={submitOnEnter(handleEmailSignup)} />
-              </div>
-              {error && <div style={{ fontSize: 12, color: T.danger, marginBottom: 12, padding: "8px 10px", background: T.dangerMuted, borderRadius: 6 }}>{error}</div>}
-              <Btn color={T.teal} onClick={handleEmailSignup} disabled={loading}>
-                {loading ? "Creating..." : "📧 Sign Up with Email"}
-              </Btn>
-              <div style={{ textAlign: "center", marginTop: 14, fontSize: 11, color: T.textDim }}>
-                Already have an account? <span onClick={() => { setTab("login"); clearForm(); }} style={{ color: T.accent, cursor: "pointer", fontWeight: 600 }}>Log In</span>
-              </div>
             </div>
           )}
         </div>
@@ -643,43 +555,50 @@ function AuthScreen({ onLogin }) {
   );
 }
 
-// ═══ MAIN APP (wrapper with auth) ═══
+// ═══ MAIN APP (wrapper with Firebase auth) ═══
 export default function IdleRealmsUI() {
-  const [account, setAccount] = useState(null); // { username, displayName, isGuest }
+  const [account, setAccount] = useState(null);
   const [initialSave, setInitialSave] = useState(null);
   const [authChecked, setAuthChecked] = useState(false);
 
-  // Auto-login check
+  // Listen for Firebase auth state
   useEffect(() => {
-    (async () => {
-      try {
-        const session = await window.storage.get("session");
-        if (session) {
-          const s = JSON.parse(session.value);
-          let save;
-          try {
-            const sr = await window.storage.get(`save:${s.username}`);
-            save = JSON.parse(sr.value);
-          } catch { save = DEFAULT_SAVE(); }
-          setAccount(s);
-          setInitialSave(save);
-        }
-      } catch {}
+    const unsub = onAuthStateChanged(auth, async (user) => {
+      if (user) {
+        const username = user.uid;
+        let save;
+        try {
+          const sr = await window.storage.get(`save:${username}`);
+          save = JSON.parse(sr.value);
+        } catch { save = DEFAULT_SAVE(); }
+        setAccount({
+          username,
+          displayName: user.displayName || user.email?.split("@")[0] || "Adventurer",
+          email: user.email,
+          uid: user.uid,
+          isGuest: false,
+        });
+        setInitialSave(save);
+      } else {
+        setAccount(null);
+        setInitialSave(null);
+      }
       setAuthChecked(true);
-    })();
+    });
+    return () => unsub();
   }, []);
 
   const handleLogin = useCallback(async (acct, save) => {
     setAccount(acct);
     setInitialSave(save);
-    try { await window.storage.set("session", JSON.stringify(acct)); } catch {}
   }, []);
 
   const handleLogout = useCallback(async () => {
+    await signOut(auth);
     setAccount(null);
     setInitialSave(null);
-    try { await window.storage.delete("session"); } catch {}
   }, []);
+
 
   if (!authChecked) {
     return (
@@ -712,6 +631,8 @@ function GameUI({ account, initialSave, onLogout }) {
   // ─── INVENTORY & EQUIPMENT STATE ───
   const [inventory, setInventory] = useState(() => sv.inventory);
   const [equipped, setEquipped] = useState(() => sv.equipped);
+  const [pets, setPets] = useState(() => sv.pets || []);
+  const [activePet, setActivePet] = useState(() => sv.activePet || null);
   const [player, setPlayer] = useState(() => sv.player);
   const [bankFilter, setBankFilter] = useState("all");
   const [bankSearch, setBankSearch] = useState("");
@@ -795,8 +716,31 @@ function GameUI({ account, initialSave, onLogout }) {
   const equipDef = Object.values(equipped).reduce((a, n) => a + (n && ITEMS[n] ? (ITEMS[n].def || 0) : 0), 0);
   const equipSpeedPct = Object.values(equipped).reduce((a, n) => a + (n && ITEMS[n] ? (ITEMS[n].speedPct || 0) : 0), 0);
   const equipXpPct = Object.values(equipped).reduce((a, n) => a + (n && ITEMS[n] ? (ITEMS[n].xpPct || 0) : 0), 0);
-  const playerAtk = combatLvl * 2 + equipAtk;
-  const playerDef = Math.floor(combatLvl * 0.8) + equipDef;
+
+  // Pet bonuses — active pet provides skill-specific or "all" bonuses
+  const petData = activePet ? PETS[activePet] : null;
+  const getPetXpPct = useCallback((skill) => {
+    if (!petData) return 0;
+    if (petData.skill === "all" || petData.skill === skill) return petData.xpPct;
+    return 0;
+  }, [petData]);
+  const getPetSpeedPct = useCallback((skill) => {
+    if (!petData) return 0;
+    if (petData.skill === "all" || petData.skill === skill) return petData.speedPct;
+    return 0;
+  }, [petData]);
+  const petAtk = petData?.atkBonus || 0;
+  const petDef = petData?.defBonus || 0;
+
+  const unlockPet = useCallback((petName) => {
+    if (!PETS[petName] || pets.includes(petName)) return;
+    setPets(prev => [...prev, petName]);
+    addLog(`🐾 New pet unlocked: ${PETS[petName].emoji} ${petName}!`);
+    if (!activePet) setActivePet(petName);
+  }, [pets, activePet, addLog]);
+
+  const playerAtk = combatLvl * 2 + equipAtk + petAtk;
+  const playerDef = Math.floor(combatLvl * 0.8) + equipDef + petDef;
   const totalItems = Object.values(inventory).reduce((a, q) => a + q, 0);
   const uniqueItems = Object.keys(inventory).length;
   const nav = (p) => { setPage(p); setMobileNav(false); };
@@ -869,9 +813,9 @@ function GameUI({ account, initialSave, onLogout }) {
     const { skillId, node } = activeGather;
     const step = 100;
     let elapsed = 0;
-    const speedMult = 1 + equipSpeedPct / 100;
+    const speedMult = 1 + (equipSpeedPct + getPetSpeedPct(skillId)) / 100;
     const effectiveTime = Math.max(500, Math.round(node.time / speedMult));
-    const xpMult = 1 + equipXpPct / 100;
+    const xpMult = 1 + (equipXpPct + getPetXpPct(skillId)) / 100;
     const effectiveXp = Math.round(node.xp * xpMult);
 
     gatherRef.current = setInterval(() => {
@@ -942,7 +886,7 @@ function GameUI({ account, initialSave, onLogout }) {
         // Monster dies
         if (monsterHp <= 0) {
           // Rewards (apply XP bonus)
-          const xpMult = 1 + equipXpPct / 100;
+          const xpMult = 1 + (equipXpPct + getPetXpPct("combat")) / 100;
           const effectiveXp = Math.round(m.xpR * xpMult);
           addXp("combat", effectiveXp);
           addGold(m.goldR);
@@ -972,7 +916,6 @@ function GameUI({ account, initialSave, onLogout }) {
 
   // ─── CRAFTING STATE ───
   const [activeCraft, setActiveCraft] = useState(null); // { skillId, recipe, remaining }
-  const [smithTab, setSmithTab] = useState("all"); // all | weapon | armor | tool | jewelry
   const [craftProgress, setCraftProgress] = useState(0);
   const [craftStats, setCraftStats] = useState(() => sv.craftStats || { crafted: 0 });
   const craftRef = useRef(null);
@@ -1009,9 +952,9 @@ function GameUI({ account, initialSave, onLogout }) {
     const { skillId, recipe, remaining } = activeCraft;
     const step = 100;
     let elapsed = 0;
-    const speedMult = 1 + equipSpeedPct / 100;
+    const speedMult = 1 + (equipSpeedPct + getPetSpeedPct(skillId)) / 100;
     const effectiveTime = Math.max(500, Math.round(recipe.time / speedMult));
-    const xpMult = 1 + equipXpPct / 100;
+    const xpMult = 1 + (equipXpPct + getPetXpPct(skillId)) / 100;
     const effectiveXp = Math.round(recipe.xp * xpMult);
 
     craftRef.current = setInterval(() => {
@@ -1175,7 +1118,7 @@ function GameUI({ account, initialSave, onLogout }) {
       if (mHp <= 0) {
         // Victory!
         const n = party.members.length;
-        const xpMult = 1 + equipXpPct / 100;
+        const xpMult = 1 + (equipXpPct + getPetXpPct("combat")) / 100;
         const sharedXp = Math.round((m.xpR * 0.7 / n) * xpMult);
         const sharedGold = Math.round(m.goldR * 0.8 / n);
         addXp("combat", sharedXp); addGold(sharedGold);
@@ -1214,7 +1157,7 @@ function GameUI({ account, initialSave, onLogout }) {
       const p = await fetchMyParty();
       if (p && p.status === "victory") {
         const m = MONSTERS[p.monster]; const n = p.members.length;
-        const xpMult = 1 + equipXpPct / 100;
+        const xpMult = 1 + (equipXpPct + getPetXpPct("combat")) / 100;
         addXp("combat", Math.round((m.xpR * 0.7 / n) * xpMult));
         addGold(Math.round(m.goldR * 0.8 / n));
         addLog(`🎉 Party defeated ${m.emoji} ${m.name}!`);
@@ -1316,16 +1259,39 @@ function GameUI({ account, initialSave, onLogout }) {
 
   // Quest progress trackers — called from game actions (trackQuest defined earlier)
 
+  // Pet rewards mapped to quest difficulty (only highest difficulty gives pet)
+  const QUEST_PET_REWARDS = {
+    mine: { diff: 3, pet: "Rocky" },
+    chop: { diff: 3, pet: "Timber" },
+    fish: { diff: 3, pet: "Bubbles" },
+    kill: { diff: 3, pet: "Ember" },
+    cook: { diff: 3, pet: "Sizzle" },
+    smith: { diff: 3, pet: "Clink" },
+    brew: { diff: 3, pet: "Mystic" },
+    pm_kill: { diff: 3, pet: "Shadow" },
+    pm_gather: { diff: 3, pet: "Phoenix" },
+    pm_wealth: { diff: 3, pet: "Dragon Whelp" },
+  };
+
   const claimQuest = useCallback((quest) => {
     if (questsClaimed[quest.id]) return;
     if ((questProgress[quest.id] || 0) < quest.target) return;
     setQuestsClaimed(prev => ({ ...prev, [quest.id]: true }));
     if (quest.gold > 0) addGold(quest.gold);
     if (quest.xp > 0 && quest.skill) addXp(quest.skill, quest.xp);
-    else if (quest.xp > 0) addXp("combat", quest.xp); // fallback XP to combat
+    else if (quest.xp > 0) addXp("combat", quest.xp);
     if (quest.rewardItem) addItem(quest.rewardItem);
+    // Pet reward — highest difficulty quests have a chance to drop a pet
+    const petInfo = QUEST_PET_REWARDS[quest.id];
+    if (petInfo && quest.diff >= petInfo.diff && !pets.includes(petInfo.pet)) {
+      const roll = Math.random();
+      const chance = quest.id.startsWith("pm_") ? 0.25 : 0.15; // 25% premium, 15% free
+      if (roll < chance) {
+        unlockPet(petInfo.pet);
+      }
+    }
     addLog(`📋 Quest complete: ${quest.icon} ${quest.verb} ${quest.target} ${quest.unit}! ${quest.gold > 0 ? `+${quest.gold}g ` : ""}${quest.xp > 0 ? `+${quest.xp} XP ` : ""}${quest.rewardItem ? `+${ITEMS[quest.rewardItem]?.emoji} ${quest.rewardItem}` : ""}`);
-  }, [questProgress, questsClaimed, addGold, addXp, addItem, addLog]);
+  }, [questProgress, questsClaimed, addGold, addXp, addItem, addLog, pets, unlockPet]);
 
   const questsDone = [...(dailyQuests.free || []), ...(isPremium ? (dailyQuests.premium || []) : [])].filter(q => questsClaimed[q.id]).length;
   const questsTotal = (dailyQuests.free?.length || 0) + (isPremium ? (dailyQuests.premium?.length || 0) : 0);
@@ -1495,156 +1461,6 @@ function GameUI({ account, initialSave, onLogout }) {
   // Fetch listings when market page opens
   useEffect(() => { if (page === "market") fetchMarketListings(); }, [page, fetchMarketListings]);
 
-  // ─── PLAYER TRADE SYSTEM ───
-  const [tradeOffers, setTradeOffers] = useState([]);
-  const [tradeLoading, setTradeLoading] = useState(false);
-  const [tradeTarget, setTradeTarget] = useState("");
-  const [tradeOfferItems, setTradeOfferItems] = useState({}); // { itemName: qty }
-  const [tradeOfferGold, setTradeOfferGold] = useState(0);
-  const [tradeRequestItems, setTradeRequestItems] = useState(""); // text description of what you want
-
-  const fetchTradeOffers = useCallback(async () => {
-    setTradeLoading(true);
-    try {
-      const keys = await window.storage.list("trade:", true);
-      if (keys?.keys) {
-        const offers = [];
-        for (const k of keys.keys.slice(0, 100)) {
-          try {
-            const raw = await window.storage.get(k, true);
-            if (raw) offers.push(JSON.parse(raw.value));
-          } catch {}
-        }
-        offers.sort((a, b) => b.created - a.created);
-        setTradeOffers(offers);
-      }
-    } catch {}
-    setTradeLoading(false);
-  }, []);
-
-  const sendTradeOffer = useCallback(async () => {
-    if (!tradeTarget.trim()) return;
-    const items = Object.entries(tradeOfferItems).filter(([, q]) => q > 0);
-    if (items.length === 0 && tradeOfferGold <= 0) return;
-    // Verify player has the items/gold
-    for (const [name, qty] of items) {
-      if ((inventory[name] || 0) < qty) { addLog(`❌ Not enough ${name}`); return; }
-    }
-    if (tradeOfferGold > gold) { addLog("❌ Not enough gold"); return; }
-    // Remove items and gold from player
-    for (const [name, qty] of items) removeItem(name, qty);
-    if (tradeOfferGold > 0) addGold(-tradeOfferGold);
-    const offer = {
-      id: `${account.username}-${Date.now()}`,
-      from: account.username,
-      fromDisplay: account.displayName || account.username,
-      to: tradeTarget.trim().toLowerCase(),
-      items: items.map(([name, qty]) => ({ name, qty })),
-      gold: tradeOfferGold,
-      request: tradeRequestItems.trim(),
-      created: Date.now(),
-      status: "pending",
-    };
-    try {
-      await window.storage.set(`trade:${offer.id}`, JSON.stringify(offer), true);
-      addLog(`📤 Trade offer sent to ${tradeTarget}`);
-      setTradeTarget(""); setTradeOfferItems({}); setTradeOfferGold(0); setTradeRequestItems("");
-      fetchTradeOffers();
-    } catch { 
-      // Refund on fail
-      for (const [name, qty] of items) addItem(name, qty);
-      if (tradeOfferGold > 0) addGold(tradeOfferGold);
-      addLog("❌ Failed to send trade offer");
-    }
-  }, [tradeTarget, tradeOfferItems, tradeOfferGold, tradeRequestItems, inventory, gold, account, removeItem, addGold, addItem, addLog, fetchTradeOffers]);
-
-  const acceptTrade = useCallback(async (offer) => {
-    if (offer.to !== account.username) return;
-    try {
-      // Give items and gold to receiver (me)
-      for (const it of offer.items) addItem(it.name, it.qty);
-      if (offer.gold > 0) addGold(offer.gold);
-      // Notify sender via wallet/notification
-      try {
-        const nRaw = await window.storage.get(`tradenotify:${offer.from}`, true).catch(() => null);
-        const notifs = nRaw ? JSON.parse(nRaw.value) : [];
-        notifs.push({ type: "accepted", by: account.displayName || account.username, id: offer.id, time: Date.now() });
-        await window.storage.set(`tradenotify:${offer.from}`, JSON.stringify(notifs), true);
-      } catch {}
-      await window.storage.delete(`trade:${offer.id}`, true);
-      addLog(`✅ Accepted trade from ${offer.fromDisplay}: ${offer.items.map(i => `${i.qty}x ${i.name}`).join(", ")}${offer.gold > 0 ? ` + ${offer.gold}g` : ""}`);
-      fetchTradeOffers();
-    } catch { addLog("❌ Failed to accept trade"); }
-  }, [account, addItem, addGold, addLog, fetchTradeOffers]);
-
-  const declineTrade = useCallback(async (offer) => {
-    if (offer.to !== account.username) return;
-    try {
-      // Refund sender via wallet
-      try {
-        const wRaw = await window.storage.get(`wallet:${offer.from}`, true).catch(() => null);
-        const w = wRaw ? JSON.parse(wRaw.value) : { pending: 0 };
-        w.pending = (w.pending || 0) + (offer.gold || 0);
-        // Store refund items
-        w.refundItems = [...(w.refundItems || []), ...offer.items];
-        await window.storage.set(`wallet:${offer.from}`, JSON.stringify(w), true);
-      } catch {}
-      await window.storage.delete(`trade:${offer.id}`, true);
-      addLog(`❌ Declined trade from ${offer.fromDisplay}`);
-      fetchTradeOffers();
-    } catch {}
-  }, [account, addLog, fetchTradeOffers]);
-
-  const cancelTrade = useCallback(async (offer) => {
-    if (offer.from !== account.username) return;
-    try {
-      // Refund items and gold to self
-      for (const it of offer.items) addItem(it.name, it.qty);
-      if (offer.gold > 0) addGold(offer.gold);
-      await window.storage.delete(`trade:${offer.id}`, true);
-      addLog(`↩️ Cancelled trade offer to ${offer.to}`);
-      fetchTradeOffers();
-    } catch {}
-  }, [account, addItem, addGold, addLog, fetchTradeOffers]);
-
-  // Check for trade notifications (accepted/refunded items)
-  useEffect(() => {
-    if (!account.username) return;
-    const checkTradeNotifs = async () => {
-      try {
-        const raw = await window.storage.get(`tradenotify:${account.username}`, true);
-        if (raw) {
-          const notifs = JSON.parse(raw.value);
-          if (notifs.length > 0) {
-            for (const n of notifs) {
-              if (n.type === "accepted") addLog(`✅ ${n.by} accepted your trade!`);
-            }
-            await window.storage.delete(`tradenotify:${account.username}`, true);
-          }
-        }
-      } catch {}
-      // Check for refunded items from declined trades
-      try {
-        const wRaw = await window.storage.get(`wallet:${account.username}`, true);
-        if (wRaw) {
-          const w = JSON.parse(wRaw.value);
-          if (w.refundItems && w.refundItems.length > 0) {
-            for (const it of w.refundItems) addItem(it.name, it.qty);
-            addLog(`📦 Received refund from declined trade: ${w.refundItems.map(i => `${i.qty}x ${i.name}`).join(", ")}`);
-            w.refundItems = [];
-            await window.storage.set(`wallet:${account.username}`, JSON.stringify(w), true);
-          }
-        }
-      } catch {}
-    };
-    checkTradeNotifs();
-    const iv = setInterval(checkTradeNotifs, 10000);
-    return () => clearInterval(iv);
-  }, [account.username, addItem, addLog]);
-
-  // Fetch trades when page opens
-  useEffect(() => { if (page === "trade") fetchTradeOffers(); }, [page, fetchTradeOffers]);
-
   // ─── AUTO-SAVE ───
   const [lastSaved, setLastSaved] = useState(null);
   const saveTimer = useRef(null);
@@ -1652,7 +1468,7 @@ function GameUI({ account, initialSave, onLogout }) {
   useEffect(() => {
     if (saveTimer.current) clearTimeout(saveTimer.current);
     saveTimer.current = setTimeout(async () => {
-      const save = { skills, inventory, equipped, player, gold, stats, combatStats, craftStats };
+      const save = { skills, inventory, equipped, pets, activePet, player, gold, stats, combatStats, craftStats };
       try {
         await window.storage.set(`save:${account.username}`, JSON.stringify(save));
         setLastSaved(new Date());
@@ -1973,6 +1789,12 @@ function GameUI({ account, initialSave, onLogout }) {
             <span style={{ fontSize: 12, color: T.gold }}>💰 Gold</span>
             <span style={{ fontSize: 12, color: T.gold, fontWeight: 800 }}>{fmt(gold)}</span>
           </div>
+          {activePet && (
+            <div style={{ display: "flex", justifyContent: "space-between", marginTop: 6 }}>
+              <span style={{ fontSize: 12, color: T.purple }}>🐾 Pet</span>
+              <span style={{ fontSize: 12, color: T.purple, fontWeight: 800 }}>{PETS[activePet]?.emoji} {activePet}</span>
+            </div>
+          )}
         </div>
 
         {/* Nav */}
@@ -1980,9 +1802,9 @@ function GameUI({ account, initialSave, onLogout }) {
           <SectionLabel>General</SectionLabel>
           <SidebarItem icon="📊" label="Skills" active={page==="skills"} onClick={() => nav("skills")} color={T.accent} />
           <SidebarItem icon="📋" label="Quests" active={page==="quests"} onClick={() => nav("quests")} color={T.orange} badge={questsRemaining > 0 ? `${questsRemaining}` : "✓"} />
-          <SidebarItem icon="🎒" label="Bank" active={page==="bank"} onClick={() => nav("bank")} color={T.warning} badge={uniqueItems || undefined} />
+          <SidebarItem icon="🎒" label="Inventory" active={page==="bank"} onClick={() => nav("bank")} color={T.warning} badge={uniqueItems || undefined} />
+          <SidebarItem icon="🐾" label="Pets" active={page==="pets"} onClick={() => nav("pets")} color={T.purple} badge={pets.length > 0 ? `${pets.length}` : undefined} />
           <SidebarItem icon="🏪" label="Market" active={page==="market"} onClick={() => nav("market")} color={T.teal} />
-          <SidebarItem icon="🤝" label="Trade" active={page==="trade"} onClick={() => nav("trade")} color={T.purple} />
 
           <SectionLabel>Combat</SectionLabel>
           <SidebarItem icon="⚔️" label="Combat" active={page==="combat"} onClick={() => nav("combat")} color={T.danger} badge={`${skills.combat.level}`} />
@@ -2003,7 +1825,6 @@ function GameUI({ account, initialSave, onLogout }) {
             <SidebarItem icon="🏰" label={myClan ? `[${myClan.tag}] Clan` : "Clans"} active={page==="clan"} onClick={() => nav("clan")} color={T.purple} badge={myClan ? undefined : "Join"} />
             <SidebarItem icon="🏆" label="Leaderboard" active={page==="leaderboard"} onClick={() => nav("leaderboard")} color={T.gold} />
             <SidebarItem icon="📜" label="Activity Log" active={page==="log"} onClick={() => nav("log")} color={T.textDim} />
-            <SidebarItem icon="📖" label="Rules" active={page==="rules"} onClick={() => nav("rules")} color={T.info} />
           </div>
         </nav>
 
@@ -2750,9 +2571,11 @@ function GameUI({ account, initialSave, onLogout }) {
 
                 {/* Gathering stats row */}
                 {isActiveSkill && (() => {
-                  const speedMult = 1 + equipSpeedPct / 100;
+                  const totalSpeedPct = equipSpeedPct + getPetSpeedPct(activeGather.skillId);
+                  const totalXpPct = equipXpPct + getPetXpPct(activeGather.skillId);
+                  const speedMult = 1 + totalSpeedPct / 100;
                   const effTime = Math.max(500, Math.round(activeGather.node.time / speedMult));
-                  const xpMult = 1 + equipXpPct / 100;
+                  const xpMult = 1 + totalXpPct / 100;
                   const effXp = Math.round(activeGather.node.xp * xpMult);
                   return (
                     <Card style={{ marginBottom: 14, padding: "10px 14px" }}>
@@ -2760,8 +2583,9 @@ function GameUI({ account, initialSave, onLogout }) {
                         <div><span style={{ color: T.textDim }}>Gathering: </span><span style={{ color: sk.color, fontWeight: 700 }}>{activeGather.node.emoji} {activeGather.node.name}</span></div>
                         <div><span style={{ color: T.textDim }}>Rate: </span><span style={{ color: T.white, fontWeight: 700 }}>{(3600000 / effTime).toFixed(0)}/hr</span></div>
                         <div><span style={{ color: T.textDim }}>XP/hr: </span><span style={{ color: T.success, fontWeight: 700 }}>{fmt(Math.floor(effXp * 3600000 / effTime))}</span></div>
-                        {equipSpeedPct > 0 && <div><span style={{ color: T.teal, fontWeight: 700 }}>⚡+{equipSpeedPct}%</span></div>}
-                        {equipXpPct > 0 && <div><span style={{ color: T.gold, fontWeight: 700 }}>✨+{equipXpPct}%</span></div>}
+                        {totalSpeedPct > 0 && <div><span style={{ color: T.teal, fontWeight: 700 }}>⚡+{totalSpeedPct}%</span></div>}
+                        {totalXpPct > 0 && <div><span style={{ color: T.gold, fontWeight: 700 }}>✨+{totalXpPct}%</span></div>}
+                        {activePet && getPetSpeedPct(activeGather.skillId) > 0 && <div><span style={{ color: T.purple, fontWeight: 700 }}>🐾 {PETS[activePet]?.emoji}</span></div>}
                       </div>
                     </Card>
                   );
@@ -2848,34 +2672,13 @@ function GameUI({ account, initialSave, onLogout }) {
                   </div>
                 </div>
 
-                {/* Smithing category tabs */}
-                {page === "smithing" && (() => {
-                  const tabs = [
-                    { id: "all", label: "All", icon: "📋" },
-                    { id: "weapon", label: "Weapons", icon: "⚔️" },
-                    { id: "armor", label: "Armor", icon: "🛡️" },
-                    { id: "tool", label: "Tools", icon: "⛏️" },
-                    { id: "jewelry", label: "Jewelry", icon: "💎" },
-                  ];
-                  return (
-                    <div style={{ display: "flex", gap: 4, marginBottom: 16, flexWrap: "wrap" }}>
-                      {tabs.map(t => (
-                        <button key={t.id} onClick={() => setSmithTab(t.id)} style={{
-                          padding: "7px 14px", background: smithTab === t.id ? sk.color + "22" : T.surface,
-                          border: `1px solid ${smithTab === t.id ? sk.color : T.border}`, borderRadius: 6,
-                          color: smithTab === t.id ? sk.color : T.textDim, fontWeight: 600, cursor: "pointer",
-                          fontSize: 12, transition: "all .15s",
-                        }}>{t.icon} {t.label} <span style={{ opacity: 0.6 }}>({recipes.filter(r => t.id === "all" || r.tag === t.id).length})</span></button>
-                      ))}
-                    </div>
-                  );
-                })()}
-
                 {/* Active craft info */}
                 {isActiveSkill && activeCraft && (() => {
-                  const speedMult = 1 + equipSpeedPct / 100;
+                  const totalSpeedPct = equipSpeedPct + getPetSpeedPct(activeCraft.skillId);
+                  const totalXpPct = equipXpPct + getPetXpPct(activeCraft.skillId);
+                  const speedMult = 1 + totalSpeedPct / 100;
                   const effTime = Math.max(500, Math.round(activeCraft.recipe.time / speedMult));
-                  const xpMult = 1 + equipXpPct / 100;
+                  const xpMult = 1 + totalXpPct / 100;
                   const effXp = Math.round(activeCraft.recipe.xp * xpMult);
                   return (
                     <Card style={{ marginBottom: 14, padding: "10px 14px" }}>
@@ -2883,8 +2686,9 @@ function GameUI({ account, initialSave, onLogout }) {
                         <div><span style={{ color: T.textDim }}>Crafting: </span><span style={{ color: sk.color, fontWeight: 700 }}>{activeCraft.recipe.emoji} {activeCraft.recipe.name}</span></div>
                         {activeCraft.remaining > 0 && <div><span style={{ color: T.textDim }}>Queue: </span><span style={{ color: T.white, fontWeight: 700 }}>{activeCraft.remaining} remaining</span></div>}
                         <div><span style={{ color: T.textDim }}>XP/hr: </span><span style={{ color: T.success, fontWeight: 700 }}>{fmt(Math.floor(effXp * 3600000 / effTime))}</span></div>
-                        {equipSpeedPct > 0 && <div><span style={{ color: T.teal, fontWeight: 700 }}>⚡+{equipSpeedPct}%</span></div>}
-                        {equipXpPct > 0 && <div><span style={{ color: T.gold, fontWeight: 700 }}>✨+{equipXpPct}%</span></div>}
+                        {totalSpeedPct > 0 && <div><span style={{ color: T.teal, fontWeight: 700 }}>⚡+{totalSpeedPct}%</span></div>}
+                        {totalXpPct > 0 && <div><span style={{ color: T.gold, fontWeight: 700 }}>✨+{totalXpPct}%</span></div>}
+                        {activePet && getPetXpPct(activeCraft.skillId) > 0 && <div><span style={{ color: T.purple, fontWeight: 700 }}>🐾 {PETS[activePet]?.emoji}</span></div>}
                         <div style={{ marginLeft: "auto" }}><Btn color={T.danger} small onClick={stopCrafting}>Stop</Btn></div>
                       </div>
                     </Card>
@@ -2893,7 +2697,7 @@ function GameUI({ account, initialSave, onLogout }) {
 
                 {/* Recipe grid */}
                 <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(340px, 1fr))", gap: 10 }}>
-                  {recipes.filter(r => page !== "smithing" || smithTab === "all" || r.tag === smithTab).map((r, ri) => {
+                  {recipes.map((r, ri) => {
                     const locked = sk.level < r.lvl;
                     const canCraft1 = !locked && canCraftRecipe(r);
                     const maxQty = maxCraftable(r);
@@ -2965,189 +2769,236 @@ function GameUI({ account, initialSave, onLogout }) {
             );
           })()}
 
-          {/* ════ BANK / INVENTORY ════ */}
+          {/* ════ INVENTORY ════ */}
           {page === "bank" && (() => {
             const filteredItems = getFilteredInv();
-            const matCount = getInvByCategory("material").reduce((a, [, q]) => a + q, 0);
-            const eqCount = getInvByCategory("equipment").length;
-            const conCount = getInvByCategory("consumable").reduce((a, [, q]) => a + q, 0);
             const filters = [
-              { id: "all", label: "All", count: uniqueItems },
-              { id: "material", label: "Materials", count: getInvByCategory("material").length },
-              { id: "equipment", label: "Equipment", count: eqCount },
-              { id: "consumable", label: "Consumables", count: getInvByCategory("consumable").length },
+              { id: "all", label: "All", icon: "📦", count: uniqueItems },
+              { id: "equipment", label: "Gear", icon: "⚔️", count: getInvByCategory("equipment").length },
+              { id: "material", label: "Materials", icon: "🪨", count: getInvByCategory("material").length },
+              { id: "consumable", label: "Potions", icon: "🧪", count: getInvByCategory("consumable").length },
             ];
+            const totalValue = Object.entries(inventory).reduce((a, [n, q]) => a + (ITEMS[n]?.sell || 0) * q, 0);
 
             return (
-              <div>
-                <PageTitle icon="🎒" title="Bank" subtitle={`${uniqueItems} unique items  •  ${totalItems} total`} />
-
-                {/* ── Equipment Slots ── */}
-                <Card style={{ marginBottom: 14 }}>
-                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
-                    <div style={{ fontSize: 14, fontWeight: 700, color: T.white }}>⚔️ Equipment</div>
-                    <div style={{ fontSize: 11, color: T.textSec, display: "flex", gap: 8, flexWrap: "wrap" }}>
-                      <span>ATK <span style={{ color: T.danger, fontWeight: 700 }}>{equipAtk}</span></span>
-                      <span>DEF <span style={{ color: T.info, fontWeight: 700 }}>{equipDef}</span></span>
-                      {equipSpeedPct > 0 && <span>⚡ <span style={{ color: T.teal, fontWeight: 700 }}>+{equipSpeedPct}%</span></span>}
-                      {equipXpPct > 0 && <span>✨ <span style={{ color: T.gold, fontWeight: 700 }}>+{equipXpPct}% XP</span></span>}
+              <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+                {/* Header with stats bar */}
+                <div style={{
+                  display: "flex", alignItems: "center", justifyContent: "space-between",
+                  padding: "14px 18px", borderRadius: 12,
+                  background: `linear-gradient(135deg, ${T.card}, ${T.bgDeep})`,
+                  border: `1px solid ${T.cardBorder}`,
+                }}>
+                  <div>
+                    <div style={{ fontSize: 18, fontWeight: 800, color: T.white }}>🎒 Inventory</div>
+                    <div style={{ fontSize: 11, color: T.textDim, marginTop: 2 }}>{uniqueItems} items  •  {totalItems} total</div>
+                  </div>
+                  <div style={{ display: "flex", gap: 16, alignItems: "center" }}>
+                    <div style={{ textAlign: "center" }}>
+                      <div style={{ fontSize: 16, fontWeight: 800, color: T.gold }}>{fmt(gold)}</div>
+                      <div style={{ fontSize: 9, color: T.textDim, textTransform: "uppercase", letterSpacing: 0.5 }}>Gold</div>
+                    </div>
+                    <div style={{ width: 1, height: 28, background: T.cardBorder }} />
+                    <div style={{ textAlign: "center" }}>
+                      <div style={{ fontSize: 16, fontWeight: 800, color: T.success }}>{fmt(totalValue)}</div>
+                      <div style={{ fontSize: 9, color: T.textDim, textTransform: "uppercase", letterSpacing: 0.5 }}>Value</div>
                     </div>
                   </div>
-                  <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(210px, 1fr))", gap: 8 }}>
-                    {["weapon", "helm", "armor", "shield", "boots", "ring", "tool", "amulet"].map(slot => {
+                </div>
+
+                {/* ── Equipment Loadout ── */}
+                <div style={{
+                  borderRadius: 12, overflow: "hidden",
+                  border: `1px solid ${T.cardBorder}`,
+                  background: T.card,
+                }}>
+                  <div style={{
+                    padding: "10px 16px",
+                    background: `linear-gradient(90deg, ${T.danger}12, transparent)`,
+                    borderBottom: `1px solid ${T.cardBorder}`,
+                    display: "flex", alignItems: "center", justifyContent: "space-between",
+                  }}>
+                    <span style={{ fontSize: 13, fontWeight: 700, color: T.white }}>⚔️ Equipment Loadout</span>
+                    <div style={{ display: "flex", gap: 10, fontSize: 11 }}>
+                      <span style={{ color: T.danger, fontWeight: 700 }}>⚔ {equipAtk + petAtk} ATK</span>
+                      <span style={{ color: T.accent, fontWeight: 700 }}>🛡 {equipDef + petDef} DEF</span>
+                      {(equipSpeedPct > 0 || (petData && petData.speedPct > 0)) && <span style={{ color: T.teal, fontWeight: 700 }}>⚡ +{equipSpeedPct + (petData?.skill === "all" ? petData.speedPct : 0)}%</span>}
+                      {(equipXpPct > 0 || (petData && petData.xpPct > 0)) && <span style={{ color: T.gold, fontWeight: 700 }}>✨ +{equipXpPct + (petData?.skill === "all" ? petData.xpPct : 0)}%</span>}
+                    </div>
+                  </div>
+                  <div style={{ padding: 12, display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(180px, 1fr))", gap: 8 }}>
+                    {["weapon", "shield", "armor", "ring", "tool", "amulet"].map(slot => {
                       const eqName = equipped[slot];
                       const item = eqName ? ITEMS[eqName] : null;
-                      const rarityColor = item ? (RARITY_COLORS[item.rarity] || T.text) : T.textDim;
+                      const rc = item ? (RARITY_COLORS[item.rarity] || T.text) : T.textDim;
                       return (
                         <div key={slot}
                           onClick={eqName ? () => unequipItem(slot) : undefined}
                           style={{
-                            padding: 12, borderRadius: T.rs,
-                            background: item ? `${rarityColor}08` : T.bgDeep,
-                            border: `1px solid ${item ? rarityColor + "30" : T.divider}`,
-                            display: "flex", alignItems: "center", gap: 10,
+                            padding: "8px 10px", borderRadius: 8,
+                            background: item ? `${rc}08` : T.bgDeep,
+                            border: `1px solid ${item ? rc + "25" : T.divider}`,
+                            display: "flex", alignItems: "center", gap: 8,
                             cursor: eqName ? "pointer" : "default",
                             transition: "all 0.15s",
                           }}>
                           <div style={{
-                            width: 38, height: 38, borderRadius: T.rs,
-                            background: item ? `${rarityColor}15` : T.card,
+                            width: 32, height: 32, borderRadius: 6,
+                            background: item ? `${rc}15` : T.card,
                             display: "flex", alignItems: "center", justifyContent: "center",
-                            fontSize: 18, border: `1px solid ${item ? rarityColor + "25" : T.divider}`,
+                            fontSize: 16, border: `1px solid ${item ? rc + "20" : T.divider}`,
                           }}>
                             {item ? item.emoji : SLOT_ICONS[slot]}
                           </div>
                           <div style={{ flex: 1, minWidth: 0 }}>
-                            <div style={{ fontSize: 10, color: T.textDim, textTransform: "uppercase", fontWeight: 700, letterSpacing: 0.5 }}>{slot}</div>
+                            <div style={{ fontSize: 9, color: T.textDim, textTransform: "uppercase", fontWeight: 700, letterSpacing: 0.5 }}>{slot}</div>
                             {item ? (
-                              <>
-                                <div style={{ fontSize: 12, fontWeight: 700, color: rarityColor, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{eqName}</div>
-                                <div style={{ fontSize: 10, color: T.textSec, marginTop: 1 }}>
-                                  {item.atk > 0 && <span style={{ color: T.danger }}>+{item.atk} ATK </span>}
-                                  {item.def > 0 && <span style={{ color: T.info }}>+{item.def} DEF</span>}
-                                </div>
-                              </>
+                              <div style={{ fontSize: 11, fontWeight: 700, color: rc, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{eqName}</div>
                             ) : (
-                              <div style={{ fontSize: 12, color: T.textDim }}>Empty</div>
+                              <div style={{ fontSize: 11, color: T.textDim }}>Empty</div>
                             )}
                           </div>
-                          {eqName && (
-                            <div style={{ fontSize: 9, color: T.textDim, padding: "2px 6px", borderRadius: 3, background: T.bar }}>
-                              ✕
-                            </div>
-                          )}
+                          {eqName && <span style={{ fontSize: 9, color: T.textDim, background: T.bar, padding: "2px 5px", borderRadius: 3 }}>✕</span>}
                         </div>
                       );
                     })}
                   </div>
-                </Card>
+                </div>
 
-                {/* ── Consumable Quick-Use ── */}
+                {/* ── Quick Use Consumables ── */}
                 {getInvByCategory("consumable").length > 0 && (
-                  <Card style={{ marginBottom: 14 }}>
-                    <div style={{ fontSize: 14, fontWeight: 700, color: T.white, marginBottom: 10 }}>⚡ Quick Use</div>
-                    <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+                  <div style={{
+                    borderRadius: 12, overflow: "hidden",
+                    border: `1px solid ${T.cardBorder}`,
+                    background: T.card,
+                  }}>
+                    <div style={{
+                      padding: "8px 16px",
+                      background: `linear-gradient(90deg, ${T.teal}12, transparent)`,
+                      borderBottom: `1px solid ${T.cardBorder}`,
+                    }}>
+                      <span style={{ fontSize: 13, fontWeight: 700, color: T.white }}>⚡ Quick Use</span>
+                    </div>
+                    <div style={{ padding: 10, display: "flex", flexWrap: "wrap", gap: 6 }}>
                       {getInvByCategory("consumable").map(([name, qty]) => {
                         const item = ITEMS[name];
                         return (
                           <div key={name} onClick={() => useConsumable(name)} style={{
                             display: "flex", alignItems: "center", gap: 6,
-                            padding: "6px 10px", borderRadius: T.rs,
-                            background: T.tealMuted, border: `1px solid ${T.teal}25`,
+                            padding: "5px 10px", borderRadius: 8,
+                            background: T.teal + "10", border: `1px solid ${T.teal}20`,
                             cursor: "pointer", transition: "all 0.12s",
                           }}>
                             <span style={{ fontSize: 14 }}>{item.emoji}</span>
                             <span style={{ fontSize: 11, fontWeight: 600, color: T.teal }}>{name}</span>
                             <span style={{
                               fontSize: 10, fontWeight: 800, color: T.white,
-                              background: T.teal + "30", padding: "1px 5px", borderRadius: 3,
+                              background: T.teal + "25", padding: "1px 6px", borderRadius: 4,
                             }}>×{qty}</span>
                           </div>
                         );
                       })}
                     </div>
-                  </Card>
+                  </div>
                 )}
 
-                {/* ── Search & Filter ── */}
-                <Card style={{ marginBottom: 14, padding: "12px 14px" }}>
-                  <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
-                    {/* Search */}
-                    <div style={{
-                      display: "flex", alignItems: "center", gap: 6,
-                      background: T.bgDeep, borderRadius: T.rs, border: `1px solid ${T.divider}`,
-                      padding: "6px 10px", flex: "1 1 180px", minWidth: 140,
-                    }}>
-                      <span style={{ fontSize: 13, color: T.textDim }}>🔍</span>
-                      <input
-                        type="text" placeholder="Search items..."
-                        value={bankSearch} onChange={e => setBankSearch(e.target.value)}
-                        style={{
-                          background: "none", border: "none", outline: "none",
-                          color: T.text, fontFamily: FONT, fontSize: 12, width: "100%",
-                        }}
-                      />
-                      {bankSearch && (
-                        <span onClick={() => setBankSearch("")} style={{ cursor: "pointer", fontSize: 11, color: T.textDim }}>✕</span>
-                      )}
-                    </div>
-                    {/* Filter pills */}
+                {/* ── Search + Tabs ── */}
+                <div style={{
+                  display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap",
+                }}>
+                  {/* Search */}
+                  <div style={{
+                    display: "flex", alignItems: "center", gap: 6,
+                    background: T.card, borderRadius: 8, border: `1px solid ${T.cardBorder}`,
+                    padding: "7px 12px", flex: "1 1 200px", minWidth: 150,
+                  }}>
+                    <span style={{ fontSize: 13, color: T.textDim }}>🔍</span>
+                    <input
+                      type="text" placeholder="Search items..."
+                      value={bankSearch} onChange={e => setBankSearch(e.target.value)}
+                      style={{
+                        background: "none", border: "none", outline: "none",
+                        color: T.text, fontFamily: FONT, fontSize: 12, width: "100%",
+                      }}
+                    />
+                    {bankSearch && (
+                      <span onClick={() => setBankSearch("")} style={{ cursor: "pointer", fontSize: 11, color: T.textDim }}>✕</span>
+                    )}
+                  </div>
+                  {/* Category tabs */}
+                  <div style={{ display: "flex", gap: 4 }}>
                     {filters.map(f => (
                       <div key={f.id} onClick={() => setBankFilter(f.id)} style={{
-                        padding: "5px 10px", borderRadius: T.rs,
-                        background: bankFilter === f.id ? T.accent + "20" : T.bgDeep,
-                        border: `1px solid ${bankFilter === f.id ? T.accent + "50" : T.divider}`,
+                        padding: "6px 12px", borderRadius: 8,
+                        background: bankFilter === f.id ? T.accent + "18" : T.card,
+                        border: `1px solid ${bankFilter === f.id ? T.accent + "40" : T.cardBorder}`,
                         color: bankFilter === f.id ? T.accent : T.textSec,
                         fontSize: 11, fontWeight: 600, cursor: "pointer",
                         transition: "all 0.12s",
-                        display: "flex", alignItems: "center", gap: 5,
+                        display: "flex", alignItems: "center", gap: 4,
                       }}>
-                        {f.label}
+                        <span>{f.icon}</span>
+                        <span>{f.label}</span>
                         <span style={{
-                          fontSize: 10, fontWeight: 800, color: bankFilter === f.id ? T.accent : T.textDim,
+                          fontSize: 9, fontWeight: 800,
+                          color: bankFilter === f.id ? T.accent : T.textDim,
                           background: bankFilter === f.id ? T.accent + "15" : T.bar,
-                          padding: "0 5px", borderRadius: 3,
+                          padding: "0 4px", borderRadius: 3,
                         }}>{f.count}</span>
                       </div>
                     ))}
                   </div>
-                </Card>
+                </div>
 
                 {/* ── Item Grid ── */}
-                <Card>
+                <div style={{
+                  borderRadius: 12, overflow: "hidden",
+                  border: `1px solid ${T.cardBorder}`,
+                  background: T.card,
+                }}>
                   {filteredItems.length === 0 ? (
-                    <div style={{ textAlign: "center", padding: "40px 0", color: T.textDim }}>
-                      <div style={{ fontSize: 28, marginBottom: 8 }}>📦</div>
-                      <div style={{ fontSize: 13 }}>{bankSearch ? "No items match your search" : "No items in this category"}</div>
+                    <div style={{ textAlign: "center", padding: "50px 0", color: T.textDim }}>
+                      <div style={{ fontSize: 36, marginBottom: 10, opacity: 0.4 }}>📦</div>
+                      <div style={{ fontSize: 13, fontWeight: 600 }}>{bankSearch ? "No items match your search" : "No items in this category"}</div>
+                      <div style={{ fontSize: 11, marginTop: 4 }}>Try gathering, crafting, or killing monsters!</div>
                     </div>
                   ) : (
-                    <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))", gap: 6 }}>
+                    <div style={{ padding: 10, display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))", gap: 6 }}>
                       {filteredItems.map(([name, qty]) => {
                         const item = ITEMS[name];
                         if (!item) return null;
                         const isEq = item.category === "equipment";
                         const isCon = item.category === "consumable";
-                        const rarityColor = isEq ? (RARITY_COLORS[item.rarity] || T.text) : null;
-                        const actionColor = isEq ? rarityColor : isCon ? T.teal : null;
+                        const rc = isEq ? (RARITY_COLORS[item.rarity] || T.text) : isCon ? T.teal : T.textSoft;
+                        const isEquipped = isEq && Object.values(equipped).includes(name);
 
                         return (
                           <div key={name}
                             onClick={isEq ? () => equipItem(name) : isCon ? () => useConsumable(name) : undefined}
                             style={{
-                              padding: 10, borderRadius: T.rs,
-                              background: isEq ? `${rarityColor}06` : T.bgDeep,
-                              border: `1px solid ${isEq ? rarityColor + "20" : T.divider}`,
+                              padding: "8px 10px", borderRadius: 8,
+                              background: isEquipped ? `${rc}12` : isEq ? `${rc}05` : T.bgDeep,
+                              border: `1px solid ${isEquipped ? rc + "40" : isEq ? rc + "18" : T.divider}`,
                               display: "flex", alignItems: "center", gap: 10,
                               cursor: (isEq || isCon) ? "pointer" : "default",
                               transition: "all 0.12s",
+                              position: "relative",
                             }}>
+                            {/* Equipped badge */}
+                            {isEquipped && (
+                              <div style={{
+                                position: "absolute", top: 3, right: 6,
+                                fontSize: 8, fontWeight: 800, color: T.success,
+                                background: T.successMuted, padding: "1px 5px", borderRadius: 4,
+                                textTransform: "uppercase", letterSpacing: 0.5,
+                              }}>Worn</div>
+                            )}
                             {/* Icon */}
                             <div style={{
-                              width: 34, height: 34, borderRadius: T.rs, flexShrink: 0,
-                              background: isEq ? `${rarityColor}12` : isCon ? T.tealMuted : T.card,
+                              width: 36, height: 36, borderRadius: 8, flexShrink: 0,
+                              background: isEq ? `${rc}12` : isCon ? T.tealMuted : T.card,
                               display: "flex", alignItems: "center", justifyContent: "center",
-                              fontSize: 16,
-                              border: `1px solid ${isEq ? rarityColor + "20" : "transparent"}`,
+                              fontSize: 17, border: `1px solid ${isEq ? rc + "18" : "transparent"}`,
                             }}>
                               {item.emoji}
                             </div>
@@ -3155,28 +3006,29 @@ function GameUI({ account, initialSave, onLogout }) {
                             <div style={{ flex: 1, minWidth: 0 }}>
                               <div style={{
                                 fontSize: 12, fontWeight: 600,
-                                color: isEq ? rarityColor : T.text,
+                                color: isEq ? rc : T.text,
                                 overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
                               }}>{name}</div>
-                              <div style={{ fontSize: 10, color: T.textDim, marginTop: 1 }}>
+                              <div style={{ fontSize: 10, color: T.textDim, marginTop: 1, display: "flex", gap: 4, flexWrap: "wrap" }}>
                                 {isEq && (
                                   <>
-                                    {item.atk > 0 && <span style={{ color: T.danger }}>+{item.atk} ATK </span>}
-                                    {item.def > 0 && <span style={{ color: T.info }}>+{item.def} DEF </span>}
-                                    <span style={{ color: RARITY_COLORS[item.rarity] }}>[{item.rarity}]</span>
+                                    {item.atk > 0 && <span style={{ color: T.danger }}>+{item.atk}ATK</span>}
+                                    {item.def > 0 && <span style={{ color: T.accent }}>+{item.def}DEF</span>}
+                                    {item.xpPct > 0 && <span style={{ color: T.gold }}>+{item.xpPct}%XP</span>}
+                                    {item.speedPct > 0 && <span style={{ color: T.teal }}>+{item.speedPct}%SPD</span>}
                                   </>
                                 )}
                                 {isCon && <span style={{ color: T.teal }}>{item.desc}</span>}
-                                {!isEq && !isCon && <span>{item.desc}</span>}
+                                {!isEq && !isCon && <span>{item.sell > 0 ? `Sell: ${item.sell}g` : item.desc}</span>}
                               </div>
                             </div>
-                            {/* Qty + Action */}
+                            {/* Qty */}
                             <div style={{ textAlign: "right", flexShrink: 0 }}>
-                              <div style={{ fontSize: 14, fontWeight: 800, color: T.white }}>{qty}</div>
+                              <div style={{ fontSize: 15, fontWeight: 800, color: T.white }}>{qty}</div>
                               {(isEq || isCon) && (
                                 <div style={{
-                                  fontSize: 9, fontWeight: 700, marginTop: 2,
-                                  color: actionColor, textTransform: "uppercase",
+                                  fontSize: 8, fontWeight: 700, marginTop: 1,
+                                  color: isEq ? rc : T.teal, textTransform: "uppercase",
                                 }}>
                                   {isEq ? "Equip" : "Use"}
                                 </div>
@@ -3187,27 +3039,157 @@ function GameUI({ account, initialSave, onLogout }) {
                       })}
                     </div>
                   )}
+                </div>
+
+                {/* ── Test Tools ── */}
+                <div style={{
+                  borderRadius: 12, overflow: "hidden",
+                  border: `1px solid ${T.cardBorder}`,
+                  background: T.card,
+                }}>
+                  <div style={{
+                    padding: "8px 16px",
+                    background: `linear-gradient(90deg, ${T.warning}12, transparent)`,
+                    borderBottom: `1px solid ${T.cardBorder}`,
+                  }}>
+                    <span style={{ fontSize: 13, fontWeight: 700, color: T.white }}>🧪 Test Tools</span>
+                  </div>
+                  <div style={{ padding: 12, display: "flex", flexDirection: "column", gap: 12 }}>
+                    {/* Add Items */}
+                    <div>
+                      <div style={{ fontSize: 11, fontWeight: 600, color: T.textSec, marginBottom: 6 }}>Add Items</div>
+                      <div style={{ display: "flex", flexWrap: "wrap", gap: 5 }}>
+                        {[
+                          ["Iron Ore", 5, T.warning], ["Gold Ore", 2, T.gold], ["Raw Trout", 3, T.info],
+                          ["Beast Fang", 2, T.orange], ["Mana Crystal", 1, T.purple],
+                          ["Iron Sword", 1, T.info], ["Gold Ring", 1, T.info],
+                          ["HP Potion", 2, T.teal], ["ATK Elixir", 1, T.teal],
+                          ["Dragon Scale", 1, T.orange],
+                          ["Bronze Pickaxe", 1, T.success], ["Iron Pickaxe", 1, T.success],
+                          ["Copper Amulet", 1, T.purple], ["Silver Amulet", 1, T.purple],
+                        ].map(([name, qty, color]) => (
+                          <Btn key={name} small color={color} onClick={() => { addItem(name, qty); addLog(`📦 Added ${qty}× ${ITEMS[name]?.emoji} ${name}`); }}>
+                            {ITEMS[name]?.emoji} +{qty}
+                          </Btn>
+                        ))}
+                      </div>
+                    </div>
+                    {/* Add Gold */}
+                    <div>
+                      <div style={{ fontSize: 11, fontWeight: 600, color: T.textSec, marginBottom: 6 }}>Add Gold — Current: <span style={{ color: T.gold }}>{gold.toLocaleString()}</span></div>
+                      <div style={{ display: "flex", flexWrap: "wrap", gap: 5 }}>
+                        {[1000, 5000, 10000, 50000].map(amt => (
+                          <Btn key={amt} small color={T.gold} onClick={() => { setGold(g => g + amt); addLog(`💰 Added ${amt.toLocaleString()} gold`); }}>
+                            💰 +{amt >= 1000 ? `${amt/1000}k` : amt}
+                          </Btn>
+                        ))}
+                      </div>
+                    </div>
+                    {/* Unlock Pets */}
+                    <div>
+                      <div style={{ fontSize: 11, fontWeight: 600, color: T.textSec, marginBottom: 6 }}>Unlock Pets — Owned: <span style={{ color: T.purple }}>{pets.length}/{PET_IDS.length}</span></div>
+                      <div style={{ display: "flex", flexWrap: "wrap", gap: 5 }}>
+                        {PET_IDS.map(name => (
+                          <Btn key={name} small color={pets.includes(name) ? T.textDim : RARITY_COLORS[PETS[name].rarity]} disabled={pets.includes(name)} onClick={() => unlockPet(name)}>
+                            {PETS[name].emoji} {name}
+                          </Btn>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            );
+          })()}
+
+          {/* ════ PETS ════ */}
+          {page === "pets" && (() => {
+            return (
+              <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+                {/* Active Pet Banner */}
+                <Card style={{ background: activePet ? `linear-gradient(135deg, ${T.card}, ${T.purpleMuted})` : T.card }}>
+                  <div style={{ fontSize: 14, fontWeight: 700, color: T.white, marginBottom: 10 }}>🐾 Active Companion</div>
+                  {activePet ? (() => {
+                    const p = PETS[activePet];
+                    return (
+                      <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
+                        <div style={{ fontSize: 40 }}>{p.emoji}</div>
+                        <div style={{ flex: 1 }}>
+                          <div style={{ fontWeight: 700, color: RARITY_COLORS[p.rarity], fontSize: 16 }}>{activePet}</div>
+                          <div style={{ fontSize: 12, color: T.textSoft, marginTop: 2 }}>{p.desc}</div>
+                          <div style={{ display: "flex", gap: 10, marginTop: 6, fontSize: 12 }}>
+                            {p.xpPct > 0 && <span style={{ color: T.gold }}>✨ +{p.xpPct}% XP</span>}
+                            {p.speedPct > 0 && <span style={{ color: T.teal }}>⚡ +{p.speedPct}% Speed</span>}
+                            {p.atkBonus && <span style={{ color: T.danger }}>⚔️ +{p.atkBonus} ATK</span>}
+                            {p.defBonus && <span style={{ color: T.accent }}>🛡️ +{p.defBonus} DEF</span>}
+                            <span style={{ color: T.purple }}>({p.skill === "all" ? "All Skills" : SKILLS_CONFIG[p.skill]?.name || p.skill})</span>
+                          </div>
+                        </div>
+                        <Btn color={T.danger} small onClick={() => { setActivePet(null); addLog("🐾 Pet dismissed"); }}>Dismiss</Btn>
+                      </div>
+                    );
+                  })() : (
+                    <div style={{ fontSize: 13, color: T.textDim, textAlign: "center", padding: "16px 0" }}>
+                      No pet active. {pets.length > 0 ? "Select one below!" : "Complete hard quests to unlock pets!"}
+                    </div>
+                  )}
                 </Card>
 
-                {/* ── Test: Add Items ── */}
-                <Card style={{ marginTop: 14 }}>
-                  <div style={{ fontSize: 13, fontWeight: 700, color: T.white, marginBottom: 10 }}>🧪 Test — Add Items</div>
-                  <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
-                    {[
-                      ["Iron Ore", 5, T.warning], ["Gold Ore", 2, T.gold], ["Raw Trout", 3, T.info],
-                      ["Beast Fang", 2, T.orange], ["Mana Crystal", 1, T.purple],
-                      ["Iron Sword", 1, T.info], ["Gold Ring", 1, T.info],
-                      ["HP Potion", 2, T.teal], ["ATK Elixir", 1, T.teal],
-                      ["Dragon Scale", 1, T.orange],
-                      ["Bronze Pickaxe", 1, T.success], ["Iron Pickaxe", 1, T.success],
-                      ["Copper Amulet", 1, T.purple], ["Silver Amulet", 1, T.purple],
-                    ].map(([name, qty, color]) => (
-                      <Btn key={name} small color={color} onClick={() => { addItem(name, qty); addLog(`📦 Added ${qty}× ${ITEMS[name]?.emoji} ${name}`); }}>
-                        {ITEMS[name]?.emoji} +{qty}
-                      </Btn>
-                    ))}
+                {/* Pet Collection */}
+                <Card>
+                  <div style={{ fontSize: 14, fontWeight: 700, color: T.white, marginBottom: 14 }}>📚 Pet Collection ({pets.length}/{PET_IDS.length})</div>
+                  <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: 10 }}>
+                    {PET_IDS.map(name => {
+                      const p = PETS[name];
+                      const owned = pets.includes(name);
+                      const isActive = activePet === name;
+                      return (
+                        <div key={name} style={{
+                          background: isActive ? T.purpleMuted : owned ? T.bgDeep : T.bg,
+                          border: `1px solid ${isActive ? T.purple : owned ? T.cardBorder : T.bar}`,
+                          borderRadius: 10, padding: 12,
+                          opacity: owned ? 1 : 0.5,
+                          transition: "all 0.2s",
+                        }}>
+                          <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 6 }}>
+                            <span style={{ fontSize: 28 }}>{owned ? p.emoji : "❓"}</span>
+                            <div style={{ flex: 1 }}>
+                              <div style={{ fontWeight: 700, color: owned ? RARITY_COLORS[p.rarity] : T.textDim, fontSize: 13 }}>
+                                {owned ? name : "???"}
+                                {isActive && <span style={{ marginLeft: 6, fontSize: 10, color: T.purple, background: T.purpleMuted, padding: "1px 6px", borderRadius: 8 }}>ACTIVE</span>}
+                              </div>
+                              <div style={{ fontSize: 10, color: T.textDim, textTransform: "capitalize" }}>{p.rarity}</div>
+                            </div>
+                          </div>
+                          {owned ? (
+                            <>
+                              <div style={{ fontSize: 11, color: T.textSoft, marginBottom: 6 }}>{p.desc}</div>
+                              <div style={{ display: "flex", gap: 6, flexWrap: "wrap", fontSize: 11, marginBottom: 8 }}>
+                                {p.xpPct > 0 && <span style={{ color: T.gold, background: T.gold + "15", padding: "1px 6px", borderRadius: 6 }}>+{p.xpPct}% XP</span>}
+                                {p.speedPct > 0 && <span style={{ color: T.teal, background: T.tealMuted, padding: "1px 6px", borderRadius: 6 }}>+{p.speedPct}% Speed</span>}
+                                {p.atkBonus && <span style={{ color: T.danger, background: T.dangerMuted, padding: "1px 6px", borderRadius: 6 }}>+{p.atkBonus} ATK</span>}
+                                {p.defBonus && <span style={{ color: T.accent, background: T.accent + "15", padding: "1px 6px", borderRadius: 6 }}>+{p.defBonus} DEF</span>}
+                              </div>
+                              {!isActive && <Btn color={T.purple} small onClick={() => { setActivePet(name); addLog(`🐾 ${p.emoji} ${name} is now your active pet!`); }}>Summon</Btn>}
+                            </>
+                          ) : (
+                            <div style={{ fontSize: 11, color: T.textDim }}>🔒 {p.source}</div>
+                          )}
+                        </div>
+                      );
+                    })}
                   </div>
-                  <div style={{ fontSize: 11, color: T.textDim, marginTop: 8 }}>Add items to test equipping, using consumables, search & filtering.</div>
+                </Card>
+
+                {/* How to get pets */}
+                <Card>
+                  <div style={{ fontSize: 14, fontWeight: 700, color: T.white, marginBottom: 8 }}>💡 How to Get Pets</div>
+                  <div style={{ fontSize: 12, color: T.textSoft, lineHeight: 1.8 }}>
+                    Pets are rare rewards from completing the <b style={{ color: T.warning }}>hardest difficulty</b> daily quests.
+                    Free quests have a <b style={{ color: T.success }}>15%</b> chance and Premium quests have a <b style={{ color: T.purple }}>25%</b> chance
+                    to drop a pet when you claim the reward. Each pet boosts a specific skill (or all skills!) with XP and speed bonuses.
+                    You can only have <b style={{ color: T.white }}>one active pet</b> at a time — choose wisely!
+                  </div>
                 </Card>
               </div>
             );
@@ -3444,200 +3426,6 @@ function GameUI({ account, initialSave, onLogout }) {
                     </div>
                   </Card>
                 )}
-              </div>
-            );
-          })()}
-
-          {/* ════ PLAYER TRADE ════ */}
-          {page === "trade" && (() => {
-            const incoming = tradeOffers.filter(o => o.to === account.username && o.status === "pending");
-            const outgoing = tradeOffers.filter(o => o.from === account.username && o.status === "pending");
-            const sellableItems = Object.entries(inventory).filter(([n, q]) => q > 0 && ITEMS[n]);
-
-            return (
-              <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-                <PageTitle icon="🤝" title="Player Trade" subtitle="Send items & gold directly to other players" />
-
-                {/* Incoming trades */}
-                <Card>
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
-                    <div style={{ fontSize: 15, fontWeight: 700, color: T.text }}>📥 Incoming Offers {incoming.length > 0 && <Badge color={T.accent}>{incoming.length}</Badge>}</div>
-                    <button onClick={fetchTradeOffers} style={{ padding: "6px 14px", background: T.surface, border: `1px solid ${T.border}`, borderRadius: 6, color: T.textDim, cursor: "pointer", fontSize: 12 }}>
-                      {tradeLoading ? "Loading..." : "🔄 Refresh"}
-                    </button>
-                  </div>
-                  {incoming.length === 0 && <div style={{ color: T.textDim, textAlign: "center", padding: 20 }}>No incoming trade offers</div>}
-                  <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-                    {incoming.map(o => (
-                      <div key={o.id} style={{ padding: "12px 14px", background: T.bg, borderRadius: 8, border: `1px solid ${T.border}` }}>
-                        <div style={{ fontSize: 13, fontWeight: 700, color: T.accent, marginBottom: 6 }}>From: {o.fromDisplay}</div>
-                        <div style={{ fontSize: 12, color: T.text, marginBottom: 4 }}>
-                          <span style={{ color: T.textDim }}>Offering: </span>
-                          {o.items.map(i => `${i.qty}x ${ITEMS[i.name]?.emoji || ""} ${i.name}`).join(", ")}
-                          {o.gold > 0 && <span style={{ color: T.warning, fontWeight: 600 }}> + {o.gold}g</span>}
-                        </div>
-                        {o.request && <div style={{ fontSize: 11, color: T.textDim, marginBottom: 6 }}>💬 "{o.request}"</div>}
-                        <div style={{ fontSize: 10, color: T.textDim, marginBottom: 8 }}>{new Date(o.created).toLocaleString()}</div>
-                        <div style={{ display: "flex", gap: 6 }}>
-                          <Btn color={T.success} small onClick={() => acceptTrade(o)}>✅ Accept</Btn>
-                          <Btn color={T.danger} small onClick={() => declineTrade(o)}>❌ Decline</Btn>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </Card>
-
-                {/* Outgoing trades */}
-                {outgoing.length > 0 && (
-                  <Card>
-                    <div style={{ fontSize: 15, fontWeight: 700, color: T.text, marginBottom: 12 }}>📤 Your Pending Offers</div>
-                    <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-                      {outgoing.map(o => (
-                        <div key={o.id} style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 14px", background: T.bg, borderRadius: 8, border: `1px solid ${T.border}` }}>
-                          <div style={{ flex: 1 }}>
-                            <div style={{ fontSize: 13, fontWeight: 600, color: T.text }}>To: {o.to}</div>
-                            <div style={{ fontSize: 12, color: T.textDim }}>
-                              {o.items.map(i => `${i.qty}x ${ITEMS[i.name]?.emoji || ""} ${i.name}`).join(", ")}
-                              {o.gold > 0 && <span style={{ color: T.warning }}> + {o.gold}g</span>}
-                            </div>
-                            {o.request && <div style={{ fontSize: 11, color: T.textDim }}>💬 "{o.request}"</div>}
-                          </div>
-                          <Btn color={T.danger} small onClick={() => cancelTrade(o)}>Cancel</Btn>
-                        </div>
-                      ))}
-                    </div>
-                  </Card>
-                )}
-
-                {/* Send new trade */}
-                <Card>
-                  <div style={{ fontSize: 15, fontWeight: 700, color: T.text, marginBottom: 12 }}>📤 Send Trade Offer</div>
-                  <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-                    <div>
-                      <div style={{ fontSize: 11, fontWeight: 700, color: T.textDim, marginBottom: 4, textTransform: "uppercase" }}>Recipient Username</div>
-                      <input type="text" value={tradeTarget} onChange={e => setTradeTarget(e.target.value)} placeholder="Enter player username..." style={{
-                        width: "100%", padding: "8px 12px", background: T.bg, border: `1px solid ${T.border}`, borderRadius: 6, color: T.text, fontSize: 13, outline: "none", boxSizing: "border-box",
-                      }} />
-                    </div>
-                    <div>
-                      <div style={{ fontSize: 11, fontWeight: 700, color: T.textDim, marginBottom: 4, textTransform: "uppercase" }}>Gold to send</div>
-                      <input type="number" value={tradeOfferGold} min={0} max={gold} onChange={e => setTradeOfferGold(Math.max(0, Math.min(gold, parseInt(e.target.value) || 0)))} style={{
-                        width: 120, padding: "8px 12px", background: T.bg, border: `1px solid ${T.border}`, borderRadius: 6, color: T.warning, fontSize: 13, outline: "none",
-                      }} />
-                      <span style={{ fontSize: 11, color: T.textDim, marginLeft: 8 }}>Available: {gold.toLocaleString()}g</span>
-                    </div>
-                    <div>
-                      <div style={{ fontSize: 11, fontWeight: 700, color: T.textDim, marginBottom: 4, textTransform: "uppercase" }}>Items to send</div>
-                      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))", gap: 6 }}>
-                        {sellableItems.map(([name, qty]) => {
-                          const info = ITEMS[name];
-                          const offering = tradeOfferItems[name] || 0;
-                          return (
-                            <div key={name} style={{ display: "flex", alignItems: "center", gap: 6, padding: "6px 10px", background: offering > 0 ? T.accent + "11" : T.bg, borderRadius: 6, border: `1px solid ${offering > 0 ? T.accent + "44" : T.border}` }}>
-                              <span style={{ fontSize: 16 }}>{info?.emoji || "📦"}</span>
-                              <div style={{ flex: 1, fontSize: 12, color: T.text, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{name} <span style={{ color: T.textDim }}>({qty})</span></div>
-                              <input type="number" value={offering} min={0} max={qty} onChange={e => setTradeOfferItems(p => ({ ...p, [name]: Math.max(0, Math.min(qty, parseInt(e.target.value) || 0)) }))} style={{
-                                width: 40, textAlign: "center", background: T.surface, border: `1px solid ${T.border}`, borderRadius: 4, color: T.text, fontSize: 12, padding: "2px 0",
-                              }} />
-                            </div>
-                          );
-                        })}
-                      </div>
-                      {sellableItems.length === 0 && <div style={{ color: T.textDim, fontSize: 12 }}>No items in your inventory</div>}
-                    </div>
-                    <div>
-                      <div style={{ fontSize: 11, fontWeight: 700, color: T.textDim, marginBottom: 4, textTransform: "uppercase" }}>Message (optional)</div>
-                      <input type="text" value={tradeRequestItems} onChange={e => setTradeRequestItems(e.target.value)} placeholder="e.g. Looking for Iron Ore in return..." style={{
-                        width: "100%", padding: "8px 12px", background: T.bg, border: `1px solid ${T.border}`, borderRadius: 6, color: T.text, fontSize: 13, outline: "none", boxSizing: "border-box",
-                      }} />
-                    </div>
-                    <Btn color={T.accent} onClick={sendTradeOffer}>📤 Send Trade Offer</Btn>
-                  </div>
-                </Card>
-              </div>
-            );
-          })()}
-
-          {/* ════ RULES ════ */}
-          {page === "rules" && (() => {
-            const rules = [
-              { icon: "⚔️", title: "Combat", items: [
-                "Your ATK and DEF are determined by equipped gear",
-                "Monsters drop items based on a % chance per kill",
-                "Boss monsters (marked with BOSS badge) have higher HP but better drops",
-                "Party combat scales boss HP by 60% per extra member",
-                "Party XP is split 70% of base among members, gold at 80%",
-                "Each party member rolls drops independently",
-              ]},
-              { icon: "⛏️", title: "Gathering", items: [
-                "Mining, Woodcutting, and Fishing are the 3 gathering skills",
-                "Higher level nodes give more XP and better materials",
-                "Equipping a tool (pickaxe) boosts gathering speed and XP",
-                "Materials are used in Smithing, Cooking, and Alchemy recipes",
-              ]},
-              { icon: "🔨", title: "Crafting", items: [
-                "Smithing creates weapons, armor, tools, and jewelry",
-                "Cooking turns raw fish into healing food",
-                "Alchemy brews potions and elixirs from monster drops",
-                "Higher-tier items require higher skill levels to craft",
-                "Equip crafted gear from your Bank page",
-              ]},
-              { icon: "📿", title: "Equipment", items: [
-                "8 equipment slots: Weapon, Helm, Armor, Shield, Boots, Ring, Tool, Amulet",
-                "Weapons add ATK, armor pieces add DEF",
-                "Tools boost gathering/crafting speed and XP gain",
-                "Amulets provide a global XP bonus to all skills",
-                "Rarity tiers: Common → Uncommon → Rare → Epic → Legendary",
-              ]},
-              { icon: "🏪", title: "Marketplace & Trading", items: [
-                "Quick Sell: Instantly sell items to the NPC shop at base prices",
-                "Player Market: List items at your own price — listings merge with others at the same price point",
-                "Player Trade: Send items and gold directly to another player by username",
-                "Trade offers must be accepted by the recipient — items are held in escrow until accepted/declined",
-                "Cancelled or declined trades refund all items and gold",
-              ]},
-              { icon: "📋", title: "Daily Quests", items: [
-                "8 free quests reset daily at midnight (based on your timezone)",
-                "4 premium quests give bigger rewards including rare items",
-                "All players get the same quests each day",
-                "Quest progress tracks automatically as you play",
-                "Claim rewards once the target is met",
-              ]},
-              { icon: "🏰", title: "Clans", items: [
-                "Create a clan with a unique name and 3-letter tag",
-                "Clan members can chat in the private clan channel",
-                "Clan info shows on the leaderboard next to your name",
-                "Leave anytime — if the leader leaves, leadership transfers",
-              ]},
-              { icon: "🏆", title: "Leaderboard", items: [
-                "Rankings available for: Total Level, individual skills, Gold, and Kills",
-                "Leaderboard data updates every time your game auto-saves",
-                "Compete with other players to reach the top!",
-              ]},
-              { icon: "💡", title: "Tips", items: [
-                "Your game auto-saves every 2 seconds — no progress is lost",
-                "Use the Activity Log to track all your recent actions",
-                "Equip a tool early — even a Bronze Pickaxe gives +5% speed and XP",
-                "Cook your fish before eating — cooked food heals more HP",
-                "Check the marketplace for deals — player prices can be better than NPC shop",
-              ]},
-            ];
-            return (
-              <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-                <PageTitle icon="📖" title="Game Rules & Guide" subtitle="Everything you need to know about Idle Realms" />
-                {rules.map((section, si) => (
-                  <Card key={si}>
-                    <div style={{ fontSize: 15, fontWeight: 700, color: T.white, marginBottom: 10 }}>{section.icon} {section.title}</div>
-                    <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-                      {section.items.map((item, ii) => (
-                        <div key={ii} style={{ display: "flex", gap: 8, fontSize: 13, color: T.text, lineHeight: 1.5 }}>
-                          <span style={{ color: T.accent, flexShrink: 0 }}>•</span>
-                          <span>{item}</span>
-                        </div>
-                      ))}
-                    </div>
-                  </Card>
-                ))}
               </div>
             );
           })()}

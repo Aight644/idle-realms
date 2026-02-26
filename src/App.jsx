@@ -698,6 +698,66 @@ function GameUI({ account, initialSave, onLogout }) {
 
   const addLog = useCallback(m => setLog(p => [...p.slice(-60), { m, t: Date.now() }]), []);
 
+  // ─── OFFLINE PROGRESS ───
+  const offlineProcessed = useRef(false);
+  useEffect(() => {
+    if (offlineProcessed.current) return;
+    offlineProcessed.current = true;
+    const lastTime = sv.lastActiveTime;
+    if (!lastTime) return;
+    const elapsed = Date.now() - lastTime;
+    const MAX_OFFLINE = 8 * 60 * 60 * 1000; // 8 hours max
+    const offlineMs = Math.min(elapsed, MAX_OFFLINE);
+    if (offlineMs < 60000) return; // less than 1 minute, skip
+
+    const rewards = { xp: {}, items: {}, gold: 0 };
+
+    // Offline gathering
+    if (sv.activeGather) {
+      const { skillId, node } = sv.activeGather;
+      if (node && node.time && node.item && node.xp) {
+        const actions = Math.floor(offlineMs / node.time);
+        if (actions > 0) {
+          rewards.items[node.item] = (rewards.items[node.item] || 0) + actions;
+          rewards.xp[skillId] = (rewards.xp[skillId] || 0) + (node.xp * actions);
+        }
+      }
+    }
+
+    // Offline combat
+    if (sv.activeCombat && sv.activeCombat.monsterIdx != null) {
+      const m = MONSTERS[sv.activeCombat.monsterIdx];
+      if (m) {
+        const killTime = 8000; // ~8s per kill estimate
+        const kills = Math.floor(offlineMs / killTime);
+        if (kills > 0) {
+          rewards.xp.combat = (rewards.xp.combat || 0) + (m.xp * kills);
+          rewards.gold += (m.goldR || 0) * kills;
+        }
+      }
+    }
+
+    // Apply rewards
+    let hasRewards = false;
+    for (const [skill, xp] of Object.entries(rewards.xp)) {
+      if (xp > 0) { hasRewards = true; setSkills(prev => { const s = { ...prev }; s[skill] = { ...s[skill], xp: s[skill].xp + xp }; return s; }); }
+    }
+    for (const [item, qty] of Object.entries(rewards.items)) {
+      if (qty > 0) { hasRewards = true; setInventory(prev => ({ ...prev, [item]: (prev[item] || 0) + qty })); }
+    }
+    if (rewards.gold > 0) { hasRewards = true; setGold(g => g + rewards.gold); }
+
+    if (hasRewards) {
+      const mins = Math.floor(offlineMs / 60000);
+      const timeStr = mins >= 60 ? `${Math.floor(mins / 60)}h ${mins % 60}m` : `${mins}m`;
+      const parts = [];
+      for (const [skill, xp] of Object.entries(rewards.xp)) parts.push(`+${xp} ${skill} XP`);
+      for (const [item, qty] of Object.entries(rewards.items)) parts.push(`+${qty} ${item}`);
+      if (rewards.gold > 0) parts.push(`+${rewards.gold}g`);
+      setLog([{ m: `⏰ Offline progress (${timeStr}): ${parts.join(", ")}`, t: Date.now() }]);
+    }
+  }, []);
+
   // ─── INVENTORY HELPERS ───
   const addItem = useCallback((name, qty = 1) => {
     setInventory(p => ({ ...p, [name]: (p[name] || 0) + qty }));
@@ -1536,7 +1596,7 @@ function GameUI({ account, initialSave, onLogout }) {
   useEffect(() => {
     if (saveTimer.current) clearTimeout(saveTimer.current);
     saveTimer.current = setTimeout(async () => {
-      const save = { skills, inventory, equipped, pets, activePets, petSlots, isPremium, storePurchases, player, gold, stats, combatStats, craftStats };
+      const save = { skills, inventory, equipped, pets, activePets, petSlots, isPremium, storePurchases, player, gold, stats, combatStats, craftStats, lastActiveTime: Date.now(), activeGather: activeGather || null, activeCombat: activeCombat ? { monsterIdx: MONSTERS.indexOf(activeCombat) } : null };
       try {
         await window.storage.set(`save:${account.username}`, JSON.stringify(save));
         setLastSaved(new Date());

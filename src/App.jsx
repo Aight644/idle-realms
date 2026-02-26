@@ -624,6 +624,13 @@ export default function IdleRealmsUI() {
 function GameUI({ account, initialSave, onLogout }) {
   const [page, setPage] = useState("skills");
   const [mobileNav, setMobileNav] = useState(false);
+  const [isMobile, setIsMobile] = useState(() => window.innerWidth < 768);
+
+  useEffect(() => {
+    const onResize = () => setIsMobile(window.innerWidth < 768);
+    window.addEventListener("resize", onResize);
+    return () => window.removeEventListener("resize", onResize);
+  }, []);
 
   const sv = initialSave || DEFAULT_SAVE();
 
@@ -1892,12 +1899,24 @@ function GameUI({ account, initialSave, onLogout }) {
     <div style={{ display: "flex", height: "100vh", fontFamily: FONT, color: T.text, background: T.bg, overflow: "hidden", fontSize: 13 }}>
       <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
 
+      {/* ═══ MOBILE OVERLAY ═══ */}
+      {isMobile && mobileNav && (
+        <div onClick={() => setMobileNav(false)} style={{
+          position: "fixed", inset: 0, background: "rgba(0,0,0,0.6)", zIndex: 998,
+        }} />
+      )}
+
       {/* ═══ SIDEBAR ═══ */}
       <aside style={{
         width: 230, minWidth: 230, background: T.sidebar,
         borderRight: `1px solid ${T.sidebarBorder}`,
         display: "flex", flexDirection: "column",
         flexShrink: 0,
+        ...(isMobile ? {
+          position: "fixed", top: 0, left: 0, bottom: 0, zIndex: 999,
+          transform: mobileNav ? "translateX(0)" : "translateX(-100%)",
+          transition: "transform 0.25s ease",
+        } : {}),
       }}>
         {/* Brand */}
         <div style={{ padding: "22px 18px 16px", borderBottom: `1px solid ${T.sidebarBorder}` }}>
@@ -1992,10 +2011,18 @@ function GameUI({ account, initialSave, onLogout }) {
         <header style={{
           height: 52, flexShrink: 0,
           background: T.header, borderBottom: `1px solid ${T.headerBorder}`,
-          padding: "0 24px", display: "flex", alignItems: "center", gap: 20,
+          padding: isMobile ? "0 12px" : "0 24px", display: "flex", alignItems: "center", gap: isMobile ? 10 : 20,
         }}>
+          {/* Mobile hamburger */}
+          {isMobile && (
+            <div onClick={() => setMobileNav(true)} style={{
+              width: 36, height: 36, borderRadius: 8, background: T.accent + "15",
+              display: "flex", alignItems: "center", justifyContent: "center",
+              cursor: "pointer", fontSize: 18, flexShrink: 0,
+            }}>☰</div>
+          )}
           {/* HP */}
-          <div style={{ width: 160 }}>
+          <div style={{ width: isMobile ? 100 : 160 }}>
             <div style={{ display: "flex", justifyContent: "space-between", fontSize: 10, fontWeight: 700, color: T.danger, marginBottom: 3 }}>
               <span>❤️ HP</span><span>{player.hp} / {player.maxHp}</span>
             </div>
@@ -2004,7 +2031,7 @@ function GameUI({ account, initialSave, onLogout }) {
             </div>
           </div>
           {/* MP */}
-          <div style={{ width: 130 }}>
+          <div style={{ width: isMobile ? 80 : 130 }}>
             <div style={{ display: "flex", justifyContent: "space-between", fontSize: 10, fontWeight: 700, color: T.info, marginBottom: 3 }}>
               <span>💧 MP</span><span>{player.mp} / {player.maxMp}</span>
             </div>
@@ -2016,10 +2043,10 @@ function GameUI({ account, initialSave, onLogout }) {
           <div style={{ flex: 1 }} />
 
           {/* Buff pill */}
-          <Badge color={T.purple}>✨ ATK Elixir 45s</Badge>
+          {!isMobile && <Badge color={T.purple}>✨ ATK Elixir 45s</Badge>}
 
           {/* Combat stats */}
-          <div style={{ display: "flex", gap: 14, fontSize: 12, fontWeight: 600 }}>
+          <div style={{ display: "flex", gap: isMobile ? 8 : 14, fontSize: 12, fontWeight: 600 }}>
             <span style={{ color: T.textSec }}>ATK <span style={{ color: T.danger }}>{playerAtk}</span></span>
             <span style={{ color: T.textSec }}>DEF <span style={{ color: T.info }}>{playerDef}</span></span>
           </div>
@@ -2032,10 +2059,10 @@ function GameUI({ account, initialSave, onLogout }) {
             const hpPct = (combatState.monsterHp / combatState.monsterMaxHp) * 100;
             return (
               <div style={{
-                height: 56, flexShrink: 0, padding: "0 24px",
+                height: 56, flexShrink: 0, padding: isMobile ? "0 12px" : "0 24px",
                 background: `${T.danger}06`,
                 borderBottom: `1px solid ${T.danger}25`,
-                display: "flex", alignItems: "center", gap: 14,
+                display: "flex", alignItems: "center", gap: isMobile ? 8 : 14,
               }}>
                 <span style={{ fontSize: 22 }}>{m.emoji}</span>
                 <div style={{ flex: 1, minWidth: 0 }}>
@@ -2060,7 +2087,7 @@ function GameUI({ account, initialSave, onLogout }) {
             const cfg = SKILLS_CONFIG[skillId];
             return (
               <div style={{
-                height: 52, flexShrink: 0, padding: "0 24px",
+                height: 52, flexShrink: 0, padding: isMobile ? "0 12px" : "0 24px",
                 background: `${cfg.color}06`,
                 borderBottom: `1px solid ${cfg.color}25`,
                 display: "flex", alignItems: "center", gap: 14,
@@ -2088,7 +2115,7 @@ function GameUI({ account, initialSave, onLogout }) {
           const cfg = SKILLS_CONFIG[skillId];
           return (
             <div style={{
-              height: 52, flexShrink: 0, padding: "0 24px",
+              height: 52, flexShrink: 0, padding: isMobile ? "0 12px" : "0 24px",
               background: `${cfg.color}06`,
               borderBottom: `1px solid ${cfg.color}25`,
               display: "flex", alignItems: "center", gap: 14,
@@ -2115,7 +2142,7 @@ function GameUI({ account, initialSave, onLogout }) {
         })()}
 
         {/* ─── PAGE CONTENT ─── */}
-        <div style={{ flex: 1, overflowY: "auto", padding: 24 }}>
+        <div style={{ flex: 1, overflowY: "auto", padding: isMobile ? 12 : 24 }}>
 
           {/* ════ SKILLS PAGE ════ */}
           {page === "skills" && (() => {
@@ -2158,7 +2185,7 @@ function GameUI({ account, initialSave, onLogout }) {
                 {groups.map(group => (
                   <div key={group.label} style={{ marginBottom: 20 }}>
                     <div style={{ fontSize: 11, fontWeight: 700, color: T.textDim, textTransform: "uppercase", letterSpacing: 1.2, marginBottom: 10 }}>{group.label} Skills</div>
-                    <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: 10 }}>
+                    <div style={{ display: "grid", gridTemplateColumns: `repeat(auto-fill, minmax(${isMobile ? "100%" : "280px"}, 1fr))`, gap: 10 }}>
                       {group.ids.map(id => {
                         const sk = skillFor(id);
                         const pct = sk.xpMax > 0 ? Math.min((sk.xp / sk.xpMax) * 100, 100) : 0;
@@ -2242,7 +2269,7 @@ function GameUI({ account, initialSave, onLogout }) {
                 {/* Stats summary */}
                 <Card style={{ marginTop: 12 }}>
                   <div style={{ fontSize: 14, fontWeight: 700, color: T.white, marginBottom: 8 }}>📈 Statistics</div>
-                  <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(180px, 1fr))", gap: 0 }}>
+                  <div style={{ display: "grid", gridTemplateColumns: `repeat(auto-fill, minmax(${isMobile ? "140px" : "180px"}, 1fr))`, gap: 0 }}>
                     <StatRow label="Monsters Killed" value={String(combatStats.kills)} color={T.danger} />
                     <StatRow label="Items Gathered" value={String(stats.gathered)} color={T.success} />
                     <StatRow label="Items Crafted" value={String(craftStats.crafted)} color={T.warning} />
@@ -2327,13 +2354,13 @@ function GameUI({ account, initialSave, onLogout }) {
 
                 {/* Free quests */}
                 <div style={{ fontSize: 12, fontWeight: 700, color: T.white, marginBottom: 8 }}>📋 Daily Quests ({dailyQuests.free?.filter(q => questsClaimed[q.id]).length}/{dailyQuests.free?.length})</div>
-                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(340px, 1fr))", gap: 10, marginBottom: 20 }}>
+                <div style={{ display: "grid", gridTemplateColumns: `repeat(auto-fill, minmax(${isMobile ? "100%" : "340px"}, 1fr))`, gap: 10, marginBottom: 20 }}>
                   {dailyQuests.free?.map(q => renderQuest(q, false))}
                 </div>
 
                 {/* Premium quests */}
                 <div style={{ fontSize: 12, fontWeight: 700, color: T.gold, marginBottom: 8 }}>💎 Premium Quests ({isPremium ? `${dailyQuests.premium?.filter(q => questsClaimed[q.id]).length}/${dailyQuests.premium?.length}` : "Locked"})</div>
-                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(340px, 1fr))", gap: 10 }}>
+                <div style={{ display: "grid", gridTemplateColumns: `repeat(auto-fill, minmax(${isMobile ? "100%" : "340px"}, 1fr))`, gap: 10 }}>
                   {dailyQuests.premium?.map(q => renderQuest(q, true))}
                 </div>
               </div>
@@ -2468,7 +2495,7 @@ function GameUI({ account, initialSave, onLogout }) {
                 <div style={{ fontSize: 13, fontWeight: 700, color: T.white, marginBottom: 10 }}>
                   {isInCombat ? "Switch Target" : "Select a Monster"}
                 </div>
-                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))", gap: 10 }}>
+                <div style={{ display: "grid", gridTemplateColumns: `repeat(auto-fill, minmax(${isMobile ? "100%" : "300px"}, 1fr))`, gap: 10 }}>
                   {MONSTERS.map((m, i) => {
                     const locked = combatLvl < m.lvl;
                     const isActive = activeCombat?.name === m.name;
@@ -2568,7 +2595,7 @@ function GameUI({ account, initialSave, onLogout }) {
                             <div style={{ fontSize: 12, color: T.textDim }}>No open parties. Create one!</div>
                           </Card>
                         ) : (
-                          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))", gap: 10 }}>
+                          <div style={{ display: "grid", gridTemplateColumns: `repeat(auto-fill, minmax(${isMobile ? "100%" : "300px"}, 1fr))`, gap: 10 }}>
                             {partyList.filter(p => p.status === "waiting").map((p, i) => (
                               <Card key={i}>
                                 <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 8 }}>
@@ -2592,7 +2619,7 @@ function GameUI({ account, initialSave, onLogout }) {
 
                     {/* Create */}
                     {(!party || isDone) && partyView === "create" && (
-                      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: 10 }}>
+                      <div style={{ display: "grid", gridTemplateColumns: `repeat(auto-fill, minmax(${isMobile ? "100%" : "280px"}, 1fr))`, gap: 10 }}>
                         {MONSTERS.map((m, i) => {
                           const locked = combatLvl < m.lvl;
                           return (
@@ -2721,7 +2748,7 @@ function GameUI({ account, initialSave, onLogout }) {
                 })()}
 
                 {/* Node grid */}
-                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))", gap: 10 }}>
+                <div style={{ display: "grid", gridTemplateColumns: `repeat(auto-fill, minmax(${isMobile ? "100%" : "300px"}, 1fr))`, gap: 10 }}>
                   {nodes.map((node, ni) => {
                     const locked = sk.level < node.lvl;
                     const isActive = isActiveSkill && activeGather.node.name === node.name;
@@ -2825,7 +2852,7 @@ function GameUI({ account, initialSave, onLogout }) {
                 })()}
 
                 {/* Recipe grid */}
-                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(340px, 1fr))", gap: 10 }}>
+                <div style={{ display: "grid", gridTemplateColumns: `repeat(auto-fill, minmax(${isMobile ? "100%" : "340px"}, 1fr))`, gap: 10 }}>
                   {recipes.map((r, ri) => {
                     const locked = sk.level < r.lvl;
                     const canCraft1 = !locked && canCraftRecipe(r);
@@ -2911,7 +2938,7 @@ function GameUI({ account, initialSave, onLogout }) {
             const eqSlots = ["weapon", "shield", "armor", "helm", "ring", "tool", "amulet", "boots"];
 
             return (
-              <div style={{ display: "flex", gap: 14 }}>
+              <div style={{ display: "flex", flexDirection: isMobile ? "column" : "row", gap: 14 }}>
                 {/* ── LEFT: Main Inventory ── */}
                 <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", gap: 12 }}>
                   {/* Header */}
@@ -3018,7 +3045,7 @@ function GameUI({ account, initialSave, onLogout }) {
                         <div style={{ fontSize: 12, fontWeight: 600 }}>{bankSearch ? "No items match" : "Empty"}</div>
                       </div>
                     ) : (
-                      <div style={{ padding: 8, display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))", gap: 5 }}>
+                      <div style={{ padding: 8, display: "grid", gridTemplateColumns: `repeat(auto-fill, minmax(${isMobile ? "140px" : "200px"}, 1fr))`, gap: 5 }}>
                         {filteredItems.map(([name, qty]) => {
                           const item = ITEMS[name];
                           if (!item) return null;
@@ -3144,11 +3171,11 @@ function GameUI({ account, initialSave, onLogout }) {
 
                 {/* ── RIGHT: Equipment Panel (vertical) ── */}
                 <div style={{
-                  width: 200, flexShrink: 0,
+                  width: isMobile ? "100%" : 200, flexShrink: 0,
                   borderRadius: 12, overflow: "hidden",
                   border: `1px solid ${T.cardBorder}`, background: T.card,
                   alignSelf: "flex-start",
-                  position: "sticky", top: 14,
+                  ...(isMobile ? {} : { position: "sticky", top: 14 }),
                 }}>
                   {/* Equipment header */}
                   <div style={{
@@ -3296,7 +3323,7 @@ function GameUI({ account, initialSave, onLogout }) {
                 {/* Pet Collection */}
                 <Card>
                   <div style={{ fontSize: 14, fontWeight: 700, color: T.white, marginBottom: 14 }}>📚 Pet Collection ({pets.length}/{PET_IDS.length})</div>
-                  <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: 10 }}>
+                  <div style={{ display: "grid", gridTemplateColumns: `repeat(auto-fill, minmax(${isMobile ? "100%" : "280px"}, 1fr))`, gap: 10 }}>
                     {PET_IDS.map(name => {
                       const p = PETS[name];
                       const owned = pets.includes(name);
@@ -3470,7 +3497,7 @@ function GameUI({ account, initialSave, onLogout }) {
                 {/* Upgrades Grid */}
                 <Card>
                   <div style={{ fontSize: 14, fontWeight: 700, color: T.gold, marginBottom: 14 }}>⬆️ Permanent Upgrades</div>
-                  <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))", gap: 12 }}>
+                  <div style={{ display: "grid", gridTemplateColumns: `repeat(auto-fill, minmax(${isMobile ? "100%" : "300px"}, 1fr))`, gap: 12 }}>
                     {STORE_ITEMS.map(item => {
                       const locked = item.requires && !storePurchases[item.requires] && !(item.requires === "petslot2" && petSlots >= 2) && !isPremium;
 
@@ -3563,7 +3590,7 @@ function GameUI({ account, initialSave, onLogout }) {
                       </div>
                       <div style={{ fontSize: 12, color: T.textDim, marginBottom: 12 }}>Instantly sell items for gold at NPC prices.</div>
                       {sellableItems.length === 0 && <div style={{ color: T.textDim, textAlign: "center", padding: 20 }}>No items to sell</div>}
-                      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: 8 }}>
+                      <div style={{ display: "grid", gridTemplateColumns: `repeat(auto-fill, minmax(${isMobile ? "100%" : "280px"}, 1fr))`, gap: 8 }}>
                         {sellableItems.map(([name, qty]) => {
                           const info = ITEMS[name];
                           const price = info?.sell || 1;
@@ -3676,7 +3703,7 @@ function GameUI({ account, initialSave, onLogout }) {
                       <div style={{ fontSize: 15, fontWeight: 700, color: T.text, marginBottom: 12 }}>📦 List Items for Sale</div>
                       <div style={{ fontSize: 12, color: T.textDim, marginBottom: 12 }}>Set a price per item. Your listing merges with others at the same price point.</div>
                       {sellableItems.length === 0 && <div style={{ color: T.textDim, textAlign: "center", padding: 20 }}>No items to list</div>}
-                      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))", gap: 8 }}>
+                      <div style={{ display: "grid", gridTemplateColumns: `repeat(auto-fill, minmax(${isMobile ? "100%" : "300px"}, 1fr))`, gap: 8 }}>
                         {sellableItems.map(([name, qty]) => {
                           const info = ITEMS[name];
                           const lq = listingQty[name] || 1;
@@ -3975,7 +4002,7 @@ function GameUI({ account, initialSave, onLogout }) {
                   {/* Info tab */}
                   {clanTab === "info" && (
                     <div>
-                      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(160px, 1fr))", gap: 10, marginBottom: 16 }}>
+                      <div style={{ display: "grid", gridTemplateColumns: `repeat(auto-fill, minmax(${isMobile ? "140px" : "160px"}, 1fr))`, gap: 10, marginBottom: 16 }}>
                         <Card style={{ textAlign: "center", padding: 16 }}>
                           <div style={{ fontSize: 22, marginBottom: 4 }}>👥</div>
                           <div style={{ fontSize: 20, fontWeight: 900, color: T.white }}>{clanMembers.length}</div>
@@ -4136,7 +4163,7 @@ function GameUI({ account, initialSave, onLogout }) {
                         <div style={{ fontSize: 13, color: T.textDim }}>{clanLoading ? "Loading clans..." : "No clans yet. Be the first to create one!"}</div>
                       </Card>
                     ) : (
-                      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: 10 }}>
+                      <div style={{ display: "grid", gridTemplateColumns: `repeat(auto-fill, minmax(${isMobile ? "100%" : "280px"}, 1fr))`, gap: 10 }}>
                         {clanList.map((c, i) => (
                           <Card key={i}>
                             <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 8 }}>

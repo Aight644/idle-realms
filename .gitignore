@@ -7,3 +7,5 @@ dist
 .env
 .env.txt
 .env.txt
+functions/index.js
+src/Functions/

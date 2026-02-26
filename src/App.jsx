@@ -3396,87 +3396,58 @@ function GameUI({ account, initialSave, onLogout }) {
 
             const STORE_ITEMS = [
               {
-                id: "premium", name: "⭐ Premium Membership", realPrice: "$19.99", goldPrice: 5000,
+                id: "premium", name: "⭐ Premium Membership", realPrice: "$19.99",
                 desc: "Unlock 4 premium daily quests with better rewards, rare pet drops, and exclusive items.",
                 bought: isPremium,
                 perks: ["4 extra premium quests daily", "Higher pet drop rates (25%)", "Exclusive reward items", "Premium quest badge"],
-                onGoldBuy: () => { setIsPremium(true); addLog("⭐ Premium Membership activated!"); },
               },
               {
-                id: "petslot2", name: "🐾 Pet Slot #2", realPrice: "$9.99", goldPrice: 3000,
+                id: "petslot2", name: "🐾 Pet Slot #2", realPrice: "$9.99",
                 desc: "Equip a second pet simultaneously. Stack bonuses from two pets at once!",
                 bought: petSlots >= 2, requires: null,
                 perks: ["Equip 2 pets at once", "Stack XP & speed bonuses", "Stack ATK & DEF bonuses"],
-                onGoldBuy: () => { setPetSlots(s => Math.max(s, 2)); addLog("🐾 Pet Slot #2 unlocked!"); },
               },
               {
-                id: "petslot3", name: "🐾 Pet Slot #3", realPrice: "$9.99", goldPrice: 10000,
+                id: "petslot3", name: "🐾 Pet Slot #3", realPrice: "$9.99",
                 desc: "Equip a third pet! Maximum pet power with three companions at your side.",
                 bought: petSlots >= 3, requires: "petslot2",
                 perks: ["Equip 3 pets at once", "Triple stack all pet bonuses", "Ultimate companion setup"],
-                onGoldBuy: () => { setPetSlots(s => Math.max(s, 3)); addLog("🐾 Pet Slot #3 unlocked!"); },
               },
               {
-                id: "starter_bundle", name: "🎒 Starting Bundle", realPrice: "$9.99", goldPrice: 2000,
+                id: "starter_bundle", name: "🎒 Starting Bundle", realPrice: "$9.99",
                 desc: "A generous bundle of resources, gear, and potions to kickstart your adventure.",
                 bought: !!storePurchases.starter_bundle,
                 perks: ["15× Iron Ore", "8× Gold Ore", "5× Mana Crystal", "3× HP Potion", "1× Iron Sword", "1× Copper Amulet"],
-                onGoldBuy: () => {
-                  addItem("Iron Ore", 15); addItem("Gold Ore", 8); addItem("Mana Crystal", 5);
-                  addItem("HP Potion", 3); addItem("Iron Sword", 1); addItem("Copper Amulet", 1);
-                  setStorePurchases(p => ({ ...p, starter_bundle: true }));
-                  addLog("🎒 Starting Bundle received!");
-                },
               },
               {
-                id: "xp_mastery", name: "✨ XP Mastery", realPrice: "$9.99/mo", goldPrice: 8000, sub: true,
+                id: "xp_mastery", name: "✨ XP Mastery", realPrice: "$9.99/mo", sub: true,
                 desc: "Gain +5% bonus XP on all skills. Stacks with equipment and pets.",
                 bought: !!storePurchases.xp_mastery,
                 perks: ["+5% XP to all skills", "Stacks with gear & pets", "Monthly subscription"],
-                onGoldBuy: () => {
-                  setStorePurchases(p => ({ ...p, xp_mastery: true }));
-                  addLog("✨ XP Mastery unlocked!");
-                },
               },
               {
-                id: "speed_mastery", name: "⚡ Speed Mastery", realPrice: "$9.99/mo", goldPrice: 8000, sub: true,
+                id: "speed_mastery", name: "⚡ Speed Mastery", realPrice: "$9.99/mo", sub: true,
                 desc: "Gain +5% gathering and crafting speed. Stacks with equipment and pets.",
                 bought: !!storePurchases.speed_mastery,
                 perks: ["+5% gathering speed", "+5% crafting speed", "Monthly subscription"],
-                onGoldBuy: () => {
-                  setStorePurchases(p => ({ ...p, speed_mastery: true }));
-                  addLog("⚡ Speed Mastery unlocked!");
-                },
               },
               {
-                id: "combat_mastery", name: "⚔️ Combat Mastery", realPrice: "$9.99", goldPrice: 6000,
+                id: "combat_mastery", name: "⚔️ Combat Mastery", realPrice: "$9.99",
                 desc: "Permanently gain +5 ATK and +3 DEF. Become a stronger warrior.",
                 bought: !!storePurchases.combat_mastery,
                 perks: ["+5 ATK permanently", "+3 DEF permanently", "Stacks with gear & pets"],
-                onGoldBuy: () => {
-                  setStorePurchases(p => ({ ...p, combat_mastery: true }));
-                  addLog("⚔️ Combat Mastery unlocked!");
-                },
               },
               {
-                id: "lucky_drops", name: "🍀 Lucky Drops", realPrice: "$9.99/mo", goldPrice: 12000, sub: true,
+                id: "lucky_drops", name: "🍀 Lucky Drops", realPrice: "$9.99/mo", sub: true,
                 desc: "Increase monster drop rates by +10%. More loot from every kill!",
                 bought: !!storePurchases.lucky_drops, requires: "premium",
                 perks: ["+10% drop rate on all monsters", "More crafting materials", "Monthly subscription"],
-                onGoldBuy: () => {
-                  setStorePurchases(p => ({ ...p, lucky_drops: true }));
-                  addLog("🍀 Lucky Drops unlocked!");
-                },
               },
               {
-                id: "gold_rush", name: "💰 Gold Rush", realPrice: "$9.99", goldPrice: 7000,
+                id: "gold_rush", name: "💰 Gold Rush", realPrice: "$9.99",
                 desc: "Permanently earn +15% more gold from combat and quest rewards.",
                 bought: !!storePurchases.gold_rush,
                 perks: ["+15% gold from combat", "+15% gold from quests", "Passive income boost"],
-                onGoldBuy: () => {
-                  setStorePurchases(p => ({ ...p, gold_rush: true }));
-                  addLog("💰 Gold Rush unlocked!");
-                },
               },
             ];
 
@@ -3491,11 +3462,7 @@ function GameUI({ account, initialSave, onLogout }) {
                   <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
                     <div>
                       <div style={{ fontSize: 20, fontWeight: 800, color: T.white }}>🏪 Store</div>
-                      <div style={{ fontSize: 12, color: T.textSoft, marginTop: 2 }}>Buy with gold or support the game with real purchases</div>
-                    </div>
-                    <div style={{ textAlign: "right" }}>
-                      <div style={{ fontSize: 22, fontWeight: 800, color: T.gold }}>💰 {fmt(gold)}</div>
-                      <div style={{ fontSize: 10, color: T.textDim }}>Available Gold</div>
+                      <div style={{ fontSize: 12, color: T.textSoft, marginTop: 2 }}>Support the game with premium upgrades</div>
                     </div>
                   </div>
                 </div>
@@ -3506,7 +3473,7 @@ function GameUI({ account, initialSave, onLogout }) {
                   <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))", gap: 12 }}>
                     {STORE_ITEMS.map(item => {
                       const locked = item.requires && !storePurchases[item.requires] && !(item.requires === "petslot2" && petSlots >= 2) && !isPremium;
-                      const canAffordGold = gold >= item.goldPrice;
+
                       return (
                         <div key={item.id} style={{
                           padding: 16, borderRadius: 12,
@@ -3537,22 +3504,11 @@ function GameUI({ account, initialSave, onLogout }) {
                             ))}
                           </div>
 
-                          {/* Buy Buttons */}
+                          {/* Buy Button */}
                           {!item.bought && !locked && (
-                            <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-                              {/* Real money button */}
+                            <div style={{ display: "flex", gap: 8 }}>
                               <Btn color={T.purple} onClick={() => handleStripeBuy(item.id)} style={{ flex: 1 }}>
                                 💳 {item.realPrice}
-                              </Btn>
-                              {/* Gold button */}
-                              <Btn color={canAffordGold ? T.gold : T.textDim} disabled={!canAffordGold}
-                                onClick={() => {
-                                  if (gold < item.goldPrice) return;
-                                  setGold(g => g - item.goldPrice);
-                                  item.onGoldBuy();
-                                }}
-                                style={{ flex: 1 }}>
-                                💰 {item.goldPrice.toLocaleString()}g
                               </Btn>
                             </div>
                           )}

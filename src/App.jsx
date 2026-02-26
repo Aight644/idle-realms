@@ -1653,6 +1653,71 @@ function GameUI({ account, initialSave, onLogout }) {
     setClanLoading(false);
   }, [myClan, account, addLog]);
 
+  const isLeader = myClan && myClan.creator === account.username;
+
+  const kickMember = useCallback(async (username) => {
+    if (!myClan || !isLeader || username === account.username) return;
+    setClanLoading(true);
+    try {
+      let members = [...clanMembers];
+      members = members.filter(m => m.username !== username);
+      await window.storage.set(`clan-members:${myClan.name}`, JSON.stringify(members), true);
+      try { await window.storage.delete(`player-clan:${username}`); } catch {}
+      setClanMembers(members);
+      addLog(`🏰 Kicked ${username} from clan`);
+    } catch {}
+    setClanLoading(false);
+  }, [myClan, isLeader, account.username, clanMembers, addLog]);
+
+  const promoteMember = useCallback(async (username, newRole) => {
+    if (!myClan || !isLeader || username === account.username) return;
+    setClanLoading(true);
+    try {
+      const members = clanMembers.map(m => m.username === username ? { ...m, role: newRole } : m);
+      await window.storage.set(`clan-members:${myClan.name}`, JSON.stringify(members), true);
+      setClanMembers(members);
+      addLog(`🏰 ${username} ${newRole === "officer" ? "promoted to Officer" : "demoted to Member"}`);
+    } catch {}
+    setClanLoading(false);
+  }, [myClan, isLeader, account.username, clanMembers, addLog]);
+
+  const transferLeader = useCallback(async (username) => {
+    if (!myClan || !isLeader || username === account.username) return;
+    setClanLoading(true);
+    try {
+      const members = clanMembers.map(m => {
+        if (m.username === username) return { ...m, role: "leader" };
+        if (m.username === account.username) return { ...m, role: "officer" };
+        return m;
+      });
+      const updatedClan = { ...myClan, creator: username };
+      await window.storage.set(`clan:${myClan.name}`, JSON.stringify(updatedClan), true);
+      await window.storage.set(`clan-members:${myClan.name}`, JSON.stringify(members), true);
+      setMyClan(updatedClan);
+      setClanMembers(members);
+      addLog(`🏰 Transferred leadership to ${username}`);
+    } catch {}
+    setClanLoading(false);
+  }, [myClan, isLeader, account.username, clanMembers, addLog]);
+
+  const disbandClan = useCallback(async () => {
+    if (!myClan || !isLeader) return;
+    setClanLoading(true);
+    try {
+      // Remove all members' player-clan references
+      for (const m of clanMembers) {
+        try { await window.storage.delete(`player-clan:${m.username}`); } catch {}
+      }
+      await window.storage.delete(`clan:${myClan.name}`, true);
+      await window.storage.delete(`clan-members:${myClan.name}`, true);
+      addLog(`🏰 Disbanded clan [${myClan.tag}] ${myClan.displayName || myClan.name}`);
+      setMyClan(null);
+      setClanMembers([]);
+      setClanTab("browse");
+    } catch {}
+    setClanLoading(false);
+  }, [myClan, isLeader, clanMembers, addLog]);
+
   // Fetch clan on mount and page open
   useEffect(() => { fetchMyClan(); }, [fetchMyClan]);
   useEffect(() => {
@@ -3896,9 +3961,15 @@ function GameUI({ account, initialSave, onLogout }) {
                         <div style={{ fontSize: 13, fontWeight: 700, color: T.white, marginBottom: 8 }}>Clan Details</div>
                         <StatRow label="Name" value={myClan.displayName || myClan.name} />
                         <StatRow label="Tag" value={`[${myClan.tag}]`} color={T.purple} />
-                        <StatRow label="Creator" value={myClan.creator} />
-                        <div style={{ marginTop: 14 }}>
+                        <StatRow label="Leader" value={myClan.creator} />
+                        <StatRow label="Your Role" value={isLeader ? "👑 Leader" : (clanMembers.find(m => m.username === account.username)?.role === "officer" ? "⭐ Officer" : "Member")} color={isLeader ? T.gold : T.textSec} />
+                        <div style={{ marginTop: 14, display: "flex", gap: 8, flexWrap: "wrap" }}>
                           <Btn color={T.danger} small onClick={leaveClan} disabled={clanLoading}>🚪 Leave Clan</Btn>
+                          {isLeader && (
+                            <Btn color={T.danger} small onClick={() => {
+                              if (confirm(`Are you sure you want to DISBAND [${myClan.tag}] ${myClan.displayName}? This cannot be undone!`)) disbandClan();
+                            }} disabled={clanLoading}>💀 Disband Clan</Btn>
+                          )}
                         </div>
                       </Card>
                     </div>
@@ -3908,18 +3979,21 @@ function GameUI({ account, initialSave, onLogout }) {
                   {clanTab === "members" && (
                     <Card>
                       <div style={{
-                        display: "grid", gridTemplateColumns: "40px 1fr 80px 80px",
+                        display: "grid", gridTemplateColumns: isLeader ? "40px 1fr 90px 80px 120px" : "40px 1fr 80px 80px",
                         padding: "8px 12px", borderBottom: `1px solid ${T.divider}`,
                         fontSize: 10, fontWeight: 700, color: T.textDim, textTransform: "uppercase", letterSpacing: 0.5,
                       }}>
                         <span>#</span><span>Player</span><span style={{ textAlign: "right" }}>Role</span><span style={{ textAlign: "right" }}>Joined</span>
+                        {isLeader && <span style={{ textAlign: "right" }}>Actions</span>}
                       </div>
                       {clanMembers.map((m, i) => {
                         const isMe = m.username === account.username;
                         const lb = lbData.find(e => e.displayName === m.displayName);
+                        const roleColor = m.role === "leader" ? T.gold : m.role === "officer" ? T.orange : T.textDim;
+                        const roleLabel = m.role === "leader" ? "👑 Leader" : m.role === "officer" ? "⭐ Officer" : "Member";
                         return (
                           <div key={i} style={{
-                            display: "grid", gridTemplateColumns: "40px 1fr 80px 80px",
+                            display: "grid", gridTemplateColumns: isLeader ? "40px 1fr 90px 80px 120px" : "40px 1fr 80px 80px",
                             padding: "10px 12px", alignItems: "center",
                             borderBottom: i < clanMembers.length - 1 ? `1px solid ${T.divider}` : "none",
                             background: isMe ? T.accent + "08" : "transparent",
@@ -3928,9 +4002,9 @@ function GameUI({ account, initialSave, onLogout }) {
                             <div style={{ display: "flex", alignItems: "center", gap: 8, minWidth: 0 }}>
                               <div style={{
                                 width: 26, height: 26, borderRadius: 99, flexShrink: 0,
-                                background: m.role === "leader" ? T.gold + "20" : T.bar,
+                                background: roleColor + "20",
                                 display: "flex", alignItems: "center", justifyContent: "center",
-                                fontSize: 11, fontWeight: 700, color: m.role === "leader" ? T.gold : T.textSec,
+                                fontSize: 11, fontWeight: 700, color: roleColor,
                               }}>{(m.displayName || "?")[0].toUpperCase()}</div>
                               <div style={{ minWidth: 0 }}>
                                 <div style={{ fontSize: 12, fontWeight: 600, color: isMe ? T.accent : T.white, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
@@ -3940,13 +4014,43 @@ function GameUI({ account, initialSave, onLogout }) {
                               </div>
                             </div>
                             <div style={{ textAlign: "right" }}>
-                              <Badge color={m.role === "leader" ? T.gold : T.textDim}>
-                                {m.role === "leader" ? "👑 Leader" : "Member"}
-                              </Badge>
+                              <Badge color={roleColor}>{roleLabel}</Badge>
                             </div>
                             <div style={{ textAlign: "right", fontSize: 10, color: T.textDim }}>
                               {new Date(m.joined).toLocaleDateString()}
                             </div>
+                            {isLeader && (
+                              <div style={{ display: "flex", gap: 4, justifyContent: "flex-end" }}>
+                                {!isMe && m.role === "member" && (
+                                  <span onClick={() => promoteMember(m.username, "officer")} style={{
+                                    fontSize: 9, padding: "2px 6px", borderRadius: 4, cursor: "pointer",
+                                    background: T.orange + "15", color: T.orange, fontWeight: 700,
+                                  }}>⬆ Promote</span>
+                                )}
+                                {!isMe && m.role === "officer" && (
+                                  <>
+                                    <span onClick={() => promoteMember(m.username, "member")} style={{
+                                      fontSize: 9, padding: "2px 6px", borderRadius: 4, cursor: "pointer",
+                                      background: T.textDim + "15", color: T.textDim, fontWeight: 700,
+                                    }}>⬇ Demote</span>
+                                    <span onClick={() => {
+                                      if (confirm(`Transfer leadership to ${m.displayName}? You will become Officer.`)) transferLeader(m.username);
+                                    }} style={{
+                                      fontSize: 9, padding: "2px 6px", borderRadius: 4, cursor: "pointer",
+                                      background: T.gold + "15", color: T.gold, fontWeight: 700,
+                                    }}>👑 Lead</span>
+                                  </>
+                                )}
+                                {!isMe && m.role !== "leader" && (
+                                  <span onClick={() => {
+                                    if (confirm(`Kick ${m.displayName} from the clan?`)) kickMember(m.username);
+                                  }} style={{
+                                    fontSize: 9, padding: "2px 6px", borderRadius: 4, cursor: "pointer",
+                                    background: T.danger + "15", color: T.danger, fontWeight: 700,
+                                  }}>✕ Kick</span>
+                                )}
+                              </div>
+                            )}
                           </div>
                         );
                       })}

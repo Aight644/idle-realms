@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect, useRef } from "react";
-import { auth } from './firebase.js';
+import { auth, db } from './firebase.js';
 import './storage.js'; // installs window.storage backed by Firestore
 import {
   signInWithEmailAndPassword,
@@ -8,6 +8,7 @@ import {
   onAuthStateChanged,
   updateProfile,
 } from 'firebase/auth';
+import { doc, setDoc, onSnapshot, serverTimestamp } from 'firebase/firestore';
 
 // ─── THEME ───
 const T = {
@@ -559,16 +560,26 @@ function AuthScreen({ onLogin }) {
 }
 
 // ═══ MAIN APP (wrapper with Firebase auth) ═══
+const SESSION_ID = Math.random().toString(36).slice(2) + Date.now().toString(36);
+
 export default function IdleRealmsUI() {
   const [account, setAccount] = useState(null);
   const [initialSave, setInitialSave] = useState(null);
   const [authChecked, setAuthChecked] = useState(false);
+  const [kicked, setKicked] = useState(false);
 
   // Listen for Firebase auth state
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, async (user) => {
       if (user) {
         const username = user.uid;
+
+        // Write our session to Firestore
+        await setDoc(doc(db, "sessions", username), {
+          sessionId: SESSION_ID,
+          loginAt: serverTimestamp(),
+        });
+
         let save;
         try {
           const sr = await window.storage.get(`save:${username}`);
@@ -582,6 +593,7 @@ export default function IdleRealmsUI() {
           isGuest: false,
         });
         setInitialSave(save);
+        setKicked(false);
       } else {
         setAccount(null);
         setInitialSave(null);
@@ -590,6 +602,24 @@ export default function IdleRealmsUI() {
     });
     return () => unsub();
   }, []);
+
+  // Listen for session changes — kick if another login takes over
+  useEffect(() => {
+    if (!account) return;
+    const unsub = onSnapshot(doc(db, "sessions", account.uid), (snap) => {
+      if (snap.exists()) {
+        const data = snap.data();
+        if (data.sessionId && data.sessionId !== SESSION_ID) {
+          // Another session took over — kick this one
+          setKicked(true);
+          setAccount(null);
+          setInitialSave(null);
+          signOut(auth).catch(() => {});
+        }
+      }
+    });
+    return () => unsub();
+  }, [account?.uid]);
 
   const handleLogin = useCallback(async (acct, save) => {
     setAccount(acct);
@@ -610,6 +640,23 @@ export default function IdleRealmsUI() {
         <div style={{ textAlign: "center" }}>
           <div style={{ fontSize: 32, marginBottom: 12 }}>⚔️</div>
           <div style={{ fontSize: 13 }}>Loading...</div>
+        </div>
+      </div>
+    );
+  }
+
+  if (kicked) {
+    return (
+      <div style={{ height: "100vh", display: "flex", alignItems: "center", justifyContent: "center", background: T.bg, fontFamily: FONT, color: T.text }}>
+        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
+        <div style={{ textAlign: "center", padding: 32 }}>
+          <div style={{ fontSize: 48, marginBottom: 16 }}>🚫</div>
+          <div style={{ fontSize: 18, fontWeight: 700, color: T.danger, marginBottom: 8 }}>Session Ended</div>
+          <div style={{ fontSize: 13, color: T.textSoft, marginBottom: 20 }}>Your account was logged in from another device.</div>
+          <div onClick={() => { setKicked(false); }} style={{
+            padding: "10px 24px", borderRadius: 8, background: T.accent,
+            color: "#fff", fontWeight: 700, cursor: "pointer", display: "inline-block",
+          }}>Back to Login</div>
         </div>
       </div>
     );

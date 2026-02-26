@@ -217,7 +217,7 @@ const ITEMS = {
   "Antidote":          { emoji: "💊", category: "consumable", desc: "Cures poison", sell: 10 },
 };
 
-const SLOT_ICONS = { weapon: "⚔️", shield: "🛡️", armor: "🦺", ring: "💍", tool: "⛏️", amulet: "📿" };
+const SLOT_ICONS = { weapon: "⚔️", shield: "🛡️", armor: "🦺", helm: "🪖", ring: "💍", tool: "⛏️", amulet: "📿", boots: "👢" };
 
 // ═══ PET SYSTEM ═══
 const PETS = {
@@ -375,9 +375,12 @@ const DEFAULT_SAVE = () => ({
     "Slime Gel": 6, "Herb": 3, "Rat Tail": 4, "Bone": 2,
     "Bronze Dagger": 1, "Cooked Shrimp": 4, "Minor HP Potion": 2,
   },
-  equipped: { weapon: null, shield: null, armor: null, ring: null, tool: null, amulet: null },
-  pets: [],       // owned pet names
-  activePet: null, // currently active pet name
+  equipped: { weapon: null, shield: null, armor: null, helm: null, ring: null, tool: null, amulet: null, boots: null },
+  pets: [],          // owned pet names
+  activePets: [],    // currently active pet names (limited by petSlots)
+  petSlots: 1,       // max active pets (1 free, buy more in store)
+  isPremium: false,  // premium membership
+  storePurchases: {}, // track what's been bought
   player: { hp: 60, maxHp: 60, mp: 25, maxMp: 25 },
   gold: 0,
   stats: { gathered: 0, totalXpEarned: 0 },
@@ -632,7 +635,9 @@ function GameUI({ account, initialSave, onLogout }) {
   const [inventory, setInventory] = useState(() => sv.inventory);
   const [equipped, setEquipped] = useState(() => sv.equipped);
   const [pets, setPets] = useState(() => sv.pets || []);
-  const [activePet, setActivePet] = useState(() => sv.activePet || null);
+  const [activePets, setActivePets] = useState(() => sv.activePets || (sv.activePet ? [sv.activePet] : []));
+  const [petSlots, setPetSlots] = useState(() => sv.petSlots || 1);
+  const [storePurchases, setStorePurchases] = useState(() => sv.storePurchases || {});
   const [player, setPlayer] = useState(() => sv.player);
   const [bankFilter, setBankFilter] = useState("all");
   const [bankSearch, setBankSearch] = useState("");
@@ -717,27 +722,32 @@ function GameUI({ account, initialSave, onLogout }) {
   const equipSpeedPct = Object.values(equipped).reduce((a, n) => a + (n && ITEMS[n] ? (ITEMS[n].speedPct || 0) : 0), 0);
   const equipXpPct = Object.values(equipped).reduce((a, n) => a + (n && ITEMS[n] ? (ITEMS[n].xpPct || 0) : 0), 0);
 
-  // Pet bonuses — active pet provides skill-specific or "all" bonuses
-  const petData = activePet ? PETS[activePet] : null;
+  // Pet bonuses — sum across all active pets
   const getPetXpPct = useCallback((skill) => {
-    if (!petData) return 0;
-    if (petData.skill === "all" || petData.skill === skill) return petData.xpPct;
-    return 0;
-  }, [petData]);
+    return activePets.reduce((sum, pName) => {
+      const p = PETS[pName];
+      if (!p) return sum;
+      if (p.skill === "all" || p.skill === skill) return sum + p.xpPct;
+      return sum;
+    }, 0);
+  }, [activePets]);
   const getPetSpeedPct = useCallback((skill) => {
-    if (!petData) return 0;
-    if (petData.skill === "all" || petData.skill === skill) return petData.speedPct;
-    return 0;
-  }, [petData]);
-  const petAtk = petData?.atkBonus || 0;
-  const petDef = petData?.defBonus || 0;
+    return activePets.reduce((sum, pName) => {
+      const p = PETS[pName];
+      if (!p) return sum;
+      if (p.skill === "all" || p.skill === skill) return sum + p.speedPct;
+      return sum;
+    }, 0);
+  }, [activePets]);
+  const petAtk = activePets.reduce((sum, pName) => sum + (PETS[pName]?.atkBonus || 0), 0);
+  const petDef = activePets.reduce((sum, pName) => sum + (PETS[pName]?.defBonus || 0), 0);
 
   const unlockPet = useCallback((petName) => {
     if (!PETS[petName] || pets.includes(petName)) return;
     setPets(prev => [...prev, petName]);
     addLog(`🐾 New pet unlocked: ${PETS[petName].emoji} ${petName}!`);
-    if (!activePet) setActivePet(petName);
-  }, [pets, activePet, addLog]);
+    if (activePets.length < petSlots) setActivePets(prev => [...prev, petName]);
+  }, [pets, activePets, petSlots, addLog]);
 
   const playerAtk = combatLvl * 2 + equipAtk + petAtk;
   const playerDef = Math.floor(combatLvl * 0.8) + equipDef + petDef;
@@ -1173,7 +1183,7 @@ function GameUI({ account, initialSave, onLogout }) {
   useEffect(() => { if (page === "combat" && combatMode === "party") { fetchMyParty(); fetchPartyList(); } }, [page, combatMode, fetchMyParty, fetchPartyList]);
 
   // ─── QUEST SYSTEM ───
-  const [isPremium, setIsPremium] = useState(false);
+  const [isPremium, setIsPremium] = useState(() => sv.isPremium || false);
   const [questsClaimed, setQuestsClaimed] = useState({}); // { "quest-id": true }
   const [questDay, setQuestDay] = useState(""); // "YYYY-MM-DD" — resets quests when day changes
 
@@ -1468,7 +1478,7 @@ function GameUI({ account, initialSave, onLogout }) {
   useEffect(() => {
     if (saveTimer.current) clearTimeout(saveTimer.current);
     saveTimer.current = setTimeout(async () => {
-      const save = { skills, inventory, equipped, pets, activePet, player, gold, stats, combatStats, craftStats };
+      const save = { skills, inventory, equipped, pets, activePets, petSlots, isPremium, storePurchases, player, gold, stats, combatStats, craftStats };
       try {
         await window.storage.set(`save:${account.username}`, JSON.stringify(save));
         setLastSaved(new Date());
@@ -1789,10 +1799,10 @@ function GameUI({ account, initialSave, onLogout }) {
             <span style={{ fontSize: 12, color: T.gold }}>💰 Gold</span>
             <span style={{ fontSize: 12, color: T.gold, fontWeight: 800 }}>{fmt(gold)}</span>
           </div>
-          {activePet && (
+          {activePets.length > 0 && (
             <div style={{ display: "flex", justifyContent: "space-between", marginTop: 6 }}>
-              <span style={{ fontSize: 12, color: T.purple }}>🐾 Pet</span>
-              <span style={{ fontSize: 12, color: T.purple, fontWeight: 800 }}>{PETS[activePet]?.emoji} {activePet}</span>
+              <span style={{ fontSize: 12, color: T.purple }}>🐾 Pets</span>
+              <span style={{ fontSize: 12, color: T.purple, fontWeight: 800 }}>{activePets.map(n => PETS[n]?.emoji).join(" ")} ({activePets.length}/{petSlots})</span>
             </div>
           )}
         </div>
@@ -1804,7 +1814,8 @@ function GameUI({ account, initialSave, onLogout }) {
           <SidebarItem icon="📋" label="Quests" active={page==="quests"} onClick={() => nav("quests")} color={T.orange} badge={questsRemaining > 0 ? `${questsRemaining}` : "✓"} />
           <SidebarItem icon="🎒" label="Inventory" active={page==="bank"} onClick={() => nav("bank")} color={T.warning} badge={uniqueItems || undefined} />
           <SidebarItem icon="🐾" label="Pets" active={page==="pets"} onClick={() => nav("pets")} color={T.purple} badge={pets.length > 0 ? `${pets.length}` : undefined} />
-          <SidebarItem icon="🏪" label="Market" active={page==="market"} onClick={() => nav("market")} color={T.teal} />
+          <SidebarItem icon="🏪" label="Store" active={page==="store"} onClick={() => nav("store")} color={T.gold} badge={!isPremium ? "NEW" : undefined} />
+          <SidebarItem icon="📈" label="Market" active={page==="market"} onClick={() => nav("market")} color={T.teal} />
 
           <SectionLabel>Combat</SectionLabel>
           <SidebarItem icon="⚔️" label="Combat" active={page==="combat"} onClick={() => nav("combat")} color={T.danger} badge={`${skills.combat.level}`} />
@@ -2585,7 +2596,7 @@ function GameUI({ account, initialSave, onLogout }) {
                         <div><span style={{ color: T.textDim }}>XP/hr: </span><span style={{ color: T.success, fontWeight: 700 }}>{fmt(Math.floor(effXp * 3600000 / effTime))}</span></div>
                         {totalSpeedPct > 0 && <div><span style={{ color: T.teal, fontWeight: 700 }}>⚡+{totalSpeedPct}%</span></div>}
                         {totalXpPct > 0 && <div><span style={{ color: T.gold, fontWeight: 700 }}>✨+{totalXpPct}%</span></div>}
-                        {activePet && getPetSpeedPct(activeGather.skillId) > 0 && <div><span style={{ color: T.purple, fontWeight: 700 }}>🐾 {PETS[activePet]?.emoji}</span></div>}
+                        {activePets.length > 0 && getPetSpeedPct(activeGather.skillId) > 0 && <div><span style={{ color: T.purple, fontWeight: 700 }}>🐾 {activePets.map(n => PETS[n]?.emoji).join("")}</span></div>}
                       </div>
                     </Card>
                   );
@@ -2688,7 +2699,7 @@ function GameUI({ account, initialSave, onLogout }) {
                         <div><span style={{ color: T.textDim }}>XP/hr: </span><span style={{ color: T.success, fontWeight: 700 }}>{fmt(Math.floor(effXp * 3600000 / effTime))}</span></div>
                         {totalSpeedPct > 0 && <div><span style={{ color: T.teal, fontWeight: 700 }}>⚡+{totalSpeedPct}%</span></div>}
                         {totalXpPct > 0 && <div><span style={{ color: T.gold, fontWeight: 700 }}>✨+{totalXpPct}%</span></div>}
-                        {activePet && getPetXpPct(activeCraft.skillId) > 0 && <div><span style={{ color: T.purple, fontWeight: 700 }}>🐾 {PETS[activePet]?.emoji}</span></div>}
+                        {activePets.length > 0 && getPetXpPct(activeCraft.skillId) > 0 && <div><span style={{ color: T.purple, fontWeight: 700 }}>🐾 {activePets.map(n => PETS[n]?.emoji).join("")}</span></div>}
                         <div style={{ marginLeft: "auto" }}><Btn color={T.danger} small onClick={stopCrafting}>Stop</Btn></div>
                       </div>
                     </Card>
@@ -2779,163 +2790,92 @@ function GameUI({ account, initialSave, onLogout }) {
               { id: "consumable", label: "Potions", icon: "🧪", count: getInvByCategory("consumable").length },
             ];
             const totalValue = Object.entries(inventory).reduce((a, [n, q]) => a + (ITEMS[n]?.sell || 0) * q, 0);
+            const eqSlots = ["weapon", "shield", "armor", "helm", "ring", "tool", "amulet", "boots"];
 
             return (
-              <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-                {/* Header with stats bar */}
-                <div style={{
-                  display: "flex", alignItems: "center", justifyContent: "space-between",
-                  padding: "14px 18px", borderRadius: 12,
-                  background: `linear-gradient(135deg, ${T.card}, ${T.bgDeep})`,
-                  border: `1px solid ${T.cardBorder}`,
-                }}>
-                  <div>
-                    <div style={{ fontSize: 18, fontWeight: 800, color: T.white }}>🎒 Inventory</div>
-                    <div style={{ fontSize: 11, color: T.textDim, marginTop: 2 }}>{uniqueItems} items  •  {totalItems} total</div>
-                  </div>
-                  <div style={{ display: "flex", gap: 16, alignItems: "center" }}>
-                    <div style={{ textAlign: "center" }}>
-                      <div style={{ fontSize: 16, fontWeight: 800, color: T.gold }}>{fmt(gold)}</div>
-                      <div style={{ fontSize: 9, color: T.textDim, textTransform: "uppercase", letterSpacing: 0.5 }}>Gold</div>
-                    </div>
-                    <div style={{ width: 1, height: 28, background: T.cardBorder }} />
-                    <div style={{ textAlign: "center" }}>
-                      <div style={{ fontSize: 16, fontWeight: 800, color: T.success }}>{fmt(totalValue)}</div>
-                      <div style={{ fontSize: 9, color: T.textDim, textTransform: "uppercase", letterSpacing: 0.5 }}>Value</div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* ── Equipment Loadout ── */}
-                <div style={{
-                  borderRadius: 12, overflow: "hidden",
-                  border: `1px solid ${T.cardBorder}`,
-                  background: T.card,
-                }}>
+              <div style={{ display: "flex", gap: 14 }}>
+                {/* ── LEFT: Main Inventory ── */}
+                <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", gap: 12 }}>
+                  {/* Header */}
                   <div style={{
-                    padding: "10px 16px",
-                    background: `linear-gradient(90deg, ${T.danger}12, transparent)`,
-                    borderBottom: `1px solid ${T.cardBorder}`,
                     display: "flex", alignItems: "center", justifyContent: "space-between",
-                  }}>
-                    <span style={{ fontSize: 13, fontWeight: 700, color: T.white }}>⚔️ Equipment Loadout</span>
-                    <div style={{ display: "flex", gap: 10, fontSize: 11 }}>
-                      <span style={{ color: T.danger, fontWeight: 700 }}>⚔ {equipAtk + petAtk} ATK</span>
-                      <span style={{ color: T.accent, fontWeight: 700 }}>🛡 {equipDef + petDef} DEF</span>
-                      {(equipSpeedPct > 0 || (petData && petData.speedPct > 0)) && <span style={{ color: T.teal, fontWeight: 700 }}>⚡ +{equipSpeedPct + (petData?.skill === "all" ? petData.speedPct : 0)}%</span>}
-                      {(equipXpPct > 0 || (petData && petData.xpPct > 0)) && <span style={{ color: T.gold, fontWeight: 700 }}>✨ +{equipXpPct + (petData?.skill === "all" ? petData.xpPct : 0)}%</span>}
-                    </div>
-                  </div>
-                  <div style={{ padding: 12, display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(180px, 1fr))", gap: 8 }}>
-                    {["weapon", "shield", "armor", "ring", "tool", "amulet"].map(slot => {
-                      const eqName = equipped[slot];
-                      const item = eqName ? ITEMS[eqName] : null;
-                      const rc = item ? (RARITY_COLORS[item.rarity] || T.text) : T.textDim;
-                      return (
-                        <div key={slot}
-                          onClick={eqName ? () => unequipItem(slot) : undefined}
-                          style={{
-                            padding: "8px 10px", borderRadius: 8,
-                            background: item ? `${rc}08` : T.bgDeep,
-                            border: `1px solid ${item ? rc + "25" : T.divider}`,
-                            display: "flex", alignItems: "center", gap: 8,
-                            cursor: eqName ? "pointer" : "default",
-                            transition: "all 0.15s",
-                          }}>
-                          <div style={{
-                            width: 32, height: 32, borderRadius: 6,
-                            background: item ? `${rc}15` : T.card,
-                            display: "flex", alignItems: "center", justifyContent: "center",
-                            fontSize: 16, border: `1px solid ${item ? rc + "20" : T.divider}`,
-                          }}>
-                            {item ? item.emoji : SLOT_ICONS[slot]}
-                          </div>
-                          <div style={{ flex: 1, minWidth: 0 }}>
-                            <div style={{ fontSize: 9, color: T.textDim, textTransform: "uppercase", fontWeight: 700, letterSpacing: 0.5 }}>{slot}</div>
-                            {item ? (
-                              <div style={{ fontSize: 11, fontWeight: 700, color: rc, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{eqName}</div>
-                            ) : (
-                              <div style={{ fontSize: 11, color: T.textDim }}>Empty</div>
-                            )}
-                          </div>
-                          {eqName && <span style={{ fontSize: 9, color: T.textDim, background: T.bar, padding: "2px 5px", borderRadius: 3 }}>✕</span>}
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-
-                {/* ── Quick Use Consumables ── */}
-                {getInvByCategory("consumable").length > 0 && (
-                  <div style={{
-                    borderRadius: 12, overflow: "hidden",
+                    padding: "12px 16px", borderRadius: 12,
+                    background: `linear-gradient(135deg, ${T.card}, ${T.bgDeep})`,
                     border: `1px solid ${T.cardBorder}`,
-                    background: T.card,
                   }}>
-                    <div style={{
-                      padding: "8px 16px",
-                      background: `linear-gradient(90deg, ${T.teal}12, transparent)`,
-                      borderBottom: `1px solid ${T.cardBorder}`,
-                    }}>
-                      <span style={{ fontSize: 13, fontWeight: 700, color: T.white }}>⚡ Quick Use</span>
+                    <div>
+                      <div style={{ fontSize: 16, fontWeight: 800, color: T.white }}>🎒 Inventory</div>
+                      <div style={{ fontSize: 10, color: T.textDim, marginTop: 1 }}>{uniqueItems} items  •  {totalItems} total</div>
                     </div>
-                    <div style={{ padding: 10, display: "flex", flexWrap: "wrap", gap: 6 }}>
-                      {getInvByCategory("consumable").map(([name, qty]) => {
-                        const item = ITEMS[name];
-                        return (
-                          <div key={name} onClick={() => useConsumable(name)} style={{
-                            display: "flex", alignItems: "center", gap: 6,
-                            padding: "5px 10px", borderRadius: 8,
-                            background: T.teal + "10", border: `1px solid ${T.teal}20`,
-                            cursor: "pointer", transition: "all 0.12s",
-                          }}>
-                            <span style={{ fontSize: 14 }}>{item.emoji}</span>
-                            <span style={{ fontSize: 11, fontWeight: 600, color: T.teal }}>{name}</span>
-                            <span style={{
-                              fontSize: 10, fontWeight: 800, color: T.white,
-                              background: T.teal + "25", padding: "1px 6px", borderRadius: 4,
-                            }}>×{qty}</span>
-                          </div>
-                        );
-                      })}
+                    <div style={{ display: "flex", gap: 14, alignItems: "center" }}>
+                      <div style={{ textAlign: "center" }}>
+                        <div style={{ fontSize: 14, fontWeight: 800, color: T.gold }}>{fmt(gold)}</div>
+                        <div style={{ fontSize: 8, color: T.textDim, textTransform: "uppercase", letterSpacing: 0.5 }}>Gold</div>
+                      </div>
+                      <div style={{ width: 1, height: 24, background: T.cardBorder }} />
+                      <div style={{ textAlign: "center" }}>
+                        <div style={{ fontSize: 14, fontWeight: 800, color: T.success }}>{fmt(totalValue)}</div>
+                        <div style={{ fontSize: 8, color: T.textDim, textTransform: "uppercase", letterSpacing: 0.5 }}>Value</div>
+                      </div>
                     </div>
                   </div>
-                )}
 
-                {/* ── Search + Tabs ── */}
-                <div style={{
-                  display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap",
-                }}>
-                  {/* Search */}
-                  <div style={{
-                    display: "flex", alignItems: "center", gap: 6,
-                    background: T.card, borderRadius: 8, border: `1px solid ${T.cardBorder}`,
-                    padding: "7px 12px", flex: "1 1 200px", minWidth: 150,
-                  }}>
-                    <span style={{ fontSize: 13, color: T.textDim }}>🔍</span>
-                    <input
-                      type="text" placeholder="Search items..."
-                      value={bankSearch} onChange={e => setBankSearch(e.target.value)}
-                      style={{
-                        background: "none", border: "none", outline: "none",
-                        color: T.text, fontFamily: FONT, fontSize: 12, width: "100%",
-                      }}
-                    />
-                    {bankSearch && (
-                      <span onClick={() => setBankSearch("")} style={{ cursor: "pointer", fontSize: 11, color: T.textDim }}>✕</span>
-                    )}
-                  </div>
-                  {/* Category tabs */}
-                  <div style={{ display: "flex", gap: 4 }}>
+                  {/* Quick Use Consumables */}
+                  {getInvByCategory("consumable").length > 0 && (
+                    <div style={{
+                      borderRadius: 10, overflow: "hidden",
+                      border: `1px solid ${T.cardBorder}`, background: T.card,
+                    }}>
+                      <div style={{
+                        padding: "6px 14px",
+                        background: `linear-gradient(90deg, ${T.teal}12, transparent)`,
+                        borderBottom: `1px solid ${T.cardBorder}`,
+                      }}>
+                        <span style={{ fontSize: 12, fontWeight: 700, color: T.white }}>⚡ Quick Use</span>
+                      </div>
+                      <div style={{ padding: 8, display: "flex", flexWrap: "wrap", gap: 5 }}>
+                        {getInvByCategory("consumable").map(([name, qty]) => {
+                          const item = ITEMS[name];
+                          return (
+                            <div key={name} onClick={() => useConsumable(name)} style={{
+                              display: "flex", alignItems: "center", gap: 5,
+                              padding: "4px 8px", borderRadius: 6,
+                              background: T.teal + "10", border: `1px solid ${T.teal}18`,
+                              cursor: "pointer", transition: "all 0.12s",
+                            }}>
+                              <span style={{ fontSize: 13 }}>{item.emoji}</span>
+                              <span style={{ fontSize: 10, fontWeight: 600, color: T.teal }}>{name}</span>
+                              <span style={{ fontSize: 9, fontWeight: 800, color: T.white, background: T.teal + "25", padding: "0 5px", borderRadius: 3 }}>×{qty}</span>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Search + Category Tabs */}
+                  <div style={{ display: "flex", gap: 6, alignItems: "center", flexWrap: "wrap" }}>
+                    <div style={{
+                      display: "flex", alignItems: "center", gap: 5,
+                      background: T.card, borderRadius: 8, border: `1px solid ${T.cardBorder}`,
+                      padding: "6px 10px", flex: "1 1 160px", minWidth: 120,
+                    }}>
+                      <span style={{ fontSize: 12, color: T.textDim }}>🔍</span>
+                      <input
+                        type="text" placeholder="Search..."
+                        value={bankSearch} onChange={e => setBankSearch(e.target.value)}
+                        style={{ background: "none", border: "none", outline: "none", color: T.text, fontFamily: FONT, fontSize: 11, width: "100%" }}
+                      />
+                      {bankSearch && <span onClick={() => setBankSearch("")} style={{ cursor: "pointer", fontSize: 10, color: T.textDim }}>✕</span>}
+                    </div>
                     {filters.map(f => (
                       <div key={f.id} onClick={() => setBankFilter(f.id)} style={{
-                        padding: "6px 12px", borderRadius: 8,
+                        padding: "5px 10px", borderRadius: 7,
                         background: bankFilter === f.id ? T.accent + "18" : T.card,
                         border: `1px solid ${bankFilter === f.id ? T.accent + "40" : T.cardBorder}`,
                         color: bankFilter === f.id ? T.accent : T.textSec,
-                        fontSize: 11, fontWeight: 600, cursor: "pointer",
-                        transition: "all 0.12s",
-                        display: "flex", alignItems: "center", gap: 4,
+                        fontSize: 10, fontWeight: 600, cursor: "pointer",
+                        display: "flex", alignItems: "center", gap: 3,
                       }}>
                         <span>{f.icon}</span>
                         <span>{f.label}</span>
@@ -2948,155 +2888,232 @@ function GameUI({ account, initialSave, onLogout }) {
                       </div>
                     ))}
                   </div>
-                </div>
 
-                {/* ── Item Grid ── */}
-                <div style={{
-                  borderRadius: 12, overflow: "hidden",
-                  border: `1px solid ${T.cardBorder}`,
-                  background: T.card,
-                }}>
-                  {filteredItems.length === 0 ? (
-                    <div style={{ textAlign: "center", padding: "50px 0", color: T.textDim }}>
-                      <div style={{ fontSize: 36, marginBottom: 10, opacity: 0.4 }}>📦</div>
-                      <div style={{ fontSize: 13, fontWeight: 600 }}>{bankSearch ? "No items match your search" : "No items in this category"}</div>
-                      <div style={{ fontSize: 11, marginTop: 4 }}>Try gathering, crafting, or killing monsters!</div>
-                    </div>
-                  ) : (
-                    <div style={{ padding: 10, display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))", gap: 6 }}>
-                      {filteredItems.map(([name, qty]) => {
-                        const item = ITEMS[name];
-                        if (!item) return null;
-                        const isEq = item.category === "equipment";
-                        const isCon = item.category === "consumable";
-                        const rc = isEq ? (RARITY_COLORS[item.rarity] || T.text) : isCon ? T.teal : T.textSoft;
-                        const isEquipped = isEq && Object.values(equipped).includes(name);
+                  {/* Item Grid */}
+                  <div style={{
+                    borderRadius: 10, overflow: "hidden",
+                    border: `1px solid ${T.cardBorder}`, background: T.card, flex: 1,
+                  }}>
+                    {filteredItems.length === 0 ? (
+                      <div style={{ textAlign: "center", padding: "40px 0", color: T.textDim }}>
+                        <div style={{ fontSize: 30, marginBottom: 8, opacity: 0.4 }}>📦</div>
+                        <div style={{ fontSize: 12, fontWeight: 600 }}>{bankSearch ? "No items match" : "Empty"}</div>
+                      </div>
+                    ) : (
+                      <div style={{ padding: 8, display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))", gap: 5 }}>
+                        {filteredItems.map(([name, qty]) => {
+                          const item = ITEMS[name];
+                          if (!item) return null;
+                          const isEq = item.category === "equipment";
+                          const isCon = item.category === "consumable";
+                          const rc = isEq ? (RARITY_COLORS[item.rarity] || T.text) : isCon ? T.teal : T.textSoft;
+                          const isWorn = isEq && Object.values(equipped).includes(name);
 
-                        return (
-                          <div key={name}
-                            onClick={isEq ? () => equipItem(name) : isCon ? () => useConsumable(name) : undefined}
-                            style={{
-                              padding: "8px 10px", borderRadius: 8,
-                              background: isEquipped ? `${rc}12` : isEq ? `${rc}05` : T.bgDeep,
-                              border: `1px solid ${isEquipped ? rc + "40" : isEq ? rc + "18" : T.divider}`,
-                              display: "flex", alignItems: "center", gap: 10,
-                              cursor: (isEq || isCon) ? "pointer" : "default",
-                              transition: "all 0.12s",
-                              position: "relative",
-                            }}>
-                            {/* Equipped badge */}
-                            {isEquipped && (
+                          return (
+                            <div key={name}
+                              onClick={isEq ? () => equipItem(name) : isCon ? () => useConsumable(name) : undefined}
+                              style={{
+                                padding: "7px 9px", borderRadius: 8,
+                                background: isWorn ? `${rc}12` : isEq ? `${rc}05` : T.bgDeep,
+                                border: `1px solid ${isWorn ? rc + "40" : isEq ? rc + "18" : T.divider}`,
+                                display: "flex", alignItems: "center", gap: 8,
+                                cursor: (isEq || isCon) ? "pointer" : "default",
+                                transition: "all 0.12s", position: "relative",
+                              }}>
+                              {isWorn && (
+                                <div style={{
+                                  position: "absolute", top: 2, right: 5,
+                                  fontSize: 7, fontWeight: 800, color: T.success,
+                                  background: T.successMuted, padding: "1px 4px", borderRadius: 3,
+                                  textTransform: "uppercase", letterSpacing: 0.4,
+                                }}>Worn</div>
+                              )}
                               <div style={{
-                                position: "absolute", top: 3, right: 6,
-                                fontSize: 8, fontWeight: 800, color: T.success,
-                                background: T.successMuted, padding: "1px 5px", borderRadius: 4,
-                                textTransform: "uppercase", letterSpacing: 0.5,
-                              }}>Worn</div>
-                            )}
-                            {/* Icon */}
-                            <div style={{
-                              width: 36, height: 36, borderRadius: 8, flexShrink: 0,
-                              background: isEq ? `${rc}12` : isCon ? T.tealMuted : T.card,
-                              display: "flex", alignItems: "center", justifyContent: "center",
-                              fontSize: 17, border: `1px solid ${isEq ? rc + "18" : "transparent"}`,
-                            }}>
-                              {item.emoji}
-                            </div>
-                            {/* Info */}
-                            <div style={{ flex: 1, minWidth: 0 }}>
-                              <div style={{
-                                fontSize: 12, fontWeight: 600,
-                                color: isEq ? rc : T.text,
-                                overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
-                              }}>{name}</div>
-                              <div style={{ fontSize: 10, color: T.textDim, marginTop: 1, display: "flex", gap: 4, flexWrap: "wrap" }}>
-                                {isEq && (
-                                  <>
-                                    {item.atk > 0 && <span style={{ color: T.danger }}>+{item.atk}ATK</span>}
-                                    {item.def > 0 && <span style={{ color: T.accent }}>+{item.def}DEF</span>}
-                                    {item.xpPct > 0 && <span style={{ color: T.gold }}>+{item.xpPct}%XP</span>}
-                                    {item.speedPct > 0 && <span style={{ color: T.teal }}>+{item.speedPct}%SPD</span>}
-                                  </>
+                                width: 32, height: 32, borderRadius: 6, flexShrink: 0,
+                                background: isEq ? `${rc}12` : isCon ? T.tealMuted : T.card,
+                                display: "flex", alignItems: "center", justifyContent: "center",
+                                fontSize: 15, border: `1px solid ${isEq ? rc + "18" : "transparent"}`,
+                              }}>
+                                {item.emoji}
+                              </div>
+                              <div style={{ flex: 1, minWidth: 0 }}>
+                                <div style={{
+                                  fontSize: 11, fontWeight: 600, color: isEq ? rc : T.text,
+                                  overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
+                                }}>{name}</div>
+                                <div style={{ fontSize: 9, color: T.textDim, marginTop: 1, display: "flex", gap: 3, flexWrap: "wrap" }}>
+                                  {isEq && (
+                                    <>
+                                      {item.atk > 0 && <span style={{ color: T.danger }}>+{item.atk}ATK</span>}
+                                      {item.def > 0 && <span style={{ color: T.accent }}>+{item.def}DEF</span>}
+                                      {item.xpPct > 0 && <span style={{ color: T.gold }}>+{item.xpPct}%XP</span>}
+                                      {item.speedPct > 0 && <span style={{ color: T.teal }}>+{item.speedPct}%SPD</span>}
+                                    </>
+                                  )}
+                                  {isCon && <span style={{ color: T.teal }}>{item.desc}</span>}
+                                  {!isEq && !isCon && <span>{item.sell > 0 ? `${item.sell}g` : item.desc}</span>}
+                                </div>
+                              </div>
+                              <div style={{ textAlign: "right", flexShrink: 0 }}>
+                                <div style={{ fontSize: 13, fontWeight: 800, color: T.white }}>{qty}</div>
+                                {(isEq || isCon) && (
+                                  <div style={{ fontSize: 7, fontWeight: 700, marginTop: 1, color: isEq ? rc : T.teal, textTransform: "uppercase" }}>
+                                    {isEq ? "Equip" : "Use"}
+                                  </div>
                                 )}
-                                {isCon && <span style={{ color: T.teal }}>{item.desc}</span>}
-                                {!isEq && !isCon && <span>{item.sell > 0 ? `Sell: ${item.sell}g` : item.desc}</span>}
                               </div>
                             </div>
-                            {/* Qty */}
-                            <div style={{ textAlign: "right", flexShrink: 0 }}>
-                              <div style={{ fontSize: 15, fontWeight: 800, color: T.white }}>{qty}</div>
-                              {(isEq || isCon) && (
-                                <div style={{
-                                  fontSize: 8, fontWeight: 700, marginTop: 1,
-                                  color: isEq ? rc : T.teal, textTransform: "uppercase",
-                                }}>
-                                  {isEq ? "Equip" : "Use"}
-                                </div>
-                              )}
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Test Tools */}
+                  <div style={{
+                    borderRadius: 10, overflow: "hidden",
+                    border: `1px solid ${T.cardBorder}`, background: T.card,
+                  }}>
+                    <div style={{
+                      padding: "6px 14px",
+                      background: `linear-gradient(90deg, ${T.warning}12, transparent)`,
+                      borderBottom: `1px solid ${T.cardBorder}`,
+                    }}>
+                      <span style={{ fontSize: 12, fontWeight: 700, color: T.white }}>🧪 Test Tools</span>
+                    </div>
+                    <div style={{ padding: 10, display: "flex", flexDirection: "column", gap: 10 }}>
+                      <div>
+                        <div style={{ fontSize: 10, fontWeight: 600, color: T.textSec, marginBottom: 4 }}>Add Items</div>
+                        <div style={{ display: "flex", flexWrap: "wrap", gap: 4 }}>
+                          {[
+                            ["Iron Ore", 5, T.warning], ["Gold Ore", 2, T.gold], ["Raw Trout", 3, T.info],
+                            ["Beast Fang", 2, T.orange], ["Mana Crystal", 1, T.purple],
+                            ["Iron Sword", 1, T.info], ["Gold Ring", 1, T.info],
+                            ["HP Potion", 2, T.teal], ["ATK Elixir", 1, T.teal],
+                            ["Dragon Scale", 1, T.orange],
+                            ["Bronze Pickaxe", 1, T.success], ["Iron Pickaxe", 1, T.success],
+                            ["Copper Amulet", 1, T.purple], ["Silver Amulet", 1, T.purple],
+                          ].map(([name, qty, color]) => (
+                            <Btn key={name} small color={color} onClick={() => { addItem(name, qty); addLog(`📦 Added ${qty}× ${ITEMS[name]?.emoji} ${name}`); }}>
+                              {ITEMS[name]?.emoji} +{qty}
+                            </Btn>
+                          ))}
+                        </div>
+                      </div>
+                      <div>
+                        <div style={{ fontSize: 10, fontWeight: 600, color: T.textSec, marginBottom: 4 }}>Gold: <span style={{ color: T.gold }}>{gold.toLocaleString()}</span></div>
+                        <div style={{ display: "flex", flexWrap: "wrap", gap: 4 }}>
+                          {[1000, 5000, 10000, 50000].map(amt => (
+                            <Btn key={amt} small color={T.gold} onClick={() => { setGold(g => g + amt); addLog(`💰 +${amt.toLocaleString()}g`); }}>
+                              💰 +{amt >= 1000 ? `${amt/1000}k` : amt}
+                            </Btn>
+                          ))}
+                        </div>
+                      </div>
+                      <div>
+                        <div style={{ fontSize: 10, fontWeight: 600, color: T.textSec, marginBottom: 4 }}>Pets: <span style={{ color: T.purple }}>{pets.length}/{PET_IDS.length}</span></div>
+                        <div style={{ display: "flex", flexWrap: "wrap", gap: 4 }}>
+                          {PET_IDS.map(name => (
+                            <Btn key={name} small color={pets.includes(name) ? T.textDim : RARITY_COLORS[PETS[name].rarity]} disabled={pets.includes(name)} onClick={() => unlockPet(name)}>
+                              {PETS[name].emoji} {name}
+                            </Btn>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* ── RIGHT: Equipment Panel (vertical) ── */}
+                <div style={{
+                  width: 200, flexShrink: 0,
+                  borderRadius: 12, overflow: "hidden",
+                  border: `1px solid ${T.cardBorder}`, background: T.card,
+                  alignSelf: "flex-start",
+                  position: "sticky", top: 14,
+                }}>
+                  {/* Equipment header */}
+                  <div style={{
+                    padding: "10px 14px",
+                    background: `linear-gradient(180deg, ${T.danger}12, transparent)`,
+                    borderBottom: `1px solid ${T.cardBorder}`,
+                    textAlign: "center",
+                  }}>
+                    <div style={{ fontSize: 13, fontWeight: 700, color: T.white }}>⚔️ Equipment</div>
+                    <div style={{ display: "flex", gap: 8, justifyContent: "center", marginTop: 6, fontSize: 10 }}>
+                      <span style={{ color: T.danger, fontWeight: 700 }}>⚔ {equipAtk + petAtk}</span>
+                      <span style={{ color: T.accent, fontWeight: 700 }}>🛡 {equipDef + petDef}</span>
+                      {(equipSpeedPct + getPetSpeedPct("all")) > 0 && <span style={{ color: T.teal, fontWeight: 700 }}>⚡{equipSpeedPct + getPetSpeedPct("all")}%</span>}
+                    </div>
+                    {(equipXpPct + getPetXpPct("all")) > 0 && (
+                      <div style={{ fontSize: 10, color: T.gold, fontWeight: 700, marginTop: 2 }}>✨ +{equipXpPct + getPetXpPct("all")}% XP</div>
+                    )}
+                  </div>
+
+                  {/* Equipment slots vertical */}
+                  <div style={{ padding: 8, display: "flex", flexDirection: "column", gap: 6 }}>
+                    {eqSlots.map(slot => {
+                      const eqName = equipped[slot];
+                      const item = eqName ? ITEMS[eqName] : null;
+                      const rc = item ? (RARITY_COLORS[item.rarity] || T.text) : T.textDim;
+                      return (
+                        <div key={slot}
+                          onClick={eqName ? () => unequipItem(slot) : undefined}
+                          style={{
+                            padding: "6px 8px", borderRadius: 8,
+                            background: item ? `${rc}08` : T.bgDeep,
+                            border: `1px solid ${item ? rc + "25" : T.divider}`,
+                            display: "flex", alignItems: "center", gap: 8,
+                            cursor: eqName ? "pointer" : "default",
+                            transition: "all 0.15s",
+                          }}>
+                          <div style={{
+                            width: 30, height: 30, borderRadius: 6, flexShrink: 0,
+                            background: item ? `${rc}15` : T.card,
+                            display: "flex", alignItems: "center", justifyContent: "center",
+                            fontSize: 14, border: `1px solid ${item ? rc + "20" : T.divider}`,
+                          }}>
+                            {item ? item.emoji : (SLOT_ICONS[slot] || "➖")}
+                          </div>
+                          <div style={{ flex: 1, minWidth: 0 }}>
+                            <div style={{ fontSize: 8, color: T.textDim, textTransform: "uppercase", fontWeight: 700, letterSpacing: 0.4 }}>{slot}</div>
+                            {item ? (
+                              <div style={{ fontSize: 10, fontWeight: 700, color: rc, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{eqName}</div>
+                            ) : (
+                              <div style={{ fontSize: 10, color: T.textDim }}>Empty</div>
+                            )}
+                          </div>
+                          {eqName && <span style={{ fontSize: 8, color: T.textDim, background: T.bar, padding: "1px 4px", borderRadius: 3 }}>✕</span>}
+                        </div>
+                      );
+                    })}
+                  </div>
+
+                  {/* Active pets in equipment panel */}
+                  {activePets.length > 0 && (
+                    <div style={{ padding: "6px 8px", borderTop: `1px solid ${T.cardBorder}` }}>
+                      <div style={{ fontSize: 9, color: T.textDim, textTransform: "uppercase", fontWeight: 700, letterSpacing: 0.4, marginBottom: 4, textAlign: "center" }}>Companions</div>
+                      {activePets.map(pName => {
+                        const p = PETS[pName];
+                        return (
+                          <div key={pName} style={{
+                            padding: "4px 8px", borderRadius: 6,
+                            background: T.purpleMuted, border: `1px solid ${T.purple}20`,
+                            display: "flex", alignItems: "center", gap: 6, marginBottom: 4,
+                          }}>
+                            <span style={{ fontSize: 16 }}>{p.emoji}</span>
+                            <div style={{ flex: 1, minWidth: 0 }}>
+                              <div style={{ fontSize: 10, fontWeight: 700, color: RARITY_COLORS[p.rarity], overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{pName}</div>
+                              <div style={{ fontSize: 8, color: T.textDim }}>
+                                {p.xpPct > 0 && <span style={{ color: T.gold }}>+{p.xpPct}%XP </span>}
+                                {p.speedPct > 0 && <span style={{ color: T.teal }}>+{p.speedPct}%SPD</span>}
+                              </div>
                             </div>
                           </div>
                         );
                       })}
                     </div>
                   )}
-                </div>
-
-                {/* ── Test Tools ── */}
-                <div style={{
-                  borderRadius: 12, overflow: "hidden",
-                  border: `1px solid ${T.cardBorder}`,
-                  background: T.card,
-                }}>
-                  <div style={{
-                    padding: "8px 16px",
-                    background: `linear-gradient(90deg, ${T.warning}12, transparent)`,
-                    borderBottom: `1px solid ${T.cardBorder}`,
-                  }}>
-                    <span style={{ fontSize: 13, fontWeight: 700, color: T.white }}>🧪 Test Tools</span>
-                  </div>
-                  <div style={{ padding: 12, display: "flex", flexDirection: "column", gap: 12 }}>
-                    {/* Add Items */}
-                    <div>
-                      <div style={{ fontSize: 11, fontWeight: 600, color: T.textSec, marginBottom: 6 }}>Add Items</div>
-                      <div style={{ display: "flex", flexWrap: "wrap", gap: 5 }}>
-                        {[
-                          ["Iron Ore", 5, T.warning], ["Gold Ore", 2, T.gold], ["Raw Trout", 3, T.info],
-                          ["Beast Fang", 2, T.orange], ["Mana Crystal", 1, T.purple],
-                          ["Iron Sword", 1, T.info], ["Gold Ring", 1, T.info],
-                          ["HP Potion", 2, T.teal], ["ATK Elixir", 1, T.teal],
-                          ["Dragon Scale", 1, T.orange],
-                          ["Bronze Pickaxe", 1, T.success], ["Iron Pickaxe", 1, T.success],
-                          ["Copper Amulet", 1, T.purple], ["Silver Amulet", 1, T.purple],
-                        ].map(([name, qty, color]) => (
-                          <Btn key={name} small color={color} onClick={() => { addItem(name, qty); addLog(`📦 Added ${qty}× ${ITEMS[name]?.emoji} ${name}`); }}>
-                            {ITEMS[name]?.emoji} +{qty}
-                          </Btn>
-                        ))}
-                      </div>
-                    </div>
-                    {/* Add Gold */}
-                    <div>
-                      <div style={{ fontSize: 11, fontWeight: 600, color: T.textSec, marginBottom: 6 }}>Add Gold — Current: <span style={{ color: T.gold }}>{gold.toLocaleString()}</span></div>
-                      <div style={{ display: "flex", flexWrap: "wrap", gap: 5 }}>
-                        {[1000, 5000, 10000, 50000].map(amt => (
-                          <Btn key={amt} small color={T.gold} onClick={() => { setGold(g => g + amt); addLog(`💰 Added ${amt.toLocaleString()} gold`); }}>
-                            💰 +{amt >= 1000 ? `${amt/1000}k` : amt}
-                          </Btn>
-                        ))}
-                      </div>
-                    </div>
-                    {/* Unlock Pets */}
-                    <div>
-                      <div style={{ fontSize: 11, fontWeight: 600, color: T.textSec, marginBottom: 6 }}>Unlock Pets — Owned: <span style={{ color: T.purple }}>{pets.length}/{PET_IDS.length}</span></div>
-                      <div style={{ display: "flex", flexWrap: "wrap", gap: 5 }}>
-                        {PET_IDS.map(name => (
-                          <Btn key={name} small color={pets.includes(name) ? T.textDim : RARITY_COLORS[PETS[name].rarity]} disabled={pets.includes(name)} onClick={() => unlockPet(name)}>
-                            {PETS[name].emoji} {name}
-                          </Btn>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
                 </div>
               </div>
             );
@@ -3106,31 +3123,54 @@ function GameUI({ account, initialSave, onLogout }) {
           {page === "pets" && (() => {
             return (
               <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-                {/* Active Pet Banner */}
-                <Card style={{ background: activePet ? `linear-gradient(135deg, ${T.card}, ${T.purpleMuted})` : T.card }}>
-                  <div style={{ fontSize: 14, fontWeight: 700, color: T.white, marginBottom: 10 }}>🐾 Active Companion</div>
-                  {activePet ? (() => {
-                    const p = PETS[activePet];
-                    return (
-                      <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
-                        <div style={{ fontSize: 40 }}>{p.emoji}</div>
-                        <div style={{ flex: 1 }}>
-                          <div style={{ fontWeight: 700, color: RARITY_COLORS[p.rarity], fontSize: 16 }}>{activePet}</div>
-                          <div style={{ fontSize: 12, color: T.textSoft, marginTop: 2 }}>{p.desc}</div>
-                          <div style={{ display: "flex", gap: 10, marginTop: 6, fontSize: 12 }}>
-                            {p.xpPct > 0 && <span style={{ color: T.gold }}>✨ +{p.xpPct}% XP</span>}
-                            {p.speedPct > 0 && <span style={{ color: T.teal }}>⚡ +{p.speedPct}% Speed</span>}
-                            {p.atkBonus && <span style={{ color: T.danger }}>⚔️ +{p.atkBonus} ATK</span>}
-                            {p.defBonus && <span style={{ color: T.accent }}>🛡️ +{p.defBonus} DEF</span>}
-                            <span style={{ color: T.purple }}>({p.skill === "all" ? "All Skills" : SKILLS_CONFIG[p.skill]?.name || p.skill})</span>
+                {/* Active Pets Banner */}
+                <Card style={{ background: activePets.length > 0 ? `linear-gradient(135deg, ${T.card}, ${T.purpleMuted})` : T.card }}>
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
+                    <div style={{ fontSize: 14, fontWeight: 700, color: T.white }}>🐾 Active Companions</div>
+                    <span style={{ fontSize: 11, color: T.purple, background: T.purpleMuted, padding: "2px 8px", borderRadius: 6, fontWeight: 700 }}>
+                      {activePets.length}/{petSlots} slots
+                    </span>
+                  </div>
+                  {activePets.length > 0 ? (
+                    <div style={{ display: "grid", gridTemplateColumns: `repeat(${Math.min(petSlots, 3)}, 1fr)`, gap: 10 }}>
+                      {Array.from({ length: petSlots }).map((_, i) => {
+                        const pName = activePets[i];
+                        const p = pName ? PETS[pName] : null;
+                        return (
+                          <div key={i} style={{
+                            padding: 10, borderRadius: 10,
+                            background: p ? `${RARITY_COLORS[p.rarity]}08` : T.bgDeep,
+                            border: `1px dashed ${p ? RARITY_COLORS[p.rarity] + "40" : T.divider}`,
+                            textAlign: "center",
+                          }}>
+                            {p ? (
+                              <>
+                                <div style={{ fontSize: 32, marginBottom: 4 }}>{p.emoji}</div>
+                                <div style={{ fontWeight: 700, color: RARITY_COLORS[p.rarity], fontSize: 12 }}>{pName}</div>
+                                <div style={{ display: "flex", gap: 4, justifyContent: "center", marginTop: 4, flexWrap: "wrap", fontSize: 10 }}>
+                                  {p.xpPct > 0 && <span style={{ color: T.gold }}>+{p.xpPct}%XP</span>}
+                                  {p.speedPct > 0 && <span style={{ color: T.teal }}>+{p.speedPct}%SPD</span>}
+                                  {p.atkBonus && <span style={{ color: T.danger }}>+{p.atkBonus}ATK</span>}
+                                  {p.defBonus && <span style={{ color: T.accent }}>+{p.defBonus}DEF</span>}
+                                </div>
+                                <Btn color={T.danger} small style={{ marginTop: 6 }} onClick={() => {
+                                  setActivePets(prev => prev.filter(n => n !== pName));
+                                  addLog(`🐾 ${p.emoji} ${pName} dismissed`);
+                                }}>Dismiss</Btn>
+                              </>
+                            ) : (
+                              <div style={{ padding: "14px 0" }}>
+                                <div style={{ fontSize: 22, opacity: 0.3, marginBottom: 4 }}>➕</div>
+                                <div style={{ fontSize: 10, color: T.textDim }}>Empty Slot</div>
+                              </div>
+                            )}
                           </div>
-                        </div>
-                        <Btn color={T.danger} small onClick={() => { setActivePet(null); addLog("🐾 Pet dismissed"); }}>Dismiss</Btn>
-                      </div>
-                    );
-                  })() : (
+                        );
+                      })}
+                    </div>
+                  ) : (
                     <div style={{ fontSize: 13, color: T.textDim, textAlign: "center", padding: "16px 0" }}>
-                      No pet active. {pets.length > 0 ? "Select one below!" : "Complete hard quests to unlock pets!"}
+                      No pets active. {pets.length > 0 ? "Select one below!" : "Complete hard quests to unlock pets!"}
                     </div>
                   )}
                 </Card>
@@ -3142,7 +3182,8 @@ function GameUI({ account, initialSave, onLogout }) {
                     {PET_IDS.map(name => {
                       const p = PETS[name];
                       const owned = pets.includes(name);
-                      const isActive = activePet === name;
+                      const isActive = activePets.includes(name);
+                      const canSummon = owned && !isActive && activePets.length < petSlots;
                       return (
                         <div key={name} style={{
                           background: isActive ? T.purpleMuted : owned ? T.bgDeep : T.bg,
@@ -3170,7 +3211,11 @@ function GameUI({ account, initialSave, onLogout }) {
                                 {p.atkBonus && <span style={{ color: T.danger, background: T.dangerMuted, padding: "1px 6px", borderRadius: 6 }}>+{p.atkBonus} ATK</span>}
                                 {p.defBonus && <span style={{ color: T.accent, background: T.accent + "15", padding: "1px 6px", borderRadius: 6 }}>+{p.defBonus} DEF</span>}
                               </div>
-                              {!isActive && <Btn color={T.purple} small onClick={() => { setActivePet(name); addLog(`🐾 ${p.emoji} ${name} is now your active pet!`); }}>Summon</Btn>}
+                              <div style={{ display: "flex", gap: 6 }}>
+                                {canSummon && <Btn color={T.purple} small onClick={() => { setActivePets(prev => [...prev, name]); addLog(`🐾 ${p.emoji} ${name} is now active!`); }}>Summon</Btn>}
+                                {isActive && <Btn color={T.danger} small onClick={() => { setActivePets(prev => prev.filter(n => n !== name)); addLog(`🐾 ${p.emoji} ${name} dismissed`); }}>Dismiss</Btn>}
+                                {owned && !isActive && activePets.length >= petSlots && <span style={{ fontSize: 10, color: T.warning }}>All slots full — dismiss one or buy more in the Store!</span>}
+                              </div>
                             </>
                           ) : (
                             <div style={{ fontSize: 11, color: T.textDim }}>🔒 {p.source}</div>
@@ -3187,8 +3232,184 @@ function GameUI({ account, initialSave, onLogout }) {
                   <div style={{ fontSize: 12, color: T.textSoft, lineHeight: 1.8 }}>
                     Pets are rare rewards from completing the <b style={{ color: T.warning }}>hardest difficulty</b> daily quests.
                     Free quests have a <b style={{ color: T.success }}>15%</b> chance and Premium quests have a <b style={{ color: T.purple }}>25%</b> chance
-                    to drop a pet when you claim the reward. Each pet boosts a specific skill (or all skills!) with XP and speed bonuses.
-                    You can only have <b style={{ color: T.white }}>one active pet</b> at a time — choose wisely!
+                    to drop a pet when you claim the reward. You start with <b style={{ color: T.white }}>1 pet slot</b> — buy more
+                    in the <span style={{ color: T.gold, cursor: "pointer", fontWeight: 700 }} onClick={() => nav("store")}>🏪 Store</span> to equip multiple pets at once!
+                  </div>
+                </Card>
+              </div>
+            );
+          })()}
+
+          {/* ════ STORE ════ */}
+          {page === "store" && (() => {
+            const STORE_ITEMS = [
+              {
+                id: "premium", name: "⭐ Premium Membership", price: 5000,
+                desc: "Unlock 4 premium daily quests with better rewards, rare pet drops, and exclusive items.",
+                bought: isPremium, oneTime: true,
+                perks: ["4 extra premium quests daily", "Higher pet drop rates (25%)", "Exclusive reward items", "Premium quest badge"],
+                onBuy: () => { setIsPremium(true); addLog("⭐ Premium Membership activated!"); },
+              },
+              {
+                id: "petslot2", name: "🐾 Pet Slot #2", price: 3000,
+                desc: "Equip a second pet simultaneously. Stack bonuses from two pets at once!",
+                bought: petSlots >= 2, oneTime: true, requires: null,
+                perks: ["Equip 2 pets at once", "Stack XP & speed bonuses", "Stack ATK & DEF bonuses"],
+                onBuy: () => { setPetSlots(s => Math.max(s, 2)); addLog("🐾 Pet Slot #2 unlocked!"); },
+              },
+              {
+                id: "petslot3", name: "🐾 Pet Slot #3", price: 10000,
+                desc: "Equip a third pet! Maximum pet power with three companions at your side.",
+                bought: petSlots >= 3, oneTime: true, requires: "petslot2",
+                perks: ["Equip 3 pets at once", "Triple stack all pet bonuses", "Ultimate companion setup"],
+                onBuy: () => { setPetSlots(s => Math.max(s, 3)); addLog("🐾 Pet Slot #3 unlocked!"); },
+              },
+              {
+                id: "inventory_expand", name: "🎒 Expanded Inventory", price: 2000,
+                desc: "Increase your starting resources and get a bonus item bundle.",
+                bought: !!storePurchases.inventory_expand, oneTime: true,
+                perks: ["10× Iron Ore", "5× Gold Ore", "3× Mana Crystal", "1× HP Potion"],
+                onBuy: () => {
+                  addItem("Iron Ore", 10); addItem("Gold Ore", 5); addItem("Mana Crystal", 3); addItem("HP Potion", 1);
+                  setStorePurchases(p => ({ ...p, inventory_expand: true }));
+                  addLog("🎒 Inventory expansion bundle received!");
+                },
+              },
+              {
+                id: "xp_boost", name: "✨ XP Boost Pack", price: 1500,
+                desc: "Get a bundle of XP-boosting consumables to accelerate your training.",
+                bought: false, oneTime: false,
+                perks: ["3× ATK Elixir", "3× DEF Elixir", "2× Shadow Elixir"],
+                onBuy: () => {
+                  addItem("ATK Elixir", 3); addItem("DEF Elixir", 3); addItem("Shadow Elixir", 2);
+                  addLog("✨ XP Boost Pack purchased!");
+                },
+              },
+              {
+                id: "potion_pack", name: "🧪 Mega Potion Pack", price: 800,
+                desc: "A bulk supply of potions to keep you fighting longer.",
+                bought: false, oneTime: false,
+                perks: ["5× HP Potion", "3× Greater HP Potion", "2× Mana Potion"],
+                onBuy: () => {
+                  addItem("HP Potion", 5); addItem("Greater HP Potion", 3); addItem("Mana Potion", 2);
+                  addLog("🧪 Mega Potion Pack purchased!");
+                },
+              },
+              {
+                id: "craft_bundle", name: "🔨 Crafter's Bundle", price: 2500,
+                desc: "Premium crafting materials for high-level recipes.",
+                bought: false, oneTime: false,
+                perks: ["5× Dragon Scale", "3× Dragon Fang", "5× Mithril Ore", "3× Elder Log"],
+                onBuy: () => {
+                  addItem("Dragon Scale", 5); addItem("Dragon Fang", 3); addItem("Mithril Ore", 5); addItem("Elder Log", 3);
+                  addLog("🔨 Crafter's Bundle purchased!");
+                },
+              },
+            ];
+
+            return (
+              <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+                {/* Store Header */}
+                <div style={{
+                  padding: "18px 22px", borderRadius: 12,
+                  background: `linear-gradient(135deg, ${T.gold}15, ${T.purple}15)`,
+                  border: `1px solid ${T.gold}25`,
+                }}>
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                    <div>
+                      <div style={{ fontSize: 20, fontWeight: 800, color: T.white }}>🏪 Store</div>
+                      <div style={{ fontSize: 12, color: T.textSoft, marginTop: 2 }}>Spend your hard-earned gold on upgrades and supplies</div>
+                    </div>
+                    <div style={{ textAlign: "right" }}>
+                      <div style={{ fontSize: 22, fontWeight: 800, color: T.gold }}>💰 {fmt(gold)}</div>
+                      <div style={{ fontSize: 10, color: T.textDim }}>Available Gold</div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Upgrades Section */}
+                <Card>
+                  <div style={{ fontSize: 14, fontWeight: 700, color: T.gold, marginBottom: 14 }}>⬆️ Permanent Upgrades</div>
+                  <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))", gap: 12 }}>
+                    {STORE_ITEMS.filter(i => i.oneTime).map(item => {
+                      const locked = item.requires && !storePurchases[item.requires] && !(item.requires === "petslot2" && petSlots >= 2);
+                      const canAfford = gold >= item.price;
+                      return (
+                        <div key={item.id} style={{
+                          padding: 16, borderRadius: 12,
+                          background: item.bought ? `${T.success}08` : locked ? T.bgDeep : T.bgDeep,
+                          border: `1px solid ${item.bought ? T.success + "30" : locked ? T.divider : T.cardBorder}`,
+                          opacity: locked ? 0.5 : 1,
+                        }}>
+                          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
+                            <div style={{ fontSize: 15, fontWeight: 700, color: item.bought ? T.success : T.white }}>{item.name}</div>
+                            {item.bought ? (
+                              <span style={{ fontSize: 10, fontWeight: 800, color: T.success, background: T.successMuted, padding: "2px 8px", borderRadius: 6 }}>OWNED</span>
+                            ) : (
+                              <span style={{ fontSize: 13, fontWeight: 800, color: canAfford ? T.gold : T.danger }}>{item.price.toLocaleString()}g</span>
+                            )}
+                          </div>
+                          <div style={{ fontSize: 11, color: T.textSoft, marginBottom: 10 }}>{item.desc}</div>
+                          <div style={{ display: "flex", flexWrap: "wrap", gap: 4, marginBottom: 10 }}>
+                            {item.perks.map((perk, i) => (
+                              <span key={i} style={{
+                                fontSize: 10, padding: "2px 8px", borderRadius: 6,
+                                background: item.bought ? T.success + "10" : T.accent + "10",
+                                color: item.bought ? T.success : T.accent,
+                              }}>✓ {perk}</span>
+                            ))}
+                          </div>
+                          {!item.bought && !locked && (
+                            <Btn color={canAfford ? T.gold : T.textDim} disabled={!canAfford} onClick={() => {
+                              if (gold < item.price) return;
+                              setGold(g => g - item.price);
+                              item.onBuy();
+                            }}>
+                              {canAfford ? `Buy for ${item.price.toLocaleString()}g` : "Not enough gold"}
+                            </Btn>
+                          )}
+                          {locked && <div style={{ fontSize: 10, color: T.warning }}>🔒 Requires: {STORE_ITEMS.find(s => s.id === item.requires)?.name}</div>}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </Card>
+
+                {/* Consumable Packs Section */}
+                <Card>
+                  <div style={{ fontSize: 14, fontWeight: 700, color: T.teal, marginBottom: 14 }}>📦 Supply Packs <span style={{ fontSize: 11, fontWeight: 400, color: T.textDim }}>(repeatable)</span></div>
+                  <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: 12 }}>
+                    {STORE_ITEMS.filter(i => !i.oneTime).map(item => {
+                      const canAfford = gold >= item.price;
+                      return (
+                        <div key={item.id} style={{
+                          padding: 16, borderRadius: 12,
+                          background: T.bgDeep,
+                          border: `1px solid ${T.cardBorder}`,
+                        }}>
+                          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
+                            <div style={{ fontSize: 14, fontWeight: 700, color: T.white }}>{item.name}</div>
+                            <span style={{ fontSize: 13, fontWeight: 800, color: canAfford ? T.gold : T.danger }}>{item.price.toLocaleString()}g</span>
+                          </div>
+                          <div style={{ fontSize: 11, color: T.textSoft, marginBottom: 10 }}>{item.desc}</div>
+                          <div style={{ display: "flex", flexWrap: "wrap", gap: 4, marginBottom: 10 }}>
+                            {item.perks.map((perk, i) => (
+                              <span key={i} style={{
+                                fontSize: 10, padding: "2px 8px", borderRadius: 6,
+                                background: T.teal + "10", color: T.teal,
+                              }}>📦 {perk}</span>
+                            ))}
+                          </div>
+                          <Btn color={canAfford ? T.teal : T.textDim} disabled={!canAfford} onClick={() => {
+                            if (gold < item.price) return;
+                            setGold(g => g - item.price);
+                            item.onBuy();
+                          }}>
+                            {canAfford ? `Buy for ${item.price.toLocaleString()}g` : "Not enough gold"}
+                          </Btn>
+                        </div>
+                      );
+                    })}
                   </div>
                 </Card>
               </div>

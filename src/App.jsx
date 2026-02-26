@@ -886,7 +886,10 @@ function GameUI({ account, initialSave, onLogout }) {
   const addGold = useCallback((n) => setGold(g => g + n), []);
 
   // ─── COMBAT STATE ───
-  const [activeCombat, setActiveCombat] = useState(null);
+  const [activeCombat, setActiveCombat] = useState(() => {
+    if (sv.activeCombat?.monsterIdx != null) return MONSTERS[sv.activeCombat.monsterIdx] || null;
+    return null;
+  });
   const [combatState, setCombatState] = useState(null);
   const [combatStats, setCombatStats] = useState(() => sv.combatStats || { kills: 0, totalDamage: 0, deaths: 0 });
   const combatRef = useRef(null);
@@ -898,7 +901,7 @@ function GameUI({ account, initialSave, onLogout }) {
   }, []);
 
   // ─── GATHERING STATE ───
-  const [activeGather, setActiveGather] = useState(null);
+  const [activeGather, setActiveGather] = useState(() => sv.activeGather || null);
   const [gatherProgress, setGatherProgress] = useState(0);
   const [stats, setStats] = useState(() => sv.stats || { gathered: 0, totalXpEarned: 0 });
   const gatherRef = useRef(null);
@@ -1042,7 +1045,7 @@ function GameUI({ account, initialSave, onLogout }) {
   }, [activeCombat, combatState?.monsterMaxHp, playerAtk, playerDef, addXp, addGold, addItem, addLog, stopCombat, equipXpPct, trackQuest]);
 
   // ─── CRAFTING STATE ───
-  const [activeCraft, setActiveCraft] = useState(null); // { skillId, recipe, remaining }
+  const [activeCraft, setActiveCraft] = useState(() => sv.activeCraft || null); // { skillId, recipe, remaining }
   const [craftProgress, setCraftProgress] = useState(0);
   const [craftStats, setCraftStats] = useState(() => sv.craftStats || { crafted: 0 });
   const craftRef = useRef(null);
@@ -1596,7 +1599,7 @@ function GameUI({ account, initialSave, onLogout }) {
   useEffect(() => {
     if (saveTimer.current) clearTimeout(saveTimer.current);
     saveTimer.current = setTimeout(async () => {
-      const save = { skills, inventory, equipped, pets, activePets, petSlots, isPremium, storePurchases, player, gold, stats, combatStats, craftStats, lastActiveTime: Date.now(), activeGather: activeGather || null, activeCombat: activeCombat ? { monsterIdx: MONSTERS.indexOf(activeCombat) } : null };
+      const save = { skills, inventory, equipped, pets, activePets, petSlots, isPremium, storePurchases, player, gold, stats, combatStats, craftStats, lastActiveTime: Date.now(), activeGather: activeGather || null, activeCombat: activeCombat ? { monsterIdx: MONSTERS.indexOf(activeCombat) } : null, activeCraft: activeCraft || null };
       try {
         await window.storage.set(`save:${account.username}`, JSON.stringify(save));
         setLastSaved(new Date());

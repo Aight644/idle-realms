@@ -672,7 +672,6 @@ function GameUI({ account, initialSave, onLogout }) {
   const [page, setPage] = useState("skills");
   const [mobileNav, setMobileNav] = useState(false);
   const [isMobile, setIsMobile] = useState(() => window.innerWidth < 768);
-
   useEffect(() => {
     const onResize = () => setIsMobile(window.innerWidth < 768);
     window.addEventListener("resize", onResize);
@@ -700,6 +699,7 @@ function GameUI({ account, initialSave, onLogout }) {
 
   // ─── OFFLINE PROGRESS ───
   const offlineProcessed = useRef(false);
+  const [offlinePopup, setOfflinePopup] = useState(null);
   useEffect(() => {
     if (offlineProcessed.current) return;
     offlineProcessed.current = true;
@@ -750,11 +750,7 @@ function GameUI({ account, initialSave, onLogout }) {
     if (hasRewards) {
       const mins = Math.floor(offlineMs / 60000);
       const timeStr = mins >= 60 ? `${Math.floor(mins / 60)}h ${mins % 60}m` : `${mins}m`;
-      const parts = [];
-      for (const [skill, xp] of Object.entries(rewards.xp)) parts.push(`+${xp} ${skill} XP`);
-      for (const [item, qty] of Object.entries(rewards.items)) parts.push(`+${qty} ${item}`);
-      if (rewards.gold > 0) parts.push(`+${rewards.gold}g`);
-      setLog([{ m: `⏰ Offline progress (${timeStr}): ${parts.join(", ")}`, t: Date.now() }]);
+      setOfflinePopup({ timeStr, rewards });
     }
   }, []);
 
@@ -2008,6 +2004,87 @@ function GameUI({ account, initialSave, onLogout }) {
   return (
     <div style={{ display: "flex", height: "100vh", fontFamily: FONT, color: T.text, background: T.bg, overflow: "hidden", fontSize: 13 }}>
       <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
+
+      {/* ═══ OFFLINE PROGRESS POPUP ═══ */}
+      {offlinePopup && (
+        <div style={{
+          position: "fixed", inset: 0, background: "rgba(0,0,0,0.7)", zIndex: 1000,
+          display: "flex", alignItems: "center", justifyContent: "center", padding: 20,
+        }}>
+          <div style={{
+            width: 380, maxWidth: "92vw", background: T.card, borderRadius: 16,
+            border: `1px solid ${T.gold}40`, overflow: "hidden",
+            boxShadow: `0 0 40px ${T.gold}15`,
+          }}>
+            {/* Header */}
+            <div style={{
+              padding: "20px 24px 16px", textAlign: "center",
+              background: `linear-gradient(135deg, ${T.gold}15, ${T.purple}10)`,
+              borderBottom: `1px solid ${T.divider}`,
+            }}>
+              <div style={{ fontSize: 40, marginBottom: 8 }}>⏰</div>
+              <div style={{ fontSize: 18, fontWeight: 800, color: T.gold }}>Welcome Back!</div>
+              <div style={{ fontSize: 12, color: T.textSoft, marginTop: 4 }}>
+                You were away for <span style={{ color: T.white, fontWeight: 700 }}>{offlinePopup.timeStr}</span>
+              </div>
+            </div>
+
+            {/* Rewards */}
+            <div style={{ padding: "16px 24px" }}>
+              <div style={{ fontSize: 11, fontWeight: 700, color: T.textDim, marginBottom: 10, textTransform: "uppercase", letterSpacing: 1 }}>Your workers earned:</div>
+
+              {Object.entries(offlinePopup.rewards.xp).map(([skill, xp]) => (
+                <div key={skill} style={{
+                  display: "flex", alignItems: "center", justifyContent: "space-between",
+                  padding: "8px 12px", marginBottom: 6, borderRadius: 8,
+                  background: T.bgDeep, border: `1px solid ${T.divider}`,
+                }}>
+                  <span style={{ fontSize: 12, color: T.textSec, textTransform: "capitalize" }}>
+                    {SKILLS_CONFIG[skill]?.emoji || "⚔️"} {skill} XP
+                  </span>
+                  <span style={{ fontSize: 13, fontWeight: 700, color: T.accent }}>+{xp.toLocaleString()}</span>
+                </div>
+              ))}
+
+              {Object.entries(offlinePopup.rewards.items).map(([item, qty]) => (
+                <div key={item} style={{
+                  display: "flex", alignItems: "center", justifyContent: "space-between",
+                  padding: "8px 12px", marginBottom: 6, borderRadius: 8,
+                  background: T.bgDeep, border: `1px solid ${T.divider}`,
+                }}>
+                  <span style={{ fontSize: 12, color: T.textSec }}>
+                    {ITEMS[item]?.emoji || "📦"} {item}
+                  </span>
+                  <span style={{ fontSize: 13, fontWeight: 700, color: T.success }}>+{qty.toLocaleString()}</span>
+                </div>
+              ))}
+
+              {offlinePopup.rewards.gold > 0 && (
+                <div style={{
+                  display: "flex", alignItems: "center", justifyContent: "space-between",
+                  padding: "8px 12px", marginBottom: 6, borderRadius: 8,
+                  background: T.bgDeep, border: `1px solid ${T.divider}`,
+                }}>
+                  <span style={{ fontSize: 12, color: T.textSec }}>💰 Gold</span>
+                  <span style={{ fontSize: 13, fontWeight: 700, color: T.gold }}>+{offlinePopup.rewards.gold.toLocaleString()}</span>
+                </div>
+              )}
+            </div>
+
+            {/* Collect button */}
+            <div style={{ padding: "8px 24px 20px" }}>
+              <div onClick={() => setOfflinePopup(null)} style={{
+                padding: "12px 0", borderRadius: 10, textAlign: "center",
+                background: `linear-gradient(135deg, ${T.gold}, ${T.orange || T.gold})`,
+                color: "#000", fontWeight: 800, fontSize: 14, cursor: "pointer",
+                letterSpacing: 0.5,
+              }}>
+                ✨ Collect Rewards
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* ═══ MOBILE OVERLAY ═══ */}
       {isMobile && mobileNav && (

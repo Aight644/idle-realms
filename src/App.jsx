@@ -1645,13 +1645,31 @@ function GameUI({ account, initialSave, onLogout }) {
   }, [page, fetchLeaderboard]);
 
   // ─── CLAN STATE ───
-  const [myClan, setMyClan] = useState(null); // { name, tag, desc, creator, created }
+  const [myClan, setMyClan] = useState(null); // { name, tag, desc, creator, created, minLevel, joinMode }
   const [clanMembers, setClanMembers] = useState([]);
   const [clanList, setClanList] = useState([]);
   const [clanLoading, setClanLoading] = useState(false);
-  const [clanTab, setClanTab] = useState("info"); // info | members | browse | create
+  const [clanTab, setClanTab] = useState("info"); // info | members | browse | create | quests | shop | requests | settings
   const [clanForm, setClanForm] = useState({ name: "", tag: "", desc: "" });
   const [clanError, setClanError] = useState("");
+  const [clanRequests, setClanRequests] = useState([]); // join requests
+  const [clanInviteUser, setClanInviteUser] = useState("");
+
+  // Clan quest definitions
+  const CLAN_QUESTS = [
+    { id: "cq_kills", icon: "⚔️", verb: "Slay", targets: [50, 100, 200], unit: "monsters", xp: [500, 1200, 2500], gold: [300, 700, 1500] },
+    { id: "cq_gather", icon: "⛏️", verb: "Gather", targets: [100, 200, 400], unit: "resources", xp: [400, 1000, 2000], gold: [250, 600, 1200] },
+    { id: "cq_craft", icon: "🔨", verb: "Craft", targets: [20, 50, 100], unit: "items", xp: [600, 1500, 3000], gold: [400, 900, 2000] },
+    { id: "cq_gold", icon: "💰", verb: "Earn", targets: [500, 2000, 5000], unit: "gold", xp: [300, 800, 1800], gold: [0, 0, 0] },
+  ];
+
+  // Clan shop items (bought with clan gold)
+  const CLAN_SHOP = [
+    { id: "clan_xp_boost", name: "📚 Clan XP Boost", cost: 2000, desc: "+3% XP for all members (24h)", duration: 86400000 },
+    { id: "clan_speed_boost", name: "⚡ Clan Speed Boost", cost: 2000, desc: "+3% speed for all members (24h)", duration: 86400000 },
+    { id: "clan_banner", name: "🏴 Clan Banner", cost: 5000, desc: "Flex your clan on the leaderboard", permanent: true },
+    { id: "clan_slots", name: "👥 +5 Member Slots", cost: 3000, desc: "Increase max members by 5", permanent: true },
+  ];
 
   const fetchMyClan = useCallback(async () => {
     try {
@@ -1665,10 +1683,18 @@ function GameUI({ account, initialSave, onLogout }) {
             const memRaw = await window.storage.get(`clan-members:${clanName}`, true);
             if (memRaw) setClanMembers(JSON.parse(memRaw.value));
           } catch { setClanMembers([]); }
+          try {
+            const reqRaw = await window.storage.get(`clan-requests:${clanName}`, true);
+            if (reqRaw) setClanRequests(JSON.parse(reqRaw.value));
+            else setClanRequests([]);
+          } catch { setClanRequests([]); }
         }
-      } else { setMyClan(null); setClanMembers([]); }
+      } else { setMyClan(null); setClanMembers([]); setClanRequests([]); }
     } catch { setMyClan(null); }
   }, [account.username]);
+
+  const isLeader = myClan && myClan.creator === account.username;
+  const isOfficer = clanMembers.find(m => m.username === account.username)?.role === "officer";
 
   const fetchClanList = useCallback(async () => {
     setClanLoading(true);
@@ -1708,10 +1734,11 @@ function GameUI({ account, initialSave, onLogout }) {
     try {
       const existing = await window.storage.get(`clan:${name.toLowerCase()}`, true).catch(() => null);
       if (existing) { setClanError("Clan name already taken"); setClanLoading(false); return; }
-      const clan = { name: name.toLowerCase(), displayName: name, tag: tag.toUpperCase(), desc, creator: account.username, created: Date.now() };
+      const clan = { name: name.toLowerCase(), displayName: name, tag: tag.toUpperCase(), desc, creator: account.username, created: Date.now(), minLevel: 1, joinMode: "request", maxMembers: 20, clanGold: 0, clanXp: 0, boosts: {}, shop: {} };
       const members = [{ username: account.username, displayName: account.displayName || account.username, role: "leader", joined: Date.now() }];
       await window.storage.set(`clan:${name.toLowerCase()}`, JSON.stringify(clan), true);
       await window.storage.set(`clan-members:${name.toLowerCase()}`, JSON.stringify(members), true);
+      await window.storage.set(`clan-requests:${name.toLowerCase()}`, JSON.stringify([]), true);
       await window.storage.set(`player-clan:${account.username}`, name.toLowerCase());
       setGold(g => g - 500);
       addLog(`🏰 Created clan [${tag.toUpperCase()}] ${name}!`);
@@ -1726,16 +1753,161 @@ function GameUI({ account, initialSave, onLogout }) {
   const joinClan = useCallback(async (clanName) => {
     setClanLoading(true);
     try {
+      const clanRaw = await window.storage.get(`clan:${clanName}`, true);
+      if (!clanRaw) { setClanLoading(false); return; }
+      const clan = JSON.parse(clanRaw.value);
+
+      // Check level requirement
+      if (clan.minLevel && totalLevel < clan.minLevel) {
+        setClanError(`Need total level ${clan.minLevel} to join (you have ${totalLevel})`);
+        setClanLoading(false); return;
+      }
+
+      // Check member cap
       let members = [];
+      try { const memRaw = await window.storage.get(`clan-members:${clanName}`, true); if (memRaw) members = JSON.parse(memRaw.value); } catch {}
+      const maxMem = clan.maxMembers || 20;
+      if (members.length >= maxMem) { setClanError("Clan is full"); setClanLoading(false); return; }
+
+      if (clan.joinMode === "open") {
+        // Direct join
+        if (members.find(m => m.username === account.username)) { setClanLoading(false); return; }
+        members.push({ username: account.username, displayName: account.displayName || account.username, role: "member", joined: Date.now() });
+        await window.storage.set(`clan-members:${clanName}`, JSON.stringify(members), true);
+        await window.storage.set(`player-clan:${account.username}`, clanName);
+        addLog(`🏰 Joined clan ${clan.displayName || clanName}!`);
+        await fetchMyClan();
+        setClanTab("info");
+      } else {
+        // Send join request
+        let requests = [];
+        try { const reqRaw = await window.storage.get(`clan-requests:${clanName}`, true); if (reqRaw) requests = JSON.parse(reqRaw.value); } catch {}
+        if (requests.find(r => r.username === account.username)) { setClanError("You already sent a request"); setClanLoading(false); return; }
+        requests.push({ username: account.username, displayName: account.displayName || account.username, totalLevel, requestedAt: Date.now() });
+        await window.storage.set(`clan-requests:${clanName}`, JSON.stringify(requests), true);
+        addLog(`📩 Sent join request to ${clan.displayName || clanName}`);
+        setClanError("✅ Join request sent! Wait for the leader to accept.");
+      }
+    } catch { setClanError("Failed to join clan"); }
+    setClanLoading(false);
+  }, [account, addLog, fetchMyClan, totalLevel]);
+
+  // Accept/reject join request
+  const handleJoinRequest = useCallback(async (username, accept) => {
+    if (!myClan) return;
+    setClanLoading(true);
+    try {
+      let requests = [...clanRequests];
+      const req = requests.find(r => r.username === username);
+      requests = requests.filter(r => r.username !== username);
+      await window.storage.set(`clan-requests:${myClan.name}`, JSON.stringify(requests), true);
+      setClanRequests(requests);
+
+      if (accept && req) {
+        let members = [...clanMembers];
+        if (!members.find(m => m.username === username)) {
+          members.push({ username: req.username, displayName: req.displayName, role: "member", joined: Date.now() });
+          await window.storage.set(`clan-members:${myClan.name}`, JSON.stringify(members), true);
+          await window.storage.set(`player-clan:${username}`, myClan.name);
+          setClanMembers(members);
+          addLog(`🏰 Accepted ${req.displayName} into the clan!`);
+        }
+      } else {
+        addLog(`🏰 Rejected ${username}'s join request`);
+      }
+    } catch {}
+    setClanLoading(false);
+  }, [myClan, clanRequests, clanMembers, addLog]);
+
+  // Invite player by name
+  const invitePlayer = useCallback(async (targetName) => {
+    if (!myClan || !targetName.trim()) return;
+    setClanLoading(true);
+    try {
+      // Store invite for the target player
+      let invites = [];
+      try { const invRaw = await window.storage.get(`clan-invites:${targetName.trim()}`); if (invRaw) invites = JSON.parse(invRaw.value); } catch {}
+      if (invites.find(i => i.clanName === myClan.name)) { setClanError("Already invited"); setClanLoading(false); return; }
+      invites.push({ clanName: myClan.name, clanTag: myClan.tag, clanDisplayName: myClan.displayName, invitedBy: account.displayName || account.username, invitedAt: Date.now() });
+      await window.storage.set(`clan-invites:${targetName.trim()}`, JSON.stringify(invites));
+      addLog(`📩 Invited ${targetName} to the clan`);
+      setClanInviteUser("");
+    } catch { setClanError("Failed to invite"); }
+    setClanLoading(false);
+  }, [myClan, account, addLog]);
+
+  // Update clan settings
+  const updateClanSettings = useCallback(async (updates) => {
+    if (!myClan || !isLeader) return;
+    setClanLoading(true);
+    try {
+      const updated = { ...myClan, ...updates };
+      await window.storage.set(`clan:${myClan.name}`, JSON.stringify(updated), true);
+      setMyClan(updated);
+      addLog("🏰 Clan settings updated");
+    } catch {}
+    setClanLoading(false);
+  }, [myClan, isLeader, addLog]);
+
+  // Clan shop purchase
+  const buyClanShopItem = useCallback(async (item) => {
+    if (!myClan || !isLeader) return;
+    const clanGold = myClan.clanGold || 0;
+    if (clanGold < item.cost) return;
+    setClanLoading(true);
+    try {
+      const updated = { ...myClan, clanGold: clanGold - item.cost };
+      if (item.permanent) {
+        updated.shop = { ...(updated.shop || {}), [item.id]: true };
+        if (item.id === "clan_slots") updated.maxMembers = (updated.maxMembers || 20) + 5;
+      } else {
+        updated.boosts = { ...(updated.boosts || {}), [item.id]: Date.now() + item.duration };
+      }
+      await window.storage.set(`clan:${myClan.name}`, JSON.stringify(updated), true);
+      setMyClan(updated);
+      addLog(`🏪 Bought ${item.name} for the clan!`);
+    } catch {}
+    setClanLoading(false);
+  }, [myClan, isLeader, addLog]);
+
+  // Donate gold to clan
+  const donateToClan = useCallback(async (amount) => {
+    if (!myClan || amount <= 0 || gold < amount) return;
+    setClanLoading(true);
+    try {
+      const updated = { ...myClan, clanGold: (myClan.clanGold || 0) + amount };
+      await window.storage.set(`clan:${myClan.name}`, JSON.stringify(updated), true);
+      setMyClan(updated);
+      setGold(g => g - amount);
+      addLog(`🏰 Donated ${amount}g to the clan treasury`);
+    } catch {}
+    setClanLoading(false);
+  }, [myClan, gold, addLog]);
+
+  // Check for clan invites on mount
+  const [clanInvites, setClanInvites] = useState([]);
+  useEffect(() => {
+    if (myClan) return; // already in a clan
+    (async () => {
       try {
-        const memRaw = await window.storage.get(`clan-members:${clanName}`, true);
-        if (memRaw) members = JSON.parse(memRaw.value);
+        const invRaw = await window.storage.get(`clan-invites:${account.username}`);
+        if (invRaw) setClanInvites(JSON.parse(invRaw.value));
       } catch {}
-      if (members.find(m => m.username === account.username)) { setClanLoading(false); return; }
+    })();
+  }, [myClan, account.username]);
+
+  const acceptInvite = useCallback(async (invite) => {
+    setClanLoading(true);
+    try {
+      let members = [];
+      try { const memRaw = await window.storage.get(`clan-members:${invite.clanName}`, true); if (memRaw) members = JSON.parse(memRaw.value); } catch {}
       members.push({ username: account.username, displayName: account.displayName || account.username, role: "member", joined: Date.now() });
-      await window.storage.set(`clan-members:${clanName}`, JSON.stringify(members), true);
-      await window.storage.set(`player-clan:${account.username}`, clanName);
-      addLog(`🏰 Joined clan ${clanName}!`);
+      await window.storage.set(`clan-members:${invite.clanName}`, JSON.stringify(members), true);
+      await window.storage.set(`player-clan:${account.username}`, invite.clanName);
+      // Clear invites
+      await window.storage.delete(`clan-invites:${account.username}`);
+      setClanInvites([]);
+      addLog(`🏰 Joined ${invite.clanDisplayName} via invite!`);
       await fetchMyClan();
       setClanTab("info");
     } catch {}
@@ -1770,7 +1942,6 @@ function GameUI({ account, initialSave, onLogout }) {
     setClanLoading(false);
   }, [myClan, account, addLog]);
 
-  const isLeader = myClan && myClan.creator === account.username;
 
   const kickMember = useCallback(async (username) => {
     if (!myClan || !isLeader || username === account.username) return;
@@ -4163,10 +4334,15 @@ function GameUI({ account, initialSave, onLogout }) {
                 const lb = lbData.find(e => e.displayName === m.displayName);
                 return acc + (lb?.kills || 0);
               }, 0);
+              const clanGold = myClan.clanGold || 0;
+              const maxMem = myClan.maxMembers || 20;
 
               const tabs = [
                 { id: "info", label: "Info", icon: "🏰" },
                 { id: "members", label: `Members (${clanMembers.length})`, icon: "👥" },
+                ...(isLeader || isOfficer ? [{ id: "requests", label: `Requests${clanRequests.length > 0 ? ` (${clanRequests.length})` : ""}`, icon: "📩" }] : []),
+                { id: "shop", label: "Shop", icon: "🏪" },
+                ...(isLeader ? [{ id: "settings", label: "Settings", icon: "⚙️" }] : []),
               ];
 
               return (
@@ -4174,7 +4350,7 @@ function GameUI({ account, initialSave, onLogout }) {
                   <PageTitle icon="🏰" title={`[${myClan.tag}] ${myClan.displayName || myClan.name}`} subtitle={myClan.desc || "No description"} />
 
                   {/* Tabs */}
-                  <div style={{ display: "flex", gap: 6, marginBottom: 16 }}>
+                  <div style={{ display: "flex", gap: 6, marginBottom: 16, flexWrap: "wrap" }}>
                     {tabs.map(t => (
                       <div key={t.id} onClick={() => setClanTab(t.id)} style={{
                         padding: "7px 14px", borderRadius: T.rs,
@@ -4192,7 +4368,7 @@ function GameUI({ account, initialSave, onLogout }) {
                       <div style={{ display: "grid", gridTemplateColumns: `repeat(auto-fill, minmax(${isMobile ? "140px" : "160px"}, 1fr))`, gap: 10, marginBottom: 16 }}>
                         <Card style={{ textAlign: "center", padding: 16 }}>
                           <div style={{ fontSize: 22, marginBottom: 4 }}>👥</div>
-                          <div style={{ fontSize: 20, fontWeight: 900, color: T.white }}>{clanMembers.length}</div>
+                          <div style={{ fontSize: 20, fontWeight: 900, color: T.white }}>{clanMembers.length}/{maxMem}</div>
                           <div style={{ fontSize: 10, color: T.textDim, fontWeight: 600 }}>MEMBERS</div>
                         </Card>
                         <Card style={{ textAlign: "center", padding: 16 }}>
@@ -4206,9 +4382,9 @@ function GameUI({ account, initialSave, onLogout }) {
                           <div style={{ fontSize: 10, color: T.textDim, fontWeight: 600 }}>TOTAL KILLS</div>
                         </Card>
                         <Card style={{ textAlign: "center", padding: 16 }}>
-                          <div style={{ fontSize: 22, marginBottom: 4 }}>📅</div>
-                          <div style={{ fontSize: 13, fontWeight: 700, color: T.white }}>{new Date(myClan.created).toLocaleDateString()}</div>
-                          <div style={{ fontSize: 10, color: T.textDim, fontWeight: 600 }}>FOUNDED</div>
+                          <div style={{ fontSize: 22, marginBottom: 4 }}>💰</div>
+                          <div style={{ fontSize: 20, fontWeight: 900, color: T.gold }}>{fmt(clanGold)}</div>
+                          <div style={{ fontSize: 10, color: T.textDim, fontWeight: 600 }}>CLAN GOLD</div>
                         </Card>
                       </div>
 
@@ -4217,8 +4393,18 @@ function GameUI({ account, initialSave, onLogout }) {
                         <StatRow label="Name" value={myClan.displayName || myClan.name} />
                         <StatRow label="Tag" value={`[${myClan.tag}]`} color={T.purple} />
                         <StatRow label="Leader" value={myClan.creator} />
-                        <StatRow label="Your Role" value={isLeader ? "👑 Leader" : (clanMembers.find(m => m.username === account.username)?.role === "officer" ? "⭐ Officer" : "Member")} color={isLeader ? T.gold : T.textSec} />
-                        <div style={{ marginTop: 14, display: "flex", gap: 8, flexWrap: "wrap" }}>
+                        <StatRow label="Min Level" value={myClan.minLevel || 1} />
+                        <StatRow label="Join Mode" value={(myClan.joinMode || "request") === "open" ? "🟢 Open" : "🔒 Request Only"} />
+                        <StatRow label="Your Role" value={isLeader ? "👑 Leader" : (isOfficer ? "⭐ Officer" : "Member")} color={isLeader ? T.gold : T.textSec} />
+
+                        {/* Donate */}
+                        <div style={{ marginTop: 14, display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
+                          <Btn color={T.gold} small onClick={() => donateToClan(100)} disabled={gold < 100 || clanLoading}>💰 Donate 100g</Btn>
+                          <Btn color={T.gold} small onClick={() => donateToClan(500)} disabled={gold < 500 || clanLoading}>💰 Donate 500g</Btn>
+                          <Btn color={T.gold} small onClick={() => donateToClan(1000)} disabled={gold < 1000 || clanLoading}>💰 Donate 1000g</Btn>
+                        </div>
+
+                        <div style={{ marginTop: 10, display: "flex", gap: 8, flexWrap: "wrap" }}>
                           <Btn color={T.danger} small onClick={leaveClan} disabled={clanLoading}>🚪 Leave Clan</Btn>
                           {isLeader && (
                             <Btn color={T.danger} small onClick={() => {
@@ -4232,83 +4418,149 @@ function GameUI({ account, initialSave, onLogout }) {
 
                   {/* Members tab */}
                   {clanTab === "members" && (
-                    <Card>
-                      <div style={{
-                        display: "grid", gridTemplateColumns: isLeader ? "40px 1fr 90px 80px 120px" : "40px 1fr 80px 80px",
-                        padding: "8px 12px", borderBottom: `1px solid ${T.divider}`,
-                        fontSize: 10, fontWeight: 700, color: T.textDim, textTransform: "uppercase", letterSpacing: 0.5,
-                      }}>
-                        <span>#</span><span>Player</span><span style={{ textAlign: "right" }}>Role</span><span style={{ textAlign: "right" }}>Joined</span>
-                        {isLeader && <span style={{ textAlign: "right" }}>Actions</span>}
-                      </div>
-                      {clanMembers.map((m, i) => {
-                        const isMe = m.username === account.username;
-                        const lb = lbData.find(e => e.displayName === m.displayName);
-                        const roleColor = m.role === "leader" ? T.gold : m.role === "officer" ? T.orange : T.textDim;
-                        const roleLabel = m.role === "leader" ? "👑 Leader" : m.role === "officer" ? "⭐ Officer" : "Member";
-                        return (
-                          <div key={i} style={{
-                            display: "grid", gridTemplateColumns: isLeader ? "40px 1fr 90px 80px 120px" : "40px 1fr 80px 80px",
-                            padding: "10px 12px", alignItems: "center",
-                            borderBottom: i < clanMembers.length - 1 ? `1px solid ${T.divider}` : "none",
-                            background: isMe ? T.accent + "08" : "transparent",
-                          }}>
-                            <span style={{ fontSize: 12, fontWeight: 700, color: T.textDim }}>{i + 1}</span>
-                            <div style={{ display: "flex", alignItems: "center", gap: 8, minWidth: 0 }}>
+                    <div>
+                      {/* Invite */}
+                      {(isLeader || isOfficer) && (
+                        <Card style={{ marginBottom: 12 }}>
+                          <div style={{ fontSize: 12, fontWeight: 700, color: T.white, marginBottom: 8 }}>📩 Invite Player</div>
+                          <div style={{ display: "flex", gap: 8 }}>
+                            <input style={{ ...inputStyle, flex: 1 }} placeholder="Player username..." value={clanInviteUser} onChange={e => setClanInviteUser(e.target.value)} />
+                            <Btn color={T.purple} small onClick={() => invitePlayer(clanInviteUser)} disabled={!clanInviteUser.trim() || clanLoading}>Send Invite</Btn>
+                          </div>
+                        </Card>
+                      )}
+
+                      <Card>
+                        {clanMembers.map((m, i) => {
+                          const isMe = m.username === account.username;
+                          const lb = lbData.find(e => e.displayName === m.displayName);
+                          const roleColor = m.role === "leader" ? T.gold : m.role === "officer" ? T.orange : T.textDim;
+                          const roleLabel = m.role === "leader" ? "👑 Leader" : m.role === "officer" ? "⭐ Officer" : "Member";
+                          return (
+                            <div key={i} style={{
+                              display: "flex", alignItems: "center", gap: 10,
+                              padding: "10px 12px",
+                              borderBottom: i < clanMembers.length - 1 ? `1px solid ${T.divider}` : "none",
+                              background: isMe ? T.accent + "08" : "transparent",
+                            }}>
                               <div style={{
-                                width: 26, height: 26, borderRadius: 99, flexShrink: 0,
+                                width: 30, height: 30, borderRadius: 99, flexShrink: 0,
                                 background: roleColor + "20",
                                 display: "flex", alignItems: "center", justifyContent: "center",
-                                fontSize: 11, fontWeight: 700, color: roleColor,
+                                fontSize: 12, fontWeight: 700, color: roleColor,
                               }}>{(m.displayName || "?")[0].toUpperCase()}</div>
-                              <div style={{ minWidth: 0 }}>
-                                <div style={{ fontSize: 12, fontWeight: 600, color: isMe ? T.accent : T.white, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                              <div style={{ flex: 1, minWidth: 0 }}>
+                                <div style={{ fontSize: 12, fontWeight: 600, color: isMe ? T.accent : T.white }}>
                                   {m.displayName}{isMe && <span style={{ fontSize: 9, color: T.accent, marginLeft: 4 }}>(you)</span>}
                                 </div>
-                                <div style={{ fontSize: 10, color: T.textDim }}>Lv {lb?.totalLevel || "?"}</div>
+                                <div style={{ fontSize: 10, color: T.textDim }}>Lv {lb?.totalLevel || "?"} · <Badge color={roleColor}>{roleLabel}</Badge></div>
                               </div>
+                              {isLeader && !isMe && (
+                                <div style={{ display: "flex", gap: 4 }}>
+                                  {m.role === "member" && <span onClick={() => promoteMember(m.username, "officer")} style={{ fontSize: 9, padding: "2px 6px", borderRadius: 4, cursor: "pointer", background: T.orange + "15", color: T.orange, fontWeight: 700 }}>⬆</span>}
+                                  {m.role === "officer" && <span onClick={() => promoteMember(m.username, "member")} style={{ fontSize: 9, padding: "2px 6px", borderRadius: 4, cursor: "pointer", background: T.textDim + "15", color: T.textDim, fontWeight: 700 }}>⬇</span>}
+                                  {m.role === "officer" && <span onClick={() => { if (confirm(`Transfer leadership to ${m.displayName}?`)) transferLeader(m.username); }} style={{ fontSize: 9, padding: "2px 6px", borderRadius: 4, cursor: "pointer", background: T.gold + "15", color: T.gold, fontWeight: 700 }}>👑</span>}
+                                  <span onClick={() => { if (confirm(`Kick ${m.displayName}?`)) kickMember(m.username); }} style={{ fontSize: 9, padding: "2px 6px", borderRadius: 4, cursor: "pointer", background: T.danger + "15", color: T.danger, fontWeight: 700 }}>✕</span>
+                                </div>
+                              )}
                             </div>
-                            <div style={{ textAlign: "right" }}>
-                              <Badge color={roleColor}>{roleLabel}</Badge>
+                          );
+                        })}
+                      </Card>
+                    </div>
+                  )}
+
+                  {/* Requests tab */}
+                  {clanTab === "requests" && (
+                    <Card>
+                      <div style={{ fontSize: 13, fontWeight: 700, color: T.white, marginBottom: 12 }}>📩 Join Requests</div>
+                      {clanRequests.length === 0 ? (
+                        <div style={{ textAlign: "center", padding: "30px 0", color: T.textDim, fontSize: 12 }}>No pending requests</div>
+                      ) : (
+                        clanRequests.map((r, i) => (
+                          <div key={i} style={{
+                            display: "flex", alignItems: "center", gap: 10, padding: "10px 12px",
+                            borderBottom: i < clanRequests.length - 1 ? `1px solid ${T.divider}` : "none",
+                          }}>
+                            <div style={{ flex: 1 }}>
+                              <div style={{ fontSize: 12, fontWeight: 600, color: T.white }}>{r.displayName}</div>
+                              <div style={{ fontSize: 10, color: T.textDim }}>Total Level: {r.totalLevel || "?"} · {new Date(r.requestedAt).toLocaleDateString()}</div>
                             </div>
-                            <div style={{ textAlign: "right", fontSize: 10, color: T.textDim }}>
-                              {new Date(m.joined).toLocaleDateString()}
-                            </div>
-                            {isLeader && (
-                              <div style={{ display: "flex", gap: 4, justifyContent: "flex-end" }}>
-                                {!isMe && m.role === "member" && (
-                                  <span onClick={() => promoteMember(m.username, "officer")} style={{
-                                    fontSize: 9, padding: "2px 6px", borderRadius: 4, cursor: "pointer",
-                                    background: T.orange + "15", color: T.orange, fontWeight: 700,
-                                  }}>⬆ Promote</span>
-                                )}
-                                {!isMe && m.role === "officer" && (
-                                  <>
-                                    <span onClick={() => promoteMember(m.username, "member")} style={{
-                                      fontSize: 9, padding: "2px 6px", borderRadius: 4, cursor: "pointer",
-                                      background: T.textDim + "15", color: T.textDim, fontWeight: 700,
-                                    }}>⬇ Demote</span>
-                                    <span onClick={() => {
-                                      if (confirm(`Transfer leadership to ${m.displayName}? You will become Officer.`)) transferLeader(m.username);
-                                    }} style={{
-                                      fontSize: 9, padding: "2px 6px", borderRadius: 4, cursor: "pointer",
-                                      background: T.gold + "15", color: T.gold, fontWeight: 700,
-                                    }}>👑 Lead</span>
-                                  </>
-                                )}
-                                {!isMe && m.role !== "leader" && (
-                                  <span onClick={() => {
-                                    if (confirm(`Kick ${m.displayName} from the clan?`)) kickMember(m.username);
-                                  }} style={{
-                                    fontSize: 9, padding: "2px 6px", borderRadius: 4, cursor: "pointer",
-                                    background: T.danger + "15", color: T.danger, fontWeight: 700,
-                                  }}>✕ Kick</span>
-                                )}
-                              </div>
-                            )}
+                            <Btn color={T.success} small onClick={() => handleJoinRequest(r.username, true)} disabled={clanLoading}>✓ Accept</Btn>
+                            <Btn color={T.danger} small onClick={() => handleJoinRequest(r.username, false)} disabled={clanLoading}>✕ Deny</Btn>
                           </div>
-                        );
-                      })}
+                        ))
+                      )}
+                    </Card>
+                  )}
+
+                  {/* Shop tab */}
+                  {clanTab === "shop" && (
+                    <div>
+                      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
+                        <div style={{ fontSize: 12, color: T.textSec }}>Clan Treasury: <span style={{ color: T.gold, fontWeight: 700 }}>{fmt(clanGold)}g</span></div>
+                      </div>
+                      <div style={{ display: "grid", gridTemplateColumns: `repeat(auto-fill, minmax(${isMobile ? "100%" : "280px"}, 1fr))`, gap: 10 }}>
+                        {CLAN_SHOP.map(item => {
+                          const owned = myClan.shop?.[item.id];
+                          const boostActive = myClan.boosts?.[item.id] && myClan.boosts[item.id] > Date.now();
+                          const canAfford = clanGold >= item.cost;
+                          return (
+                            <Card key={item.id} style={{ opacity: owned || boostActive ? 0.6 : 1 }}>
+                              <div style={{ fontSize: 14, fontWeight: 700, color: T.white, marginBottom: 4 }}>{item.name}</div>
+                              <div style={{ fontSize: 11, color: T.textSoft, marginBottom: 10 }}>{item.desc}</div>
+                              {owned ? (
+                                <Badge color={T.success}>OWNED</Badge>
+                              ) : boostActive ? (
+                                <Badge color={T.accent}>ACTIVE</Badge>
+                              ) : (
+                                <Btn color={canAfford ? T.purple : T.textDim} small disabled={!canAfford || !isLeader || clanLoading}
+                                  onClick={() => buyClanShopItem(item)}>
+                                  💰 {fmt(item.cost)}g {!isLeader && "(Leader only)"}
+                                </Btn>
+                              )}
+                            </Card>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Settings tab (leader only) */}
+                  {clanTab === "settings" && isLeader && (
+                    <Card style={{ maxWidth: 400 }}>
+                      <div style={{ fontSize: 14, fontWeight: 700, color: T.white, marginBottom: 16 }}>⚙️ Clan Settings</div>
+
+                      <div style={{ marginBottom: 14 }}>
+                        <label style={labelStyle}>Description</label>
+                        <input style={inputStyle} value={myClan.desc || ""} onChange={e => updateClanSettings({ desc: e.target.value })} />
+                      </div>
+
+                      <div style={{ marginBottom: 14 }}>
+                        <label style={labelStyle}>Minimum Total Level to Join</label>
+                        <input style={inputStyle} type="number" min="1" max="999" value={myClan.minLevel || 1}
+                          onChange={e => updateClanSettings({ minLevel: Math.max(1, parseInt(e.target.value) || 1) })} />
+                      </div>
+
+                      <div style={{ marginBottom: 14 }}>
+                        <label style={labelStyle}>Join Mode</label>
+                        <div style={{ display: "flex", gap: 8 }}>
+                          <div onClick={() => updateClanSettings({ joinMode: "request" })} style={{
+                            padding: "8px 16px", borderRadius: 8, cursor: "pointer",
+                            background: (myClan.joinMode || "request") === "request" ? T.purple + "20" : T.bgDeep,
+                            border: `1px solid ${(myClan.joinMode || "request") === "request" ? T.purple : T.divider}`,
+                            color: (myClan.joinMode || "request") === "request" ? T.purple : T.textSec,
+                            fontSize: 12, fontWeight: 600,
+                          }}>🔒 Request Only</div>
+                          <div onClick={() => updateClanSettings({ joinMode: "open" })} style={{
+                            padding: "8px 16px", borderRadius: 8, cursor: "pointer",
+                            background: myClan.joinMode === "open" ? T.success + "20" : T.bgDeep,
+                            border: `1px solid ${myClan.joinMode === "open" ? T.success : T.divider}`,
+                            color: myClan.joinMode === "open" ? T.success : T.textSec,
+                            fontSize: 12, fontWeight: 600,
+                          }}>🟢 Open Join</div>
+                        </div>
+                      </div>
                     </Card>
                   )}
                 </div>
@@ -4324,6 +4576,22 @@ function GameUI({ account, initialSave, onLogout }) {
             return (
               <div>
                 <PageTitle icon="🏰" title="Clans" subtitle="Join a clan or create your own" />
+
+                {/* Pending invites */}
+                {clanInvites.length > 0 && (
+                  <Card style={{ marginBottom: 16, border: `1px solid ${T.gold}40` }}>
+                    <div style={{ fontSize: 13, fontWeight: 700, color: T.gold, marginBottom: 10 }}>📩 Clan Invites</div>
+                    {clanInvites.map((inv, i) => (
+                      <div key={i} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 0", borderBottom: i < clanInvites.length - 1 ? `1px solid ${T.divider}` : "none" }}>
+                        <div style={{ flex: 1 }}>
+                          <div style={{ fontSize: 12, fontWeight: 600, color: T.white }}>[{inv.clanTag}] {inv.clanDisplayName}</div>
+                          <div style={{ fontSize: 10, color: T.textDim }}>Invited by {inv.invitedBy}</div>
+                        </div>
+                        <Btn color={T.success} small onClick={() => acceptInvite(inv)}>✓ Join</Btn>
+                      </div>
+                    ))}
+                  </Card>
+                )}
 
                 <div style={{ display: "flex", gap: 6, marginBottom: 16 }}>
                   {noClanTabs.map(t => (
@@ -4344,6 +4612,7 @@ function GameUI({ account, initialSave, onLogout }) {
                       <div style={{ fontSize: 12, color: T.textSec }}>{clanList.length} clan{clanList.length !== 1 ? "s" : ""} found</div>
                       <Btn color={T.accent} small onClick={fetchClanList} disabled={clanLoading}>🔄 Refresh</Btn>
                     </div>
+                    {clanError && <div style={{ fontSize: 12, color: clanError.startsWith("✅") ? T.success : T.danger, marginBottom: 12, padding: "8px 10px", background: clanError.startsWith("✅") ? T.success + "10" : T.dangerMuted, borderRadius: 6 }}>{clanError}</div>}
                     {clanList.length === 0 ? (
                       <Card style={{ textAlign: "center", padding: "40px 0" }}>
                         <div style={{ fontSize: 28, marginBottom: 8 }}>🏰</div>
@@ -4364,11 +4633,14 @@ function GameUI({ account, initialSave, onLogout }) {
                                 <div style={{ fontSize: 11, color: T.textDim }}>{c.desc || "No description"}</div>
                               </div>
                             </div>
-                            <div style={{ display: "flex", gap: 12, fontSize: 11, color: T.textSec, marginBottom: 10 }}>
-                              <span>👥 {c.memberCount} member{c.memberCount !== 1 ? "s" : ""}</span>
-                              <span>📅 {new Date(c.created).toLocaleDateString()}</span>
+                            <div style={{ display: "flex", gap: 12, fontSize: 11, color: T.textSec, marginBottom: 10, flexWrap: "wrap" }}>
+                              <span>👥 {c.memberCount}/{c.maxMembers || 20}</span>
+                              <span>📊 Min Lv {c.minLevel || 1}</span>
+                              <span>{(c.joinMode || "request") === "open" ? "🟢 Open" : "🔒 Request"}</span>
                             </div>
-                            <Btn color={T.purple} small onClick={() => joinClan(c.name)} disabled={clanLoading}>Join Clan</Btn>
+                            <Btn color={T.purple} small onClick={() => joinClan(c.name)} disabled={clanLoading}>
+                              {(c.joinMode || "request") === "open" ? "Join Clan" : "Request to Join"}
+                            </Btn>
                           </Card>
                         ))}
                       </div>

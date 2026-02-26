@@ -1722,6 +1722,55 @@ function GameUI({ account, initialSave, onLogout }) {
     setClanLoading(false);
   }, [myClan, isLeader, clanMembers, addLog]);
 
+  // ─── CHECK STRIPE PURCHASES ───
+  const checkStripePurchases = useCallback(async () => {
+    const functionsUrl = import.meta.env.VITE_FUNCTIONS_URL;
+    if (!functionsUrl) return;
+    try {
+      const res = await fetch(`${functionsUrl}/checkPurchases`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId: account.username }),
+      });
+      const data = await res.json();
+      if (data.purchases) {
+        const p = data.purchases;
+        if (p.premium && !isPremium) { setIsPremium(true); addLog("⭐ Premium restored from purchase"); }
+        if (p.petslot2 && petSlots < 2) { setPetSlots(s => Math.max(s, 2)); addLog("🐾 Pet Slot #2 restored"); }
+        if (p.petslot3 && petSlots < 3) { setPetSlots(s => Math.max(s, 3)); addLog("🐾 Pet Slot #3 restored"); }
+        if (p.starter_bundle && !storePurchases.starter_bundle) {
+          addItem("Iron Ore", 15); addItem("Gold Ore", 8); addItem("Mana Crystal", 5);
+          addItem("HP Potion", 3); addItem("Iron Sword", 1); addItem("Copper Amulet", 1);
+          setStorePurchases(prev => ({ ...prev, starter_bundle: true }));
+          addLog("🎒 Starting Bundle granted!");
+        }
+        if (p.xp_mastery) setStorePurchases(prev => ({ ...prev, xp_mastery: true }));
+        if (p.speed_mastery) setStorePurchases(prev => ({ ...prev, speed_mastery: true }));
+        if (p.combat_mastery) setStorePurchases(prev => ({ ...prev, combat_mastery: true }));
+        if (p.lucky_drops) setStorePurchases(prev => ({ ...prev, lucky_drops: true }));
+        if (p.gold_rush) setStorePurchases(prev => ({ ...prev, gold_rush: true }));
+        // Revoke subscriptions that were cancelled
+        if (p.xp_mastery === false && storePurchases.xp_mastery) setStorePurchases(prev => ({ ...prev, xp_mastery: false }));
+        if (p.speed_mastery === false && storePurchases.speed_mastery) setStorePurchases(prev => ({ ...prev, speed_mastery: false }));
+        if (p.lucky_drops === false && storePurchases.lucky_drops) setStorePurchases(prev => ({ ...prev, lucky_drops: false }));
+      }
+    } catch {}
+  }, [account.username, isPremium, petSlots, storePurchases, addItem, addLog]);
+
+  // Check purchases on mount and after Stripe redirect
+  useEffect(() => {
+    checkStripePurchases();
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("purchase") === "success") {
+      addLog("✅ Payment successful! Your purchase is being processed...");
+      setTimeout(checkStripePurchases, 3000); // Re-check after webhook processes
+      window.history.replaceState({}, "", window.location.pathname);
+    } else if (params.get("purchase") === "cancelled") {
+      addLog("❌ Purchase cancelled");
+      window.history.replaceState({}, "", window.location.pathname);
+    }
+  }, []); // eslint-disable-line
+
   // Fetch clan on mount and page open
   useEffect(() => { fetchMyClan(); }, [fetchMyClan]);
   useEffect(() => {
@@ -3311,34 +3360,68 @@ function GameUI({ account, initialSave, onLogout }) {
 
           {/* ════ STORE ════ */}
           {page === "store" && (() => {
+            // Stripe Price IDs
+            const STRIPE_PRICES = {
+              premium: "price_1T4urmQZjXMzndTI7OtuMCq0",
+              petslot2: "price_1T4usJQZjXMzndTIJlB2kgGW",
+              petslot3: "price_1T4usiQZjXMzndTIsTSBJAyY",
+              starter_bundle: "price_1T4uu3QZjXMzndTIzpJvbVP2",
+              xp_mastery: "price_1T4vWXQZjXMzndTIk10BD1GE",
+              speed_mastery: "price_1T4vXYQZjXMzndTIrNkQ4loy",
+              combat_mastery: "price_1T4vYTQZjXMzndTIzVrdFB2u",
+              lucky_drops: "price_1T4vZ2QZjXMzndTIwANSmmrO",
+              gold_rush: "price_1T4vZVQZjXMzndTINZQRz1V0",
+            };
+
+            const handleStripeBuy = async (storeId) => {
+              try {
+                const functionsUrl = import.meta.env.VITE_FUNCTIONS_URL;
+                if (!functionsUrl) { addLog("❌ Store not configured yet"); return; }
+                const res = await fetch(`${functionsUrl}/createCheckoutSession`, {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({
+                    priceId: STRIPE_PRICES[storeId],
+                    userId: account.username,
+                    username: account.displayName || account.username,
+                  }),
+                });
+                const data = await res.json();
+                if (data.url) window.location.href = data.url;
+                else addLog(`❌ ${data.error || "Failed to start checkout"}`);
+              } catch (err) {
+                addLog("❌ Failed to connect to payment server");
+              }
+            };
+
             const STORE_ITEMS = [
               {
-                id: "premium", name: "⭐ Premium Membership", price: 5000,
+                id: "premium", name: "⭐ Premium Membership", realPrice: "$19.99", goldPrice: 5000,
                 desc: "Unlock 4 premium daily quests with better rewards, rare pet drops, and exclusive items.",
-                bought: isPremium, oneTime: true,
+                bought: isPremium,
                 perks: ["4 extra premium quests daily", "Higher pet drop rates (25%)", "Exclusive reward items", "Premium quest badge"],
-                onBuy: () => { setIsPremium(true); addLog("⭐ Premium Membership activated!"); },
+                onGoldBuy: () => { setIsPremium(true); addLog("⭐ Premium Membership activated!"); },
               },
               {
-                id: "petslot2", name: "🐾 Pet Slot #2", price: 3000,
+                id: "petslot2", name: "🐾 Pet Slot #2", realPrice: "$9.99", goldPrice: 3000,
                 desc: "Equip a second pet simultaneously. Stack bonuses from two pets at once!",
-                bought: petSlots >= 2, oneTime: true, requires: null,
+                bought: petSlots >= 2, requires: null,
                 perks: ["Equip 2 pets at once", "Stack XP & speed bonuses", "Stack ATK & DEF bonuses"],
-                onBuy: () => { setPetSlots(s => Math.max(s, 2)); addLog("🐾 Pet Slot #2 unlocked!"); },
+                onGoldBuy: () => { setPetSlots(s => Math.max(s, 2)); addLog("🐾 Pet Slot #2 unlocked!"); },
               },
               {
-                id: "petslot3", name: "🐾 Pet Slot #3", price: 10000,
+                id: "petslot3", name: "🐾 Pet Slot #3", realPrice: "$9.99", goldPrice: 10000,
                 desc: "Equip a third pet! Maximum pet power with three companions at your side.",
-                bought: petSlots >= 3, oneTime: true, requires: "petslot2",
+                bought: petSlots >= 3, requires: "petslot2",
                 perks: ["Equip 3 pets at once", "Triple stack all pet bonuses", "Ultimate companion setup"],
-                onBuy: () => { setPetSlots(s => Math.max(s, 3)); addLog("🐾 Pet Slot #3 unlocked!"); },
+                onGoldBuy: () => { setPetSlots(s => Math.max(s, 3)); addLog("🐾 Pet Slot #3 unlocked!"); },
               },
               {
-                id: "starter_bundle", name: "🎒 Starting Bundle", price: 2000,
+                id: "starter_bundle", name: "🎒 Starting Bundle", realPrice: "$9.99", goldPrice: 2000,
                 desc: "A generous bundle of resources, gear, and potions to kickstart your adventure.",
-                bought: !!storePurchases.starter_bundle, oneTime: true,
+                bought: !!storePurchases.starter_bundle,
                 perks: ["15× Iron Ore", "8× Gold Ore", "5× Mana Crystal", "3× HP Potion", "1× Iron Sword", "1× Copper Amulet"],
-                onBuy: () => {
+                onGoldBuy: () => {
                   addItem("Iron Ore", 15); addItem("Gold Ore", 8); addItem("Mana Crystal", 5);
                   addItem("HP Potion", 3); addItem("Iron Sword", 1); addItem("Copper Amulet", 1);
                   setStorePurchases(p => ({ ...p, starter_bundle: true }));
@@ -3346,53 +3429,53 @@ function GameUI({ account, initialSave, onLogout }) {
                 },
               },
               {
-                id: "xp_mastery", name: "✨ XP Mastery", price: 8000,
-                desc: "Permanently gain +5% bonus XP on all skills. Stacks with equipment and pets.",
-                bought: !!storePurchases.xp_mastery, oneTime: true,
-                perks: ["+5% XP to all skills", "Permanent passive bonus", "Stacks with gear & pets"],
-                onBuy: () => {
+                id: "xp_mastery", name: "✨ XP Mastery", realPrice: "$9.99/mo", goldPrice: 8000, sub: true,
+                desc: "Gain +5% bonus XP on all skills. Stacks with equipment and pets.",
+                bought: !!storePurchases.xp_mastery,
+                perks: ["+5% XP to all skills", "Stacks with gear & pets", "Monthly subscription"],
+                onGoldBuy: () => {
                   setStorePurchases(p => ({ ...p, xp_mastery: true }));
-                  addLog("✨ XP Mastery unlocked! +5% XP to all skills permanently.");
+                  addLog("✨ XP Mastery unlocked!");
                 },
               },
               {
-                id: "speed_mastery", name: "⚡ Speed Mastery", price: 8000,
-                desc: "Permanently gain +5% gathering and crafting speed. Stacks with equipment and pets.",
-                bought: !!storePurchases.speed_mastery, oneTime: true,
-                perks: ["+5% gathering speed", "+5% crafting speed", "Permanent passive bonus"],
-                onBuy: () => {
+                id: "speed_mastery", name: "⚡ Speed Mastery", realPrice: "$9.99/mo", goldPrice: 8000, sub: true,
+                desc: "Gain +5% gathering and crafting speed. Stacks with equipment and pets.",
+                bought: !!storePurchases.speed_mastery,
+                perks: ["+5% gathering speed", "+5% crafting speed", "Monthly subscription"],
+                onGoldBuy: () => {
                   setStorePurchases(p => ({ ...p, speed_mastery: true }));
-                  addLog("⚡ Speed Mastery unlocked! +5% speed permanently.");
+                  addLog("⚡ Speed Mastery unlocked!");
                 },
               },
               {
-                id: "combat_mastery", name: "⚔️ Combat Mastery", price: 6000,
+                id: "combat_mastery", name: "⚔️ Combat Mastery", realPrice: "$9.99", goldPrice: 6000,
                 desc: "Permanently gain +5 ATK and +3 DEF. Become a stronger warrior.",
-                bought: !!storePurchases.combat_mastery, oneTime: true,
+                bought: !!storePurchases.combat_mastery,
                 perks: ["+5 ATK permanently", "+3 DEF permanently", "Stacks with gear & pets"],
-                onBuy: () => {
+                onGoldBuy: () => {
                   setStorePurchases(p => ({ ...p, combat_mastery: true }));
-                  addLog("⚔️ Combat Mastery unlocked! +5 ATK, +3 DEF permanently.");
+                  addLog("⚔️ Combat Mastery unlocked!");
                 },
               },
               {
-                id: "lucky_drops", name: "🍀 Lucky Drops", price: 12000,
-                desc: "Permanently increase monster drop rates by +10%. More loot from every kill!",
-                bought: !!storePurchases.lucky_drops, oneTime: true, requires: "premium",
-                perks: ["+10% drop rate on all monsters", "More crafting materials", "Stacks with everything"],
-                onBuy: () => {
+                id: "lucky_drops", name: "🍀 Lucky Drops", realPrice: "$9.99/mo", goldPrice: 12000, sub: true,
+                desc: "Increase monster drop rates by +10%. More loot from every kill!",
+                bought: !!storePurchases.lucky_drops, requires: "premium",
+                perks: ["+10% drop rate on all monsters", "More crafting materials", "Monthly subscription"],
+                onGoldBuy: () => {
                   setStorePurchases(p => ({ ...p, lucky_drops: true }));
-                  addLog("🍀 Lucky Drops unlocked! +10% monster drop rates.");
+                  addLog("🍀 Lucky Drops unlocked!");
                 },
               },
               {
-                id: "gold_rush", name: "💰 Gold Rush", price: 7000,
+                id: "gold_rush", name: "💰 Gold Rush", realPrice: "$9.99", goldPrice: 7000,
                 desc: "Permanently earn +15% more gold from combat and quest rewards.",
-                bought: !!storePurchases.gold_rush, oneTime: true,
+                bought: !!storePurchases.gold_rush,
                 perks: ["+15% gold from combat", "+15% gold from quests", "Passive income boost"],
-                onBuy: () => {
+                onGoldBuy: () => {
                   setStorePurchases(p => ({ ...p, gold_rush: true }));
-                  addLog("💰 Gold Rush unlocked! +15% gold from all sources.");
+                  addLog("💰 Gold Rush unlocked!");
                 },
               },
             ];
@@ -3408,7 +3491,7 @@ function GameUI({ account, initialSave, onLogout }) {
                   <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
                     <div>
                       <div style={{ fontSize: 20, fontWeight: 800, color: T.white }}>🏪 Store</div>
-                      <div style={{ fontSize: 12, color: T.textSoft, marginTop: 2 }}>Spend your hard-earned gold on upgrades and supplies</div>
+                      <div style={{ fontSize: 12, color: T.textSoft, marginTop: 2 }}>Buy with gold or support the game with real purchases</div>
                     </div>
                     <div style={{ textAlign: "right" }}>
                       <div style={{ fontSize: 22, fontWeight: 800, color: T.gold }}>💰 {fmt(gold)}</div>
@@ -3417,13 +3500,13 @@ function GameUI({ account, initialSave, onLogout }) {
                   </div>
                 </div>
 
-                {/* Upgrades Section */}
+                {/* Upgrades Grid */}
                 <Card>
                   <div style={{ fontSize: 14, fontWeight: 700, color: T.gold, marginBottom: 14 }}>⬆️ Permanent Upgrades</div>
                   <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))", gap: 12 }}>
-                    {STORE_ITEMS.filter(i => i.oneTime).map(item => {
-                      const locked = item.requires && !storePurchases[item.requires] && !(item.requires === "petslot2" && petSlots >= 2);
-                      const canAfford = gold >= item.price;
+                    {STORE_ITEMS.map(item => {
+                      const locked = item.requires && !storePurchases[item.requires] && !(item.requires === "petslot2" && petSlots >= 2) && !isPremium;
+                      const canAffordGold = gold >= item.goldPrice;
                       return (
                         <div key={item.id} style={{
                           padding: 16, borderRadius: 12,
@@ -3431,16 +3514,20 @@ function GameUI({ account, initialSave, onLogout }) {
                           border: `1px solid ${item.bought ? T.success + "30" : locked ? T.divider : T.cardBorder}`,
                           opacity: locked ? 0.5 : 1,
                         }}>
+                          {/* Header */}
                           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
-                            <div style={{ fontSize: 15, fontWeight: 700, color: item.bought ? T.success : T.white }}>{item.name}</div>
+                            <div style={{ fontSize: 14, fontWeight: 700, color: item.bought ? T.success : T.white }}>{item.name}</div>
                             {item.bought ? (
                               <span style={{ fontSize: 10, fontWeight: 800, color: T.success, background: T.successMuted, padding: "2px 8px", borderRadius: 6 }}>OWNED</span>
-                            ) : (
-                              <span style={{ fontSize: 13, fontWeight: 800, color: canAfford ? T.gold : T.danger }}>{item.price.toLocaleString()}g</span>
-                            )}
+                            ) : item.sub ? (
+                              <span style={{ fontSize: 10, fontWeight: 700, color: T.purple, background: T.purpleMuted, padding: "2px 8px", borderRadius: 6 }}>SUBSCRIPTION</span>
+                            ) : null}
                           </div>
+
                           <div style={{ fontSize: 11, color: T.textSoft, marginBottom: 10 }}>{item.desc}</div>
-                          <div style={{ display: "flex", flexWrap: "wrap", gap: 4, marginBottom: 10 }}>
+
+                          {/* Perks */}
+                          <div style={{ display: "flex", flexWrap: "wrap", gap: 4, marginBottom: 12 }}>
                             {item.perks.map((perk, i) => (
                               <span key={i} style={{
                                 fontSize: 10, padding: "2px 8px", borderRadius: 6,
@@ -3449,14 +3536,25 @@ function GameUI({ account, initialSave, onLogout }) {
                               }}>✓ {perk}</span>
                             ))}
                           </div>
+
+                          {/* Buy Buttons */}
                           {!item.bought && !locked && (
-                            <Btn color={canAfford ? T.gold : T.textDim} disabled={!canAfford} onClick={() => {
-                              if (gold < item.price) return;
-                              setGold(g => g - item.price);
-                              item.onBuy();
-                            }}>
-                              {canAfford ? `Buy for ${item.price.toLocaleString()}g` : "Not enough gold"}
-                            </Btn>
+                            <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                              {/* Real money button */}
+                              <Btn color={T.purple} onClick={() => handleStripeBuy(item.id)} style={{ flex: 1 }}>
+                                💳 {item.realPrice}
+                              </Btn>
+                              {/* Gold button */}
+                              <Btn color={canAffordGold ? T.gold : T.textDim} disabled={!canAffordGold}
+                                onClick={() => {
+                                  if (gold < item.goldPrice) return;
+                                  setGold(g => g - item.goldPrice);
+                                  item.onGoldBuy();
+                                }}
+                                style={{ flex: 1 }}>
+                                💰 {item.goldPrice.toLocaleString()}g
+                              </Btn>
+                            </div>
                           )}
                           {locked && <div style={{ fontSize: 10, color: T.warning }}>🔒 Requires: {STORE_ITEMS.find(s => s.id === item.requires)?.name}</div>}
                         </div>

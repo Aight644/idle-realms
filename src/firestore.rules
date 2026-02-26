@@ -1,0 +1,26 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // User saves — only owner can read/write
+    match /saves/{userId}/{document=**} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+    // Quest data — only owner
+    match /quests/{userId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+    // Shared data (market, chat, clans, parties) — any authenticated user
+    match /shared/{docId} {
+      allow read, write: if request.auth != null;
+    }
+    // Purchases — users can read their own, only Cloud Functions can write
+    match /purchases/{userId} {
+      allow read: if request.auth != null && request.auth.uid == userId;
+      allow write: if false; // Only Cloud Functions (admin SDK) can write
+    }
+    // Stripe customers — only Cloud Functions
+    match /stripe_customers/{userId} {
+      allow read, write: if false; // Only Cloud Functions
+    }
+  }
+}

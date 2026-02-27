@@ -619,7 +619,6 @@ function AuthScreen({ onLogin }) {
     setError("");
     const uname = username.trim().toLowerCase().replace(/[^a-z0-9_]/g, "");
     if (!uname || uname.length < 3 || uname.length > 16) return setError("Username must be 3-16 characters (letters, numbers, underscore)");
-    if (!displayName.trim() || displayName.length < 3) return setError("Display name must be at least 3 characters");
     if (!email.trim()) return setError("Please enter an email address");
     if (!password || password.length < 6) return setError("Password must be at least 6 characters");
     if (password !== confirmPw) return setError("Passwords do not match");
@@ -630,15 +629,15 @@ function AuthScreen({ onLogin }) {
       if (existing) { setError("Username already taken"); setLoading(false); return; }
 
       const cred = await createUserWithEmailAndPassword(auth, email.trim(), password);
-      await updateProfile(cred.user, { displayName: displayName.trim() });
+      await updateProfile(cred.user, { displayName: uname });
       // Reserve username globally (shared storage)
-      await window.storage.set(`username:${uname}`, JSON.stringify({ uid: cred.user.uid, displayName: displayName.trim() }), true);
+      await window.storage.set(`username:${uname}`, JSON.stringify({ uid: cred.user.uid }), true);
       // Save initial game data
       const save = DEFAULT_SAVE();
       await window.storage.set(`save:${uname}`, JSON.stringify(save));
       // Map uid -> username for login lookups
       await window.storage.set(`uidmap:${cred.user.uid}`, uname, true);
-      onLogin({ username: uname, displayName: displayName.trim(), email: email.trim(), uid: cred.user.uid, isGuest: false }, save);
+      onLogin({ username: uname, displayName: uname, email: email.trim(), uid: cred.user.uid, isGuest: false }, save);
     } catch (e) {
       const msg = e.code === "auth/email-already-in-use" ? "An account with this email already exists"
         : e.code === "auth/invalid-email" ? "Invalid email address"
@@ -675,7 +674,7 @@ function AuthScreen({ onLogin }) {
       }
       onLogin({
         username: uname,
-        displayName: cred.user.displayName || email.split("@")[0],
+        displayName: uname,
         email: cred.user.email,
         uid,
         isGuest: false,
@@ -767,11 +766,7 @@ function AuthScreen({ onLogin }) {
               <div>
                 <label style={labelStyle}>Username</label>
                 <input style={inputStyle} placeholder="unique_username" value={username} onChange={e => setUsername(e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, "").slice(0, 16))} />
-                <div style={{ fontSize: 10, color: T.textDim, marginTop: 3 }}>3-16 chars, letters/numbers/underscore only. This is permanent.</div>
-              </div>
-              <div>
-                <label style={labelStyle}>Display Name</label>
-                <input style={inputStyle} placeholder="Your character name" value={displayName} onChange={e => setDisplayName(e.target.value)} />
+                <div style={{ fontSize: 10, color: T.textDim, marginTop: 3 }}>3-16 chars, letters/numbers/underscore. This is your identity everywhere.</div>
               </div>
               <div>
                 <label style={labelStyle}>Email</label>
@@ -825,7 +820,7 @@ export default function IdleRealmsUI() {
         } catch { save = DEFAULT_SAVE(); }
         setAccount({
           username,
-          displayName: user.displayName || user.email?.split("@")[0] || "Adventurer",
+          displayName: username,
           email: user.email,
           uid: user.uid,
           isGuest: false,
@@ -1451,6 +1446,13 @@ function GameUI({ account, initialSave, onLogout }) {
   const [combatMode, setCombatMode] = useState("solo"); // solo | party
   const [combatZone, setCombatZone] = useState("meadow");
   const [achFilter, setAchFilter] = useState("all");
+  const [settingsTab, setSettingsTab] = useState("account");
+  const [newUsername, setNewUsername] = useState("");
+  const [newDisplayName, setNewDisplayName] = useState("");
+  const [nameTag, setNameTag] = useState(() => sv.nameTag || null);
+  const [nameColor, setNameColor] = useState(() => sv.nameColor || null);
+  const [profileBorder, setProfileBorder] = useState(() => sv.profileBorder || null);
+  const [deleteConfirm, setDeleteConfirm] = useState("");
   const [party, setParty] = useState(null); // { id, leader, monster, members, status, monsterHp, monsterMaxHp, combatLog }
   const [partyList, setPartyList] = useState([]);
   const [partyLoading, setPartyLoading] = useState(false);
@@ -1925,7 +1927,7 @@ function GameUI({ account, initialSave, onLogout }) {
   useEffect(() => {
     if (saveTimer.current) clearTimeout(saveTimer.current);
     saveTimer.current = setTimeout(async () => {
-      const save = { skills, inventory, equipped, pets, activePets, petSlots, isPremium, storePurchases, player, gold, stats, combatStats, craftStats, achievementsUnlocked, lastActiveTime: Date.now(), activeGather: activeGather || null, activeCombat: activeCombat ? { monsterIdx: MONSTERS.indexOf(activeCombat) } : null, activeCraft: activeCraft || null };
+      const save = { skills, inventory, equipped, pets, activePets, petSlots, isPremium, storePurchases, player, gold, stats, combatStats, craftStats, achievementsUnlocked, nameTag, nameColor, profileBorder, lastActiveTime: Date.now(), activeGather: activeGather || null, activeCombat: activeCombat ? { monsterIdx: MONSTERS.indexOf(activeCombat) } : null, activeCraft: activeCraft || null };
       try {
         await window.storage.set(`save:${account.username}`, JSON.stringify(save));
         setLastSaved(new Date());
@@ -2987,6 +2989,7 @@ function GameUI({ account, initialSave, onLogout }) {
             <SidebarItem icon="📊" label="Stats" active={page==="stats"} onClick={() => nav("stats")} color={T.info} />
             <SidebarItem icon="🏅" label="Achievements" active={page==="achievements"} onClick={() => nav("achievements")} color={T.gold} badge={`${Object.keys(achievementsUnlocked).length}/${ACHIEVEMENTS.length}`} />
             <SidebarItem icon="📜" label="Activity Log" active={page==="log"} onClick={() => nav("log")} color={T.textDim} />
+            <SidebarItem icon="⚙️" label="Settings" active={page==="settings"} onClick={() => nav("settings")} color={T.textSec} />
           </div>
         </nav>
 
@@ -4519,6 +4522,50 @@ function GameUI({ account, initialSave, onLogout }) {
                 bought: !!storePurchases.gold_rush,
                 perks: ["+15% gold from combat", "+15% gold from quests", "Passive income boost"],
               },
+              // ── Cosmetics ──
+              {
+                id: "name_change", name: "📝 Username Change Token", realPrice: "$4.99",
+                desc: "Change your username once. Token consumed on use.",
+                bought: !!storePurchases.name_change,
+                perks: ["Change username in Settings", "Case-insensitive unique check", "One-time use"],
+              },
+              {
+                id: "title_champion", name: "🏆 Title: Champion", realPrice: "$2.99",
+                desc: "Display a golden 'Champion' title tag next to your name in chat.",
+                bought: !!storePurchases.title_champion,
+                perks: ["[Champion] chat tag", "Gold colored name in chat", "Show off in leaderboards"],
+              },
+              {
+                id: "title_legend", name: "⚡ Title: Legend", realPrice: "$4.99",
+                desc: "Display a legendary purple 'Legend' title tag next to your name.",
+                bought: !!storePurchases.title_legend,
+                perks: ["[Legend] chat tag", "Purple colored name", "Requires Premium"],
+                requires: "premium",
+              },
+              {
+                id: "title_shadow", name: "🌑 Title: Shadow", realPrice: "$2.99",
+                desc: "A dark and mysterious 'Shadow' title for your name.",
+                bought: !!storePurchases.title_shadow,
+                perks: ["[Shadow] chat tag", "Dark themed name color"],
+              },
+              {
+                id: "color_rainbow", name: "🌈 Name Color: Rainbow", realPrice: "$3.99",
+                desc: "Your name cycles through rainbow colors in chat.",
+                bought: !!storePurchases.color_rainbow,
+                perks: ["Animated rainbow name in chat", "Visible in all channels"],
+              },
+              {
+                id: "border_flame", name: "🔥 Profile Border: Flame", realPrice: "$2.99",
+                desc: "Fiery animated border around your profile avatar.",
+                bought: !!storePurchases.border_flame,
+                perks: ["Flame border on profile", "Visible in player lookups"],
+              },
+              {
+                id: "expansion_pack", name: "📦 Resource Expansion", realPrice: "$14.99",
+                desc: "Massive resource bundle for mid-game acceleration.",
+                bought: !!storePurchases.expansion_pack,
+                perks: ["25× Mithril Ore", "15× Elder Log", "10× Raw Shark", "8× Dragon Scale", "5× Shadow Dust", "3000g"],
+              },
             ];
 
             return (
@@ -5861,6 +5908,240 @@ function GameUI({ account, initialSave, onLogout }) {
                     );
                   })}
                 </div>
+              </div>
+            );
+          })()}
+
+          {/* ════ SETTINGS ════ */}
+          {page === "settings" && (() => {
+            const TITLES = [
+              { id: null, label: "None", color: T.textSec },
+              ...(storePurchases.title_champion ? [{ id: "Champion", label: "[Champion]", color: T.gold }] : []),
+              ...(storePurchases.title_legend ? [{ id: "Legend", label: "[Legend]", color: T.purple }] : []),
+              ...(storePurchases.title_shadow ? [{ id: "Shadow", label: "[Shadow]", color: "#555" }] : []),
+            ];
+            const NAME_COLORS = [
+              { id: null, label: "Default", color: T.white },
+              ...(storePurchases.title_champion ? [{ id: T.gold, label: "Gold", color: T.gold }] : []),
+              ...(storePurchases.title_legend ? [{ id: T.purple, label: "Purple", color: T.purple }] : []),
+              ...(storePurchases.title_shadow ? [{ id: "#888", label: "Shadow", color: "#888" }] : []),
+              ...(storePurchases.color_rainbow ? [{ id: "rainbow", label: "🌈 Rainbow", color: T.accent }] : []),
+            ];
+            const BORDERS = [
+              { id: null, label: "None" },
+              ...(storePurchases.border_flame ? [{ id: "flame", label: "🔥 Flame" }] : []),
+            ];
+            const tabs = [
+              { id: "account", label: "Account", icon: "👤" },
+              { id: "cosmetics", label: "Cosmetics", icon: "🎨" },
+              { id: "danger", label: "Danger Zone", icon: "⚠️" },
+            ];
+
+            return (
+              <div>
+                <PageTitle icon="⚙️" title="Settings" subtitle="Account & customization" />
+
+                {/* Tabs */}
+                <div style={{ display: "flex", gap: 5, marginBottom: 16 }}>
+                  {tabs.map(t => (
+                    <div key={t.id} onClick={() => setSettingsTab(t.id)} style={{
+                      padding: "7px 14px", borderRadius: 6, cursor: "pointer", fontSize: 12, fontWeight: 600,
+                      background: settingsTab === t.id ? T.accent + "20" : T.bgDeep,
+                      color: settingsTab === t.id ? T.accent : T.textSec,
+                      border: `1px solid ${settingsTab === t.id ? T.accent + "40" : T.divider}`,
+                    }}>{t.icon} {t.label}</div>
+                  ))}
+                </div>
+
+                {/* ── Account Tab ── */}
+                {settingsTab === "account" && (
+                  <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+                    <Card>
+                      <div style={{ fontSize: 13, fontWeight: 700, color: T.white, marginBottom: 12 }}>👤 Account Info</div>
+                      <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                        <div style={{ display: "flex", justifyContent: "space-between", padding: "6px 0", borderBottom: `1px solid ${T.divider}` }}>
+                          <span style={{ fontSize: 12, color: T.textSec }}>Username</span>
+                          <span style={{ fontSize: 12, fontWeight: 700, color: T.accent }}>@{account.username}</span>
+                        </div>
+                        <div style={{ display: "flex", justifyContent: "space-between", padding: "6px 0", borderBottom: `1px solid ${T.divider}` }}>
+                          <span style={{ fontSize: 12, color: T.textSec }}>Email</span>
+                          <span style={{ fontSize: 12, color: T.textDim }}>{account.email || "N/A"}</span>
+                        </div>
+                        <div style={{ display: "flex", justifyContent: "space-between", padding: "6px 0" }}>
+                          <span style={{ fontSize: 12, color: T.textSec }}>Premium</span>
+                          <span style={{ fontSize: 12, fontWeight: 700, color: isPremium ? T.gold : T.textDim }}>{isPremium ? "⭐ Active" : "Free"}</span>
+                        </div>
+                      </div>
+                    </Card>
+
+                    {/* Change Username */}
+                    <Card>
+                      <div style={{ fontSize: 13, fontWeight: 700, color: T.white, marginBottom: 8 }}>📝 Change Username</div>
+                      {storePurchases.name_change ? (
+                        <div>
+                          <div style={{ fontSize: 11, color: T.textDim, marginBottom: 8 }}>You have a username change token. Enter your new username below.</div>
+                          <div style={{ display: "flex", gap: 8 }}>
+                            <input value={newUsername} onChange={e => setNewUsername(e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, "").slice(0, 16))}
+                              placeholder="new_username" style={{ flex: 1, padding: "8px 12px", background: T.bgDeep, border: `1px solid ${T.border}`, borderRadius: 8, color: T.text, fontSize: 12, outline: "none" }} />
+                            <Btn color={T.accent} small onClick={async () => {
+                              const uname = newUsername.trim();
+                              if (!uname || uname.length < 3) { addLog("❌ Username must be 3+ characters"); return; }
+                              try {
+                                const existing = await window.storage.get(`username:${uname}`, true);
+                                if (existing) { addLog("❌ Username already taken"); return; }
+                                // Release old, reserve new
+                                await window.storage.delete(`username:${account.username}`, true);
+                                await window.storage.set(`username:${uname}`, JSON.stringify({ uid: account.uid, displayName: account.displayName }), true);
+                                await window.storage.set(`uidmap:${account.uid}`, uname, true);
+                                // Migrate save
+                                const saveRaw = await window.storage.get(`save:${account.username}`);
+                                if (saveRaw) { await window.storage.set(`save:${uname}`, saveRaw.value); await window.storage.delete(`save:${account.username}`); }
+                                // Migrate friends key
+                                try { const fr = await window.storage.get(`friends:${account.username}`); if (fr) { await window.storage.set(`friends:${uname}`, fr.value); } } catch {}
+                                setStorePurchases(p => { const n = {...p}; delete n.name_change; return n; });
+                                addLog(`✅ Username changed to @${uname}! Please re-login.`);
+                                setNewUsername("");
+                              } catch { addLog("❌ Failed to change username"); }
+                            }}>Change</Btn>
+                          </div>
+                        </div>
+                      ) : (
+                        <div style={{ fontSize: 11, color: T.textDim }}>Purchase a <span style={{ color: T.gold }}>Username Change Token</span> from the Store to change your username.</div>
+                      )}
+                    </Card>
+
+                    </Card>
+                  </div>
+                )}
+
+                {/* ── Cosmetics Tab ── */}
+                {settingsTab === "cosmetics" && (
+                  <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+                    <Card>
+                      <div style={{ fontSize: 13, fontWeight: 700, color: T.white, marginBottom: 4 }}>🎨 Chat Title Tag</div>
+                      <div style={{ fontSize: 11, color: T.textDim, marginBottom: 10 }}>Shows before your name in chat. Buy titles in the Store.</div>
+                      <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+                        {TITLES.map(t => (
+                          <div key={t.id || "none"} onClick={() => setNameTag(t.id)} style={{
+                            padding: "6px 14px", borderRadius: 6, cursor: "pointer", fontSize: 12, fontWeight: 700,
+                            background: nameTag === t.id ? t.color + "20" : T.bgDeep,
+                            color: t.color, border: `1px solid ${nameTag === t.id ? t.color + "50" : T.divider}`,
+                          }}>{t.label}</div>
+                        ))}
+                      </div>
+                      {TITLES.length <= 1 && <div style={{ fontSize: 10, color: T.textDim, marginTop: 6 }}>Buy title cosmetics from the Store to unlock options.</div>}
+                    </Card>
+
+                    <Card>
+                      <div style={{ fontSize: 13, fontWeight: 700, color: T.white, marginBottom: 4 }}>🌈 Name Color</div>
+                      <div style={{ fontSize: 11, color: T.textDim, marginBottom: 10 }}>Change your name color in chat.</div>
+                      <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+                        {NAME_COLORS.map(c => (
+                          <div key={c.id || "none"} onClick={() => setNameColor(c.id)} style={{
+                            padding: "6px 14px", borderRadius: 6, cursor: "pointer", fontSize: 12, fontWeight: 700,
+                            background: nameColor === c.id ? c.color + "20" : T.bgDeep,
+                            color: c.color, border: `1px solid ${nameColor === c.id ? c.color + "50" : T.divider}`,
+                          }}>{c.label}</div>
+                        ))}
+                      </div>
+                    </Card>
+
+                    <Card>
+                      <div style={{ fontSize: 13, fontWeight: 700, color: T.white, marginBottom: 4 }}>🖼️ Profile Border</div>
+                      <div style={{ fontSize: 11, color: T.textDim, marginBottom: 10 }}>Style your avatar border.</div>
+                      <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+                        {BORDERS.map(b => (
+                          <div key={b.id || "none"} onClick={() => setProfileBorder(b.id)} style={{
+                            padding: "6px 14px", borderRadius: 6, cursor: "pointer", fontSize: 12, fontWeight: 600,
+                            background: profileBorder === b.id ? T.accent + "20" : T.bgDeep,
+                            color: profileBorder === b.id ? T.accent : T.textSec,
+                            border: `1px solid ${profileBorder === b.id ? T.accent + "50" : T.divider}`,
+                          }}>{b.label}</div>
+                        ))}
+                      </div>
+                    </Card>
+
+                    {/* Preview */}
+                    <Card>
+                      <div style={{ fontSize: 13, fontWeight: 700, color: T.white, marginBottom: 10 }}>👁️ Chat Preview</div>
+                      <div style={{ padding: "10px 14px", background: T.bgDeep, borderRadius: 10, display: "flex", alignItems: "center", gap: 8 }}>
+                        <div style={{
+                          width: 32, height: 32, borderRadius: "50%", background: T.accent + "20",
+                          display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14, fontWeight: 800,
+                          color: T.accent, border: profileBorder === "flame" ? `2px solid ${T.orange}` : `2px solid ${T.accent}30`,
+                          boxShadow: profileBorder === "flame" ? `0 0 8px ${T.orange}40` : "none",
+                        }}>{(account.displayName || "?")[0]?.toUpperCase()}</div>
+                        <div>
+                          <span style={{ fontSize: 12 }}>
+                            {nameTag && <span style={{ fontWeight: 800, color: TITLES.find(t => t.id === nameTag)?.color || T.textSec, marginRight: 4 }}>[{nameTag}]</span>}
+                            <span style={{ fontWeight: 700, color: nameColor || T.white }}>{account.displayName}</span>
+                          </span>
+                          <div style={{ fontSize: 11, color: T.textDim }}>Hello, this is a preview message!</div>
+                        </div>
+                      </div>
+                    </Card>
+                  </div>
+                )}
+
+                {/* ── Danger Zone Tab ── */}
+                {settingsTab === "danger" && (
+                  <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+                    <Card style={{ border: `1px solid ${T.danger}30` }}>
+                      <div style={{ fontSize: 13, fontWeight: 700, color: T.danger, marginBottom: 12 }}>⚠️ Danger Zone</div>
+
+                      {/* Reset Stats */}
+                      <div style={{ padding: "12px 0", borderBottom: `1px solid ${T.divider}` }}>
+                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                          <div>
+                            <div style={{ fontSize: 12, fontWeight: 600, color: T.white }}>Reset Statistics</div>
+                            <div style={{ fontSize: 10, color: T.textDim }}>Clears all stat counters. Skills, inventory, and gold are kept.</div>
+                          </div>
+                          <Btn color={T.orange} small onClick={() => {
+                            if (!confirm("Reset all statistics? This cannot be undone.")) return;
+                            setStats(s => ({ ...s, gathered: 0, totalXpEarned: 0, itemsSold: 0, goldEarned: 0, goldSpent: 0, timePlayed: 0 }));
+                            setCombatStats({ kills: 0, totalDamage: 0, deaths: 0 });
+                            setCraftStats({ crafted: 0 });
+                            addLog("📊 Statistics reset");
+                          }}>Reset</Btn>
+                        </div>
+                      </div>
+
+                      {/* Permanently Delete Account */}
+                      <div style={{ padding: "12px 0" }}>
+                        <div style={{ fontSize: 12, fontWeight: 600, color: T.danger, marginBottom: 4 }}>Permanently Delete Account</div>
+                        <div style={{ fontSize: 10, color: T.textDim, marginBottom: 10 }}>
+                          This will permanently delete all your data, skills, inventory, friends, and clan membership.
+                          <strong style={{ color: T.danger }}> This cannot be undone.</strong>
+                        </div>
+                        <div style={{ fontSize: 11, color: T.textDim, marginBottom: 8 }}>
+                          Type <span style={{ color: T.danger, fontWeight: 700 }}>DELETE</span> to confirm:
+                        </div>
+                        <div style={{ display: "flex", gap: 8 }}>
+                          <input value={deleteConfirm} onChange={e => setDeleteConfirm(e.target.value)}
+                            placeholder="Type DELETE" style={{ flex: 1, padding: "8px 12px", background: T.bgDeep, border: `1px solid ${T.danger}30`, borderRadius: 8, color: T.danger, fontSize: 12, outline: "none" }} />
+                          <Btn color={T.danger} small onClick={async () => {
+                            if (deleteConfirm !== "DELETE") { addLog("❌ Type DELETE to confirm"); return; }
+                            if (!confirm("FINAL WARNING: This will permanently delete your account and ALL data. Are you absolutely sure?")) return;
+                            try {
+                              // Delete save, friends, username reservation, uid map
+                              await window.storage.delete(`save:${account.username}`);
+                              await window.storage.delete(`friends:${account.username}`);
+                              await window.storage.delete(`blocked:${account.username}`);
+                              await window.storage.delete(`freq:${account.username}`);
+                              await window.storage.delete(`freqsent:${account.username}`);
+                              await window.storage.delete(`username:${account.username}`, true);
+                              await window.storage.delete(`uidmap:${account.uid}`, true);
+                              await window.storage.delete(`lb:${account.username}`, true);
+                              await window.storage.delete(`sessions/${account.uid}`);
+                              addLog("Account deleted. Signing out...");
+                              setTimeout(() => window.location.reload(), 1500);
+                            } catch { addLog("❌ Failed to delete account"); }
+                          }} disabled={deleteConfirm !== "DELETE"}>Delete Forever</Btn>
+                        </div>
+                      </div>
+                    </Card>
+                  </div>
+                )}
               </div>
             );
           })()}

@@ -2552,6 +2552,46 @@ function GameUI({ account, initialSave, onLogout }) {
     return () => clearInterval(iv);
   }, [page, fetchFriendRequests]);
 
+  // ─── ONLINE PRESENCE ───
+  const [onlineUsers, setOnlineUsers] = useState(new Set());
+
+  // Heartbeat: write our presence every 30s
+  useEffect(() => {
+    const beat = async () => {
+      try {
+        await window.storage.set(`presence:${account.username}`, JSON.stringify({ t: Date.now(), displayName: account.displayName }), true);
+      } catch {}
+    };
+    beat();
+    const iv = setInterval(beat, 30000);
+    return () => clearInterval(iv);
+  }, [account.username, account.displayName]);
+
+  // Poll online status of clan members + friends every 15s
+  useEffect(() => {
+    const checkOnline = async () => {
+      const usernames = new Set();
+      clanMembers.forEach(m => usernames.add(m.username));
+      friendsList.forEach(f => usernames.add(f.username));
+      const now = Date.now();
+      const online = new Set();
+      for (const u of usernames) {
+        try {
+          const raw = await window.storage.get(`presence:${u}`, true);
+          if (raw) {
+            const data = JSON.parse(raw.value);
+            if (now - data.t < 120000) online.add(u); // 2 min threshold
+          }
+        } catch {}
+      }
+      online.add(account.username); // always show self as online
+      setOnlineUsers(online);
+    };
+    checkOnline();
+    const iv = setInterval(checkOnline, 15000);
+    return () => clearInterval(iv);
+  }, [clanMembers, friendsList, account.username]);
+
   const sendFriendRequest = useCallback(async (targetName) => {
     if (!targetName.trim() || targetName.trim() === account.username) return;
     const name = targetName.trim();
@@ -4978,13 +5018,22 @@ function GameUI({ account, initialSave, onLogout }) {
                         </div>
                       ) : friendsList.length > 0 && (
                         <>
-                        <div style={{ fontSize: 12, fontWeight: 700, color: T.success, marginBottom: 8 }}>👥 Friends ({friendsList.length})</div>
+                        <div style={{ fontSize: 12, fontWeight: 700, color: T.success, marginBottom: 8 }}>👥 Friends ({friendsList.filter(f => onlineUsers.has(f.username)).length} online / {friendsList.length})</div>
                         {friendsList.map((f, i) => {
                           const lb = lbData.find(e => e.username === f.username || e.displayName === f.username);
                           return (
                             <div key={i} style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 12px", marginBottom: 6, background: T.card, borderRadius: 10, border: `1px solid ${T.border}` }}>
-                              <div style={{ width: 36, height: 36, borderRadius: "50%", background: T.accent + "20", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16, fontWeight: 800, color: T.accent }}>
-                                {f.username[0]?.toUpperCase()}
+                              <div style={{ position: "relative", flexShrink: 0 }}>
+                                <div style={{ width: 36, height: 36, borderRadius: "50%", background: T.accent + "20", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16, fontWeight: 800, color: T.accent }}>
+                                  {f.username[0]?.toUpperCase()}
+                                </div>
+                                <div style={{
+                                  position: "absolute", bottom: -1, right: -1,
+                                  width: 11, height: 11, borderRadius: "50%",
+                                  background: onlineUsers.has(f.username) ? T.success : "#555",
+                                  border: `2px solid ${T.card}`,
+                                  boxShadow: onlineUsers.has(f.username) ? `0 0 6px ${T.success}60` : "none",
+                                }} />
                               </div>
                               <div style={{ flex: 1 }}>
                                 <div style={{ fontSize: 13, fontWeight: 700, color: T.white }}>{f.username}</div>
@@ -5310,6 +5359,13 @@ function GameUI({ account, initialSave, onLogout }) {
                       )}
 
                       <Card>
+                        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 0 8px 0", marginBottom: 4, borderBottom: `1px solid ${T.divider}` }}>
+                          <div style={{ fontSize: 13, fontWeight: 700, color: T.white }}>👥 Members ({clanMembers.length})</div>
+                          <div style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 11, fontWeight: 600, color: T.success }}>
+                            <div style={{ width: 7, height: 7, borderRadius: "50%", background: T.success, boxShadow: `0 0 6px ${T.success}60` }} />
+                            {clanMembers.filter(m => onlineUsers.has(m.username)).length} online
+                          </div>
+                        </div>
                         {clanMembers.map((m, i) => {
                           const isMe = m.username === account.username;
                           const lb = lbData.find(e => e.displayName === m.displayName);
@@ -5322,12 +5378,21 @@ function GameUI({ account, initialSave, onLogout }) {
                               borderBottom: i < clanMembers.length - 1 ? `1px solid ${T.divider}` : "none",
                               background: isMe ? T.accent + "08" : "transparent",
                             }}>
-                              <div style={{
-                                width: 30, height: 30, borderRadius: 99, flexShrink: 0,
-                                background: roleColor + "20",
-                                display: "flex", alignItems: "center", justifyContent: "center",
-                                fontSize: 12, fontWeight: 700, color: roleColor,
-                              }}>{(m.displayName || "?")[0].toUpperCase()}</div>
+                              <div style={{ position: "relative", flexShrink: 0 }}>
+                                <div style={{
+                                  width: 30, height: 30, borderRadius: 99,
+                                  background: roleColor + "20",
+                                  display: "flex", alignItems: "center", justifyContent: "center",
+                                  fontSize: 12, fontWeight: 700, color: roleColor,
+                                }}>{(m.displayName || "?")[0].toUpperCase()}</div>
+                                <div style={{
+                                  position: "absolute", bottom: -1, right: -1,
+                                  width: 10, height: 10, borderRadius: "50%",
+                                  background: onlineUsers.has(m.username) ? T.success : "#555",
+                                  border: `2px solid ${T.card}`,
+                                  boxShadow: onlineUsers.has(m.username) ? `0 0 6px ${T.success}60` : "none",
+                                }} />
+                              </div>
                               <div style={{ flex: 1, minWidth: 0 }}>
                                 <div style={{ fontSize: 12, fontWeight: 600, color: isMe ? T.accent : T.white }}>
                                   {m.displayName}{isMe && <span style={{ fontSize: 9, color: T.accent, marginLeft: 4 }}>(you)</span>}

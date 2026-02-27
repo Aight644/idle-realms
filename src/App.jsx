@@ -624,6 +624,7 @@ function AuthScreen({ onLogin }) {
     try {
       const cred = await createUserWithEmailAndPassword(auth, email.trim(), password);
       await updateProfile(cred.user, { displayName: displayName.trim() });
+      // Save initial game data
       const save = DEFAULT_SAVE();
       const uid = cred.user.uid;
       const username = uid;
@@ -784,31 +785,32 @@ export default function IdleRealmsUI() {
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, async (user) => {
       if (user) {
-          const username = user.uid;
+        const username = user.uid;
 
-          await setDoc(doc(db, "sessions", username), {
-            sessionId: SESSION_ID,
-            loginAt: serverTimestamp(),
-          });
+        // Write our session to Firestore
+        await setDoc(doc(db, "sessions", username), {
+          sessionId: SESSION_ID,
+          loginAt: serverTimestamp(),
+        });
 
-          let save;
-          try {
-            const sr = await window.storage.get(`save:${username}`);
-            save = JSON.parse(sr.value);
-          } catch { save = DEFAULT_SAVE(); }
-          setAccount({
-            username,
-            displayName: user.displayName || user.email?.split("@")[0] || "Adventurer",
-            email: user.email,
-            uid: user.uid,
-            isGuest: false,
-          });
-          setInitialSave(save);
-          setKicked(false);
-        } else {
-          setAccount(null);
-          setInitialSave(null);
-        }
+        let save;
+        try {
+          const sr = await window.storage.get(`save:${username}`);
+          save = JSON.parse(sr.value);
+        } catch { save = DEFAULT_SAVE(); }
+        setAccount({
+          username,
+          displayName: user.displayName || user.email?.split("@")[0] || "Adventurer",
+          email: user.email,
+          uid: user.uid,
+          isGuest: false,
+        });
+        setInitialSave(save);
+        setKicked(false);
+      } else {
+        setAccount(null);
+        setInitialSave(null);
+      }
       setAuthChecked(true);
     });
     return () => unsub();
@@ -4750,7 +4752,7 @@ function GameUI({ account, initialSave, onLogout }) {
                             onKeyDown={e => { if (e.key === "Enter" && friendInput.trim()) { addFriend(friendInput); } if (e.key === "Escape") setFriendInput(""); }}
                             placeholder="Search players..."
                             style={{ flex: 1, padding: "8px 12px", background: T.bgDeep, border: `1px solid ${T.border}`, borderRadius: 8, color: T.text, fontSize: 12, outline: "none" }} />
-                          <Btn color={T.success} small onClick={() => addFriend(friendInput)}>Request</Btn>
+                          <Btn color={T.success} small onClick={() => addFriend(friendInput)}>Add</Btn>
                         </div>
                         {friendInput.trim().length >= 1 && (() => {
                           const q = friendInput.trim().toLowerCase();
@@ -4768,7 +4770,7 @@ function GameUI({ account, initialSave, onLogout }) {
                               boxShadow: "0 8px 24px rgba(0,0,0,0.4)", overflow: "hidden", maxHeight: 220, overflowY: "auto",
                             }}>
                               {suggestions.map((s, i) => (
-                                <div key={i} onMouseDown={e => { e.preventDefault(); addFriend(s.username); setFriendInput(""); }}
+                                <div key={i} onClick={() => { addFriend(s.username); setFriendInput(""); }}
                                   style={{
                                     display: "flex", alignItems: "center", gap: 10, padding: "10px 14px",
                                     cursor: "pointer", borderBottom: `1px solid ${T.divider}`,
@@ -5085,7 +5087,7 @@ function GameUI({ account, initialSave, onLogout }) {
                                   boxShadow: "0 8px 24px rgba(0,0,0,0.4)", overflow: "hidden",
                                 }}>
                                   {suggestions.map((s, i) => (
-                                    <div key={i} onMouseDown={e => { e.preventDefault(); setClanInviteUser(s.username); }}
+                                    <div key={i} onClick={() => { setClanInviteUser(s.username); }}
                                       style={{
                                         display: "flex", alignItems: "center", gap: 10, padding: "8px 12px",
                                         cursor: "pointer", borderBottom: `1px solid ${T.divider}`,
@@ -5667,6 +5669,7 @@ function GameUI({ account, initialSave, onLogout }) {
 
         </div>
       </div>
+
       <style>{`
         * { box-sizing: border-box; margin: 0; }
         body { margin: 0; background: ${T.bg}; overflow: hidden; }

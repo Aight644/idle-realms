@@ -73,17 +73,65 @@ const SKILLS_CONFIG = {
 const xpForLevel = (lvl) => Math.floor(50 * Math.pow(lvl, 1.8));
 const SKILL_IDS = Object.keys(SKILLS_CONFIG);
 
+const COMBAT_ZONES = [
+  { id: "meadow", name: "Sunlit Meadow", emoji: "🌾", lvl: 1, desc: "Where all adventurers begin", color: "#8bc34a" },
+  { id: "caves", name: "Darkstone Caves", emoji: "🕳️", lvl: 8, desc: "Damp tunnels crawling with beasts", color: "#78909c" },
+  { id: "swamp", name: "Rotwood Swamp", emoji: "🌿", lvl: 18, desc: "Toxic bogs and cursed creatures", color: "#689f38" },
+  { id: "ruins", name: "Shattered Ruins", emoji: "🏛️", lvl: 28, desc: "Ancient battlefields of a lost empire", color: "#8d6e63" },
+  { id: "volcano", name: "Emberpeak Volcano", emoji: "🌋", lvl: 40, desc: "Molten caverns and fire dwellers", color: "#ff5722" },
+  { id: "abyss", name: "The Hollow Abyss", emoji: "🕳️", lvl: 55, desc: "Where light itself fears to tread", color: "#4a148c" },
+  { id: "titan", name: "Titan's Domain", emoji: "⚡", lvl: 70, desc: "Realm of ancient god-beasts", color: "#ffd600" },
+];
+
 const MONSTERS = [
-  { name: "Slime", emoji: "🟢", lvl: 1, hp: 10, atk: 1, def: 0, speed: 2500, xpR: 5, goldR: 2, drops: [{ item: "Slime Gel", pct: 40 }] },
-  { name: "Rat", emoji: "🐀", lvl: 1, hp: 15, atk: 2, def: 1, speed: 2200, xpR: 8, goldR: 3, drops: [{ item: "Rat Tail", pct: 35 }] },
-  { name: "Goblin", emoji: "👺", lvl: 3, hp: 30, atk: 4, def: 2, speed: 2800, xpR: 15, goldR: 8, drops: [{ item: "Goblin Ear", pct: 25 }, { item: "Herb", pct: 20 }] },
-  { name: "Skeleton", emoji: "💀", lvl: 5, hp: 45, atk: 6, def: 4, speed: 3000, xpR: 25, goldR: 12, drops: [{ item: "Bone", pct: 35 }, { item: "Shadow Dust", pct: 10 }] },
-  { name: "Wolf", emoji: "🐺", lvl: 8, hp: 60, atk: 8, def: 3, speed: 1800, xpR: 35, goldR: 15, drops: [{ item: "Wolf Pelt", pct: 30 }, { item: "Beast Fang", pct: 15 }] },
-  { name: "Orc", emoji: "👹", lvl: 12, hp: 100, atk: 12, def: 8, speed: 3200, xpR: 60, goldR: 30, drops: [{ item: "Orc Tooth", pct: 20 }, { item: "Thick Hide", pct: 15 }] },
-  { name: "Dark Mage", emoji: "🧙", lvl: 16, hp: 80, atk: 18, def: 5, speed: 3500, xpR: 80, goldR: 45, drops: [{ item: "Mana Crystal", pct: 20 }, { item: "Shadow Dust", pct: 25 }] },
-  { name: "Dragon", emoji: "🐉", lvl: 25, hp: 250, atk: 30, def: 20, speed: 4000, xpR: 200, goldR: 100, drops: [{ item: "Dragon Scale", pct: 15 }, { item: "Dragon Fang", pct: 10 }] },
-  { name: "Elder Lich", emoji: "☠️", lvl: 30, hp: 500, atk: 35, def: 15, speed: 3000, xpR: 500, goldR: 200, drops: [{ item: "Shadow Dust", pct: 50 }, { item: "Mana Crystal", pct: 40 }, { item: "Dragon Scale", pct: 8 }], boss: true },
-  { name: "World Serpent", emoji: "🐍", lvl: 40, hp: 1000, atk: 50, def: 30, speed: 3500, xpR: 1200, goldR: 500, drops: [{ item: "Dragon Scale", pct: 30 }, { item: "Dragon Fang", pct: 20 }, { item: "Mana Crystal", pct: 50 }], boss: true },
+  // ── Sunlit Meadow (Lv 1-7) ──
+  { name: "Slime", emoji: "🟢", lvl: 1, hp: 10, atk: 1, def: 0, speed: 2500, xpR: 5, goldR: 2, zone: "meadow", drops: [{ item: "Slime Gel", pct: 40 }] },
+  { name: "Rat", emoji: "🐀", lvl: 1, hp: 15, atk: 2, def: 1, speed: 2200, xpR: 8, goldR: 3, zone: "meadow", drops: [{ item: "Rat Tail", pct: 35 }] },
+  { name: "Goblin", emoji: "👺", lvl: 3, hp: 30, atk: 4, def: 2, speed: 2800, xpR: 15, goldR: 8, zone: "meadow", drops: [{ item: "Goblin Ear", pct: 25 }, { item: "Herb", pct: 20 }] },
+  { name: "Skeleton", emoji: "💀", lvl: 5, hp: 45, atk: 6, def: 4, speed: 3000, xpR: 25, goldR: 12, zone: "meadow", drops: [{ item: "Bone", pct: 35 }, { item: "Shadow Dust", pct: 10 }] },
+  { name: "Meadow Golem", emoji: "🗿", lvl: 7, hp: 80, atk: 8, def: 8, speed: 3500, xpR: 40, goldR: 18, zone: "meadow", boss: true, drops: [{ item: "Mana Crystal", pct: 25 }, { item: "Herb", pct: 40 }] },
+
+  // ── Darkstone Caves (Lv 8-17) ──
+  { name: "Wolf", emoji: "🐺", lvl: 8, hp: 60, atk: 8, def: 3, speed: 1800, xpR: 35, goldR: 15, zone: "caves", drops: [{ item: "Wolf Pelt", pct: 30 }, { item: "Beast Fang", pct: 15 }] },
+  { name: "Cave Spider", emoji: "🕷️", lvl: 10, hp: 50, atk: 10, def: 2, speed: 1600, xpR: 42, goldR: 18, zone: "caves", drops: [{ item: "Spider Silk", pct: 30 }, { item: "Venom Sac", pct: 12 }] },
+  { name: "Orc", emoji: "👹", lvl: 12, hp: 100, atk: 12, def: 8, speed: 3200, xpR: 60, goldR: 30, zone: "caves", drops: [{ item: "Orc Tooth", pct: 20 }, { item: "Thick Hide", pct: 15 }] },
+  { name: "Stone Troll", emoji: "🪨", lvl: 15, hp: 150, atk: 14, def: 12, speed: 3800, xpR: 75, goldR: 35, zone: "caves", drops: [{ item: "Troll Blood", pct: 18 }, { item: "Iron Ore", pct: 25 }] },
+  { name: "Cave Wyrm", emoji: "🐛", lvl: 17, hp: 200, atk: 18, def: 10, speed: 3200, xpR: 100, goldR: 50, zone: "caves", boss: true, drops: [{ item: "Wyrm Fang", pct: 20 }, { item: "Mana Crystal", pct: 30 }] },
+
+  // ── Rotwood Swamp (Lv 18-27) ──
+  { name: "Bog Lurker", emoji: "🐸", lvl: 18, hp: 130, atk: 16, def: 8, speed: 2800, xpR: 85, goldR: 40, zone: "swamp", drops: [{ item: "Swamp Mucus", pct: 30 }, { item: "Herb", pct: 20 }] },
+  { name: "Dark Mage", emoji: "🧙", lvl: 20, hp: 100, atk: 22, def: 6, speed: 3500, xpR: 100, goldR: 50, zone: "swamp", drops: [{ item: "Mana Crystal", pct: 22 }, { item: "Shadow Dust", pct: 25 }] },
+  { name: "Venomfang", emoji: "🐍", lvl: 22, hp: 160, atk: 20, def: 10, speed: 2200, xpR: 120, goldR: 55, zone: "swamp", drops: [{ item: "Venom Sac", pct: 25 }, { item: "Snake Scale", pct: 15 }] },
+  { name: "Plague Bearer", emoji: "🤢", lvl: 25, hp: 200, atk: 24, def: 12, speed: 3000, xpR: 150, goldR: 70, zone: "swamp", drops: [{ item: "Cursed Bone", pct: 18 }, { item: "Shadow Dust", pct: 20 }] },
+  { name: "Swamp Hydra", emoji: "🐲", lvl: 27, hp: 350, atk: 28, def: 16, speed: 3400, xpR: 220, goldR: 100, zone: "swamp", boss: true, drops: [{ item: "Hydra Crest", pct: 15 }, { item: "Dragon Scale", pct: 10 }, { item: "Mana Crystal", pct: 35 }] },
+
+  // ── Shattered Ruins (Lv 28-39) ──
+  { name: "Haunted Armor", emoji: "🛡️", lvl: 28, hp: 280, atk: 22, def: 22, speed: 3600, xpR: 180, goldR: 80, zone: "ruins", drops: [{ item: "Enchanted Plate", pct: 12 }, { item: "Iron Ore", pct: 30 }] },
+  { name: "Wraith", emoji: "👻", lvl: 32, hp: 220, atk: 30, def: 8, speed: 2400, xpR: 240, goldR: 95, zone: "ruins", drops: [{ item: "Shadow Dust", pct: 35 }, { item: "Cursed Bone", pct: 20 }] },
+  { name: "Golem", emoji: "🗿", lvl: 35, hp: 400, atk: 28, def: 25, speed: 4000, xpR: 300, goldR: 120, zone: "ruins", drops: [{ item: "Golem Core", pct: 15 }, { item: "Mithril Ore", pct: 18 }] },
+  { name: "Dragon", emoji: "🐉", lvl: 38, hp: 350, atk: 35, def: 22, speed: 3500, xpR: 380, goldR: 150, zone: "ruins", drops: [{ item: "Dragon Scale", pct: 18 }, { item: "Dragon Fang", pct: 12 }] },
+  { name: "Elder Lich", emoji: "☠️", lvl: 39, hp: 500, atk: 38, def: 18, speed: 3000, xpR: 500, goldR: 200, zone: "ruins", boss: true, drops: [{ item: "Lich Crown", pct: 10 }, { item: "Shadow Dust", pct: 50 }, { item: "Mana Crystal", pct: 40 }] },
+
+  // ── Emberpeak Volcano (Lv 40-54) ──
+  { name: "Magma Imp", emoji: "😈", lvl: 40, hp: 350, atk: 35, def: 18, speed: 2200, xpR: 420, goldR: 180, zone: "volcano", drops: [{ item: "Lava Shard", pct: 28 }, { item: "Gold Ore", pct: 22 }] },
+  { name: "Flame Serpent", emoji: "🔥", lvl: 44, hp: 450, atk: 40, def: 20, speed: 2800, xpR: 520, goldR: 220, zone: "volcano", drops: [{ item: "Fire Essence", pct: 20 }, { item: "Dragon Scale", pct: 12 }] },
+  { name: "Obsidian Brute", emoji: "⬛", lvl: 48, hp: 600, atk: 45, def: 30, speed: 4000, xpR: 650, goldR: 280, zone: "volcano", drops: [{ item: "Obsidian Chunk", pct: 18 }, { item: "Lava Shard", pct: 25 }] },
+  { name: "Ember Drake", emoji: "🐉", lvl: 52, hp: 750, atk: 50, def: 28, speed: 3200, xpR: 800, goldR: 350, zone: "volcano", drops: [{ item: "Dragon Fang", pct: 15 }, { item: "Fire Essence", pct: 22 }] },
+  { name: "Inferno King", emoji: "👑", lvl: 54, hp: 1200, atk: 55, def: 32, speed: 3500, xpR: 1200, goldR: 500, zone: "volcano", boss: true, drops: [{ item: "Inferno Crown", pct: 8 }, { item: "Fire Essence", pct: 40 }, { item: "Dragon Scale", pct: 25 }] },
+
+  // ── The Hollow Abyss (Lv 55-69) ──
+  { name: "Shadow Stalker", emoji: "🌑", lvl: 55, hp: 700, atk: 50, def: 25, speed: 1800, xpR: 900, goldR: 400, zone: "abyss", drops: [{ item: "Shadow Dust", pct: 40 }, { item: "Void Shard", pct: 15 }] },
+  { name: "Abyssal Watcher", emoji: "👁️", lvl: 58, hp: 800, atk: 55, def: 30, speed: 3000, xpR: 1100, goldR: 480, zone: "abyss", drops: [{ item: "Void Shard", pct: 20 }, { item: "Mana Crystal", pct: 30 }] },
+  { name: "Doom Crawler", emoji: "🦂", lvl: 62, hp: 950, atk: 60, def: 35, speed: 3400, xpR: 1400, goldR: 580, zone: "abyss", drops: [{ item: "Abyssal Chitin", pct: 18 }, { item: "Void Shard", pct: 22 }] },
+  { name: "Soul Reaver", emoji: "💀", lvl: 66, hp: 1100, atk: 65, def: 38, speed: 2600, xpR: 1700, goldR: 700, zone: "abyss", drops: [{ item: "Soul Fragment", pct: 12 }, { item: "Shadow Dust", pct: 35 }] },
+  { name: "Void Leviathan", emoji: "🐙", lvl: 69, hp: 2000, atk: 72, def: 42, speed: 3800, xpR: 2500, goldR: 1000, zone: "abyss", boss: true, drops: [{ item: "Leviathan Eye", pct: 8 }, { item: "Void Shard", pct: 40 }, { item: "Soul Fragment", pct: 20 }] },
+
+  // ── Titan's Domain (Lv 70+) ──
+  { name: "Storm Giant", emoji: "⛈️", lvl: 70, hp: 1500, atk: 70, def: 40, speed: 3600, xpR: 2200, goldR: 900, zone: "titan", drops: [{ item: "Titan Bone", pct: 18 }, { item: "Storm Crystal", pct: 15 }] },
+  { name: "Ancient Wyrm", emoji: "🐲", lvl: 74, hp: 1800, atk: 78, def: 45, speed: 3200, xpR: 2800, goldR: 1100, zone: "titan", drops: [{ item: "Dragon Fang", pct: 20 }, { item: "Wyrm Heart", pct: 10 }] },
+  { name: "Celestial Knight", emoji: "🌟", lvl: 78, hp: 2200, atk: 85, def: 50, speed: 2800, xpR: 3500, goldR: 1400, zone: "titan", drops: [{ item: "Titan Bone", pct: 22 }, { item: "Storm Crystal", pct: 18 }] },
+  { name: "Titan Colossus", emoji: "🗿", lvl: 82, hp: 3000, atk: 95, def: 60, speed: 4200, xpR: 4500, goldR: 1800, zone: "titan", drops: [{ item: "Titan Bone", pct: 25 }, { item: "Colossus Heart", pct: 8 }] },
+  { name: "God of the Spire", emoji: "⚡", lvl: 85, hp: 5000, atk: 110, def: 70, speed: 3500, xpR: 8000, goldR: 3500, zone: "titan", boss: true, drops: [{ item: "Divine Spark", pct: 5 }, { item: "Colossus Heart", pct: 15 }, { item: "Storm Crystal", pct: 30 }, { item: "Titan Bone", pct: 35 }] },
 ];
 
 const GATHER_NODES = {
@@ -253,6 +301,31 @@ const ITEMS = {
   "Mana Crystal":   { emoji: "💜", category: "material", desc: "Crystallized mana", sell: 35 },
   "Dragon Scale":   { emoji: "🐉", category: "material", desc: "Legendary dragon scale", sell: 150 },
   "Dragon Fang":    { emoji: "🔥", category: "material", desc: "Fang of a dragon", sell: 200 },
+  // ── Zone Drops ──
+  "Spider Silk":    { emoji: "🕸️", category: "material", desc: "Sticky spider thread", sell: 8 },
+  "Venom Sac":      { emoji: "🧪", category: "material", desc: "Pouch of deadly venom", sell: 12 },
+  "Troll Blood":    { emoji: "🩸", category: "material", desc: "Thick regenerative blood", sell: 18 },
+  "Wyrm Fang":      { emoji: "🦷", category: "material", desc: "Cave wyrm fang", sell: 35 },
+  "Swamp Mucus":    { emoji: "🟩", category: "material", desc: "Sticky bog slime", sell: 15 },
+  "Snake Scale":    { emoji: "🐍", category: "material", desc: "Iridescent snake scale", sell: 22 },
+  "Cursed Bone":    { emoji: "🦴", category: "material", desc: "Bone radiating dark energy", sell: 30 },
+  "Hydra Crest":    { emoji: "🐲", category: "material", desc: "Trophy from a hydra", sell: 80 },
+  "Enchanted Plate":{ emoji: "🛡️", category: "material", desc: "Magically animated steel", sell: 45 },
+  "Golem Core":     { emoji: "💎", category: "material", desc: "Power source of a golem", sell: 65 },
+  "Lich Crown":     { emoji: "👑", category: "equipment", slot: "helm", atk: 15, def: 10, xpPct: 8, rarity: "legendary", desc: "Crown of the undead king", sell: 500 },
+  "Lava Shard":     { emoji: "🔶", category: "material", desc: "Solidified magma fragment", sell: 55 },
+  "Fire Essence":   { emoji: "🔥", category: "material", desc: "Pure elemental fire", sell: 80 },
+  "Obsidian Chunk": { emoji: "⬛", category: "material", desc: "Volcanic glass", sell: 70 },
+  "Inferno Crown":  { emoji: "👑", category: "equipment", slot: "helm", atk: 22, def: 15, xpPct: 10, rarity: "legendary", desc: "Crown of the fire king", sell: 1200 },
+  "Void Shard":     { emoji: "🟣", category: "material", desc: "Fragment of the void", sell: 100 },
+  "Abyssal Chitin": { emoji: "🦂", category: "material", desc: "Impossibly hard shell", sell: 120 },
+  "Soul Fragment":  { emoji: "👻", category: "material", desc: "Trapped spirit energy", sell: 180 },
+  "Leviathan Eye":  { emoji: "👁️", category: "equipment", slot: "amulet", atk: 25, def: 20, xpPct: 12, rarity: "legendary", desc: "All-seeing abyssal eye", sell: 2500 },
+  "Titan Bone":     { emoji: "🦴", category: "material", desc: "Bone of an ancient giant", sell: 200 },
+  "Storm Crystal":  { emoji: "⚡", category: "material", desc: "Crystal of pure lightning", sell: 250 },
+  "Wyrm Heart":     { emoji: "❤️", category: "material", desc: "Still-beating wyrm heart", sell: 350 },
+  "Colossus Heart": { emoji: "💜", category: "material", desc: "Heart of a titan", sell: 500 },
+  "Divine Spark":   { emoji: "✨", category: "equipment", slot: "amulet", atk: 35, def: 30, xpPct: 15, speedPct: 10, rarity: "legendary", desc: "Fragment of godly power", sell: 5000 },
   // ── Equipment ──
   "Bronze Dagger":  { emoji: "🗡️", category: "equipment", slot: "weapon", atk: 3,  def: 0,  rarity: "common",    desc: "Basic bronze blade", sell: 15 },
   "Bronze Shield":  { emoji: "🛡️", category: "equipment", slot: "shield", atk: 0,  def: 3,  rarity: "common",    desc: "Simple bronze shield", sell: 20 },
@@ -1224,6 +1297,7 @@ function GameUI({ account, initialSave, onLogout }) {
 
   // ─── PARTY COMBAT STATE ───
   const [combatMode, setCombatMode] = useState("solo"); // solo | party
+  const [combatZone, setCombatZone] = useState("meadow");
   const [party, setParty] = useState(null); // { id, leader, monster, members, status, monsterHp, monsterMaxHp, combatLog }
   const [partyList, setPartyList] = useState([]);
   const [partyLoading, setPartyLoading] = useState(false);
@@ -2956,12 +3030,40 @@ function GameUI({ account, initialSave, onLogout }) {
                   );
                 })()}
 
+                {/* ── Zone Selection ── */}
+                <div style={{ marginBottom: 14 }}>
+                  <div style={{ fontSize: 11, fontWeight: 700, color: T.textDim, marginBottom: 6, textTransform: "uppercase", letterSpacing: 0.5 }}>Zones</div>
+                  <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+                    {COMBAT_ZONES.map(z => {
+                      const zoneLocked = combatLvl < z.lvl;
+                      const isActiveZone = combatZone === z.id;
+                      return (
+                        <div key={z.id} onClick={zoneLocked ? undefined : () => setCombatZone(z.id)} style={{
+                          padding: "7px 14px", borderRadius: T.rs, cursor: zoneLocked ? "not-allowed" : "pointer",
+                          background: isActiveZone ? z.color + "20" : T.bgDeep,
+                          border: `1px solid ${isActiveZone ? z.color + "50" : T.divider}`,
+                          color: zoneLocked ? T.textDim + "60" : isActiveZone ? z.color : T.textSec,
+                          fontSize: 11, fontWeight: 600, opacity: zoneLocked ? 0.4 : 1,
+                          display: "flex", alignItems: "center", gap: 5,
+                        }}>
+                          <span>{z.emoji}</span> {z.name}
+                          {zoneLocked && <span style={{ fontSize: 9 }}>🔒 Lv{z.lvl}</span>}
+                        </div>
+                      );
+                    })}
+                  </div>
+                  {(() => {
+                    const z = COMBAT_ZONES.find(z => z.id === combatZone);
+                    return z ? <div style={{ fontSize: 11, color: T.textDim, marginTop: 6 }}>{z.emoji} {z.desc}</div> : null;
+                  })()}
+                </div>
+
                 {/* ── Monster Selection ── */}
                 <div style={{ fontSize: 13, fontWeight: 700, color: T.white, marginBottom: 10 }}>
                   {isInCombat ? "Switch Target" : "Select a Monster"}
                 </div>
                 <div style={{ display: "grid", gridTemplateColumns: `repeat(auto-fill, minmax(${isMobile ? "100%" : "300px"}, 1fr))`, gap: 10 }}>
-                  {MONSTERS.map((m, i) => {
+                  {MONSTERS.filter(m => m.zone === combatZone).map((m, i) => {
                     const locked = combatLvl < m.lvl;
                     const isActive = activeCombat?.name === m.name;
                     const canWin = playerAtk > m.def;
@@ -2985,6 +3087,7 @@ function GameUI({ account, initialSave, onLogout }) {
                             <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                               <span style={{ fontSize: 14, fontWeight: 700, color: isActive ? T.danger : T.white }}>{m.name}</span>
                               <Badge color={locked ? T.danger : T.textDim}>Lv {m.lvl}</Badge>
+                              {m.boss && <Badge color={T.gold}>👑 BOSS</Badge>}
                               {locked && <span style={{ fontSize: 10, color: T.danger }}>🔒</span>}
                               {isActive && <Badge color={T.danger}>Fighting</Badge>}
                             </div>

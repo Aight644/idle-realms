@@ -776,6 +776,11 @@ function GameUI({ account, initialSave, onLogout }) {
 
   const sv = initialSave || DEFAULT_SAVE();
 
+  // Migrate: ensure all skills exist in save (handles new skills added after account creation)
+  for (const id of SKILL_IDS) {
+    if (!sv.skills[id]) sv.skills[id] = { level: 1, xp: 0 };
+  }
+
   // ─── LIVE SKILL STATE ───
   const [skills, setSkills] = useState(() => sv.skills);
   const [log, setLog] = useState([]);

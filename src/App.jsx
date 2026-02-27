@@ -83,6 +83,49 @@ const COMBAT_ZONES = [
   { id: "titan", name: "Titan's Domain", emoji: "⚡", lvl: 70, desc: "Realm of ancient god-beasts", color: "#ffd600" },
 ];
 
+// ─── ACHIEVEMENTS ───
+const ACHIEVEMENTS = [
+  // Combat milestones
+  { id: "kill_10", name: "Pest Control", desc: "Kill 10 monsters", icon: "🐛", category: "combat", check: (s) => s.combatStats.kills >= 10, reward: { gold: 50 } },
+  { id: "kill_100", name: "Monster Hunter", desc: "Kill 100 monsters", icon: "⚔️", category: "combat", check: (s) => s.combatStats.kills >= 100, reward: { gold: 300 } },
+  { id: "kill_500", name: "Slayer", desc: "Kill 500 monsters", icon: "💀", category: "combat", check: (s) => s.combatStats.kills >= 500, reward: { gold: 1000 } },
+  { id: "kill_2000", name: "Legend of the Blade", desc: "Kill 2,000 monsters", icon: "🗡️", category: "combat", check: (s) => s.combatStats.kills >= 2000, reward: { gold: 5000 } },
+  { id: "kill_10000", name: "God of War", desc: "Kill 10,000 monsters", icon: "⚡", category: "combat", check: (s) => s.combatStats.kills >= 10000, reward: { gold: 25000 } },
+  { id: "combat_10", name: "Brawler", desc: "Reach Combat level 10", icon: "🥊", category: "combat", check: (s) => s.skills.combat.level >= 10, reward: { gold: 100 } },
+  { id: "combat_30", name: "Warrior", desc: "Reach Combat level 30", icon: "🛡️", category: "combat", check: (s) => s.skills.combat.level >= 30, reward: { gold: 500 } },
+  { id: "combat_50", name: "Champion", desc: "Reach Combat level 50", icon: "🏆", category: "combat", check: (s) => s.skills.combat.level >= 50, reward: { gold: 2000 } },
+  { id: "combat_75", name: "Warlord", desc: "Reach Combat level 75", icon: "👑", category: "combat", check: (s) => s.skills.combat.level >= 75, reward: { gold: 8000 } },
+  // Gathering milestones
+  { id: "gather_50", name: "Collector", desc: "Gather 50 resources", icon: "📦", category: "gathering", check: (s) => s.stats.gathered >= 50, reward: { gold: 75 } },
+  { id: "gather_500", name: "Hoarder", desc: "Gather 500 resources", icon: "🏗️", category: "gathering", check: (s) => s.stats.gathered >= 500, reward: { gold: 500 } },
+  { id: "gather_2000", name: "Resource Baron", desc: "Gather 2,000 resources", icon: "💎", category: "gathering", check: (s) => s.stats.gathered >= 2000, reward: { gold: 2500 } },
+  { id: "gather_10000", name: "Strip Miner", desc: "Gather 10,000 resources", icon: "⛏️", category: "gathering", check: (s) => s.stats.gathered >= 10000, reward: { gold: 10000 } },
+  { id: "mining_25", name: "Prospector", desc: "Reach Mining level 25", icon: "⛏️", category: "gathering", check: (s) => s.skills.mining.level >= 25, reward: { gold: 200 } },
+  { id: "fishing_25", name: "Angler", desc: "Reach Fishing level 25", icon: "🎣", category: "gathering", check: (s) => s.skills.fishing.level >= 25, reward: { gold: 200 } },
+  { id: "wc_25", name: "Lumberjack", desc: "Reach Woodcutting level 25", icon: "🪓", category: "gathering", check: (s) => s.skills.woodcutting.level >= 25, reward: { gold: 200 } },
+  // Crafting milestones
+  { id: "craft_25", name: "Apprentice", desc: "Craft 25 items", icon: "🔨", category: "artisan", check: (s) => s.craftStats.crafted >= 25, reward: { gold: 100 } },
+  { id: "craft_200", name: "Artisan", desc: "Craft 200 items", icon: "⚒️", category: "artisan", check: (s) => s.craftStats.crafted >= 200, reward: { gold: 750 } },
+  { id: "craft_1000", name: "Master Crafter", desc: "Craft 1,000 items", icon: "🏅", category: "artisan", check: (s) => s.craftStats.crafted >= 1000, reward: { gold: 5000 } },
+  { id: "smithing_25", name: "Ironworker", desc: "Reach Smithing level 25", icon: "🔨", category: "artisan", check: (s) => s.skills.smithing.level >= 25, reward: { gold: 200 } },
+  { id: "cooking_25", name: "Chef", desc: "Reach Cooking level 25", icon: "🍳", category: "artisan", check: (s) => s.skills.cooking.level >= 25, reward: { gold: 200 } },
+  // Economy milestones
+  { id: "gold_1000", name: "Pocket Change", desc: "Earn 1,000 gold total", icon: "🪙", category: "economy", check: (s) => (s.stats.goldEarned || 0) >= 1000, reward: { gold: 100 } },
+  { id: "gold_10000", name: "Wealthy", desc: "Earn 10,000 gold total", icon: "💰", category: "economy", check: (s) => (s.stats.goldEarned || 0) >= 10000, reward: { gold: 500 } },
+  { id: "gold_100000", name: "Tycoon", desc: "Earn 100,000 gold total", icon: "🏦", category: "economy", check: (s) => (s.stats.goldEarned || 0) >= 100000, reward: { gold: 5000 } },
+  { id: "sell_100", name: "Merchant", desc: "Sell 100 items", icon: "🏪", category: "economy", check: (s) => (s.stats.itemsSold || 0) >= 100, reward: { gold: 200 } },
+  // Total level milestones
+  { id: "total_25", name: "Well Rounded", desc: "Reach 25 total level", icon: "📊", category: "milestone", check: (s) => SKILL_IDS.reduce((a, id) => a + s.skills[id].level, 0) >= 25, reward: { gold: 150 } },
+  { id: "total_50", name: "Skilled", desc: "Reach 50 total level", icon: "📈", category: "milestone", check: (s) => SKILL_IDS.reduce((a, id) => a + s.skills[id].level, 0) >= 50, reward: { gold: 400 } },
+  { id: "total_100", name: "Veteran", desc: "Reach 100 total level", icon: "🎖️", category: "milestone", check: (s) => SKILL_IDS.reduce((a, id) => a + s.skills[id].level, 0) >= 100, reward: { gold: 1500 } },
+  { id: "total_200", name: "Elite", desc: "Reach 200 total level", icon: "🌟", category: "milestone", check: (s) => SKILL_IDS.reduce((a, id) => a + s.skills[id].level, 0) >= 200, reward: { gold: 5000 } },
+  { id: "total_500", name: "Legendary", desc: "Reach 500 total level", icon: "👑", category: "milestone", check: (s) => SKILL_IDS.reduce((a, id) => a + s.skills[id].level, 0) >= 500, reward: { gold: 20000 } },
+  // Streak
+  { id: "streak_3", name: "Dedicated", desc: "3-day login streak", icon: "📅", category: "milestone", check: (s) => (s.stats.loginStreak || 0) >= 3, reward: { gold: 100 } },
+  { id: "streak_7", name: "Committed", desc: "7-day login streak", icon: "🔥", category: "milestone", check: (s) => (s.stats.loginStreak || 0) >= 7, reward: { gold: 500 } },
+  { id: "streak_30", name: "No-Lifer", desc: "30-day login streak", icon: "💀", category: "milestone", check: (s) => (s.stats.loginStreak || 0) >= 30, reward: { gold: 5000 } },
+];
+
 const MONSTERS = [
   // ── Sunlit Meadow (Lv 1-7) ──
   { name: "Slime", emoji: "🟢", lvl: 1, hp: 10, atk: 1, def: 0, speed: 2500, xpR: 5, goldR: 2, zone: "meadow", drops: [{ item: "Slime Gel", pct: 40 }] },
@@ -556,6 +599,7 @@ const DEFAULT_SAVE = () => ({
   stats: { gathered: 0, totalXpEarned: 0, itemsSold: 0, goldEarned: 0, goldSpent: 0, timePlayed: 0, loginStreak: 0, lastLoginDay: null, lastLoginReward: null },
   combatStats: { kills: 0, totalDamage: 0, deaths: 0 },
   craftStats: { crafted: 0 },
+  achievementsUnlocked: {},
 });
 
 // ═══ AUTH SCREEN (Firebase Auth) ═══
@@ -885,6 +929,11 @@ function GameUI({ account, initialSave, onLogout }) {
     if (offlineMs < 60000) return; // less than 1 minute, skip
 
     const rewards = { xp: {}, items: {}, gold: 0 };
+
+    // Loyalty bonus: longer streaks = bonus gold
+    const streak = sv.stats?.loginStreak || 0;
+    const loyaltyBonus = Math.min(streak * 10, 500); // 10g per streak day, max 500g
+    if (loyaltyBonus > 0) rewards.gold += loyaltyBonus;
 
     // Offline gathering
     if (sv.activeGather) {
@@ -1254,6 +1303,48 @@ function GameUI({ account, initialSave, onLogout }) {
   const [activeCraft, setActiveCraft] = useState(() => sv.activeCraft || null); // { skillId, recipe, remaining }
   const [craftProgress, setCraftProgress] = useState(0);
   const [craftStats, setCraftStats] = useState(() => sv.craftStats || { crafted: 0 });
+  const [achievementsUnlocked, setAchievementsUnlocked] = useState(() => sv.achievementsUnlocked || {});
+  const [achievementPopup, setAchievementPopup] = useState(null);
+  const achievementQueueRef = useRef([]);
+
+  // Check achievements periodically
+  useEffect(() => {
+    const checkInterval = setInterval(() => {
+      const state = { skills, stats, combatStats, craftStats };
+      const newUnlocks = {};
+      let anyNew = false;
+      ACHIEVEMENTS.forEach(a => {
+        if (achievementsUnlocked[a.id]) return;
+        try {
+          if (a.check(state)) {
+            newUnlocks[a.id] = Date.now();
+            anyNew = true;
+            achievementQueueRef.current.push(a);
+          }
+        } catch {}
+      });
+      if (anyNew) {
+        setAchievementsUnlocked(prev => ({ ...prev, ...newUnlocks }));
+        // Grant rewards for new achievements
+        Object.keys(newUnlocks).forEach(id => {
+          const a = ACHIEVEMENTS.find(x => x.id === id);
+          if (a?.reward?.gold) addGold(a.reward.gold);
+        });
+      }
+    }, 3000);
+    return () => clearInterval(checkInterval);
+  }, [skills, stats, combatStats, craftStats, achievementsUnlocked, addGold]);
+
+  // Show achievement popups one at a time
+  useEffect(() => {
+    if (achievementPopup) return;
+    if (achievementQueueRef.current.length > 0) {
+      const next = achievementQueueRef.current.shift();
+      setAchievementPopup(next);
+      setTimeout(() => setAchievementPopup(null), 4000);
+    }
+  }, [achievementPopup]);
+
   const craftRef = useRef(null);
 
   const stopCrafting = useCallback(() => {
@@ -1334,6 +1425,7 @@ function GameUI({ account, initialSave, onLogout }) {
   // ─── PARTY COMBAT STATE ───
   const [combatMode, setCombatMode] = useState("solo"); // solo | party
   const [combatZone, setCombatZone] = useState("meadow");
+  const [achFilter, setAchFilter] = useState("all");
   const [party, setParty] = useState(null); // { id, leader, monster, members, status, monsterHp, monsterMaxHp, combatLog }
   const [partyList, setPartyList] = useState([]);
   const [partyLoading, setPartyLoading] = useState(false);
@@ -1808,7 +1900,7 @@ function GameUI({ account, initialSave, onLogout }) {
   useEffect(() => {
     if (saveTimer.current) clearTimeout(saveTimer.current);
     saveTimer.current = setTimeout(async () => {
-      const save = { skills, inventory, equipped, pets, activePets, petSlots, isPremium, storePurchases, player, gold, stats, combatStats, craftStats, lastActiveTime: Date.now(), activeGather: activeGather || null, activeCombat: activeCombat ? { monsterIdx: MONSTERS.indexOf(activeCombat) } : null, activeCraft: activeCraft || null };
+      const save = { skills, inventory, equipped, pets, activePets, petSlots, isPremium, storePurchases, player, gold, stats, combatStats, craftStats, achievementsUnlocked, lastActiveTime: Date.now(), activeGather: activeGather || null, activeCombat: activeCombat ? { monsterIdx: MONSTERS.indexOf(activeCombat) } : null, activeCraft: activeCraft || null };
       try {
         await window.storage.set(`save:${account.username}`, JSON.stringify(save));
         setLastSaved(new Date());
@@ -2279,9 +2371,14 @@ function GameUI({ account, initialSave, onLogout }) {
   }, [page, fetchMyClan, fetchClanList, fetchLeaderboard, myClan, clanTab]);
 
   // ─── CHAT STATE ───
-  const [chatChannel, setChatChannel] = useState("global"); // global | clan | system
+  const [chatChannel, setChatChannel] = useState("global"); // global | clan | system | dm
   const [chatMessages, setChatMessages] = useState({ global: [], clan: [], system: [] });
   const [chatInput, setChatInput] = useState("");
+  const [friendsList, setFriendsList] = useState([]);
+  const [dmTarget, setDmTarget] = useState(null); // username we're DMing
+  const [dmMessages, setDmMessages] = useState({});
+  const [playerProfile, setPlayerProfile] = useState(null); // popup profile
+  const [friendInput, setFriendInput] = useState("");
   const [chatLoading, setChatLoading] = useState(false);
   const [unreadChat, setUnreadChat] = useState(0);
   const chatPollRef = useRef(null);
@@ -2385,9 +2482,166 @@ function GameUI({ account, initialSave, onLogout }) {
     }
   }, [chatMessages, chatChannel, page]);
 
+  // ─── FRIENDS LIST ───
+  const fetchFriends = useCallback(async () => {
+    try {
+      const raw = await window.storage.get(`friends:${account.username}`);
+      if (raw) setFriendsList(JSON.parse(raw.value));
+    } catch { setFriendsList([]); }
+  }, [account.username]);
+
+  useEffect(() => { fetchFriends(); }, [fetchFriends]);
+
+  const addFriend = useCallback(async (friendName) => {
+    if (!friendName.trim() || friendName.trim() === account.username) return;
+    const name = friendName.trim();
+    const updated = [...friendsList];
+    if (updated.find(f => f.username === name)) return;
+    updated.push({ username: name, addedAt: Date.now() });
+    setFriendsList(updated);
+    await window.storage.set(`friends:${account.username}`, JSON.stringify(updated));
+    addLog(`👥 Added ${name} as friend`);
+    setFriendInput("");
+  }, [friendsList, account.username, addLog]);
+
+  const removeFriend = useCallback(async (friendName) => {
+    const updated = friendsList.filter(f => f.username !== friendName);
+    setFriendsList(updated);
+    await window.storage.set(`friends:${account.username}`, JSON.stringify(updated));
+    addLog(`👥 Removed ${friendName} from friends`);
+  }, [friendsList, account.username, addLog]);
+
+  // ─── DIRECT MESSAGES ───
+  const fetchDMs = useCallback(async (target) => {
+    if (!target) return;
+    try {
+      const key1 = [account.username, target].sort().join("-");
+      const raw = await window.storage.get(`dm:${key1}`);
+      if (raw) setDmMessages(prev => ({ ...prev, [target]: JSON.parse(raw.value) }));
+      else setDmMessages(prev => ({ ...prev, [target]: [] }));
+    } catch {}
+  }, [account.username]);
+
+  const sendDM = useCallback(async (target, text) => {
+    if (!text.trim() || !target) return;
+    const key1 = [account.username, target].sort().join("-");
+    const msgs = dmMessages[target] || [];
+    const newMsg = { user: account.displayName || account.username, username: account.username, text: text.trim(), t: Date.now() };
+    const updated = [...msgs, newMsg].slice(-100);
+    setDmMessages(prev => ({ ...prev, [target]: updated }));
+    await window.storage.set(`dm:${key1}`, JSON.stringify(updated));
+    setChatInput("");
+  }, [account, dmMessages]);
+
+  // ─── PLAYER PROFILE LOOKUP ───
+  const viewProfile = useCallback(async (username) => {
+    try {
+      const lb = lbData.find(e => e.displayName === username || e.username === username);
+      if (lb) {
+        setPlayerProfile({ ...lb, username });
+      } else {
+        setPlayerProfile({ displayName: username, username, totalLevel: "?", kills: 0, gold: 0 });
+      }
+    } catch { setPlayerProfile(null); }
+  }, [lbData]);
+
   return (
     <div style={{ display: "flex", height: "100vh", fontFamily: FONT, color: T.text, background: T.bg, overflow: "hidden", fontSize: 13 }}>
       <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
+
+      {/* ═══ ACHIEVEMENT TOAST ═══ */}
+      {achievementPopup && (
+        <div style={{
+          position: "fixed", top: 20, left: "50%", transform: "translateX(-50%)", zIndex: 1002,
+          background: T.card, borderRadius: 14, padding: "14px 24px",
+          border: `1px solid ${T.gold}50`, boxShadow: `0 4px 24px ${T.gold}20`,
+          display: "flex", alignItems: "center", gap: 12, minWidth: 280,
+          animation: "slideIn 0.4s ease-out",
+        }}>
+          <div style={{
+            width: 42, height: 42, borderRadius: 10, background: T.gold + "20",
+            display: "flex", alignItems: "center", justifyContent: "center", fontSize: 22,
+            border: `1px solid ${T.gold}30`,
+          }}>{achievementPopup.icon}</div>
+          <div>
+            <div style={{ fontSize: 10, fontWeight: 800, color: T.gold, textTransform: "uppercase", letterSpacing: 1 }}>Achievement Unlocked!</div>
+            <div style={{ fontSize: 14, fontWeight: 700, color: T.white }}>{achievementPopup.name}</div>
+            <div style={{ fontSize: 11, color: T.textDim }}>{achievementPopup.desc} · <span style={{ color: T.gold }}>+{achievementPopup.reward?.gold}g</span></div>
+          </div>
+        </div>
+      )}
+
+      {/* ═══ PLAYER PROFILE POPUP ═══ */}
+      {playerProfile && (
+        <div onClick={() => setPlayerProfile(null)} style={{
+          position: "fixed", inset: 0, background: "rgba(0,0,0,0.7)", zIndex: 1001,
+          display: "flex", alignItems: "center", justifyContent: "center", padding: 20,
+        }}>
+          <div onClick={e => e.stopPropagation()} style={{
+            width: 340, maxWidth: "92vw", background: T.card, borderRadius: 16,
+            border: `1px solid ${T.accent}30`, overflow: "hidden",
+            boxShadow: `0 0 40px ${T.accent}10`,
+          }}>
+            <div style={{
+              padding: "20px 24px 16px", textAlign: "center",
+              background: `linear-gradient(135deg, ${T.accent}12, ${T.purple}08)`,
+              borderBottom: `1px solid ${T.divider}`,
+            }}>
+              <div style={{
+                width: 56, height: 56, borderRadius: "50%", margin: "0 auto 10px",
+                background: T.accent + "20", display: "flex", alignItems: "center", justifyContent: "center",
+                fontSize: 24, fontWeight: 900, color: T.accent, border: `2px solid ${T.accent}40`,
+              }}>
+                {(playerProfile.displayName || playerProfile.username || "?")[0]?.toUpperCase()}
+              </div>
+              <div style={{ fontSize: 18, fontWeight: 800, color: T.white }}>{playerProfile.displayName || playerProfile.username}</div>
+              {playerProfile.username && <div style={{ fontSize: 11, color: T.textDim }}>@{playerProfile.username}</div>}
+            </div>
+            <div style={{ padding: "12px 24px" }}>
+              {[
+                { icon: "🏆", label: "Total Level", value: playerProfile.totalLevel || "?", color: T.gold },
+                { icon: "⚔️", label: "Kills", value: fmt(playerProfile.kills || 0), color: T.danger },
+                { icon: "💰", label: "Gold", value: fmt(playerProfile.gold || 0), color: T.gold },
+                ...(playerProfile.clan ? [{ icon: "🏰", label: "Clan", value: playerProfile.clan, color: T.purple }] : []),
+              ].map((s, i) => (
+                <div key={i} style={{ display: "flex", justifyContent: "space-between", padding: "8px 0", borderBottom: `1px solid ${T.divider}` }}>
+                  <span style={{ fontSize: 12, color: T.textSec }}>{s.icon} {s.label}</span>
+                  <span style={{ fontSize: 13, fontWeight: 700, color: s.color }}>{s.value}</span>
+                </div>
+              ))}
+            </div>
+            <div style={{ padding: "8px 24px 20px", display: "flex", gap: 8 }}>
+              {playerProfile.username !== account.username && (
+                <>
+                  <div onClick={() => {
+                    addFriend(playerProfile.username);
+                    setPlayerProfile(null);
+                  }} style={{
+                    flex: 1, padding: "10px 0", borderRadius: 8, textAlign: "center",
+                    background: T.success + "18", color: T.success, fontWeight: 700, fontSize: 12,
+                    cursor: "pointer", border: `1px solid ${T.success}30`,
+                  }}>👥 Add Friend</div>
+                  <div onClick={() => {
+                    setDmTarget(playerProfile.username);
+                    setChatChannel("dm");
+                    fetchDMs(playerProfile.username);
+                    setPlayerProfile(null);
+                  }} style={{
+                    flex: 1, padding: "10px 0", borderRadius: 8, textAlign: "center",
+                    background: T.pink + "18", color: T.pink, fontWeight: 700, fontSize: 12,
+                    cursor: "pointer", border: `1px solid ${T.pink}30`,
+                  }}>✉️ Message</div>
+                </>
+              )}
+              <div onClick={() => setPlayerProfile(null)} style={{
+                flex: playerProfile.username === account.username ? 1 : 0, minWidth: 60,
+                padding: "10px 14px", borderRadius: 8, textAlign: "center",
+                background: T.bar, color: T.textSec, fontWeight: 700, fontSize: 12, cursor: "pointer",
+              }}>Close</div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* ═══ DAILY LOGIN REWARD POPUP ═══ */}
       {loginReward && !offlinePopup && (
@@ -2588,6 +2842,7 @@ function GameUI({ account, initialSave, onLogout }) {
             <SidebarItem icon="🏰" label={myClan ? `[${myClan.tag}] Clan` : "Clans"} active={page==="clan"} onClick={() => nav("clan")} color={T.purple} badge={myClan ? undefined : "Join"} />
             <SidebarItem icon="🏆" label="Leaderboard" active={page==="leaderboard"} onClick={() => nav("leaderboard")} color={T.gold} />
             <SidebarItem icon="📊" label="Stats" active={page==="stats"} onClick={() => nav("stats")} color={T.info} />
+            <SidebarItem icon="🏅" label="Achievements" active={page==="achievements"} onClick={() => nav("achievements")} color={T.gold} badge={`${Object.keys(achievementsUnlocked).length}/${ACHIEVEMENTS.length}`} />
             <SidebarItem icon="📜" label="Activity Log" active={page==="log"} onClick={() => nav("log")} color={T.textDim} />
           </div>
         </nav>
@@ -4435,8 +4690,12 @@ function GameUI({ account, initialSave, onLogout }) {
               { id: "global", label: "Global", icon: "🌍", color: T.accent },
               ...(myClan ? [{ id: "clan", label: `[${myClan.tag}] Clan`, icon: "🏰", color: T.purple }] : []),
               { id: "system", label: "System", icon: "📢", color: T.warning },
+              { id: "friends", label: "Friends", icon: "👥", color: T.success },
+              ...(dmTarget ? [{ id: "dm", label: `DM: ${dmTarget}`, icon: "✉️", color: T.pink }] : []),
             ];
-            const msgs = chatMessages[chatChannel] || [];
+            const isDM = chatChannel === "dm";
+            const isFriends = chatChannel === "friends";
+            const msgs = isDM ? (dmMessages[dmTarget] || []) : (chatMessages[chatChannel] || []);
             const isSystem = chatChannel === "system";
             const myName = account.displayName || account.username;
 
@@ -4482,9 +4741,58 @@ function GameUI({ account, initialSave, onLogout }) {
                   </div>
                 </div>
 
-                {/* Messages */}
+                {/* Messages / Friends List */}
                 <div style={{ flex: 1, overflowY: "auto", padding: "12px 20px" }}>
-                  {msgs.length === 0 ? (
+                  {isFriends ? (
+                    <div>
+                      {/* Add Friend */}
+                      <div style={{ display: "flex", gap: 8, marginBottom: 16 }}>
+                        <input value={friendInput} onChange={e => setFriendInput(e.target.value)}
+                          onKeyDown={e => { if (e.key === "Enter" && friendInput.trim()) addFriend(friendInput); }}
+                          placeholder="Add friend by username..."
+                          style={{ flex: 1, padding: "8px 12px", background: T.bgDeep, border: `1px solid ${T.border}`, borderRadius: 8, color: T.text, fontSize: 12, outline: "none" }} />
+                        <Btn color={T.success} small onClick={() => addFriend(friendInput)}>Add</Btn>
+                      </div>
+
+                      {friendsList.length === 0 ? (
+                        <div style={{ textAlign: "center", padding: "40px 0", color: T.textDim }}>
+                          <div style={{ fontSize: 32, marginBottom: 8 }}>👥</div>
+                          <div style={{ fontSize: 13 }}>No friends yet. Add someone above!</div>
+                        </div>
+                      ) : (
+                        friendsList.map((f, i) => {
+                          const lb = lbData.find(e => e.username === f.username || e.displayName === f.username);
+                          return (
+                            <div key={i} style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 12px", marginBottom: 6, background: T.card, borderRadius: 10, border: `1px solid ${T.border}` }}>
+                              <div style={{ width: 36, height: 36, borderRadius: "50%", background: T.accent + "20", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16, fontWeight: 800, color: T.accent }}>
+                                {f.username[0]?.toUpperCase()}
+                              </div>
+                              <div style={{ flex: 1 }}>
+                                <div style={{ fontSize: 13, fontWeight: 700, color: T.white }}>{f.username}</div>
+                                <div style={{ fontSize: 10, color: T.textDim }}>
+                                  {lb ? `Lv ${lb.totalLevel} · ${fmt(lb.kills || 0)} kills` : "Adventurer"}
+                                </div>
+                              </div>
+                              <div style={{ display: "flex", gap: 4 }}>
+                                <div onClick={() => { setDmTarget(f.username); setChatChannel("dm"); fetchDMs(f.username); }} style={{
+                                  padding: "5px 10px", borderRadius: 6, cursor: "pointer", fontSize: 11, fontWeight: 600,
+                                  background: T.pink + "18", color: T.pink, border: `1px solid ${T.pink}30`,
+                                }}>✉️ DM</div>
+                                <div onClick={() => viewProfile(f.username)} style={{
+                                  padding: "5px 10px", borderRadius: 6, cursor: "pointer", fontSize: 11, fontWeight: 600,
+                                  background: T.info + "18", color: T.info, border: `1px solid ${T.info}30`,
+                                }}>👤</div>
+                                <div onClick={() => removeFriend(f.username)} style={{
+                                  padding: "5px 10px", borderRadius: 6, cursor: "pointer", fontSize: 11, fontWeight: 600,
+                                  background: T.danger + "18", color: T.danger, border: `1px solid ${T.danger}30`,
+                                }}>✕</div>
+                              </div>
+                            </div>
+                          );
+                        })
+                      )}
+                    </div>
+                  ) : msgs.length === 0 ? (
                     <div style={{ textAlign: "center", padding: "60px 0", color: T.textDim }}>
                       <div style={{ fontSize: 32, marginBottom: 8 }}>{isSystem ? "📢" : "💬"}</div>
                       <div style={{ fontSize: 13 }}>
@@ -4546,7 +4854,7 @@ function GameUI({ account, initialSave, onLogout }) {
                                     flexDirection: isMe ? "row-reverse" : "row",
                                   }}>
                                     {m.clan && <span style={{ fontSize: 9, fontWeight: 800, color: T.purple }}>[{m.clan}]</span>}
-                                    <span style={{ fontSize: 11, fontWeight: 700, color: isMe ? T.accent : T.white }}>{m.user}</span>
+                                    <span onClick={() => { if (!isMe && !isSys) viewProfile(m.user); }} style={{ fontSize: 11, fontWeight: 700, color: isMe ? T.accent : T.white, cursor: isMe || isSys ? "default" : "pointer", textDecoration: isMe || isSys ? "none" : "underline", textDecorationColor: T.textDim + "40", textUnderlineOffset: 2 }}>{m.user}</span>
                                     <span style={{ fontSize: 9, color: T.textDim }}>{fmtTime(m.t)}</span>
                                   </div>
                                 )}
@@ -4571,7 +4879,13 @@ function GameUI({ account, initialSave, onLogout }) {
                 </div>
 
                 {/* Input bar */}
-                {!isSystem && (
+                {!isSystem && !isFriends && (() => {
+                  const handleSend = () => {
+                    if (!chatInput.trim()) return;
+                    if (isDM && dmTarget) sendDM(dmTarget, chatInput);
+                    else sendChat(chatChannel);
+                  };
+                  return (
                   <div style={{
                     padding: "10px 20px 14px", borderTop: `1px solid ${T.divider}`,
                     display: "flex", gap: 8, alignItems: "center",
@@ -4580,8 +4894,8 @@ function GameUI({ account, initialSave, onLogout }) {
                     <input
                       type="text" value={chatInput}
                       onChange={e => setChatInput(e.target.value.slice(0, 200))}
-                      onKeyDown={e => { if (e.key === "Enter" && chatInput.trim()) sendChat(chatChannel); }}
-                      placeholder={chatChannel === "clan" ? `Message [${myClan?.tag}] clan...` : "Type a message..."}
+                      onKeyDown={e => { if (e.key === "Enter") handleSend(); }}
+                      placeholder={isDM ? `Message ${dmTarget}...` : chatChannel === "clan" ? `Message [${myClan?.tag}] clan...` : "Type a message..."}
                       style={{
                         flex: 1, padding: "10px 14px", borderRadius: 20,
                         border: `1px solid ${T.divider}`, background: T.card,
@@ -4589,15 +4903,16 @@ function GameUI({ account, initialSave, onLogout }) {
                       }}
                     />
                     <div style={{ fontSize: 9, color: T.textDim, width: 35, textAlign: "right" }}>{chatInput.length}/200</div>
-                    <div onClick={() => { if (chatInput.trim()) sendChat(chatChannel); }} style={{
+                    <div onClick={handleSend} style={{
                       width: 36, height: 36, borderRadius: 99,
-                      background: chatInput.trim() ? T.accent : T.bar,
+                      background: chatInput.trim() ? (isDM ? T.pink : T.accent) : T.bar,
                       display: "flex", alignItems: "center", justifyContent: "center",
                       cursor: chatInput.trim() ? "pointer" : "default",
                       transition: "all 0.15s", fontSize: 15,
                     }}>➤</div>
                   </div>
-                )}
+                  );
+                })()}
               </div>
             );
           })()}
@@ -5203,6 +5518,76 @@ function GameUI({ account, initialSave, onLogout }) {
             );
           })()}
 
+          {/* ════ ACHIEVEMENTS ════ */}
+          {page === "achievements" && (() => {
+            const unlocked = Object.keys(achievementsUnlocked).length;
+            const total = ACHIEVEMENTS.length;
+            const categories = [...new Set(ACHIEVEMENTS.map(a => a.category))];
+            const filtered = achFilter === "all" ? ACHIEVEMENTS : ACHIEVEMENTS.filter(a => a.category === achFilter);
+
+            return (
+              <div>
+                <PageTitle icon="🏅" title="Achievements" subtitle={`${unlocked}/${total} unlocked`} />
+
+                {/* Progress bar */}
+                <div style={{ maxWidth: 500, marginBottom: 16 }}>
+                  <ProgressBar value={unlocked} max={total} color={T.gold} showLabel />
+                  <div style={{ fontSize: 10, color: T.textDim, marginTop: 4, textAlign: "right" }}>
+                    {total - unlocked} remaining · {Math.round(unlocked / total * 100)}% complete
+                  </div>
+                </div>
+
+                {/* Filter tabs */}
+                <div style={{ display: "flex", gap: 5, flexWrap: "wrap", marginBottom: 14 }}>
+                  {["all", ...categories].map(cat => (
+                    <div key={cat} onClick={() => setAchFilter(cat)} style={{
+                      padding: "6px 12px", borderRadius: 6, cursor: "pointer", fontSize: 11, fontWeight: 600,
+                      background: achFilter === cat ? T.gold + "20" : T.bgDeep,
+                      color: achFilter === cat ? T.gold : T.textSec,
+                      border: `1px solid ${achFilter === cat ? T.gold + "40" : T.divider}`,
+                      textTransform: "capitalize",
+                    }}>{cat}</div>
+                  ))}
+                </div>
+
+                {/* Achievement cards */}
+                <div style={{ display: "grid", gridTemplateColumns: `repeat(auto-fill, minmax(${isMobile ? "100%" : "300px"}, 1fr))`, gap: 8 }}>
+                  {filtered.map(a => {
+                    const done = !!achievementsUnlocked[a.id];
+                    return (
+                      <div key={a.id} style={{
+                        display: "flex", alignItems: "center", gap: 12, padding: "12px 14px",
+                        background: done ? T.gold + "08" : T.card, borderRadius: 10,
+                        border: `1px solid ${done ? T.gold + "30" : T.border}`,
+                        opacity: done ? 1 : 0.6,
+                      }}>
+                        <div style={{
+                          width: 40, height: 40, borderRadius: 8, flexShrink: 0,
+                          background: done ? T.gold + "18" : T.bgDeep,
+                          display: "flex", alignItems: "center", justifyContent: "center", fontSize: 20,
+                          border: done ? `1px solid ${T.gold}30` : "none",
+                        }}>
+                          {done ? a.icon : "🔒"}
+                        </div>
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <div style={{ fontSize: 13, fontWeight: 700, color: done ? T.gold : T.textSec }}>{a.name}</div>
+                          <div style={{ fontSize: 11, color: T.textDim }}>{a.desc}</div>
+                        </div>
+                        <div style={{ textAlign: "right", flexShrink: 0 }}>
+                          {done ? (
+                            <Badge color={T.gold}>✓</Badge>
+                          ) : (
+                            <span style={{ fontSize: 10, color: T.gold, fontWeight: 600 }}>+{a.reward?.gold}g</span>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            );
+          })()}
+
         </div>
       </div>
 
@@ -5215,6 +5600,7 @@ function GameUI({ account, initialSave, onLogout }) {
         ::-webkit-scrollbar-thumb:hover { background: ${T.textDim}; }
         button:hover:not(:disabled) { filter: brightness(1.12); }
         button:active:not(:disabled) { transform: scale(0.97); }
+        @keyframes slideIn { from { opacity: 0; transform: translate(-50%, -20px); } to { opacity: 1; transform: translate(-50%, 0); } }
       `}</style>
     </div>
   );

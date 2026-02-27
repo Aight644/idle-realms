@@ -4746,54 +4746,12 @@ function GameUI({ account, initialSave, onLogout }) {
                   {isFriends ? (
                     <div>
                       {/* Add Friend */}
-                      <div style={{ position: "relative", marginBottom: 16 }}>
-                        <div style={{ display: "flex", gap: 8 }}>
-                          <input value={friendInput} onChange={e => { setFriendInput(e.target.value); if (!lbData.length) fetchLeaderboard(); }}
-                            onKeyDown={e => { if (e.key === "Enter" && friendInput.trim()) { addFriend(friendInput); } if (e.key === "Escape") setFriendInput(""); }}
-                            placeholder="Search players..."
-                            style={{ flex: 1, padding: "8px 12px", background: T.bgDeep, border: `1px solid ${T.border}`, borderRadius: 8, color: T.text, fontSize: 12, outline: "none" }} />
-                          <Btn color={T.success} small onClick={() => addFriend(friendInput)}>Add</Btn>
-                        </div>
-                        {friendInput.trim().length >= 1 && (() => {
-                          const q = friendInput.trim().toLowerCase();
-                          const myName = account.username;
-                          const alreadyFriends = friendsList.map(f => f.username);
-                          const suggestions = lbData
-                            .filter(e => e.username !== myName && !alreadyFriends.includes(e.username))
-                            .filter(e => (e.displayName || "").toLowerCase().includes(q) || (e.username || "").toLowerCase().includes(q))
-                            .slice(0, 6);
-                          if (suggestions.length === 0) return null;
-                          return (
-                            <div style={{
-                              position: "absolute", top: "100%", left: 0, right: 48, marginTop: 4, zIndex: 20,
-                              background: T.card, border: `1px solid ${T.border}`, borderRadius: 10,
-                              boxShadow: "0 8px 24px rgba(0,0,0,0.4)", overflow: "hidden", maxHeight: 220, overflowY: "auto",
-                            }}>
-                              {suggestions.map((s, i) => (
-                                <div key={i} onClick={() => { addFriend(s.username); setFriendInput(""); }}
-                                  style={{
-                                    display: "flex", alignItems: "center", gap: 10, padding: "10px 14px",
-                                    cursor: "pointer", borderBottom: `1px solid ${T.divider}`,
-                                    background: "transparent", transition: "background 0.1s",
-                                  }}
-                                  onMouseEnter={e => e.currentTarget.style.background = T.accent + "10"}
-                                  onMouseLeave={e => e.currentTarget.style.background = "transparent"}
-                                >
-                                  <div style={{
-                                    width: 32, height: 32, borderRadius: "50%", background: T.accent + "18",
-                                    display: "flex", alignItems: "center", justifyContent: "center",
-                                    fontSize: 14, fontWeight: 800, color: T.accent, flexShrink: 0,
-                                  }}>{(s.displayName || s.username || "?")[0]?.toUpperCase()}</div>
-                                  <div style={{ flex: 1, minWidth: 0 }}>
-                                    <div style={{ fontSize: 13, fontWeight: 700, color: T.white, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{s.displayName || s.username}</div>
-                                    <div style={{ fontSize: 10, color: T.textDim }}>@{s.username} · Lv {s.totalLevel || "?"}</div>
-                                  </div>
-                                  <span style={{ fontSize: 10, color: T.success, fontWeight: 600 }}>+ Add</span>
-                                </div>
-                              ))}
-                            </div>
-                          );
-                        })()}
+                      <div style={{ display: "flex", gap: 8, marginBottom: 16 }}>
+                        <input value={friendInput} onChange={e => setFriendInput(e.target.value)}
+                          onKeyDown={e => { if (e.key === "Enter" && friendInput.trim()) addFriend(friendInput); }}
+                          placeholder="Add friend by username..."
+                          style={{ flex: 1, padding: "8px 12px", background: T.bgDeep, border: `1px solid ${T.border}`, borderRadius: 8, color: T.text, fontSize: 12, outline: "none" }} />
+                        <Btn color={T.success} small onClick={() => addFriend(friendInput)}>Add</Btn>
                       </div>
 
                       {friendsList.length === 0 ? (
@@ -5067,46 +5025,9 @@ function GameUI({ account, initialSave, onLogout }) {
                       {(isLeader || isOfficer) && (
                         <Card style={{ marginBottom: 12 }}>
                           <div style={{ fontSize: 12, fontWeight: 700, color: T.white, marginBottom: 8 }}>📩 Invite Player</div>
-                          <div style={{ position: "relative" }}>
-                            <div style={{ display: "flex", gap: 8 }}>
-                              <input style={{ ...inputStyle, flex: 1 }} placeholder="Search players..." value={clanInviteUser} onChange={e => { setClanInviteUser(e.target.value); if (!lbData.length) fetchLeaderboard(); }} />
-                              <Btn color={T.purple} small onClick={() => invitePlayer(clanInviteUser)} disabled={!clanInviteUser.trim() || clanLoading}>Send Invite</Btn>
-                            </div>
-                            {clanInviteUser.trim().length >= 1 && (() => {
-                              const q = clanInviteUser.trim().toLowerCase();
-                              const memberNames = clanMembers.map(m => m.username);
-                              const suggestions = lbData
-                                .filter(e => e.username !== account.username && !memberNames.includes(e.username))
-                                .filter(e => (e.displayName || "").toLowerCase().includes(q) || (e.username || "").toLowerCase().includes(q))
-                                .slice(0, 5);
-                              if (suggestions.length === 0) return null;
-                              return (
-                                <div style={{
-                                  position: "absolute", top: "100%", left: 0, right: 90, marginTop: 4, zIndex: 20,
-                                  background: T.card, border: `1px solid ${T.border}`, borderRadius: 10,
-                                  boxShadow: "0 8px 24px rgba(0,0,0,0.4)", overflow: "hidden",
-                                }}>
-                                  {suggestions.map((s, i) => (
-                                    <div key={i} onClick={() => { setClanInviteUser(s.username); }}
-                                      style={{
-                                        display: "flex", alignItems: "center", gap: 10, padding: "8px 12px",
-                                        cursor: "pointer", borderBottom: `1px solid ${T.divider}`,
-                                      }}
-                                      onMouseEnter={e => e.currentTarget.style.background = T.purple + "10"}
-                                      onMouseLeave={e => e.currentTarget.style.background = "transparent"}
-                                    >
-                                      <div style={{ width: 28, height: 28, borderRadius: "50%", background: T.purple + "18", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, fontWeight: 800, color: T.purple }}>
-                                        {(s.displayName || s.username || "?")[0]?.toUpperCase()}
-                                      </div>
-                                      <div style={{ flex: 1 }}>
-                                        <span style={{ fontSize: 12, fontWeight: 600, color: T.white }}>{s.displayName || s.username}</span>
-                                        <span style={{ fontSize: 10, color: T.textDim, marginLeft: 6 }}>Lv {s.totalLevel || "?"}</span>
-                                      </div>
-                                    </div>
-                                  ))}
-                                </div>
-                              );
-                            })()}
+                          <div style={{ display: "flex", gap: 8 }}>
+                            <input style={{ ...inputStyle, flex: 1 }} placeholder="Player username..." value={clanInviteUser} onChange={e => setClanInviteUser(e.target.value)} />
+                            <Btn color={T.purple} small onClick={() => invitePlayer(clanInviteUser)} disabled={!clanInviteUser.trim() || clanLoading}>Send Invite</Btn>
                           </div>
                         </Card>
                       )}

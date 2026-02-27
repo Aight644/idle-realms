@@ -553,7 +553,7 @@ const DEFAULT_SAVE = () => ({
   storePurchases: {}, // track what's been bought
   player: { hp: 60, maxHp: 60, mp: 25, maxMp: 25 },
   gold: 0,
-  stats: { gathered: 0, totalXpEarned: 0 },
+  stats: { gathered: 0, totalXpEarned: 0, itemsSold: 0, goldEarned: 0, goldSpent: 0, timePlayed: 0, loginStreak: 0, lastLoginDay: null, lastLoginReward: null },
   combatStats: { kills: 0, totalDamage: 0, deaths: 0 },
   craftStats: { crafted: 0 },
 });
@@ -928,6 +928,38 @@ function GameUI({ account, initialSave, onLogout }) {
     }
   }, []);
 
+  // ─── DAILY LOGIN REWARDS ───
+  const LOGIN_REWARDS = [
+    { day: 1, gold: 50, label: "50g" },
+    { day: 2, gold: 100, label: "100g" },
+    { day: 3, gold: 150, item: "HP Potion", itemQty: 2, label: "150g + 2 HP Potions" },
+    { day: 4, gold: 200, label: "200g" },
+    { day: 5, gold: 300, item: "Mana Crystal", itemQty: 1, label: "300g + 1 Mana Crystal" },
+    { day: 6, gold: 400, label: "400g" },
+    { day: 7, gold: 750, item: "Mana Crystal", itemQty: 3, label: "750g + 3 Mana Crystals" },
+  ];
+  const [loginReward, setLoginReward] = useState(null);
+  useEffect(() => {
+    const today = new Date().toDateString();
+    if (stats.lastLoginDay === today) return; // already claimed today
+    const yesterday = new Date(Date.now() - 86400000).toDateString();
+    const streak = stats.lastLoginDay === yesterday ? (stats.loginStreak || 0) + 1 : 1;
+    const dayIdx = ((streak - 1) % 7);
+    const reward = LOGIN_REWARDS[dayIdx];
+    setLoginReward({ ...reward, streak });
+    setStats(s => ({ ...s, loginStreak: streak, lastLoginDay: today }));
+    setGold(g => g + reward.gold);
+    if (reward.item) setInventory(prev => ({ ...prev, [reward.item]: (prev[reward.item] || 0) + reward.itemQty }));
+  }, []);
+
+  // ─── TIME PLAYED TRACKER ───
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setStats(s => ({ ...s, timePlayed: (s.timePlayed || 0) + 60 }));
+    }, 60000); // tick every minute
+    return () => clearInterval(interval);
+  }, []);
+
   // ─── INVENTORY HELPERS ───
   const addItem = useCallback((name, qty = 1) => {
     setInventory(p => ({ ...p, [name]: (p[name] || 0) + qty }));
@@ -1053,7 +1085,11 @@ function GameUI({ account, initialSave, onLogout }) {
 
   // ─── GOLD STATE ───
   const [gold, setGold] = useState(() => sv.gold || 0);
-  const addGold = useCallback((n) => setGold(g => g + n), []);
+  const addGold = useCallback((n) => {
+    setGold(g => g + n);
+    if (n > 0) setStats(s => ({ ...s, goldEarned: (s.goldEarned || 0) + n }));
+    if (n < 0) setStats(s => ({ ...s, goldSpent: (s.goldSpent || 0) + Math.abs(n) }));
+  }, []);
 
   // ─── COMBAT STATE ───
   const [activeCombat, setActiveCombat] = useState(() => {
@@ -1617,6 +1653,7 @@ function GameUI({ account, initialSave, onLogout }) {
     const total = price * actual;
     removeItem(itemName, actual);
     addGold(total);
+    setStats(s => ({ ...s, itemsSold: (s.itemsSold || 0) + actual }));
     addLog(`🏪 Sold ${actual}x ${ITEMS[itemName]?.emoji || ""} ${itemName} for ${total}g`);
   }, [inventory, removeItem, addGold, addLog]);
 
@@ -1633,6 +1670,7 @@ function GameUI({ account, initialSave, onLogout }) {
     });
     if (totalItems > 0) {
       addGold(totalGold);
+      setStats(s => ({ ...s, itemsSold: (s.itemsSold || 0) + totalItems }));
       addLog(`🏪 Bulk sold ${totalItems} materials for ${totalGold}g`);
     }
   }, [inventory, removeItem, addGold, addLog]);
@@ -2351,6 +2389,44 @@ function GameUI({ account, initialSave, onLogout }) {
     <div style={{ display: "flex", height: "100vh", fontFamily: FONT, color: T.text, background: T.bg, overflow: "hidden", fontSize: 13 }}>
       <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
 
+      {/* ═══ DAILY LOGIN REWARD POPUP ═══ */}
+      {loginReward && !offlinePopup && (
+        <div style={{
+          position: "fixed", inset: 0, background: "rgba(0,0,0,0.7)", zIndex: 1000,
+          display: "flex", alignItems: "center", justifyContent: "center", padding: 20,
+        }}>
+          <div style={{
+            width: 340, maxWidth: "92vw", background: T.card, borderRadius: 16,
+            border: `1px solid ${T.gold}40`, overflow: "hidden",
+            boxShadow: `0 0 40px ${T.gold}15`,
+          }}>
+            <div style={{
+              padding: "20px 24px 16px", textAlign: "center",
+              background: `linear-gradient(135deg, ${T.gold}15, ${T.accent}10)`,
+              borderBottom: `1px solid ${T.divider}`,
+            }}>
+              <div style={{ fontSize: 40, marginBottom: 8 }}>🎁</div>
+              <div style={{ fontSize: 18, fontWeight: 800, color: T.gold }}>Daily Reward!</div>
+              <div style={{ fontSize: 12, color: T.textSoft, marginTop: 4 }}>
+                Day <span style={{ color: T.white, fontWeight: 700 }}>{loginReward.streak}</span> streak
+                {loginReward.streak >= 7 && " 🔥"}
+              </div>
+            </div>
+            <div style={{ padding: "16px 24px", textAlign: "center" }}>
+              <div style={{ fontSize: 14, fontWeight: 700, color: T.white, marginBottom: 4 }}>{loginReward.label}</div>
+              <div style={{ fontSize: 11, color: T.textDim }}>Come back tomorrow to keep your streak!</div>
+            </div>
+            <div style={{ padding: "8px 24px 20px" }}>
+              <div onClick={() => setLoginReward(null)} style={{
+                padding: "12px 0", borderRadius: 10, textAlign: "center",
+                background: `linear-gradient(135deg, ${T.gold}, ${T.orange || T.gold})`,
+                color: "#000", fontWeight: 800, fontSize: 14, cursor: "pointer",
+              }}>🎁 Claim</div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* ═══ OFFLINE PROGRESS POPUP ═══ */}
       {offlinePopup && (
         <div style={{
@@ -2511,6 +2587,7 @@ function GameUI({ account, initialSave, onLogout }) {
             <SidebarItem icon="💬" label="Chat" active={page==="chat"} onClick={() => nav("chat")} color={T.teal} badge={unreadChat > 0 ? `${unreadChat}` : undefined} />
             <SidebarItem icon="🏰" label={myClan ? `[${myClan.tag}] Clan` : "Clans"} active={page==="clan"} onClick={() => nav("clan")} color={T.purple} badge={myClan ? undefined : "Join"} />
             <SidebarItem icon="🏆" label="Leaderboard" active={page==="leaderboard"} onClick={() => nav("leaderboard")} color={T.gold} />
+            <SidebarItem icon="📊" label="Stats" active={page==="stats"} onClick={() => nav("stats")} color={T.info} />
             <SidebarItem icon="📜" label="Activity Log" active={page==="log"} onClick={() => nav("log")} color={T.textDim} />
           </div>
         </nav>
@@ -5055,6 +5132,77 @@ function GameUI({ account, initialSave, onLogout }) {
               </Card>
             </div>
           )}
+
+          {/* ════ STATS ════ */}
+          {page === "stats" && (() => {
+            const timeMins = Math.floor((stats.timePlayed || 0) / 60);
+            const timeHrs = Math.floor(timeMins / 60);
+            const timeStr = timeHrs > 0 ? `${timeHrs}h ${timeMins % 60}m` : `${timeMins}m`;
+            const totalItems = Object.values(inventory).reduce((a, b) => a + b, 0);
+            const highestSkill = SKILL_IDS.reduce((best, id) => skills[id].level > skills[best].level ? id : best, SKILL_IDS[0]);
+
+            return (
+              <div>
+                <PageTitle icon="📊" title="Statistics" subtitle="Your adventure at a glance" />
+                <div style={{ display: "grid", gridTemplateColumns: `repeat(auto-fill, minmax(${isMobile ? "140px" : "160px"}, 1fr))`, gap: 10, marginBottom: 16 }}>
+                  {[
+                    { icon: "⏱️", value: timeStr, label: "TIME PLAYED", color: T.info },
+                    { icon: "🏆", value: totalLevel, label: "TOTAL LEVEL", color: T.gold },
+                    { icon: "💰", value: fmt(gold), label: "CURRENT GOLD", color: T.gold },
+                    { icon: "📦", value: totalItems, label: "ITEMS OWNED", color: T.warning },
+                    { icon: "🔥", value: stats.loginStreak || 0, label: "LOGIN STREAK", color: T.orange },
+                    { icon: "⚔️", value: fmt(combatStats.kills), label: "MONSTERS SLAIN", color: T.danger },
+                  ].map((s, i) => (
+                    <Card key={i} style={{ textAlign: "center", padding: 16 }}>
+                      <div style={{ fontSize: 22, marginBottom: 4 }}>{s.icon}</div>
+                      <div style={{ fontSize: 18, fontWeight: 900, color: s.color }}>{s.value}</div>
+                      <div style={{ fontSize: 9, color: T.textDim, fontWeight: 700, letterSpacing: 0.5 }}>{s.label}</div>
+                    </Card>
+                  ))}
+                </div>
+
+                <Card style={{ marginBottom: 12 }}>
+                  <div style={{ fontSize: 13, fontWeight: 700, color: T.white, marginBottom: 10 }}>⚔️ Combat</div>
+                  <StatRow label="Monsters Killed" value={fmt(combatStats.kills)} color={T.danger} />
+                  <StatRow label="Deaths" value={String(combatStats.deaths)} color={T.danger} />
+                  <StatRow label="Total Damage Dealt" value={fmt(combatStats.totalDamage)} color={T.orange} />
+                  <StatRow label="K/D Ratio" value={combatStats.deaths > 0 ? (combatStats.kills / combatStats.deaths).toFixed(1) : "∞"} color={T.success} />
+                </Card>
+
+                <Card style={{ marginBottom: 12 }}>
+                  <div style={{ fontSize: 13, fontWeight: 700, color: T.white, marginBottom: 10 }}>💰 Economy</div>
+                  <StatRow label="Gold Earned (Lifetime)" value={fmt(stats.goldEarned || 0)} color={T.gold} />
+                  <StatRow label="Gold Spent (Lifetime)" value={fmt(stats.goldSpent || 0)} color={T.orange} />
+                  <StatRow label="Items Sold" value={fmt(stats.itemsSold || 0)} />
+                  <StatRow label="Current Balance" value={fmt(gold)} color={T.gold} />
+                </Card>
+
+                <Card style={{ marginBottom: 12 }}>
+                  <div style={{ fontSize: 13, fontWeight: 700, color: T.white, marginBottom: 10 }}>📈 Skills</div>
+                  <StatRow label="Resources Gathered" value={fmt(stats.gathered || 0)} color={T.success} />
+                  <StatRow label="Items Crafted" value={fmt(craftStats.crafted || 0)} color={T.warning} />
+                  <StatRow label="Total XP Earned" value={fmt(stats.totalXpEarned || 0)} color={T.accent} />
+                  <StatRow label="Highest Skill" value={`${SKILLS_CONFIG[highestSkill].icon} ${SKILLS_CONFIG[highestSkill].name} (Lv ${skills[highestSkill].level})`} color={SKILLS_CONFIG[highestSkill].color} />
+                </Card>
+
+                <Card>
+                  <div style={{ fontSize: 13, fontWeight: 700, color: T.white, marginBottom: 10 }}>🎯 Skill Levels</div>
+                  {SKILL_IDS.map(id => {
+                    const sk = skills[id];
+                    const cfg = SKILLS_CONFIG[id];
+                    return (
+                      <div key={id} style={{ display: "flex", alignItems: "center", gap: 8, padding: "6px 0", borderBottom: `1px solid ${T.divider}` }}>
+                        <span style={{ fontSize: 16, width: 24, textAlign: "center" }}>{cfg.icon}</span>
+                        <span style={{ flex: 1, fontSize: 12, color: T.textSec }}>{cfg.name}</span>
+                        <span style={{ fontSize: 13, fontWeight: 700, color: cfg.color }}>Lv {sk.level}</span>
+                      </div>
+                    );
+                  })}
+                </Card>
+              </div>
+            );
+          })()}
+
         </div>
       </div>
 

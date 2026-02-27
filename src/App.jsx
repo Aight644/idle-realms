@@ -805,10 +805,15 @@ export default function IdleRealmsUI() {
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, async (user) => {
       if (user) {
-        const username = user.uid;
+        // Look up username from uid map (new accounts), fallback to uid (legacy)
+        let username = user.uid;
+        try {
+          const mapRaw = await window.storage.get(`uidmap:${user.uid}`, true);
+          if (mapRaw) username = mapRaw.value;
+        } catch {}
 
         // Write our session to Firestore
-        await setDoc(doc(db, "sessions", username), {
+        await setDoc(doc(db, "sessions", user.uid), {
           sessionId: SESSION_ID,
           loginAt: serverTimestamp(),
         });
@@ -817,7 +822,13 @@ export default function IdleRealmsUI() {
         try {
           const sr = await window.storage.get(`save:${username}`);
           save = JSON.parse(sr.value);
-        } catch { save = DEFAULT_SAVE(); }
+        } catch {
+          // Try legacy uid-based save
+          try {
+            const sr = await window.storage.get(`save:${user.uid}`);
+            save = JSON.parse(sr.value);
+          } catch { save = DEFAULT_SAVE(); }
+        }
         setAccount({
           username,
           displayName: username,
@@ -6008,8 +6019,6 @@ function GameUI({ account, initialSave, onLogout }) {
                       ) : (
                         <div style={{ fontSize: 11, color: T.textDim }}>Purchase a <span style={{ color: T.gold }}>Username Change Token</span> from the Store to change your username.</div>
                       )}
-                    </Card>
-
                     </Card>
                   </div>
                 )}

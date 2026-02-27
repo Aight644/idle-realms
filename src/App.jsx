@@ -606,30 +606,39 @@ const DEFAULT_SAVE = () => ({
 function AuthScreen({ onLogin }) {
   const [tab, setTab] = useState("login"); // login | signup
   const [displayName, setDisplayName] = useState("");
+  const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPw, setConfirmPw] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const clearForm = () => { setDisplayName(""); setEmail(""); setPassword(""); setConfirmPw(""); setError(""); };
+  const clearForm = () => { setDisplayName(""); setUsername(""); setEmail(""); setPassword(""); setConfirmPw(""); setError(""); };
 
   const handleSignup = async () => {
     setError("");
+    const uname = username.trim().toLowerCase().replace(/[^a-z0-9_]/g, "");
+    if (!uname || uname.length < 3 || uname.length > 16) return setError("Username must be 3-16 characters (letters, numbers, underscore)");
     if (!displayName.trim() || displayName.length < 3) return setError("Display name must be at least 3 characters");
     if (!email.trim()) return setError("Please enter an email address");
     if (!password || password.length < 6) return setError("Password must be at least 6 characters");
     if (password !== confirmPw) return setError("Passwords do not match");
     setLoading(true);
     try {
+      // Check username uniqueness (case-insensitive)
+      const existing = await window.storage.get(`username:${uname}`, true);
+      if (existing) { setError("Username already taken"); setLoading(false); return; }
+
       const cred = await createUserWithEmailAndPassword(auth, email.trim(), password);
       await updateProfile(cred.user, { displayName: displayName.trim() });
+      // Reserve username globally (shared storage)
+      await window.storage.set(`username:${uname}`, JSON.stringify({ uid: cred.user.uid, displayName: displayName.trim() }), true);
       // Save initial game data
       const save = DEFAULT_SAVE();
-      const uid = cred.user.uid;
-      const username = uid;
-      await window.storage.set(`save:${username}`, JSON.stringify(save));
-      onLogin({ username, displayName: displayName.trim(), email: email.trim(), uid, isGuest: false }, save);
+      await window.storage.set(`save:${uname}`, JSON.stringify(save));
+      // Map uid -> username for login lookups
+      await window.storage.set(`uidmap:${cred.user.uid}`, uname, true);
+      onLogin({ username: uname, displayName: displayName.trim(), email: email.trim(), uid: cred.user.uid, isGuest: false }, save);
     } catch (e) {
       const msg = e.code === "auth/email-already-in-use" ? "An account with this email already exists"
         : e.code === "auth/invalid-email" ? "Invalid email address"
@@ -647,14 +656,25 @@ function AuthScreen({ onLogin }) {
     try {
       const cred = await signInWithEmailAndPassword(auth, email.trim(), password);
       const uid = cred.user.uid;
-      const username = uid;
+      // Look up username from uid map (new accounts), fallback to uid (legacy accounts)
+      let uname = uid;
+      try {
+        const mapRaw = await window.storage.get(`uidmap:${uid}`, true);
+        if (mapRaw) uname = mapRaw.value;
+      } catch {}
       let save;
       try {
-        const sr = await window.storage.get(`save:${username}`);
+        const sr = await window.storage.get(`save:${uname}`);
         save = JSON.parse(sr.value);
-      } catch { save = DEFAULT_SAVE(); }
+      } catch {
+        // Try legacy uid-based save
+        try {
+          const sr = await window.storage.get(`save:${uid}`);
+          save = JSON.parse(sr.value);
+        } catch { save = DEFAULT_SAVE(); }
+      }
       onLogin({
-        username,
+        username: uname,
         displayName: cred.user.displayName || email.split("@")[0],
         email: cred.user.email,
         uid,
@@ -744,6 +764,11 @@ function AuthScreen({ onLogin }) {
 
           {tab === "signup" && (
             <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+              <div>
+                <label style={labelStyle}>Username</label>
+                <input style={inputStyle} placeholder="unique_username" value={username} onChange={e => setUsername(e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, "").slice(0, 16))} />
+                <div style={{ fontSize: 10, color: T.textDim, marginTop: 3 }}>3-16 chars, letters/numbers/underscore only. This is permanent.</div>
+              </div>
               <div>
                 <label style={labelStyle}>Display Name</label>
                 <input style={inputStyle} placeholder="Your character name" value={displayName} onChange={e => setDisplayName(e.target.value)} />
@@ -2490,26 +2515,132 @@ function GameUI({ account, initialSave, onLogout }) {
     } catch { setFriendsList([]); }
   }, [account.username]);
 
-  useEffect(() => { fetchFriends(); }, [fetchFriends]);
+  const [friendRequests, setFriendRequests] = useState([]);
+  const [blockedUsers, setBlockedUsers] = useState([]);
+  const [sentRequests, setSentRequests] = useState([]);
 
-  const addFriend = useCallback(async (friendName) => {
-    if (!friendName.trim() || friendName.trim() === account.username) return;
-    const name = friendName.trim();
-    const updated = [...friendsList];
-    if (updated.find(f => f.username === name)) return;
-    updated.push({ username: name, addedAt: Date.now() });
-    setFriendsList(updated);
-    await window.storage.set(`friends:${account.username}`, JSON.stringify(updated));
-    addLog(`👥 Added ${name} as friend`);
+  const fetchFriendRequests = useCallback(async () => {
+    try {
+      const raw = await window.storage.get(`freq:${account.username}`);
+      if (raw) setFriendRequests(JSON.parse(raw.value));
+      else setFriendRequests([]);
+    } catch { setFriendRequests([]); }
+  }, [account.username]);
+
+  const fetchBlocked = useCallback(async () => {
+    try {
+      const raw = await window.storage.get(`blocked:${account.username}`);
+      if (raw) setBlockedUsers(JSON.parse(raw.value));
+      else setBlockedUsers([]);
+    } catch { setBlockedUsers([]); }
+  }, [account.username]);
+
+  const fetchSentRequests = useCallback(async () => {
+    try {
+      const raw = await window.storage.get(`freqsent:${account.username}`);
+      if (raw) setSentRequests(JSON.parse(raw.value));
+      else setSentRequests([]);
+    } catch { setSentRequests([]); }
+  }, [account.username]);
+
+  useEffect(() => { fetchFriends(); fetchFriendRequests(); fetchBlocked(); fetchSentRequests(); }, [fetchFriends, fetchFriendRequests, fetchBlocked, fetchSentRequests]);
+
+  // Poll for friend requests
+  useEffect(() => {
+    if (page !== "chat") return;
+    const iv = setInterval(() => fetchFriendRequests(), 8000);
+    return () => clearInterval(iv);
+  }, [page, fetchFriendRequests]);
+
+  const sendFriendRequest = useCallback(async (targetName) => {
+    if (!targetName.trim() || targetName.trim() === account.username) return;
+    const name = targetName.trim();
+    if (friendsList.find(f => f.username === name)) { addLog("👥 Already friends!"); return; }
+    if (sentRequests.includes(name)) { addLog("👥 Request already sent!"); return; }
+    if (blockedUsers.includes(name)) { addLog("🚫 User is blocked"); return; }
+    // Add to their incoming requests
+    try {
+      const raw = await window.storage.get(`freq:${name}`);
+      const existing = raw ? JSON.parse(raw.value) : [];
+      if (existing.find(r => r.from === account.username)) { addLog("👥 Request already sent!"); return; }
+      existing.push({ from: account.username, displayName: account.displayName, at: Date.now() });
+      await window.storage.set(`freq:${name}`, JSON.stringify(existing));
+    } catch {}
+    // Track our sent requests
+    const newSent = [...sentRequests, name];
+    setSentRequests(newSent);
+    await window.storage.set(`freqsent:${account.username}`, JSON.stringify(newSent));
+    addLog(`👥 Friend request sent to ${name}`);
     setFriendInput("");
-  }, [friendsList, account.username, addLog]);
+  }, [friendsList, sentRequests, blockedUsers, account, addLog]);
+
+  const acceptFriendRequest = useCallback(async (fromUser) => {
+    // Add to both friend lists
+    const myUpdated = [...friendsList, { username: fromUser, addedAt: Date.now() }];
+    setFriendsList(myUpdated);
+    await window.storage.set(`friends:${account.username}`, JSON.stringify(myUpdated));
+    // Add us to their friend list
+    try {
+      const raw = await window.storage.get(`friends:${fromUser}`);
+      const theirList = raw ? JSON.parse(raw.value) : [];
+      if (!theirList.find(f => f.username === account.username)) {
+        theirList.push({ username: account.username, addedAt: Date.now() });
+        await window.storage.set(`friends:${fromUser}`, JSON.stringify(theirList));
+      }
+    } catch {}
+    // Remove from requests
+    const updatedReqs = friendRequests.filter(r => r.from !== fromUser);
+    setFriendRequests(updatedReqs);
+    await window.storage.set(`freq:${account.username}`, JSON.stringify(updatedReqs));
+    addLog(`👥 You are now friends with ${fromUser}!`);
+  }, [friendsList, friendRequests, account, addLog]);
+
+  const denyFriendRequest = useCallback(async (fromUser) => {
+    const updatedReqs = friendRequests.filter(r => r.from !== fromUser);
+    setFriendRequests(updatedReqs);
+    await window.storage.set(`freq:${account.username}`, JSON.stringify(updatedReqs));
+  }, [friendRequests, account.username]);
 
   const removeFriend = useCallback(async (friendName) => {
     const updated = friendsList.filter(f => f.username !== friendName);
     setFriendsList(updated);
     await window.storage.set(`friends:${account.username}`, JSON.stringify(updated));
+    // Also remove from their list
+    try {
+      const raw = await window.storage.get(`friends:${friendName}`);
+      const theirList = raw ? JSON.parse(raw.value) : [];
+      const theirUpdated = theirList.filter(f => f.username !== account.username);
+      await window.storage.set(`friends:${friendName}`, JSON.stringify(theirUpdated));
+    } catch {}
     addLog(`👥 Removed ${friendName} from friends`);
   }, [friendsList, account.username, addLog]);
+
+  const blockUser = useCallback(async (targetName) => {
+    if (blockedUsers.includes(targetName)) return;
+    const updated = [...blockedUsers, targetName];
+    setBlockedUsers(updated);
+    await window.storage.set(`blocked:${account.username}`, JSON.stringify(updated));
+    // Also remove from friends if they were
+    const friendUpdated = friendsList.filter(f => f.username !== targetName);
+    if (friendUpdated.length !== friendsList.length) {
+      setFriendsList(friendUpdated);
+      await window.storage.set(`friends:${account.username}`, JSON.stringify(friendUpdated));
+    }
+    // Remove any pending requests from them
+    const reqUpdated = friendRequests.filter(r => r.from !== targetName);
+    if (reqUpdated.length !== friendRequests.length) {
+      setFriendRequests(reqUpdated);
+      await window.storage.set(`freq:${account.username}`, JSON.stringify(reqUpdated));
+    }
+    addLog(`🚫 Blocked ${targetName}`);
+  }, [blockedUsers, friendsList, friendRequests, account.username, addLog]);
+
+  const unblockUser = useCallback(async (targetName) => {
+    const updated = blockedUsers.filter(n => n !== targetName);
+    setBlockedUsers(updated);
+    await window.storage.set(`blocked:${account.username}`, JSON.stringify(updated));
+    addLog(`✅ Unblocked ${targetName}`);
+  }, [blockedUsers, account.username, addLog]);
 
   // ─── DIRECT MESSAGES ───
   const fetchDMs = useCallback(async (target) => {
@@ -2610,17 +2741,21 @@ function GameUI({ account, initialSave, onLogout }) {
                 </div>
               ))}
             </div>
-            <div style={{ padding: "8px 24px 20px", display: "flex", gap: 8 }}>
+            <div style={{ padding: "8px 24px 20px", display: "flex", gap: 6, flexWrap: "wrap" }}>
               {playerProfile.username !== account.username && (
                 <>
-                  <div onClick={() => {
-                    addFriend(playerProfile.username);
-                    setPlayerProfile(null);
-                  }} style={{
-                    flex: 1, padding: "10px 0", borderRadius: 8, textAlign: "center",
-                    background: T.success + "18", color: T.success, fontWeight: 700, fontSize: 12,
-                    cursor: "pointer", border: `1px solid ${T.success}30`,
-                  }}>👥 Add Friend</div>
+                  {friendsList.find(f => f.username === playerProfile.username) ? (
+                    <div style={{ flex: 1, padding: "10px 0", borderRadius: 8, textAlign: "center", background: T.success + "10", color: T.success, fontWeight: 700, fontSize: 12, border: `1px solid ${T.success}20` }}>✓ Friends</div>
+                  ) : (
+                    <div onClick={() => {
+                      sendFriendRequest(playerProfile.username);
+                      setPlayerProfile(null);
+                    }} style={{
+                      flex: 1, padding: "10px 0", borderRadius: 8, textAlign: "center",
+                      background: T.success + "18", color: T.success, fontWeight: 700, fontSize: 12,
+                      cursor: "pointer", border: `1px solid ${T.success}30`,
+                    }}>👥 Request</div>
+                  )}
                   <div onClick={() => {
                     setDmTarget(playerProfile.username);
                     setChatChannel("dm");
@@ -2631,11 +2766,19 @@ function GameUI({ account, initialSave, onLogout }) {
                     background: T.pink + "18", color: T.pink, fontWeight: 700, fontSize: 12,
                     cursor: "pointer", border: `1px solid ${T.pink}30`,
                   }}>✉️ Message</div>
+                  <div onClick={() => {
+                    blockUser(playerProfile.username);
+                    setPlayerProfile(null);
+                  }} style={{
+                    padding: "10px 12px", borderRadius: 8, textAlign: "center",
+                    background: T.danger + "12", color: T.danger, fontWeight: 700, fontSize: 12,
+                    cursor: "pointer", border: `1px solid ${T.danger}20`,
+                  }}>🚫</div>
                 </>
               )}
               <div onClick={() => setPlayerProfile(null)} style={{
-                flex: playerProfile.username === account.username ? 1 : 0, minWidth: 60,
-                padding: "10px 14px", borderRadius: 8, textAlign: "center",
+                flex: playerProfile.username === account.username ? 1 : 0, minWidth: 50,
+                padding: "10px 12px", borderRadius: 8, textAlign: "center",
                 background: T.bar, color: T.textSec, fontWeight: 700, fontSize: 12, cursor: "pointer",
               }}>Close</div>
             </div>
@@ -4690,7 +4833,7 @@ function GameUI({ account, initialSave, onLogout }) {
               { id: "global", label: "Global", icon: "🌍", color: T.accent },
               ...(myClan ? [{ id: "clan", label: `[${myClan.tag}] Clan`, icon: "🏰", color: T.purple }] : []),
               { id: "system", label: "System", icon: "📢", color: T.warning },
-              { id: "friends", label: "Friends", icon: "👥", color: T.success },
+              { id: "friends", label: friendRequests.length > 0 ? `Friends (${friendRequests.length})` : "Friends", icon: "👥", color: T.success },
               ...(dmTarget ? [{ id: "dm", label: `DM: ${dmTarget}`, icon: "✉️", color: T.pink }] : []),
             ];
             const isDM = chatChannel === "dm";
@@ -4749,10 +4892,10 @@ function GameUI({ account, initialSave, onLogout }) {
                       <div style={{ position: "relative", marginBottom: 16 }}>
                         <div style={{ display: "flex", gap: 8 }}>
                           <input value={friendInput} onChange={e => { setFriendInput(e.target.value); if (!lbData.length) fetchLeaderboard(); }}
-                            onKeyDown={e => { if (e.key === "Enter" && friendInput.trim()) { addFriend(friendInput); } if (e.key === "Escape") setFriendInput(""); }}
+                            onKeyDown={e => { if (e.key === "Enter" && friendInput.trim()) { sendFriendRequest(friendInput); } if (e.key === "Escape") setFriendInput(""); }}
                             placeholder="Search players..."
                             style={{ flex: 1, padding: "8px 12px", background: T.bgDeep, border: `1px solid ${T.border}`, borderRadius: 8, color: T.text, fontSize: 12, outline: "none" }} />
-                          <Btn color={T.success} small onClick={() => addFriend(friendInput)}>Add</Btn>
+                          <Btn color={T.success} small onClick={() => sendFriendRequest(friendInput)}>Request</Btn>
                         </div>
                         {friendInput.trim().length >= 1 && (() => {
                           const q = friendInput.trim().toLowerCase();
@@ -4770,7 +4913,7 @@ function GameUI({ account, initialSave, onLogout }) {
                               boxShadow: "0 8px 24px rgba(0,0,0,0.4)", overflow: "hidden", maxHeight: 220, overflowY: "auto",
                             }}>
                               {suggestions.map((s, i) => (
-                                <div key={i} onClick={() => { addFriend(s.username); setFriendInput(""); }}
+                                <div key={i} onMouseDown={e => { e.preventDefault(); sendFriendRequest(s.username); setFriendInput(""); }}
                                   style={{
                                     display: "flex", alignItems: "center", gap: 10, padding: "10px 14px",
                                     cursor: "pointer", borderBottom: `1px solid ${T.divider}`,
@@ -4788,7 +4931,7 @@ function GameUI({ account, initialSave, onLogout }) {
                                     <div style={{ fontSize: 13, fontWeight: 700, color: T.white, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{s.displayName || s.username}</div>
                                     <div style={{ fontSize: 10, color: T.textDim }}>@{s.username} · Lv {s.totalLevel || "?"}</div>
                                   </div>
-                                  <span style={{ fontSize: 10, color: T.success, fontWeight: 600 }}>+ Add</span>
+                                  <span style={{ fontSize: 10, color: T.success, fontWeight: 600 }}>+ Request</span>
                                 </div>
                               ))}
                             </div>
@@ -4796,13 +4939,47 @@ function GameUI({ account, initialSave, onLogout }) {
                         })()}
                       </div>
 
-                      {friendsList.length === 0 ? (
+                      {/* Incoming Friend Requests */}
+                      {friendRequests.length > 0 && (
+                        <div style={{ marginBottom: 16 }}>
+                          <div style={{ fontSize: 12, fontWeight: 700, color: T.warning, marginBottom: 8 }}>📬 Friend Requests ({friendRequests.length})</div>
+                          {friendRequests.map((r, i) => (
+                            <div key={i} style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 12px", marginBottom: 6, background: T.warning + "08", borderRadius: 10, border: `1px solid ${T.warning}25` }}>
+                              <div style={{ width: 32, height: 32, borderRadius: "50%", background: T.warning + "18", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14, fontWeight: 800, color: T.warning }}>
+                                {(r.displayName || r.from || "?")[0]?.toUpperCase()}
+                              </div>
+                              <div style={{ flex: 1 }}>
+                                <div style={{ fontSize: 13, fontWeight: 700, color: T.white }}>{r.displayName || r.from}</div>
+                                <div style={{ fontSize: 10, color: T.textDim }}>@{r.from}</div>
+                              </div>
+                              <div style={{ display: "flex", gap: 4 }}>
+                                <div onMouseDown={e => { e.preventDefault(); acceptFriendRequest(r.from); }} style={{
+                                  padding: "5px 10px", borderRadius: 6, cursor: "pointer", fontSize: 11, fontWeight: 600,
+                                  background: T.success + "18", color: T.success, border: `1px solid ${T.success}30`,
+                                }}>✓ Accept</div>
+                                <div onMouseDown={e => { e.preventDefault(); denyFriendRequest(r.from); }} style={{
+                                  padding: "5px 10px", borderRadius: 6, cursor: "pointer", fontSize: 11, fontWeight: 600,
+                                  background: T.danger + "18", color: T.danger, border: `1px solid ${T.danger}30`,
+                                }}>✕</div>
+                                <div onMouseDown={e => { e.preventDefault(); blockUser(r.from); }} style={{
+                                  padding: "5px 10px", borderRadius: 6, cursor: "pointer", fontSize: 11, fontWeight: 600,
+                                  background: T.textDim + "15", color: T.textDim, border: `1px solid ${T.textDim}20`,
+                                }}>🚫</div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+
+                      {friendsList.length === 0 && friendRequests.length === 0 ? (
                         <div style={{ textAlign: "center", padding: "40px 0", color: T.textDim }}>
                           <div style={{ fontSize: 32, marginBottom: 8 }}>👥</div>
-                          <div style={{ fontSize: 13 }}>No friends yet. Add someone above!</div>
+                          <div style={{ fontSize: 13 }}>No friends yet. Send a request above!</div>
                         </div>
-                      ) : (
-                        friendsList.map((f, i) => {
+                      ) : friendsList.length > 0 && (
+                        <>
+                        <div style={{ fontSize: 12, fontWeight: 700, color: T.success, marginBottom: 8 }}>👥 Friends ({friendsList.length})</div>
+                        {friendsList.map((f, i) => {
                           const lb = lbData.find(e => e.username === f.username || e.displayName === f.username);
                           return (
                             <div key={i} style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 12px", marginBottom: 6, background: T.card, borderRadius: 10, border: `1px solid ${T.border}` }}>
@@ -4828,10 +5005,31 @@ function GameUI({ account, initialSave, onLogout }) {
                                   padding: "5px 10px", borderRadius: 6, cursor: "pointer", fontSize: 11, fontWeight: 600,
                                   background: T.danger + "18", color: T.danger, border: `1px solid ${T.danger}30`,
                                 }}>✕</div>
+                                <div onClick={() => blockUser(f.username)} style={{
+                                  padding: "5px 10px", borderRadius: 6, cursor: "pointer", fontSize: 11, fontWeight: 600,
+                                  background: T.textDim + "15", color: T.textDim, border: `1px solid ${T.textDim}20`,
+                                }}>🚫</div>
                               </div>
                             </div>
                           );
-                        })
+                        })}
+                        </>
+                      )}
+
+                      {/* Blocked Users */}
+                      {blockedUsers.length > 0 && (
+                        <div style={{ marginTop: 16 }}>
+                          <div style={{ fontSize: 12, fontWeight: 700, color: T.danger, marginBottom: 8 }}>🚫 Blocked ({blockedUsers.length})</div>
+                          {blockedUsers.map((name, i) => (
+                            <div key={i} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "8px 12px", marginBottom: 4, background: T.danger + "06", borderRadius: 8, border: `1px solid ${T.danger}15` }}>
+                              <span style={{ fontSize: 12, color: T.textDim }}>{name}</span>
+                              <div onClick={() => unblockUser(name)} style={{
+                                padding: "4px 10px", borderRadius: 6, cursor: "pointer", fontSize: 10, fontWeight: 600,
+                                background: T.success + "18", color: T.success, border: `1px solid ${T.success}30`,
+                              }}>Unblock</div>
+                            </div>
+                          ))}
+                        </div>
                       )}
                     </div>
                   ) : msgs.length === 0 ? (
@@ -5087,7 +5285,7 @@ function GameUI({ account, initialSave, onLogout }) {
                                   boxShadow: "0 8px 24px rgba(0,0,0,0.4)", overflow: "hidden",
                                 }}>
                                   {suggestions.map((s, i) => (
-                                    <div key={i} onClick={() => { setClanInviteUser(s.username); }}
+                                    <div key={i} onMouseDown={e => { e.preventDefault(); setClanInviteUser(s.username); }}
                                       style={{
                                         display: "flex", alignItems: "center", gap: 10, padding: "8px 12px",
                                         cursor: "pointer", borderBottom: `1px solid ${T.divider}`,

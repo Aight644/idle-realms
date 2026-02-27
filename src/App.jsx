@@ -779,36 +779,41 @@ function IdleRealmsGame() {
   const [initialSave, setInitialSave] = useState(null);
   const [authChecked, setAuthChecked] = useState(false);
   const [kicked, setKicked] = useState(false);
+  const [fatalError, setFatalError] = useState(null);
 
   // Listen for Firebase auth state
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, async (user) => {
-      if (user) {
-        const username = user.uid;
+      try {
+        if (user) {
+          const username = user.uid;
 
-        // Write our session to Firestore
-        await setDoc(doc(db, "sessions", username), {
-          sessionId: SESSION_ID,
-          loginAt: serverTimestamp(),
-        });
+          await setDoc(doc(db, "sessions", username), {
+            sessionId: SESSION_ID,
+            loginAt: serverTimestamp(),
+          });
 
-        let save;
-        try {
-          const sr = await window.storage.get(`save:${username}`);
-          save = JSON.parse(sr.value);
-        } catch { save = DEFAULT_SAVE(); }
-        setAccount({
-          username,
-          displayName: user.displayName || user.email?.split("@")[0] || "Adventurer",
-          email: user.email,
-          uid: user.uid,
-          isGuest: false,
-        });
-        setInitialSave(save);
-        setKicked(false);
-      } else {
-        setAccount(null);
-        setInitialSave(null);
+          let save;
+          try {
+            const sr = await window.storage.get(`save:${username}`);
+            save = JSON.parse(sr.value);
+          } catch { save = DEFAULT_SAVE(); }
+          setAccount({
+            username,
+            displayName: user.displayName || user.email?.split("@")[0] || "Adventurer",
+            email: user.email,
+            uid: user.uid,
+            isGuest: false,
+          });
+          setInitialSave(save);
+          setKicked(false);
+        } else {
+          setAccount(null);
+          setInitialSave(null);
+        }
+      } catch (err) {
+        console.error("Auth error:", err);
+        setFatalError(String(err));
       }
       setAuthChecked(true);
     });
@@ -844,6 +849,18 @@ function IdleRealmsGame() {
     setInitialSave(null);
   }, []);
 
+
+  if (fatalError) {
+    return (
+      <div style={{ height: "100vh", display: "flex", alignItems: "center", justifyContent: "center", background: "#1c1f26", fontFamily: "monospace", color: "#ff6b6b", padding: 40 }}>
+        <div>
+          <h2>⚠️ Error</h2>
+          <pre style={{ fontSize: 12, whiteSpace: "pre-wrap", maxWidth: 600 }}>{fatalError}</pre>
+          <button onClick={() => window.location.reload()} style={{ marginTop: 16, padding: "8px 16px", background: "#4dabf7", color: "#fff", border: "none", borderRadius: 6, cursor: "pointer" }}>Reload</button>
+        </div>
+      </div>
+    );
+  }
 
   if (!authChecked) {
     return (

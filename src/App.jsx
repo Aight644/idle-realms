@@ -54,14 +54,20 @@ const FONT = `"Inter", "Segoe UI", system-ui, -apple-system, sans-serif`;
 
 // ─── SKILLS CONFIG ───
 const SKILLS_CONFIG = {
-  combat:     { name: "Combat",      icon: "⚔️", color: T.danger,  bg: T.dangerMuted,  type: "combat",    desc: "Fight monsters for gold, XP, and loot drops" },
-  mining:     { name: "Mining",      icon: "⛏️", color: T.warning, bg: T.warningMuted, type: "gathering", desc: "Mine rocks to obtain ores and gems" },
-  woodcutting:{ name: "Woodcutting", icon: "🪓", color: T.success, bg: T.successMuted, type: "gathering", desc: "Chop trees for logs used in crafting" },
-  fishing:    { name: "Fishing",     icon: "🎣", color: T.info,    bg: T.infoMuted,    type: "gathering", desc: "Catch fish from rivers and seas" },
-  cooking:    { name: "Cooking",     icon: "🍳", color: T.orange,  bg: T.orangeMuted,  type: "artisan",   desc: "Cook raw fish into food that heals HP" },
-  smithing:   { name: "Smithing",    icon: "🔨", color: T.warning, bg: T.warningMuted, type: "artisan",   desc: "Forge weapons and armor from ores" },
-  alchemy:    { name: "Alchemy",     icon: "🧪", color: T.teal,    bg: T.tealMuted,    type: "artisan",   desc: "Brew potions and elixirs from drops" },
-  magic:      { name: "Magic",       icon: "✨", color: T.purple,  bg: T.purpleMuted,  type: "combat",    desc: "Harness arcane power to boost MP" },
+  combat:      { name: "Combat",       icon: "⚔️", color: T.danger,  bg: T.dangerMuted,  type: "combat",    desc: "Fight monsters for gold, XP, and loot drops" },
+  mining:      { name: "Mining",       icon: "⛏️", color: T.warning, bg: T.warningMuted, type: "gathering", desc: "Mine rocks to obtain ores and gems" },
+  woodcutting: { name: "Woodcutting",  icon: "🪓", color: T.success, bg: T.successMuted, type: "gathering", desc: "Chop trees for logs used in crafting" },
+  fishing:     { name: "Fishing",      icon: "🎣", color: T.info,    bg: T.infoMuted,    type: "gathering", desc: "Catch fish from rivers and seas" },
+  foraging:    { name: "Foraging",     icon: "🌿", color: "#66bb6a", bg: "#66bb6a15",    type: "gathering", desc: "Search the wilds for herbs, roots, and fungi" },
+  trapping:    { name: "Trapping",     icon: "🪤", color: "#795548", bg: "#79554815",    type: "gathering", desc: "Set snares for creatures and collect pelts" },
+  scavenging:  { name: "Scavenging",   icon: "🔍", color: "#8d6e63", bg: "#8d6e6315",    type: "gathering", desc: "Rummage through ruins and crates for hidden loot" },
+  cooking:     { name: "Cooking",      icon: "🍳", color: T.orange,  bg: T.orangeMuted,  type: "artisan",   desc: "Cook raw fish into food that heals HP" },
+  smithing:    { name: "Smithing",     icon: "🔨", color: T.warning, bg: T.warningMuted, type: "artisan",   desc: "Forge weapons and armor from ores" },
+  alchemy:     { name: "Alchemy",      icon: "🧪", color: T.teal,    bg: T.tealMuted,    type: "artisan",   desc: "Brew potions and elixirs from drops" },
+  infusing:    { name: "Infusing",     icon: "🔮", color: "#b388ff", bg: "#b388ff15",    type: "artisan",   desc: "Channel essence into items for magical effects" },
+  tailoring:   { name: "Tailoring",    icon: "🧵", color: "#ce93d8", bg: "#ce93d815",    type: "artisan",   desc: "Sew pelts and fabrics into armor and cloaks" },
+  inscription: { name: "Inscription",  icon: "📜", color: "#a1887f", bg: "#a1887f15",    type: "artisan",   desc: "Scribe scrolls and glyphs that grant power" },
+  magic:       { name: "Magic",        icon: "✨", color: T.purple,  bg: T.purpleMuted,  type: "combat",    desc: "Harness arcane power to boost MP" },
 };
 
 const xpForLevel = (lvl) => Math.floor(50 * Math.pow(lvl, 1.8));
@@ -101,6 +107,30 @@ const GATHER_NODES = {
     { name: "Salmon Spot", emoji: "🐠", lvl: 25, time: 5500, xp: 20, item: "Raw Salmon" },
     { name: "Swordfish Spot", emoji: "🗡️", lvl: 45, time: 8000, xp: 45, item: "Raw Swordfish" },
     { name: "Shark Spot", emoji: "🦈", lvl: 65, time: 12000, xp: 90, item: "Raw Shark" },
+  ],
+  foraging: [
+    { name: "Meadow Patch", emoji: "🌱", lvl: 1, time: 2800, xp: 5, item: "Clover Leaf" },
+    { name: "Mossy Hollow", emoji: "🍄", lvl: 10, time: 3800, xp: 11, item: "Cave Moss" },
+    { name: "Thornbrush", emoji: "🌿", lvl: 22, time: 5200, xp: 20, item: "Thornberry" },
+    { name: "Mistpeak Summit", emoji: "🏔️", lvl: 38, time: 7500, xp: 38, item: "Frostcap" },
+    { name: "Gloomshade", emoji: "🌑", lvl: 52, time: 10000, xp: 62, item: "Duskbloom" },
+    { name: "Ember Hollow", emoji: "🔥", lvl: 68, time: 13000, xp: 95, item: "Embervine" },
+  ],
+  trapping: [
+    { name: "Wicker Snare", emoji: "🐇", lvl: 1, time: 3500, xp: 6, item: "Soft Pelt" },
+    { name: "Rope Net", emoji: "🐦", lvl: 10, time: 4200, xp: 13, item: "Down Feather" },
+    { name: "Jaw Trap", emoji: "🦊", lvl: 24, time: 5800, xp: 24, item: "Thick Hide" },
+    { name: "Spring Cage", emoji: "🐗", lvl: 38, time: 7500, xp: 40, item: "Tusked Jaw" },
+    { name: "Razor Wire", emoji: "🦅", lvl: 52, time: 10000, xp: 64, item: "Storm Plume" },
+    { name: "Titan Net", emoji: "🐲", lvl: 68, time: 14000, xp: 100, item: "Scaled Hide" },
+  ],
+  scavenging: [
+    { name: "Roadside Crate", emoji: "📦", lvl: 1, time: 3000, xp: 5, item: "Scrap Metal" },
+    { name: "Abandoned Camp", emoji: "🏕️", lvl: 12, time: 4000, xp: 13, item: "Worn Cloth" },
+    { name: "Sunken Chest", emoji: "🪙", lvl: 25, time: 5500, xp: 24, item: "Tarnished Ring" },
+    { name: "Ruined Tower", emoji: "🏚️", lvl: 40, time: 7500, xp: 42, item: "Ancient Shard" },
+    { name: "Forgotten Vault", emoji: "🔐", lvl: 55, time: 10000, xp: 68, item: "Relic Fragment" },
+    { name: "Titan's Grave", emoji: "💀", lvl: 70, time: 14000, xp: 110, item: "Titan Core" },
   ],
 };
 
@@ -145,6 +175,30 @@ const RECIPES = {
     { name: "Shadow Elixir", emoji: "🌑", lvl: 50, time: 10000, xp: 100, desc: "+10 ATK/DEF 60s", mats: [{ n: "Shadow Dust", need: 3 }, { n: "Mana Crystal", need: 2 }] },
     { name: "Dragon Elixir", emoji: "🐉", lvl: 65, time: 15000, xp: 200, desc: "+20 ATK/DEF 90s", mats: [{ n: "Dragon Scale", need: 1 }, { n: "Mana Crystal", need: 3 }, { n: "Shadow Dust", need: 2 }] },
   ],
+  infusing: [
+    { name: "Spark Rune", emoji: "⚡", lvl: 1, time: 4000, xp: 10, desc: "Basic magical catalyst", mats: [{ n: "Clover Leaf", need: 3 }, { n: "Mana Crystal", need: 1 }] },
+    { name: "Ward Stone", emoji: "🛡️", lvl: 12, time: 5500, xp: 22, desc: "DEF +4 ward", mats: [{ n: "Cave Moss", need: 2 }, { n: "Mana Crystal", need: 1 }, { n: "Iron Ore", need: 1 }] },
+    { name: "Rage Gem", emoji: "💢", lvl: 25, time: 7000, xp: 38, desc: "ATK +7 infusion", mats: [{ n: "Thornberry", need: 2 }, { n: "Mana Crystal", need: 2 }, { n: "Scrap Metal", need: 3 }] },
+    { name: "Veil Charm", emoji: "👁️", lvl: 38, time: 9000, xp: 58, desc: "+10% XP for 5 min", mats: [{ n: "Frostcap", need: 2 }, { n: "Mana Crystal", need: 3 }, { n: "Ancient Shard", need: 1 }] },
+    { name: "Void Lens", emoji: "⬛", lvl: 52, time: 12000, xp: 90, desc: "+12 ATK/DEF", mats: [{ n: "Duskbloom", need: 3 }, { n: "Relic Fragment", need: 1 }, { n: "Mana Crystal", need: 4 }] },
+    { name: "Titan Sigil", emoji: "🌋", lvl: 68, time: 18000, xp: 180, desc: "+20 ATK, +15% XP", mats: [{ n: "Embervine", need: 2 }, { n: "Titan Core", need: 1 }, { n: "Scaled Hide", need: 2 }] },
+  ],
+  tailoring: [
+    { name: "Cloth Wrap", emoji: "🧣", lvl: 1, time: 3000, xp: 8, desc: "DEF +2", mats: [{ n: "Worn Cloth", need: 3 }] },
+    { name: "Leather Vest", emoji: "🦺", lvl: 10, time: 4500, xp: 18, desc: "DEF +5", mats: [{ n: "Soft Pelt", need: 3 }, { n: "Worn Cloth", need: 2 }] },
+    { name: "Fur Cloak", emoji: "🧥", lvl: 24, time: 6500, xp: 35, desc: "DEF +8, +3% XP", mats: [{ n: "Thick Hide", need: 3 }, { n: "Down Feather", need: 4 }] },
+    { name: "Ranger Tunic", emoji: "👕", lvl: 36, time: 8500, xp: 55, desc: "DEF +12, +5% speed", mats: [{ n: "Thick Hide", need: 4 }, { n: "Tusked Jaw", need: 2 }, { n: "Willow Log", need: 2 }] },
+    { name: "Stormweave Robe", emoji: "👘", lvl: 50, time: 12000, xp: 90, desc: "DEF +18, +8% XP", mats: [{ n: "Storm Plume", need: 4 }, { n: "Worn Cloth", need: 6 }, { n: "Mana Crystal", need: 2 }] },
+    { name: "Drakehide Armor", emoji: "🛡️", lvl: 65, time: 16000, xp: 160, desc: "DEF +28, +10% XP", mats: [{ n: "Scaled Hide", need: 4 }, { n: "Storm Plume", need: 3 }, { n: "Titan Core", need: 1 }] },
+  ],
+  inscription: [
+    { name: "Minor Glyph", emoji: "📜", lvl: 1, time: 3500, xp: 9, desc: "+2% XP for 5 min", mats: [{ n: "Clover Leaf", need: 2 }, { n: "Oak Log", need: 1 }] },
+    { name: "Speed Scroll", emoji: "📜", lvl: 12, time: 5000, xp: 20, desc: "+5% speed for 5 min", mats: [{ n: "Down Feather", need: 3 }, { n: "Cave Moss", need: 2 }] },
+    { name: "Warding Glyph", emoji: "📜", lvl: 25, time: 7000, xp: 35, desc: "+6 DEF for 5 min", mats: [{ n: "Thornberry", need: 3 }, { n: "Tarnished Ring", need: 1 }, { n: "Maple Log", need: 2 }] },
+    { name: "Power Scroll", emoji: "📜", lvl: 40, time: 9000, xp: 58, desc: "+10 ATK for 5 min", mats: [{ n: "Frostcap", need: 3 }, { n: "Ancient Shard", need: 1 }, { n: "Mana Crystal", need: 2 }] },
+    { name: "Fortune Glyph", emoji: "📜", lvl: 55, time: 12000, xp: 95, desc: "+15% gold for 5 min", mats: [{ n: "Duskbloom", need: 3 }, { n: "Relic Fragment", need: 2 }, { n: "Gold Ore", need: 3 }] },
+    { name: "Titan Scroll", emoji: "📜", lvl: 70, time: 18000, xp: 200, desc: "+25 ATK/DEF for 5 min", mats: [{ n: "Embervine", need: 3 }, { n: "Titan Core", need: 1 }, { n: "Mana Crystal", need: 4 }] },
+  ],
 };
 
 // ─── ITEM DATABASE ───
@@ -165,6 +219,27 @@ const ITEMS = {
   "Raw Salmon":     { emoji: "🐠", category: "material", desc: "Wild salmon", sell: 12 },
   "Raw Swordfish":  { emoji: "🗡️", category: "material", desc: "Powerful swordfish", sell: 30 },
   "Raw Shark":      { emoji: "🦈", category: "material", desc: "Dangerous shark meat", sell: 60 },
+  // ── Foraging ──
+  "Clover Leaf":    { emoji: "🌱", category: "material", desc: "Common meadow herb", sell: 2 },
+  "Cave Moss":      { emoji: "🍄", category: "material", desc: "Damp fungal moss", sell: 5 },
+  "Thornberry":     { emoji: "🌿", category: "material", desc: "Prickly wild berry", sell: 12 },
+  "Frostcap":       { emoji: "🏔️", category: "material", desc: "Frost-kissed mushroom", sell: 25 },
+  "Duskbloom":      { emoji: "🌑", category: "material", desc: "Flower that blooms in shadow", sell: 45 },
+  "Embervine":      { emoji: "🔥", category: "material", desc: "Heat-resistant creeper vine", sell: 70 },
+  // ── Trapping ──
+  "Soft Pelt":      { emoji: "🐇", category: "material", desc: "Small animal hide", sell: 3 },
+  "Down Feather":   { emoji: "🐦", category: "material", desc: "Light fluffy feather", sell: 6 },
+  "Thick Hide":     { emoji: "🦊", category: "material", desc: "Tough tanned leather", sell: 14 },
+  "Tusked Jaw":     { emoji: "🐗", category: "material", desc: "Boar jawbone trophy", sell: 28 },
+  "Storm Plume":    { emoji: "🦅", category: "material", desc: "Feather charged with static", sell: 48 },
+  "Scaled Hide":    { emoji: "🐲", category: "material", desc: "Nearly impenetrable scales", sell: 75 },
+  // ── Scavenging ──
+  "Scrap Metal":    { emoji: "📦", category: "material", desc: "Rusty salvaged metal", sell: 2 },
+  "Worn Cloth":     { emoji: "🏕️", category: "material", desc: "Tattered but usable fabric", sell: 5 },
+  "Tarnished Ring": { emoji: "🪙", category: "material", desc: "Old ring worth polishing", sell: 15 },
+  "Ancient Shard":  { emoji: "🏚️", category: "material", desc: "Fragment of old magic", sell: 30 },
+  "Relic Fragment": { emoji: "🔐", category: "material", desc: "Piece of a forgotten artifact", sell: 50 },
+  "Titan Core":     { emoji: "💀", category: "material", desc: "Crystallized giant essence", sell: 85 },
   "Slime Gel":      { emoji: "🟢", category: "material", desc: "Goo from slimes", sell: 1 },
   "Rat Tail":       { emoji: "🐀", category: "material", desc: "Tail from rats", sell: 2 },
   "Goblin Ear":     { emoji: "👺", category: "material", desc: "Severed goblin ear", sell: 5 },
@@ -188,6 +263,27 @@ const ITEMS = {
   "Mithril Blade":  { emoji: "🔱", category: "equipment", slot: "weapon", atk: 20, def: 5,  rarity: "epic",      desc: "Legendary mithril edge", sell: 500 },
   "Dragon Plate":   { emoji: "🛡️", category: "equipment", slot: "armor",  atk: 0,  def: 25, xpPct: 8, rarity: "legendary", desc: "Dragonscale armor (+8% XP)", sell: 1500 },
   "Dragon Blade":   { emoji: "⚔️", category: "equipment", slot: "weapon", atk: 30, def: 5,  rarity: "legendary", desc: "Ultimate dragon sword", sell: 2500 },
+  // ── Infusing ──
+  "Spark Rune":     { emoji: "⚡", category: "material", desc: "Basic magical catalyst", sell: 8 },
+  "Ward Stone":     { emoji: "🛡️", category: "equipment", slot: "offhand", def: 4, rarity: "common", desc: "Protective ward", sell: 18 },
+  "Rage Gem":       { emoji: "💢", category: "equipment", slot: "amulet", atk: 7, rarity: "uncommon", desc: "Attack infusion", sell: 35 },
+  "Veil Charm":     { emoji: "👁️", category: "consumable", desc: "+10% XP boost", sell: 50 },
+  "Void Lens":      { emoji: "⬛", category: "equipment", slot: "amulet", atk: 12, def: 12, rarity: "rare", desc: "Void-infused gem", sell: 120 },
+  "Titan Sigil":    { emoji: "🌋", category: "equipment", slot: "amulet", atk: 20, xpPct: 15, rarity: "legendary", desc: "Titan's power sigil", sell: 350 },
+  // ── Tailoring ──
+  "Cloth Wrap":     { emoji: "🧣", category: "equipment", slot: "body", def: 2, rarity: "common", desc: "Simple cloth armor", sell: 5 },
+  "Leather Vest":   { emoji: "🦺", category: "equipment", slot: "body", def: 5, rarity: "common", desc: "Basic leather armor", sell: 15 },
+  "Fur Cloak":      { emoji: "🧥", category: "equipment", slot: "body", def: 8, xpPct: 3, rarity: "uncommon", desc: "Warm fur cloak", sell: 40 },
+  "Ranger Tunic":   { emoji: "👕", category: "equipment", slot: "body", def: 12, speedPct: 5, rarity: "rare", desc: "Agile ranger wear", sell: 80 },
+  "Stormweave Robe":{ emoji: "👘", category: "equipment", slot: "body", def: 18, xpPct: 8, rarity: "rare", desc: "Storm-enchanted robe", sell: 160 },
+  "Drakehide Armor":{ emoji: "🛡️", category: "equipment", slot: "body", def: 28, xpPct: 10, rarity: "legendary", desc: "Dragon-scale armor", sell: 400 },
+  // ── Inscription ──
+  "Minor Glyph":    { emoji: "📜", category: "consumable", desc: "+2% XP for 5 min", sell: 6 },
+  "Speed Scroll":   { emoji: "📜", category: "consumable", desc: "+5% speed for 5 min", sell: 15 },
+  "Warding Glyph":  { emoji: "📜", category: "consumable", desc: "+6 DEF for 5 min", sell: 30 },
+  "Power Scroll":   { emoji: "📜", category: "consumable", desc: "+10 ATK for 5 min", sell: 55 },
+  "Fortune Glyph":  { emoji: "📜", category: "consumable", desc: "+15% gold for 5 min", sell: 90 },
+  "Titan Scroll":   { emoji: "📜", category: "consumable", desc: "+25 ATK/DEF for 5 min", sell: 250 },
   // ── Tools (equip for gathering/crafting bonuses) ──
   "Bronze Pickaxe":  { emoji: "⛏️", category: "equipment", slot: "tool", atk: 0, def: 0, speedPct: 5,  xpPct: 5,  rarity: "common",    desc: "+5% speed, +5% XP", sell: 20 },
   "Iron Pickaxe":    { emoji: "⛏️", category: "equipment", slot: "tool", atk: 0, def: 0, speedPct: 10, xpPct: 8,  rarity: "uncommon",  desc: "+10% speed, +8% XP", sell: 70 },
@@ -2315,15 +2411,21 @@ function GameUI({ account, initialSave, onLogout }) {
           <SectionLabel>Combat</SectionLabel>
           <SidebarItem icon="⚔️" label="Combat" active={page==="combat"} onClick={() => nav("combat")} color={T.danger} badge={`${skills.combat.level}`} />
 
-          <SectionLabel>Non-Combat</SectionLabel>
+          <SectionLabel>Gathering</SectionLabel>
           <SidebarItem icon="⛏️" label="Mining" active={page==="mining"} onClick={() => nav("mining")} color={SKILLS_CONFIG.mining.color} badge={`${skills.mining.level}`} indent />
           <SidebarItem icon="🪓" label="Woodcutting" active={page==="woodcutting"} onClick={() => nav("woodcutting")} color={SKILLS_CONFIG.woodcutting.color} badge={`${skills.woodcutting.level}`} indent />
           <SidebarItem icon="🎣" label="Fishing" active={page==="fishing"} onClick={() => nav("fishing")} color={SKILLS_CONFIG.fishing.color} badge={`${skills.fishing.level}`} indent />
+          <SidebarItem icon="🌿" label="Foraging" active={page==="foraging"} onClick={() => nav("foraging")} color={SKILLS_CONFIG.foraging.color} badge={`${skills.foraging.level}`} indent />
+          <SidebarItem icon="🪤" label="Trapping" active={page==="trapping"} onClick={() => nav("trapping")} color={SKILLS_CONFIG.trapping.color} badge={`${skills.trapping.level}`} indent />
+          <SidebarItem icon="🔍" label="Scavenging" active={page==="scavenging"} onClick={() => nav("scavenging")} color={SKILLS_CONFIG.scavenging.color} badge={`${skills.scavenging.level}`} indent />
 
           <SectionLabel>Artisan</SectionLabel>
           <SidebarItem icon="🔨" label="Smithing" active={page==="smithing"} onClick={() => nav("smithing")} color={SKILLS_CONFIG.smithing.color} badge={`${skills.smithing.level}`} indent />
           <SidebarItem icon="🍳" label="Cooking" active={page==="cooking"} onClick={() => nav("cooking")} color={SKILLS_CONFIG.cooking.color} badge={`${skills.cooking.level}`} indent />
           <SidebarItem icon="🧪" label="Alchemy" active={page==="alchemy"} onClick={() => nav("alchemy")} color={SKILLS_CONFIG.alchemy.color} badge={`${skills.alchemy.level}`} indent />
+          <SidebarItem icon="🔮" label="Infusing" active={page==="infusing"} onClick={() => nav("infusing")} color={SKILLS_CONFIG.infusing.color} badge={`${skills.infusing.level}`} indent />
+          <SidebarItem icon="🧵" label="Tailoring" active={page==="tailoring"} onClick={() => nav("tailoring")} color={SKILLS_CONFIG.tailoring.color} badge={`${skills.tailoring.level}`} indent />
+          <SidebarItem icon="📜" label="Inscription" active={page==="inscription"} onClick={() => nav("inscription")} color={SKILLS_CONFIG.inscription.color} badge={`${skills.inscription.level}`} indent />
 
           <div style={{ flex: 1 }} />
           <div style={{ borderTop: `1px solid ${T.sidebarBorder}`, margin: "8px 0", padding: "8px 0 0" }}>
@@ -3067,7 +3169,7 @@ function GameUI({ account, initialSave, onLogout }) {
           })()}
 
           {/* ════ GATHERING PAGES ════ */}
-          {["mining", "woodcutting", "fishing"].includes(page) && (() => {
+          {["mining", "woodcutting", "fishing", "foraging", "trapping", "scavenging"].includes(page) && (() => {
             const sk = skillFor(page);
             const nodes = GATHER_NODES[page] || [];
             const isActiveSkill = activeGather?.skillId === page;
@@ -3170,7 +3272,7 @@ function GameUI({ account, initialSave, onLogout }) {
           })()}
 
           {/* ════ CRAFTING PAGES ════ */}
-          {["smithing", "cooking", "alchemy"].includes(page) && (() => {
+          {["smithing", "cooking", "alchemy", "infusing", "tailoring", "inscription"].includes(page) && (() => {
             const sk = skillFor(page);
             const recipes = RECIPES[page] || [];
             const isActiveSkill = activeCraft?.skillId === page;

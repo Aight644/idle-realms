@@ -774,7 +774,7 @@ function AuthScreen({ onLogin }) {
 // ═══ MAIN APP (wrapper with Firebase auth) ═══
 const SESSION_ID = Math.random().toString(36).slice(2) + Date.now().toString(36);
 
-function IdleRealmsGame() {
+export default function IdleRealmsUI() {
   const [account, setAccount] = useState(null);
   const [initialSave, setInitialSave] = useState(null);
   const [authChecked, setAuthChecked] = useState(false);
@@ -5680,8 +5680,4 @@ function GameUI({ account, initialSave, onLogout }) {
       `}</style>
     </div>
   );
-}
-
-export default function IdleRealmsUI() {
-  return <IdleRealmsGame />;
 }

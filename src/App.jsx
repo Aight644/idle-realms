@@ -779,13 +779,11 @@ function IdleRealmsGame() {
   const [initialSave, setInitialSave] = useState(null);
   const [authChecked, setAuthChecked] = useState(false);
   const [kicked, setKicked] = useState(false);
-  const [fatalError, setFatalError] = useState(null);
 
   // Listen for Firebase auth state
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, async (user) => {
-      try {
-        if (user) {
+      if (user) {
           const username = user.uid;
 
           await setDoc(doc(db, "sessions", username), {
@@ -811,10 +809,6 @@ function IdleRealmsGame() {
           setAccount(null);
           setInitialSave(null);
         }
-      } catch (err) {
-        console.error("Auth error:", err);
-        setFatalError(String(err));
-      }
       setAuthChecked(true);
     });
     return () => unsub();
@@ -849,18 +843,6 @@ function IdleRealmsGame() {
     setInitialSave(null);
   }, []);
 
-
-  if (fatalError) {
-    return (
-      <div style={{ height: "100vh", display: "flex", alignItems: "center", justifyContent: "center", background: "#1c1f26", fontFamily: "monospace", color: "#ff6b6b", padding: 40 }}>
-        <div>
-          <h2>⚠️ Error</h2>
-          <pre style={{ fontSize: 12, whiteSpace: "pre-wrap", maxWidth: 600 }}>{fatalError}</pre>
-          <button onClick={() => window.location.reload()} style={{ marginTop: 16, padding: "8px 16px", background: "#4dabf7", color: "#fff", border: "none", borderRadius: 6, cursor: "pointer" }}>Reload</button>
-        </div>
-      </div>
-    );
-  }
 
   if (!authChecked) {
     return (
@@ -1442,13 +1424,6 @@ function GameUI({ account, initialSave, onLogout }) {
   const [combatMode, setCombatMode] = useState("solo"); // solo | party
   const [combatZone, setCombatZone] = useState("meadow");
   const [achFilter, setAchFilter] = useState("all");
-  const [settingsTab, setSettingsTab] = useState("account");
-  const [newUsername, setNewUsername] = useState("");
-  const [newDisplayName, setNewDisplayName] = useState("");
-  const [nameTag, setNameTag] = useState(() => sv.nameTag || null);
-  const [nameColor, setNameColor] = useState(() => sv.nameColor || null);
-  const [profileBorder, setProfileBorder] = useState(() => sv.profileBorder || null);
-  const [deleteConfirm, setDeleteConfirm] = useState("");
   const [party, setParty] = useState(null); // { id, leader, monster, members, status, monsterHp, monsterMaxHp, combatLog }
   const [partyList, setPartyList] = useState([]);
   const [partyLoading, setPartyLoading] = useState(false);
@@ -1923,7 +1898,7 @@ function GameUI({ account, initialSave, onLogout }) {
   useEffect(() => {
     if (saveTimer.current) clearTimeout(saveTimer.current);
     saveTimer.current = setTimeout(async () => {
-      const save = { skills, inventory, equipped, pets, activePets, petSlots, isPremium, storePurchases, player, gold, stats, combatStats, craftStats, achievementsUnlocked, nameTag, nameColor, profileBorder, lastActiveTime: Date.now(), activeGather: activeGather || null, activeCombat: activeCombat ? { monsterIdx: MONSTERS.indexOf(activeCombat) } : null, activeCraft: activeCraft || null };
+      const save = { skills, inventory, equipped, pets, activePets, petSlots, isPremium, storePurchases, player, gold, stats, combatStats, craftStats, achievementsUnlocked, lastActiveTime: Date.now(), activeGather: activeGather || null, activeCombat: activeCombat ? { monsterIdx: MONSTERS.indexOf(activeCombat) } : null, activeCraft: activeCraft || null };
       try {
         await window.storage.set(`save:${account.username}`, JSON.stringify(save));
         setLastSaved(new Date());
@@ -2513,132 +2488,26 @@ function GameUI({ account, initialSave, onLogout }) {
     } catch { setFriendsList([]); }
   }, [account.username]);
 
-  const [friendRequests, setFriendRequests] = useState([]);
-  const [blockedUsers, setBlockedUsers] = useState([]);
-  const [sentRequests, setSentRequests] = useState([]);
+  useEffect(() => { fetchFriends(); }, [fetchFriends]);
 
-  const fetchFriendRequests = useCallback(async () => {
-    try {
-      const raw = await window.storage.get(`freq:${account.username}`);
-      if (raw) setFriendRequests(JSON.parse(raw.value));
-      else setFriendRequests([]);
-    } catch { setFriendRequests([]); }
-  }, [account.username]);
-
-  const fetchBlocked = useCallback(async () => {
-    try {
-      const raw = await window.storage.get(`blocked:${account.username}`);
-      if (raw) setBlockedUsers(JSON.parse(raw.value));
-      else setBlockedUsers([]);
-    } catch { setBlockedUsers([]); }
-  }, [account.username]);
-
-  const fetchSentRequests = useCallback(async () => {
-    try {
-      const raw = await window.storage.get(`freqsent:${account.username}`);
-      if (raw) setSentRequests(JSON.parse(raw.value));
-      else setSentRequests([]);
-    } catch { setSentRequests([]); }
-  }, [account.username]);
-
-  useEffect(() => { fetchFriends(); fetchFriendRequests(); fetchBlocked(); fetchSentRequests(); }, [fetchFriends, fetchFriendRequests, fetchBlocked, fetchSentRequests]);
-
-  // Poll for friend requests
-  useEffect(() => {
-    if (page !== "chat") return;
-    const iv = setInterval(() => fetchFriendRequests(), 8000);
-    return () => clearInterval(iv);
-  }, [page, fetchFriendRequests]);
-
-  const sendFriendRequest = useCallback(async (targetName) => {
-    if (!targetName.trim() || targetName.trim() === account.username) return;
-    const name = targetName.trim();
-    if (friendsList.find(f => f.username === name)) { addLog("👥 Already friends!"); return; }
-    if (sentRequests.includes(name)) { addLog("👥 Request already sent!"); return; }
-    if (blockedUsers.includes(name)) { addLog("🚫 User is blocked"); return; }
-    // Add to their incoming requests
-    try {
-      const raw = await window.storage.get(`freq:${name}`);
-      const existing = raw ? JSON.parse(raw.value) : [];
-      if (existing.find(r => r.from === account.username)) { addLog("👥 Request already sent!"); return; }
-      existing.push({ from: account.username, displayName: account.displayName, at: Date.now() });
-      await window.storage.set(`freq:${name}`, JSON.stringify(existing));
-    } catch {}
-    // Track our sent requests
-    const newSent = [...sentRequests, name];
-    setSentRequests(newSent);
-    await window.storage.set(`freqsent:${account.username}`, JSON.stringify(newSent));
-    addLog(`👥 Friend request sent to ${name}`);
+  const addFriend = useCallback(async (friendName) => {
+    if (!friendName.trim() || friendName.trim() === account.username) return;
+    const name = friendName.trim();
+    const updated = [...friendsList];
+    if (updated.find(f => f.username === name)) return;
+    updated.push({ username: name, addedAt: Date.now() });
+    setFriendsList(updated);
+    await window.storage.set(`friends:${account.username}`, JSON.stringify(updated));
+    addLog(`👥 Added ${name} as friend`);
     setFriendInput("");
-  }, [friendsList, sentRequests, blockedUsers, account, addLog]);
-
-  const acceptFriendRequest = useCallback(async (fromUser) => {
-    // Add to both friend lists
-    const myUpdated = [...friendsList, { username: fromUser, addedAt: Date.now() }];
-    setFriendsList(myUpdated);
-    await window.storage.set(`friends:${account.username}`, JSON.stringify(myUpdated));
-    // Add us to their friend list
-    try {
-      const raw = await window.storage.get(`friends:${fromUser}`);
-      const theirList = raw ? JSON.parse(raw.value) : [];
-      if (!theirList.find(f => f.username === account.username)) {
-        theirList.push({ username: account.username, addedAt: Date.now() });
-        await window.storage.set(`friends:${fromUser}`, JSON.stringify(theirList));
-      }
-    } catch {}
-    // Remove from requests
-    const updatedReqs = friendRequests.filter(r => r.from !== fromUser);
-    setFriendRequests(updatedReqs);
-    await window.storage.set(`freq:${account.username}`, JSON.stringify(updatedReqs));
-    addLog(`👥 You are now friends with ${fromUser}!`);
-  }, [friendsList, friendRequests, account, addLog]);
-
-  const denyFriendRequest = useCallback(async (fromUser) => {
-    const updatedReqs = friendRequests.filter(r => r.from !== fromUser);
-    setFriendRequests(updatedReqs);
-    await window.storage.set(`freq:${account.username}`, JSON.stringify(updatedReqs));
-  }, [friendRequests, account.username]);
+  }, [friendsList, account.username, addLog]);
 
   const removeFriend = useCallback(async (friendName) => {
     const updated = friendsList.filter(f => f.username !== friendName);
     setFriendsList(updated);
     await window.storage.set(`friends:${account.username}`, JSON.stringify(updated));
-    // Also remove from their list
-    try {
-      const raw = await window.storage.get(`friends:${friendName}`);
-      const theirList = raw ? JSON.parse(raw.value) : [];
-      const theirUpdated = theirList.filter(f => f.username !== account.username);
-      await window.storage.set(`friends:${friendName}`, JSON.stringify(theirUpdated));
-    } catch {}
     addLog(`👥 Removed ${friendName} from friends`);
   }, [friendsList, account.username, addLog]);
-
-  const blockUser = useCallback(async (targetName) => {
-    if (blockedUsers.includes(targetName)) return;
-    const updated = [...blockedUsers, targetName];
-    setBlockedUsers(updated);
-    await window.storage.set(`blocked:${account.username}`, JSON.stringify(updated));
-    // Also remove from friends if they were
-    const friendUpdated = friendsList.filter(f => f.username !== targetName);
-    if (friendUpdated.length !== friendsList.length) {
-      setFriendsList(friendUpdated);
-      await window.storage.set(`friends:${account.username}`, JSON.stringify(friendUpdated));
-    }
-    // Remove any pending requests from them
-    const reqUpdated = friendRequests.filter(r => r.from !== targetName);
-    if (reqUpdated.length !== friendRequests.length) {
-      setFriendRequests(reqUpdated);
-      await window.storage.set(`freq:${account.username}`, JSON.stringify(reqUpdated));
-    }
-    addLog(`🚫 Blocked ${targetName}`);
-  }, [blockedUsers, friendsList, friendRequests, account.username, addLog]);
-
-  const unblockUser = useCallback(async (targetName) => {
-    const updated = blockedUsers.filter(n => n !== targetName);
-    setBlockedUsers(updated);
-    await window.storage.set(`blocked:${account.username}`, JSON.stringify(updated));
-    addLog(`✅ Unblocked ${targetName}`);
-  }, [blockedUsers, account.username, addLog]);
 
   // ─── DIRECT MESSAGES ───
   const fetchDMs = useCallback(async (target) => {
@@ -2739,21 +2608,17 @@ function GameUI({ account, initialSave, onLogout }) {
                 </div>
               ))}
             </div>
-            <div style={{ padding: "8px 24px 20px", display: "flex", gap: 6, flexWrap: "wrap" }}>
+            <div style={{ padding: "8px 24px 20px", display: "flex", gap: 8 }}>
               {playerProfile.username !== account.username && (
                 <>
-                  {friendsList.find(f => f.username === playerProfile.username) ? (
-                    <div style={{ flex: 1, padding: "10px 0", borderRadius: 8, textAlign: "center", background: T.success + "10", color: T.success, fontWeight: 700, fontSize: 12, border: `1px solid ${T.success}20` }}>✓ Friends</div>
-                  ) : (
-                    <div onClick={() => {
-                      sendFriendRequest(playerProfile.username);
-                      setPlayerProfile(null);
-                    }} style={{
-                      flex: 1, padding: "10px 0", borderRadius: 8, textAlign: "center",
-                      background: T.success + "18", color: T.success, fontWeight: 700, fontSize: 12,
-                      cursor: "pointer", border: `1px solid ${T.success}30`,
-                    }}>👥 Request</div>
-                  )}
+                  <div onClick={() => {
+                    addFriend(playerProfile.username);
+                    setPlayerProfile(null);
+                  }} style={{
+                    flex: 1, padding: "10px 0", borderRadius: 8, textAlign: "center",
+                    background: T.success + "18", color: T.success, fontWeight: 700, fontSize: 12,
+                    cursor: "pointer", border: `1px solid ${T.success}30`,
+                  }}>👥 Add Friend</div>
                   <div onClick={() => {
                     setDmTarget(playerProfile.username);
                     setChatChannel("dm");
@@ -2764,19 +2629,11 @@ function GameUI({ account, initialSave, onLogout }) {
                     background: T.pink + "18", color: T.pink, fontWeight: 700, fontSize: 12,
                     cursor: "pointer", border: `1px solid ${T.pink}30`,
                   }}>✉️ Message</div>
-                  <div onClick={() => {
-                    blockUser(playerProfile.username);
-                    setPlayerProfile(null);
-                  }} style={{
-                    padding: "10px 12px", borderRadius: 8, textAlign: "center",
-                    background: T.danger + "12", color: T.danger, fontWeight: 700, fontSize: 12,
-                    cursor: "pointer", border: `1px solid ${T.danger}20`,
-                  }}>🚫</div>
                 </>
               )}
               <div onClick={() => setPlayerProfile(null)} style={{
-                flex: playerProfile.username === account.username ? 1 : 0, minWidth: 50,
-                padding: "10px 12px", borderRadius: 8, textAlign: "center",
+                flex: playerProfile.username === account.username ? 1 : 0, minWidth: 60,
+                padding: "10px 14px", borderRadius: 8, textAlign: "center",
                 background: T.bar, color: T.textSec, fontWeight: 700, fontSize: 12, cursor: "pointer",
               }}>Close</div>
             </div>
@@ -2985,7 +2842,6 @@ function GameUI({ account, initialSave, onLogout }) {
             <SidebarItem icon="📊" label="Stats" active={page==="stats"} onClick={() => nav("stats")} color={T.info} />
             <SidebarItem icon="🏅" label="Achievements" active={page==="achievements"} onClick={() => nav("achievements")} color={T.gold} badge={`${Object.keys(achievementsUnlocked).length}/${ACHIEVEMENTS.length}`} />
             <SidebarItem icon="📜" label="Activity Log" active={page==="log"} onClick={() => nav("log")} color={T.textDim} />
-            <SidebarItem icon="⚙️" label="Settings" active={page==="settings"} onClick={() => nav("settings")} color={T.textSec} />
           </div>
         </nav>
 
@@ -4518,44 +4374,6 @@ function GameUI({ account, initialSave, onLogout }) {
                 bought: !!storePurchases.gold_rush,
                 perks: ["+15% gold from combat", "+15% gold from quests", "Passive income boost"],
               },
-              // ── Cosmetics ──
-              {
-                id: "title_champion", name: "🏆 Title: Champion", realPrice: "$2.99",
-                desc: "Display a golden 'Champion' title tag next to your name in chat.",
-                bought: !!storePurchases.title_champion,
-                perks: ["[Champion] chat tag", "Gold colored name in chat", "Show off in leaderboards"],
-              },
-              {
-                id: "title_legend", name: "⚡ Title: Legend", realPrice: "$4.99",
-                desc: "Display a legendary purple 'Legend' title tag next to your name.",
-                bought: !!storePurchases.title_legend,
-                perks: ["[Legend] chat tag", "Purple colored name", "Requires Premium"],
-                requires: "premium",
-              },
-              {
-                id: "title_shadow", name: "🌑 Title: Shadow", realPrice: "$2.99",
-                desc: "A dark and mysterious 'Shadow' title for your name.",
-                bought: !!storePurchases.title_shadow,
-                perks: ["[Shadow] chat tag", "Dark themed name color"],
-              },
-              {
-                id: "color_rainbow", name: "🌈 Name Color: Rainbow", realPrice: "$3.99",
-                desc: "Your name cycles through rainbow colors in chat.",
-                bought: !!storePurchases.color_rainbow,
-                perks: ["Animated rainbow name in chat", "Visible in all channels"],
-              },
-              {
-                id: "border_flame", name: "🔥 Profile Border: Flame", realPrice: "$2.99",
-                desc: "Fiery animated border around your profile avatar.",
-                bought: !!storePurchases.border_flame,
-                perks: ["Flame border on profile", "Visible in player lookups"],
-              },
-              {
-                id: "expansion_pack", name: "📦 Resource Expansion", realPrice: "$14.99",
-                desc: "Massive resource bundle for mid-game acceleration.",
-                bought: !!storePurchases.expansion_pack,
-                perks: ["25× Mithril Ore", "15× Elder Log", "10× Raw Shark", "8× Dragon Scale", "5× Shadow Dust", "3000g"],
-              },
             ];
 
             return (
@@ -4870,7 +4688,7 @@ function GameUI({ account, initialSave, onLogout }) {
               { id: "global", label: "Global", icon: "🌍", color: T.accent },
               ...(myClan ? [{ id: "clan", label: `[${myClan.tag}] Clan`, icon: "🏰", color: T.purple }] : []),
               { id: "system", label: "System", icon: "📢", color: T.warning },
-              { id: "friends", label: friendRequests.length > 0 ? `Friends (${friendRequests.length})` : "Friends", icon: "👥", color: T.success },
+              { id: "friends", label: "Friends", icon: "👥", color: T.success },
               ...(dmTarget ? [{ id: "dm", label: `DM: ${dmTarget}`, icon: "✉️", color: T.pink }] : []),
             ];
             const isDM = chatChannel === "dm";
@@ -4929,10 +4747,10 @@ function GameUI({ account, initialSave, onLogout }) {
                       <div style={{ position: "relative", marginBottom: 16 }}>
                         <div style={{ display: "flex", gap: 8 }}>
                           <input value={friendInput} onChange={e => { setFriendInput(e.target.value); if (!lbData.length) fetchLeaderboard(); }}
-                            onKeyDown={e => { if (e.key === "Enter" && friendInput.trim()) { sendFriendRequest(friendInput); } if (e.key === "Escape") setFriendInput(""); }}
+                            onKeyDown={e => { if (e.key === "Enter" && friendInput.trim()) { addFriend(friendInput); } if (e.key === "Escape") setFriendInput(""); }}
                             placeholder="Search players..."
                             style={{ flex: 1, padding: "8px 12px", background: T.bgDeep, border: `1px solid ${T.border}`, borderRadius: 8, color: T.text, fontSize: 12, outline: "none" }} />
-                          <Btn color={T.success} small onClick={() => sendFriendRequest(friendInput)}>Request</Btn>
+                          <Btn color={T.success} small onClick={() => addFriend(friendInput)}>Request</Btn>
                         </div>
                         {friendInput.trim().length >= 1 && (() => {
                           const q = friendInput.trim().toLowerCase();
@@ -4950,7 +4768,7 @@ function GameUI({ account, initialSave, onLogout }) {
                               boxShadow: "0 8px 24px rgba(0,0,0,0.4)", overflow: "hidden", maxHeight: 220, overflowY: "auto",
                             }}>
                               {suggestions.map((s, i) => (
-                                <div key={i} onMouseDown={e => { e.preventDefault(); sendFriendRequest(s.username); setFriendInput(""); }}
+                                <div key={i} onMouseDown={e => { e.preventDefault(); addFriend(s.username); setFriendInput(""); }}
                                   style={{
                                     display: "flex", alignItems: "center", gap: 10, padding: "10px 14px",
                                     cursor: "pointer", borderBottom: `1px solid ${T.divider}`,
@@ -4968,7 +4786,7 @@ function GameUI({ account, initialSave, onLogout }) {
                                     <div style={{ fontSize: 13, fontWeight: 700, color: T.white, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{s.displayName || s.username}</div>
                                     <div style={{ fontSize: 10, color: T.textDim }}>@{s.username} · Lv {s.totalLevel || "?"}</div>
                                   </div>
-                                  <span style={{ fontSize: 10, color: T.success, fontWeight: 600 }}>+ Request</span>
+                                  <span style={{ fontSize: 10, color: T.success, fontWeight: 600 }}>+ Add</span>
                                 </div>
                               ))}
                             </div>
@@ -4976,47 +4794,13 @@ function GameUI({ account, initialSave, onLogout }) {
                         })()}
                       </div>
 
-                      {/* Incoming Friend Requests */}
-                      {friendRequests.length > 0 && (
-                        <div style={{ marginBottom: 16 }}>
-                          <div style={{ fontSize: 12, fontWeight: 700, color: T.warning, marginBottom: 8 }}>📬 Friend Requests ({friendRequests.length})</div>
-                          {friendRequests.map((r, i) => (
-                            <div key={i} style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 12px", marginBottom: 6, background: T.warning + "08", borderRadius: 10, border: `1px solid ${T.warning}25` }}>
-                              <div style={{ width: 32, height: 32, borderRadius: "50%", background: T.warning + "18", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14, fontWeight: 800, color: T.warning }}>
-                                {(r.displayName || r.from || "?")[0]?.toUpperCase()}
-                              </div>
-                              <div style={{ flex: 1 }}>
-                                <div style={{ fontSize: 13, fontWeight: 700, color: T.white }}>{r.displayName || r.from}</div>
-                                <div style={{ fontSize: 10, color: T.textDim }}>@{r.from}</div>
-                              </div>
-                              <div style={{ display: "flex", gap: 4 }}>
-                                <div onMouseDown={e => { e.preventDefault(); acceptFriendRequest(r.from); }} style={{
-                                  padding: "5px 10px", borderRadius: 6, cursor: "pointer", fontSize: 11, fontWeight: 600,
-                                  background: T.success + "18", color: T.success, border: `1px solid ${T.success}30`,
-                                }}>✓ Accept</div>
-                                <div onMouseDown={e => { e.preventDefault(); denyFriendRequest(r.from); }} style={{
-                                  padding: "5px 10px", borderRadius: 6, cursor: "pointer", fontSize: 11, fontWeight: 600,
-                                  background: T.danger + "18", color: T.danger, border: `1px solid ${T.danger}30`,
-                                }}>✕</div>
-                                <div onMouseDown={e => { e.preventDefault(); blockUser(r.from); }} style={{
-                                  padding: "5px 10px", borderRadius: 6, cursor: "pointer", fontSize: 11, fontWeight: 600,
-                                  background: T.textDim + "15", color: T.textDim, border: `1px solid ${T.textDim}20`,
-                                }}>🚫</div>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      )}
-
-                      {friendsList.length === 0 && friendRequests.length === 0 ? (
+                      {friendsList.length === 0 ? (
                         <div style={{ textAlign: "center", padding: "40px 0", color: T.textDim }}>
                           <div style={{ fontSize: 32, marginBottom: 8 }}>👥</div>
-                          <div style={{ fontSize: 13 }}>No friends yet. Send a request above!</div>
+                          <div style={{ fontSize: 13 }}>No friends yet. Add someone above!</div>
                         </div>
-                      ) : friendsList.length > 0 && (
-                        <>
-                        <div style={{ fontSize: 12, fontWeight: 700, color: T.success, marginBottom: 8 }}>👥 Friends ({friendsList.length})</div>
-                        {friendsList.map((f, i) => {
+                      ) : (
+                        friendsList.map((f, i) => {
                           const lb = lbData.find(e => e.username === f.username || e.displayName === f.username);
                           return (
                             <div key={i} style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 12px", marginBottom: 6, background: T.card, borderRadius: 10, border: `1px solid ${T.border}` }}>
@@ -5042,31 +4826,10 @@ function GameUI({ account, initialSave, onLogout }) {
                                   padding: "5px 10px", borderRadius: 6, cursor: "pointer", fontSize: 11, fontWeight: 600,
                                   background: T.danger + "18", color: T.danger, border: `1px solid ${T.danger}30`,
                                 }}>✕</div>
-                                <div onClick={() => blockUser(f.username)} style={{
-                                  padding: "5px 10px", borderRadius: 6, cursor: "pointer", fontSize: 11, fontWeight: 600,
-                                  background: T.textDim + "15", color: T.textDim, border: `1px solid ${T.textDim}20`,
-                                }}>🚫</div>
                               </div>
                             </div>
                           );
-                        })}
-                        </>
-                      )}
-
-                      {/* Blocked Users */}
-                      {blockedUsers.length > 0 && (
-                        <div style={{ marginTop: 16 }}>
-                          <div style={{ fontSize: 12, fontWeight: 700, color: T.danger, marginBottom: 8 }}>🚫 Blocked ({blockedUsers.length})</div>
-                          {blockedUsers.map((name, i) => (
-                            <div key={i} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "8px 12px", marginBottom: 4, background: T.danger + "06", borderRadius: 8, border: `1px solid ${T.danger}15` }}>
-                              <span style={{ fontSize: 12, color: T.textDim }}>{name}</span>
-                              <div onClick={() => unblockUser(name)} style={{
-                                padding: "4px 10px", borderRadius: 6, cursor: "pointer", fontSize: 10, fontWeight: 600,
-                                background: T.success + "18", color: T.success, border: `1px solid ${T.success}30`,
-                              }}>Unblock</div>
-                            </div>
-                          ))}
-                        </div>
+                        })
                       )}
                     </div>
                   ) : msgs.length === 0 ? (
@@ -5902,225 +5665,8 @@ function GameUI({ account, initialSave, onLogout }) {
             );
           })()}
 
-          {/* ════ SETTINGS ════ */}
-          {page === "settings" && (() => {
-            const TITLES = [
-              { id: null, label: "None", color: T.textSec },
-              ...(storePurchases.title_champion ? [{ id: "Champion", label: "[Champion]", color: T.gold }] : []),
-              ...(storePurchases.title_legend ? [{ id: "Legend", label: "[Legend]", color: T.purple }] : []),
-              ...(storePurchases.title_shadow ? [{ id: "Shadow", label: "[Shadow]", color: "#555" }] : []),
-            ];
-            const NAME_COLORS = [
-              { id: null, label: "Default", color: T.white },
-              ...(storePurchases.title_champion ? [{ id: T.gold, label: "Gold", color: T.gold }] : []),
-              ...(storePurchases.title_legend ? [{ id: T.purple, label: "Purple", color: T.purple }] : []),
-              ...(storePurchases.title_shadow ? [{ id: "#888", label: "Shadow", color: "#888" }] : []),
-              ...(storePurchases.color_rainbow ? [{ id: "rainbow", label: "🌈 Rainbow", color: T.accent }] : []),
-            ];
-            const BORDERS = [
-              { id: null, label: "None" },
-              ...(storePurchases.border_flame ? [{ id: "flame", label: "🔥 Flame" }] : []),
-            ];
-            const tabs = [
-              { id: "account", label: "Account", icon: "👤" },
-              { id: "cosmetics", label: "Cosmetics", icon: "🎨" },
-              { id: "danger", label: "Danger Zone", icon: "⚠️" },
-            ];
-
-            return (
-              <div>
-                <PageTitle icon="⚙️" title="Settings" subtitle="Account & customization" />
-
-                {/* Tabs */}
-                <div style={{ display: "flex", gap: 5, marginBottom: 16 }}>
-                  {tabs.map(t => (
-                    <div key={t.id} onClick={() => setSettingsTab(t.id)} style={{
-                      padding: "7px 14px", borderRadius: 6, cursor: "pointer", fontSize: 12, fontWeight: 600,
-                      background: settingsTab === t.id ? T.accent + "20" : T.bgDeep,
-                      color: settingsTab === t.id ? T.accent : T.textSec,
-                      border: `1px solid ${settingsTab === t.id ? T.accent + "40" : T.divider}`,
-                    }}>{t.icon} {t.label}</div>
-                  ))}
-                </div>
-
-                {/* ── Account Tab ── */}
-                {settingsTab === "account" && (
-                  <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-                    <Card>
-                      <div style={{ fontSize: 13, fontWeight: 700, color: T.white, marginBottom: 12 }}>👤 Account Info</div>
-                      <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-                        <div style={{ display: "flex", justifyContent: "space-between", padding: "6px 0", borderBottom: `1px solid ${T.divider}` }}>
-                          <span style={{ fontSize: 12, color: T.textSec }}>Username</span>
-                          <span style={{ fontSize: 12, fontWeight: 700, color: T.accent }}>@{account.username}</span>
-                        </div>
-                        <div style={{ display: "flex", justifyContent: "space-between", padding: "6px 0", borderBottom: `1px solid ${T.divider}` }}>
-                          <span style={{ fontSize: 12, color: T.textSec }}>Display Name</span>
-                          <span style={{ fontSize: 12, fontWeight: 700, color: T.white }}>{account.displayName}</span>
-                        </div>
-                        <div style={{ display: "flex", justifyContent: "space-between", padding: "6px 0", borderBottom: `1px solid ${T.divider}` }}>
-                          <span style={{ fontSize: 12, color: T.textSec }}>Email</span>
-                          <span style={{ fontSize: 12, color: T.textDim }}>{account.email || "N/A"}</span>
-                        </div>
-                        <div style={{ display: "flex", justifyContent: "space-between", padding: "6px 0" }}>
-                          <span style={{ fontSize: 12, color: T.textSec }}>Premium</span>
-                          <span style={{ fontSize: 12, fontWeight: 700, color: isPremium ? T.gold : T.textDim }}>{isPremium ? "⭐ Active" : "Free"}</span>
-                        </div>
-                      </div>
-                    </Card>
-
-                    {/* Change Display Name */}
-                    <Card>
-                      <div style={{ fontSize: 13, fontWeight: 700, color: T.white, marginBottom: 8 }}>✏️ Change Display Name</div>
-                      <div style={{ fontSize: 11, color: T.textDim, marginBottom: 8 }}>Change the name shown in chat and leaderboards.</div>
-                      <div style={{ display: "flex", gap: 8 }}>
-                        <input value={newDisplayName} onChange={e => setNewDisplayName(e.target.value.slice(0, 20))}
-                          placeholder={account.displayName} style={{ flex: 1, padding: "8px 12px", background: T.bgDeep, border: `1px solid ${T.border}`, borderRadius: 8, color: T.text, fontSize: 12, outline: "none" }} />
-                        <Btn color={T.success} small onClick={async () => {
-                          const dn = newDisplayName.trim();
-                          if (!dn || dn.length < 2) { addLog("❌ Name must be 2+ characters"); return; }
-                          addLog(`✅ Display name changed to ${dn}! Will update on next login.`);
-                          setNewDisplayName("");
-                        }}>Save</Btn>
-                      </div>
-                    </Card>
-                  </div>
-                )}
-
-                {/* ── Cosmetics Tab ── */}
-                {settingsTab === "cosmetics" && (
-                  <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-                    <Card>
-                      <div style={{ fontSize: 13, fontWeight: 700, color: T.white, marginBottom: 4 }}>🎨 Chat Title Tag</div>
-                      <div style={{ fontSize: 11, color: T.textDim, marginBottom: 10 }}>Shows before your name in chat. Buy titles in the Store.</div>
-                      <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-                        {TITLES.map(t => (
-                          <div key={t.id || "none"} onClick={() => setNameTag(t.id)} style={{
-                            padding: "6px 14px", borderRadius: 6, cursor: "pointer", fontSize: 12, fontWeight: 700,
-                            background: nameTag === t.id ? t.color + "20" : T.bgDeep,
-                            color: t.color, border: `1px solid ${nameTag === t.id ? t.color + "50" : T.divider}`,
-                          }}>{t.label}</div>
-                        ))}
-                      </div>
-                      {TITLES.length <= 1 && <div style={{ fontSize: 10, color: T.textDim, marginTop: 6 }}>Buy title cosmetics from the Store to unlock options.</div>}
-                    </Card>
-
-                    <Card>
-                      <div style={{ fontSize: 13, fontWeight: 700, color: T.white, marginBottom: 4 }}>🌈 Name Color</div>
-                      <div style={{ fontSize: 11, color: T.textDim, marginBottom: 10 }}>Change your name color in chat.</div>
-                      <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-                        {NAME_COLORS.map(c => (
-                          <div key={c.id || "none"} onClick={() => setNameColor(c.id)} style={{
-                            padding: "6px 14px", borderRadius: 6, cursor: "pointer", fontSize: 12, fontWeight: 700,
-                            background: nameColor === c.id ? c.color + "20" : T.bgDeep,
-                            color: c.color, border: `1px solid ${nameColor === c.id ? c.color + "50" : T.divider}`,
-                          }}>{c.label}</div>
-                        ))}
-                      </div>
-                    </Card>
-
-                    <Card>
-                      <div style={{ fontSize: 13, fontWeight: 700, color: T.white, marginBottom: 4 }}>🖼️ Profile Border</div>
-                      <div style={{ fontSize: 11, color: T.textDim, marginBottom: 10 }}>Style your avatar border.</div>
-                      <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-                        {BORDERS.map(b => (
-                          <div key={b.id || "none"} onClick={() => setProfileBorder(b.id)} style={{
-                            padding: "6px 14px", borderRadius: 6, cursor: "pointer", fontSize: 12, fontWeight: 600,
-                            background: profileBorder === b.id ? T.accent + "20" : T.bgDeep,
-                            color: profileBorder === b.id ? T.accent : T.textSec,
-                            border: `1px solid ${profileBorder === b.id ? T.accent + "50" : T.divider}`,
-                          }}>{b.label}</div>
-                        ))}
-                      </div>
-                    </Card>
-
-                    {/* Preview */}
-                    <Card>
-                      <div style={{ fontSize: 13, fontWeight: 700, color: T.white, marginBottom: 10 }}>👁️ Chat Preview</div>
-                      <div style={{ padding: "10px 14px", background: T.bgDeep, borderRadius: 10, display: "flex", alignItems: "center", gap: 8 }}>
-                        <div style={{
-                          width: 32, height: 32, borderRadius: "50%", background: T.accent + "20",
-                          display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14, fontWeight: 800,
-                          color: T.accent, border: profileBorder === "flame" ? `2px solid ${T.orange}` : `2px solid ${T.accent}30`,
-                          boxShadow: profileBorder === "flame" ? `0 0 8px ${T.orange}40` : "none",
-                        }}>{(account.displayName || "?")[0]?.toUpperCase()}</div>
-                        <div>
-                          <span style={{ fontSize: 12 }}>
-                            {nameTag && <span style={{ fontWeight: 800, color: TITLES.find(t => t.id === nameTag)?.color || T.textSec, marginRight: 4 }}>[{nameTag}]</span>}
-                            <span style={{ fontWeight: 700, color: nameColor || T.white }}>{account.displayName}</span>
-                          </span>
-                          <div style={{ fontSize: 11, color: T.textDim }}>Hello, this is a preview message!</div>
-                        </div>
-                      </div>
-                    </Card>
-                  </div>
-                )}
-
-                {/* ── Danger Zone Tab ── */}
-                {settingsTab === "danger" && (
-                  <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-                    <Card style={{ border: `1px solid ${T.danger}30` }}>
-                      <div style={{ fontSize: 13, fontWeight: 700, color: T.danger, marginBottom: 12 }}>⚠️ Danger Zone</div>
-
-                      {/* Reset Stats */}
-                      <div style={{ padding: "12px 0", borderBottom: `1px solid ${T.divider}` }}>
-                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                          <div>
-                            <div style={{ fontSize: 12, fontWeight: 600, color: T.white }}>Reset Statistics</div>
-                            <div style={{ fontSize: 10, color: T.textDim }}>Clears all stat counters. Skills, inventory, and gold are kept.</div>
-                          </div>
-                          <Btn color={T.orange} small onClick={() => {
-                            if (!confirm("Reset all statistics? This cannot be undone.")) return;
-                            setStats(s => ({ ...s, gathered: 0, totalXpEarned: 0, itemsSold: 0, goldEarned: 0, goldSpent: 0, timePlayed: 0 }));
-                            setCombatStats({ kills: 0, totalDamage: 0, deaths: 0 });
-                            setCraftStats({ crafted: 0 });
-                            addLog("📊 Statistics reset");
-                          }}>Reset</Btn>
-                        </div>
-                      </div>
-
-                      {/* Permanently Delete Account */}
-                      <div style={{ padding: "12px 0" }}>
-                        <div style={{ fontSize: 12, fontWeight: 600, color: T.danger, marginBottom: 4 }}>Permanently Delete Account</div>
-                        <div style={{ fontSize: 10, color: T.textDim, marginBottom: 10 }}>
-                          This will permanently delete all your data, skills, inventory, friends, and clan membership.
-                          <strong style={{ color: T.danger }}> This cannot be undone.</strong>
-                        </div>
-                        <div style={{ fontSize: 11, color: T.textDim, marginBottom: 8 }}>
-                          Type <span style={{ color: T.danger, fontWeight: 700 }}>DELETE</span> to confirm:
-                        </div>
-                        <div style={{ display: "flex", gap: 8 }}>
-                          <input value={deleteConfirm} onChange={e => setDeleteConfirm(e.target.value)}
-                            placeholder="Type DELETE" style={{ flex: 1, padding: "8px 12px", background: T.bgDeep, border: `1px solid ${T.danger}30`, borderRadius: 8, color: T.danger, fontSize: 12, outline: "none" }} />
-                          <Btn color={T.danger} small onClick={async () => {
-                            if (deleteConfirm !== "DELETE") { addLog("❌ Type DELETE to confirm"); return; }
-                            if (!confirm("FINAL WARNING: This will permanently delete your account and ALL data. Are you absolutely sure?")) return;
-                            try {
-                              // Delete save, friends, username reservation, uid map
-                              await window.storage.delete(`save:${account.username}`);
-                              await window.storage.delete(`friends:${account.username}`);
-                              await window.storage.delete(`blocked:${account.username}`);
-                              await window.storage.delete(`freq:${account.username}`);
-                              await window.storage.delete(`freqsent:${account.username}`);
-                              await window.storage.delete(`username:${account.username}`, true);
-                              await window.storage.delete(`uidmap:${account.uid}`, true);
-                              await window.storage.delete(`lb:${account.username}`, true);
-                              await window.storage.delete(`sessions/${account.uid}`);
-                              addLog("Account deleted. Signing out...");
-                              setTimeout(() => window.location.reload(), 1500);
-                            } catch { addLog("❌ Failed to delete account"); }
-                          }} disabled={deleteConfirm !== "DELETE"}>Delete Forever</Btn>
-                        </div>
-                      </div>
-                    </Card>
-                  </div>
-                )}
-              </div>
-            );
-          })()}
-
         </div>
       </div>
-
       <style>{`
         * { box-sizing: border-box; margin: 0; }
         body { margin: 0; background: ${T.bg}; overflow: hidden; }

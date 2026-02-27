@@ -1,20 +1,4 @@
-import { useState, useCallback, useEffect, useRef, Component, createElement } from "react";
-
-// Error boundary to catch render crashes
-class ErrorBoundary extends Component {
-  constructor(props) { super(props); this.state = { hasError: false, error: null }; }
-  static getDerivedStateFromError(error) { return { hasError: true, error }; }
-  render() {
-    if (this.state.hasError) {
-      return createElement('div', { style: { padding: 40, color: '#ff6b6b', background: '#1c1f26', height: '100vh', fontFamily: 'monospace' } },
-        createElement('h2', null, '⚠️ Something went wrong'),
-        createElement('pre', { style: { fontSize: 12, whiteSpace: 'pre-wrap' } }, String(this.state.error)),
-        createElement('button', { onClick: () => window.location.reload(), style: { marginTop: 16, padding: '8px 16px', background: '#4dabf7', color: '#fff', border: 'none', borderRadius: 6, cursor: 'pointer' } }, 'Reload')
-      );
-    }
-    return this.props.children;
-  }
-}
+import { useState, useCallback, useEffect, useRef } from "react";
 import { auth, db } from './firebase.js';
 import './storage.js'; // installs window.storage backed by Firestore
 import {
@@ -6202,5 +6186,5 @@ function GameUI({ account, initialSave, onLogout }) {
 }
 
 export default function IdleRealmsUI() {
-  return <ErrorBoundary><IdleRealmsGame /></ErrorBoundary>;
+  return <IdleRealmsGame />;
 }

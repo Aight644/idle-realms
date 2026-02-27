@@ -606,38 +606,29 @@ const DEFAULT_SAVE = () => ({
 function AuthScreen({ onLogin }) {
   const [tab, setTab] = useState("login"); // login | signup
   const [displayName, setDisplayName] = useState("");
-  const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPw, setConfirmPw] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const clearForm = () => { setDisplayName(""); setUsername(""); setEmail(""); setPassword(""); setConfirmPw(""); setError(""); };
+  const clearForm = () => { setDisplayName(""); setEmail(""); setPassword(""); setConfirmPw(""); setError(""); };
 
   const handleSignup = async () => {
     setError("");
-    const uname = username.trim().toLowerCase().replace(/[^a-z0-9_]/g, "");
-    if (!uname || uname.length < 3 || uname.length > 16) return setError("Username must be 3-16 characters (letters, numbers, underscore)");
+    if (!displayName.trim() || displayName.length < 3) return setError("Display name must be at least 3 characters");
     if (!email.trim()) return setError("Please enter an email address");
     if (!password || password.length < 6) return setError("Password must be at least 6 characters");
     if (password !== confirmPw) return setError("Passwords do not match");
     setLoading(true);
     try {
-      // Check username uniqueness (case-insensitive)
-      const existing = await window.storage.get(`username:${uname}`, true);
-      if (existing) { setError("Username already taken"); setLoading(false); return; }
-
       const cred = await createUserWithEmailAndPassword(auth, email.trim(), password);
-      await updateProfile(cred.user, { displayName: uname });
-      // Reserve username globally (shared storage)
-      await window.storage.set(`username:${uname}`, JSON.stringify({ uid: cred.user.uid }), true);
-      // Save initial game data
+      await updateProfile(cred.user, { displayName: displayName.trim() });
       const save = DEFAULT_SAVE();
-      await window.storage.set(`save:${uname}`, JSON.stringify(save));
-      // Map uid -> username for login lookups
-      await window.storage.set(`uidmap:${cred.user.uid}`, uname, true);
-      onLogin({ username: uname, displayName: uname, email: email.trim(), uid: cred.user.uid, isGuest: false }, save);
+      const uid = cred.user.uid;
+      const username = uid;
+      await window.storage.set(`save:${username}`, JSON.stringify(save));
+      onLogin({ username, displayName: displayName.trim(), email: email.trim(), uid, isGuest: false }, save);
     } catch (e) {
       const msg = e.code === "auth/email-already-in-use" ? "An account with this email already exists"
         : e.code === "auth/invalid-email" ? "Invalid email address"
@@ -655,26 +646,15 @@ function AuthScreen({ onLogin }) {
     try {
       const cred = await signInWithEmailAndPassword(auth, email.trim(), password);
       const uid = cred.user.uid;
-      // Look up username from uid map (new accounts), fallback to uid (legacy accounts)
-      let uname = uid;
-      try {
-        const mapRaw = await window.storage.get(`uidmap:${uid}`, true);
-        if (mapRaw) uname = mapRaw.value;
-      } catch {}
+      const username = uid;
       let save;
       try {
-        const sr = await window.storage.get(`save:${uname}`);
+        const sr = await window.storage.get(`save:${username}`);
         save = JSON.parse(sr.value);
-      } catch {
-        // Try legacy uid-based save
-        try {
-          const sr = await window.storage.get(`save:${uid}`);
-          save = JSON.parse(sr.value);
-        } catch { save = DEFAULT_SAVE(); }
-      }
+      } catch { save = DEFAULT_SAVE(); }
       onLogin({
-        username: uname,
-        displayName: uname,
+        username,
+        displayName: cred.user.displayName || email.split("@")[0],
         email: cred.user.email,
         uid,
         isGuest: false,
@@ -764,9 +744,8 @@ function AuthScreen({ onLogin }) {
           {tab === "signup" && (
             <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
               <div>
-                <label style={labelStyle}>Username</label>
-                <input style={inputStyle} placeholder="unique_username" value={username} onChange={e => setUsername(e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, "").slice(0, 16))} />
-                <div style={{ fontSize: 10, color: T.textDim, marginTop: 3 }}>3-16 chars, letters/numbers/underscore. This is your identity everywhere.</div>
+                <label style={labelStyle}>Display Name</label>
+                <input style={inputStyle} placeholder="Your character name" value={displayName} onChange={e => setDisplayName(e.target.value)} />
               </div>
               <div>
                 <label style={labelStyle}>Email</label>
@@ -804,53 +783,30 @@ function IdleRealmsGame() {
   // Listen for Firebase auth state
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, async (user) => {
-      try {
-        // Wait for window.storage to be ready
-        let retries = 0;
-        while (!window.storage && retries < 20) { await new Promise(r => setTimeout(r, 100)); retries++; }
-        
-        if (user) {
-          // Look up username from uid map (new accounts), fallback to uid (legacy)
-          let username = user.uid;
-          try {
-            const mapRaw = await window.storage.get(`uidmap:${user.uid}`, true);
-            if (mapRaw) username = mapRaw.value;
-          } catch {}
+      if (user) {
+        const username = user.uid;
 
-          // Write our session to Firestore
-          try {
-            await setDoc(doc(db, "sessions", user.uid), {
-              sessionId: SESSION_ID,
-              loginAt: serverTimestamp(),
-            });
-          } catch {}
+        // Write our session to Firestore
+        await setDoc(doc(db, "sessions", username), {
+          sessionId: SESSION_ID,
+          loginAt: serverTimestamp(),
+        });
 
-          let save;
-          try {
-            const sr = await window.storage.get(`save:${username}`);
-            save = JSON.parse(sr.value);
-          } catch {
-            // Try legacy uid-based save
-            try {
-              const sr = await window.storage.get(`save:${user.uid}`);
-              save = JSON.parse(sr.value);
-            } catch { save = DEFAULT_SAVE(); }
-          }
-          setAccount({
-            username,
-            displayName: username,
-            email: user.email,
-            uid: user.uid,
-            isGuest: false,
-          });
-          setInitialSave(save);
-          setKicked(false);
-        } else {
-          setAccount(null);
-          setInitialSave(null);
-        }
-      } catch (e) {
-        console.error("Auth state error:", e);
+        let save;
+        try {
+          const sr = await window.storage.get(`save:${username}`);
+          save = JSON.parse(sr.value);
+        } catch { save = DEFAULT_SAVE(); }
+        setAccount({
+          username,
+          displayName: user.displayName || user.email?.split("@")[0] || "Adventurer",
+          email: user.email,
+          uid: user.uid,
+          isGuest: false,
+        });
+        setInitialSave(save);
+        setKicked(false);
+      } else {
         setAccount(null);
         setInitialSave(null);
       }
@@ -4547,12 +4503,6 @@ function GameUI({ account, initialSave, onLogout }) {
               },
               // ── Cosmetics ──
               {
-                id: "name_change", name: "📝 Username Change Token", realPrice: "$4.99",
-                desc: "Change your username once. Token consumed on use.",
-                bought: !!storePurchases.name_change,
-                perks: ["Change username in Settings", "Case-insensitive unique check", "One-time use"],
-              },
-              {
                 id: "title_champion", name: "🏆 Title: Champion", realPrice: "$2.99",
                 desc: "Display a golden 'Champion' title tag next to your name in chat.",
                 bought: !!storePurchases.title_champion,
@@ -5987,6 +5937,10 @@ function GameUI({ account, initialSave, onLogout }) {
                           <span style={{ fontSize: 12, fontWeight: 700, color: T.accent }}>@{account.username}</span>
                         </div>
                         <div style={{ display: "flex", justifyContent: "space-between", padding: "6px 0", borderBottom: `1px solid ${T.divider}` }}>
+                          <span style={{ fontSize: 12, color: T.textSec }}>Display Name</span>
+                          <span style={{ fontSize: 12, fontWeight: 700, color: T.white }}>{account.displayName}</span>
+                        </div>
+                        <div style={{ display: "flex", justifyContent: "space-between", padding: "6px 0", borderBottom: `1px solid ${T.divider}` }}>
                           <span style={{ fontSize: 12, color: T.textSec }}>Email</span>
                           <span style={{ fontSize: 12, color: T.textDim }}>{account.email || "N/A"}</span>
                         </div>
@@ -5997,40 +5951,20 @@ function GameUI({ account, initialSave, onLogout }) {
                       </div>
                     </Card>
 
-                    {/* Change Username */}
+                    {/* Change Display Name */}
                     <Card>
-                      <div style={{ fontSize: 13, fontWeight: 700, color: T.white, marginBottom: 8 }}>📝 Change Username</div>
-                      {storePurchases.name_change ? (
-                        <div>
-                          <div style={{ fontSize: 11, color: T.textDim, marginBottom: 8 }}>You have a username change token. Enter your new username below.</div>
-                          <div style={{ display: "flex", gap: 8 }}>
-                            <input value={newUsername} onChange={e => setNewUsername(e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, "").slice(0, 16))}
-                              placeholder="new_username" style={{ flex: 1, padding: "8px 12px", background: T.bgDeep, border: `1px solid ${T.border}`, borderRadius: 8, color: T.text, fontSize: 12, outline: "none" }} />
-                            <Btn color={T.accent} small onClick={async () => {
-                              const uname = newUsername.trim();
-                              if (!uname || uname.length < 3) { addLog("❌ Username must be 3+ characters"); return; }
-                              try {
-                                const existing = await window.storage.get(`username:${uname}`, true);
-                                if (existing) { addLog("❌ Username already taken"); return; }
-                                // Release old, reserve new
-                                await window.storage.delete(`username:${account.username}`, true);
-                                await window.storage.set(`username:${uname}`, JSON.stringify({ uid: account.uid, displayName: account.displayName }), true);
-                                await window.storage.set(`uidmap:${account.uid}`, uname, true);
-                                // Migrate save
-                                const saveRaw = await window.storage.get(`save:${account.username}`);
-                                if (saveRaw) { await window.storage.set(`save:${uname}`, saveRaw.value); await window.storage.delete(`save:${account.username}`); }
-                                // Migrate friends key
-                                try { const fr = await window.storage.get(`friends:${account.username}`); if (fr) { await window.storage.set(`friends:${uname}`, fr.value); } } catch {}
-                                setStorePurchases(p => { const n = {...p}; delete n.name_change; return n; });
-                                addLog(`✅ Username changed to @${uname}! Please re-login.`);
-                                setNewUsername("");
-                              } catch { addLog("❌ Failed to change username"); }
-                            }}>Change</Btn>
-                          </div>
-                        </div>
-                      ) : (
-                        <div style={{ fontSize: 11, color: T.textDim }}>Purchase a <span style={{ color: T.gold }}>Username Change Token</span> from the Store to change your username.</div>
-                      )}
+                      <div style={{ fontSize: 13, fontWeight: 700, color: T.white, marginBottom: 8 }}>✏️ Change Display Name</div>
+                      <div style={{ fontSize: 11, color: T.textDim, marginBottom: 8 }}>Change the name shown in chat and leaderboards.</div>
+                      <div style={{ display: "flex", gap: 8 }}>
+                        <input value={newDisplayName} onChange={e => setNewDisplayName(e.target.value.slice(0, 20))}
+                          placeholder={account.displayName} style={{ flex: 1, padding: "8px 12px", background: T.bgDeep, border: `1px solid ${T.border}`, borderRadius: 8, color: T.text, fontSize: 12, outline: "none" }} />
+                        <Btn color={T.success} small onClick={async () => {
+                          const dn = newDisplayName.trim();
+                          if (!dn || dn.length < 2) { addLog("❌ Name must be 2+ characters"); return; }
+                          addLog(`✅ Display name changed to ${dn}! Will update on next login.`);
+                          setNewDisplayName("");
+                        }}>Save</Btn>
+                      </div>
                     </Card>
                   </div>
                 )}

@@ -1,4 +1,20 @@
-import { useState, useCallback, useEffect, useRef } from "react";
+import { useState, useCallback, useEffect, useRef, Component, createElement } from "react";
+
+// Error boundary to catch render crashes
+class ErrorBoundary extends Component {
+  constructor(props) { super(props); this.state = { hasError: false, error: null }; }
+  static getDerivedStateFromError(error) { return { hasError: true, error }; }
+  render() {
+    if (this.state.hasError) {
+      return createElement('div', { style: { padding: 40, color: '#ff6b6b', background: '#1c1f26', height: '100vh', fontFamily: 'monospace' } },
+        createElement('h2', null, '⚠️ Something went wrong'),
+        createElement('pre', { style: { fontSize: 12, whiteSpace: 'pre-wrap' } }, String(this.state.error)),
+        createElement('button', { onClick: () => window.location.reload(), style: { marginTop: 16, padding: '8px 16px', background: '#4dabf7', color: '#fff', border: 'none', borderRadius: 6, cursor: 'pointer' } }, 'Reload')
+      );
+    }
+    return this.props.children;
+  }
+}
 import { auth, db } from './firebase.js';
 import './storage.js'; // installs window.storage backed by Firestore
 import {
@@ -795,7 +811,7 @@ function AuthScreen({ onLogin }) {
 // ═══ MAIN APP (wrapper with Firebase auth) ═══
 const SESSION_ID = Math.random().toString(36).slice(2) + Date.now().toString(36);
 
-export default function IdleRealmsUI() {
+function IdleRealmsGame() {
   const [account, setAccount] = useState(null);
   const [initialSave, setInitialSave] = useState(null);
   const [authChecked, setAuthChecked] = useState(false);
@@ -804,41 +820,53 @@ export default function IdleRealmsUI() {
   // Listen for Firebase auth state
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, async (user) => {
-      if (user) {
-        // Look up username from uid map (new accounts), fallback to uid (legacy)
-        let username = user.uid;
-        try {
-          const mapRaw = await window.storage.get(`uidmap:${user.uid}`, true);
-          if (mapRaw) username = mapRaw.value;
-        } catch {}
-
-        // Write our session to Firestore
-        await setDoc(doc(db, "sessions", user.uid), {
-          sessionId: SESSION_ID,
-          loginAt: serverTimestamp(),
-        });
-
-        let save;
-        try {
-          const sr = await window.storage.get(`save:${username}`);
-          save = JSON.parse(sr.value);
-        } catch {
-          // Try legacy uid-based save
+      try {
+        // Wait for window.storage to be ready
+        let retries = 0;
+        while (!window.storage && retries < 20) { await new Promise(r => setTimeout(r, 100)); retries++; }
+        
+        if (user) {
+          // Look up username from uid map (new accounts), fallback to uid (legacy)
+          let username = user.uid;
           try {
-            const sr = await window.storage.get(`save:${user.uid}`);
+            const mapRaw = await window.storage.get(`uidmap:${user.uid}`, true);
+            if (mapRaw) username = mapRaw.value;
+          } catch {}
+
+          // Write our session to Firestore
+          try {
+            await setDoc(doc(db, "sessions", user.uid), {
+              sessionId: SESSION_ID,
+              loginAt: serverTimestamp(),
+            });
+          } catch {}
+
+          let save;
+          try {
+            const sr = await window.storage.get(`save:${username}`);
             save = JSON.parse(sr.value);
-          } catch { save = DEFAULT_SAVE(); }
+          } catch {
+            // Try legacy uid-based save
+            try {
+              const sr = await window.storage.get(`save:${user.uid}`);
+              save = JSON.parse(sr.value);
+            } catch { save = DEFAULT_SAVE(); }
+          }
+          setAccount({
+            username,
+            displayName: username,
+            email: user.email,
+            uid: user.uid,
+            isGuest: false,
+          });
+          setInitialSave(save);
+          setKicked(false);
+        } else {
+          setAccount(null);
+          setInitialSave(null);
         }
-        setAccount({
-          username,
-          displayName: username,
-          email: user.email,
-          uid: user.uid,
-          isGuest: false,
-        });
-        setInitialSave(save);
-        setKicked(false);
-      } else {
+      } catch (e) {
+        console.error("Auth state error:", e);
         setAccount(null);
         setInitialSave(null);
       }
@@ -6171,4 +6199,8 @@ function GameUI({ account, initialSave, onLogout }) {
       `}</style>
     </div>
   );
+}
+
+export default function IdleRealmsUI() {
+  return <ErrorBoundary><IdleRealmsGame /></ErrorBoundary>;
 }

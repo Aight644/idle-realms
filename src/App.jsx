@@ -119,7 +119,7 @@ const GATHER_NODES = {
   trapping: [
     { name: "Wicker Snare", emoji: "🐇", lvl: 1, time: 3500, xp: 6, item: "Soft Pelt" },
     { name: "Rope Net", emoji: "🐦", lvl: 10, time: 4200, xp: 13, item: "Down Feather" },
-    { name: "Jaw Trap", emoji: "🦊", lvl: 24, time: 5800, xp: 24, item: "Thick Hide" },
+    { name: "Jaw Trap", emoji: "🦊", lvl: 24, time: 5800, xp: 24, item: "Cured Leather" },
     { name: "Spring Cage", emoji: "🐗", lvl: 38, time: 7500, xp: 40, item: "Tusked Jaw" },
     { name: "Razor Wire", emoji: "🦅", lvl: 52, time: 10000, xp: 64, item: "Storm Plume" },
     { name: "Titan Net", emoji: "🐲", lvl: 68, time: 14000, xp: 100, item: "Scaled Hide" },
@@ -186,8 +186,8 @@ const RECIPES = {
   tailoring: [
     { name: "Cloth Wrap", emoji: "🧣", lvl: 1, time: 3000, xp: 8, desc: "DEF +2", mats: [{ n: "Worn Cloth", need: 3 }] },
     { name: "Leather Vest", emoji: "🦺", lvl: 10, time: 4500, xp: 18, desc: "DEF +5", mats: [{ n: "Soft Pelt", need: 3 }, { n: "Worn Cloth", need: 2 }] },
-    { name: "Fur Cloak", emoji: "🧥", lvl: 24, time: 6500, xp: 35, desc: "DEF +8, +3% XP", mats: [{ n: "Thick Hide", need: 3 }, { n: "Down Feather", need: 4 }] },
-    { name: "Ranger Tunic", emoji: "👕", lvl: 36, time: 8500, xp: 55, desc: "DEF +12, +5% speed", mats: [{ n: "Thick Hide", need: 4 }, { n: "Tusked Jaw", need: 2 }, { n: "Willow Log", need: 2 }] },
+    { name: "Fur Cloak", emoji: "🧥", lvl: 24, time: 6500, xp: 35, desc: "DEF +8, +3% XP", mats: [{ n: "Cured Leather", need: 3 }, { n: "Down Feather", need: 4 }] },
+    { name: "Ranger Tunic", emoji: "👕", lvl: 36, time: 8500, xp: 55, desc: "DEF +12, +5% speed", mats: [{ n: "Cured Leather", need: 4 }, { n: "Tusked Jaw", need: 2 }, { n: "Willow Log", need: 2 }] },
     { name: "Stormweave Robe", emoji: "👘", lvl: 50, time: 12000, xp: 90, desc: "DEF +18, +8% XP", mats: [{ n: "Storm Plume", need: 4 }, { n: "Worn Cloth", need: 6 }, { n: "Mana Crystal", need: 2 }] },
     { name: "Drakehide Armor", emoji: "🛡️", lvl: 65, time: 16000, xp: 160, desc: "DEF +28, +10% XP", mats: [{ n: "Scaled Hide", need: 4 }, { n: "Storm Plume", need: 3 }, { n: "Titan Core", need: 1 }] },
   ],
@@ -229,7 +229,7 @@ const ITEMS = {
   // ── Trapping ──
   "Soft Pelt":      { emoji: "🐇", category: "material", desc: "Small animal hide", sell: 3 },
   "Down Feather":   { emoji: "🐦", category: "material", desc: "Light fluffy feather", sell: 6 },
-  "Thick Hide":     { emoji: "🦊", category: "material", desc: "Tough tanned leather", sell: 14 },
+  "Cured Leather":  { emoji: "🦊", category: "material", desc: "Tough tanned leather", sell: 14 },
   "Tusked Jaw":     { emoji: "🐗", category: "material", desc: "Boar jawbone trophy", sell: 28 },
   "Storm Plume":    { emoji: "🦅", category: "material", desc: "Feather charged with static", sell: 48 },
   "Scaled Hide":    { emoji: "🐲", category: "material", desc: "Nearly impenetrable scales", sell: 75 },

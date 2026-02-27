@@ -605,7 +605,6 @@ const DEFAULT_SAVE = () => ({
 // ═══ AUTH SCREEN (Firebase Auth) ═══
 function AuthScreen({ onLogin }) {
   const [tab, setTab] = useState("login"); // login | signup
-  const [displayName, setDisplayName] = useState("");
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -613,32 +612,34 @@ function AuthScreen({ onLogin }) {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const clearForm = () => { setDisplayName(""); setUsername(""); setEmail(""); setPassword(""); setConfirmPw(""); setError(""); };
+  const clearForm = () => { setUsername(""); setEmail(""); setPassword(""); setConfirmPw(""); setError(""); };
 
   const handleSignup = async () => {
     setError("");
-    const uname = username.trim().toLowerCase().replace(/[^a-z0-9_]/g, "");
-    if (!uname || uname.length < 3 || uname.length > 16) return setError("Username must be 3-16 characters (letters, numbers, underscore)");
-    if (!displayName.trim() || displayName.length < 3) return setError("Display name must be at least 3 characters");
+    const name = username.trim();
+    if (!name || name.length < 3 || name.length > 20) return setError("Name must be 3-20 characters");
+    const nameKey = name.toLowerCase();
     if (!email.trim()) return setError("Please enter an email address");
     if (!password || password.length < 6) return setError("Password must be at least 6 characters");
     if (password !== confirmPw) return setError("Passwords do not match");
     setLoading(true);
     try {
-      // Check username uniqueness (case-insensitive)
-      const existing = await window.storage.get(`username:${uname}`, true);
-      if (existing) { setError("Username already taken"); setLoading(false); return; }
+      // Check name uniqueness (case-insensitive)
+      try {
+        const existing = await window.storage.get(`username:${nameKey}`, true);
+        if (existing) { setError("Name already taken"); setLoading(false); return; }
+      } catch {}
 
       const cred = await createUserWithEmailAndPassword(auth, email.trim(), password);
-      await updateProfile(cred.user, { displayName: displayName.trim() });
-      // Reserve username globally (shared storage)
-      await window.storage.set(`username:${uname}`, JSON.stringify({ uid: cred.user.uid, displayName: displayName.trim() }), true);
+      await updateProfile(cred.user, { displayName: name });
+      // Reserve name globally (shared storage)
+      await window.storage.set(`username:${nameKey}`, JSON.stringify({ uid: cred.user.uid, displayName: name }), true);
       // Save initial game data
       const save = DEFAULT_SAVE();
-      await window.storage.set(`save:${uname}`, JSON.stringify(save));
-      // Map uid -> username for login lookups
-      await window.storage.set(`uidmap:${cred.user.uid}`, uname, true);
-      onLogin({ username: uname, displayName: displayName.trim(), email: email.trim(), uid: cred.user.uid, isGuest: false }, save);
+      await window.storage.set(`save:${nameKey}`, JSON.stringify(save));
+      // Map uid -> name key for login lookups
+      await window.storage.set(`uidmap:${cred.user.uid}`, nameKey, true);
+      onLogin({ username: nameKey, displayName: name, email: email.trim(), uid: cred.user.uid, isGuest: false }, save);
     } catch (e) {
       const msg = e.code === "auth/email-already-in-use" ? "An account with this email already exists"
         : e.code === "auth/invalid-email" ? "Invalid email address"
@@ -765,13 +766,9 @@ function AuthScreen({ onLogin }) {
           {tab === "signup" && (
             <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
               <div>
-                <label style={labelStyle}>Username</label>
-                <input style={inputStyle} placeholder="unique_username" value={username} onChange={e => setUsername(e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, "").slice(0, 16))} />
-                <div style={{ fontSize: 10, color: T.textDim, marginTop: 3 }}>3-16 chars, letters/numbers/underscore only. This is permanent.</div>
-              </div>
-              <div>
-                <label style={labelStyle}>Display Name</label>
-                <input style={inputStyle} placeholder="Your character name" value={displayName} onChange={e => setDisplayName(e.target.value)} />
+                <label style={labelStyle}>Name</label>
+                <input style={inputStyle} placeholder="Your unique character name" value={username} onChange={e => setUsername(e.target.value.slice(0, 20))} />
+                <div style={{ fontSize: 10, color: T.textDim, marginTop: 3 }}>3-20 characters. Letters, numbers, spaces allowed. Must be unique.</div>
               </div>
               <div>
                 <label style={labelStyle}>Email</label>
@@ -810,24 +807,48 @@ export default function IdleRealmsUI() {
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, async (user) => {
       if (user) {
-        const username = user.uid;
+        const uid = user.uid;
 
         // Write our session to Firestore
-        await setDoc(doc(db, "sessions", username), {
+        await setDoc(doc(db, "sessions", uid), {
           sessionId: SESSION_ID,
           loginAt: serverTimestamp(),
         });
 
+        // Look up username from uid map
+        let uname = uid;
+        try {
+          const mapRaw = await window.storage.get(`uidmap:${uid}`, true);
+          if (mapRaw) uname = mapRaw.value;
+        } catch {}
+
         let save;
         try {
-          const sr = await window.storage.get(`save:${username}`);
+          const sr = await window.storage.get(`save:${uname}`);
           save = JSON.parse(sr.value);
-        } catch { save = DEFAULT_SAVE(); }
+        } catch {
+          // Try legacy uid-based save
+          try {
+            const sr = await window.storage.get(`save:${uid}`);
+            save = JSON.parse(sr.value);
+          } catch { save = DEFAULT_SAVE(); }
+        }
+
+        // Look up display name from reserved username entry
+        let dName = user.displayName || user.email?.split("@")[0] || "Adventurer";
+        try {
+          const unameRaw = await window.storage.get(`username:${uname}`, true);
+          if (unameRaw) {
+            const parsed = JSON.parse(unameRaw.value);
+            if (parsed.displayName) dName = parsed.displayName;
+          }
+        } catch {}
+
         setAccount({
-          username,
-          displayName: user.displayName || user.email?.split("@")[0] || "Adventurer",
+          username: uname,
+          displayName: dName,
           email: user.email,
-          uid: user.uid,
+          uid,
           isGuest: false,
         });
         setInitialSave(save);
@@ -2551,46 +2572,6 @@ function GameUI({ account, initialSave, onLogout }) {
     const iv = setInterval(() => fetchFriendRequests(), 8000);
     return () => clearInterval(iv);
   }, [page, fetchFriendRequests]);
-
-  // ─── ONLINE PRESENCE ───
-  const [onlineUsers, setOnlineUsers] = useState(new Set());
-
-  // Heartbeat: write our presence every 30s
-  useEffect(() => {
-    const beat = async () => {
-      try {
-        await window.storage.set(`presence:${account.username}`, JSON.stringify({ t: Date.now(), displayName: account.displayName }), true);
-      } catch {}
-    };
-    beat();
-    const iv = setInterval(beat, 30000);
-    return () => clearInterval(iv);
-  }, [account.username, account.displayName]);
-
-  // Poll online status of clan members + friends every 15s
-  useEffect(() => {
-    const checkOnline = async () => {
-      const usernames = new Set();
-      clanMembers.forEach(m => usernames.add(m.username));
-      friendsList.forEach(f => usernames.add(f.username));
-      const now = Date.now();
-      const online = new Set();
-      for (const u of usernames) {
-        try {
-          const raw = await window.storage.get(`presence:${u}`, true);
-          if (raw) {
-            const data = JSON.parse(raw.value);
-            if (now - data.t < 120000) online.add(u); // 2 min threshold
-          }
-        } catch {}
-      }
-      online.add(account.username); // always show self as online
-      setOnlineUsers(online);
-    };
-    checkOnline();
-    const iv = setInterval(checkOnline, 15000);
-    return () => clearInterval(iv);
-  }, [clanMembers, friendsList, account.username]);
 
   const sendFriendRequest = useCallback(async (targetName) => {
     if (!targetName.trim() || targetName.trim() === account.username) return;
@@ -5018,22 +4999,13 @@ function GameUI({ account, initialSave, onLogout }) {
                         </div>
                       ) : friendsList.length > 0 && (
                         <>
-                        <div style={{ fontSize: 12, fontWeight: 700, color: T.success, marginBottom: 8 }}>👥 Friends ({friendsList.filter(f => onlineUsers.has(f.username)).length} online / {friendsList.length})</div>
+                        <div style={{ fontSize: 12, fontWeight: 700, color: T.success, marginBottom: 8 }}>👥 Friends ({friendsList.length})</div>
                         {friendsList.map((f, i) => {
                           const lb = lbData.find(e => e.username === f.username || e.displayName === f.username);
                           return (
                             <div key={i} style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 12px", marginBottom: 6, background: T.card, borderRadius: 10, border: `1px solid ${T.border}` }}>
-                              <div style={{ position: "relative", flexShrink: 0 }}>
-                                <div style={{ width: 36, height: 36, borderRadius: "50%", background: T.accent + "20", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16, fontWeight: 800, color: T.accent }}>
-                                  {f.username[0]?.toUpperCase()}
-                                </div>
-                                <div style={{
-                                  position: "absolute", bottom: -1, right: -1,
-                                  width: 11, height: 11, borderRadius: "50%",
-                                  background: onlineUsers.has(f.username) ? T.success : "#555",
-                                  border: `2px solid ${T.card}`,
-                                  boxShadow: onlineUsers.has(f.username) ? `0 0 6px ${T.success}60` : "none",
-                                }} />
+                              <div style={{ width: 36, height: 36, borderRadius: "50%", background: T.accent + "20", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16, fontWeight: 800, color: T.accent }}>
+                                {f.username[0]?.toUpperCase()}
                               </div>
                               <div style={{ flex: 1 }}>
                                 <div style={{ fontSize: 13, fontWeight: 700, color: T.white }}>{f.username}</div>
@@ -5359,13 +5331,6 @@ function GameUI({ account, initialSave, onLogout }) {
                       )}
 
                       <Card>
-                        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 0 8px 0", marginBottom: 4, borderBottom: `1px solid ${T.divider}` }}>
-                          <div style={{ fontSize: 13, fontWeight: 700, color: T.white }}>👥 Members ({clanMembers.length})</div>
-                          <div style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 11, fontWeight: 600, color: T.success }}>
-                            <div style={{ width: 7, height: 7, borderRadius: "50%", background: T.success, boxShadow: `0 0 6px ${T.success}60` }} />
-                            {clanMembers.filter(m => onlineUsers.has(m.username)).length} online
-                          </div>
-                        </div>
                         {clanMembers.map((m, i) => {
                           const isMe = m.username === account.username;
                           const lb = lbData.find(e => e.displayName === m.displayName);
@@ -5378,21 +5343,12 @@ function GameUI({ account, initialSave, onLogout }) {
                               borderBottom: i < clanMembers.length - 1 ? `1px solid ${T.divider}` : "none",
                               background: isMe ? T.accent + "08" : "transparent",
                             }}>
-                              <div style={{ position: "relative", flexShrink: 0 }}>
-                                <div style={{
-                                  width: 30, height: 30, borderRadius: 99,
-                                  background: roleColor + "20",
-                                  display: "flex", alignItems: "center", justifyContent: "center",
-                                  fontSize: 12, fontWeight: 700, color: roleColor,
-                                }}>{(m.displayName || "?")[0].toUpperCase()}</div>
-                                <div style={{
-                                  position: "absolute", bottom: -1, right: -1,
-                                  width: 10, height: 10, borderRadius: "50%",
-                                  background: onlineUsers.has(m.username) ? T.success : "#555",
-                                  border: `2px solid ${T.card}`,
-                                  boxShadow: onlineUsers.has(m.username) ? `0 0 6px ${T.success}60` : "none",
-                                }} />
-                              </div>
+                              <div style={{
+                                width: 30, height: 30, borderRadius: 99, flexShrink: 0,
+                                background: roleColor + "20",
+                                display: "flex", alignItems: "center", justifyContent: "center",
+                                fontSize: 12, fontWeight: 700, color: roleColor,
+                              }}>{(m.displayName || "?")[0].toUpperCase()}</div>
                               <div style={{ flex: 1, minWidth: 0 }}>
                                 <div style={{ fontSize: 12, fontWeight: 600, color: isMe ? T.accent : T.white }}>
                                   {m.displayName}{isMe && <span style={{ fontSize: 9, color: T.accent, marginLeft: 4 }}>(you)</span>}

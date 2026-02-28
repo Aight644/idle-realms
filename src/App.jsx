@@ -985,7 +985,7 @@ export default function IdleRealmsUI() {
     try {
       // ── Remove from clan ──
       try {
-        const clanRaw = await window.storage.get(`player-clan:${uname}`);
+        const clanRaw = await window.storage.get(`player-clan:${uname}`, true);
         if (clanRaw) {
           const clanName = clanRaw.value;
           let members = [];
@@ -1041,8 +1041,8 @@ export default function IdleRealmsUI() {
       try { await window.storage.delete(`quests:${uname}`); } catch {}
       try { await window.storage.delete(`presence:${uname}`, true); } catch {}
       try { await window.storage.delete(`wallet:${uname}`, true); } catch {}
-      try { await window.storage.delete(`player-clan:${uname}`); } catch {}
-      try { await window.storage.delete(`player-party:${uname}`); } catch {}
+      try { await window.storage.delete(`player-clan:${uname}`, true); } catch {}
+      try { await window.storage.delete(`player-party:${uname}`, true); } catch {}
       try { await firestoreDeleteDoc(doc(db, "sessions", uid)); } catch {}
       // Delete Firebase Auth account
       await deleteUser(user);
@@ -1658,7 +1658,7 @@ function GameUI({ account, initialSave, onLogout, onDeleteAccount }) {
 
   const fetchMyParty = useCallback(async () => {
     try {
-      const raw = await window.storage.get(`player-party:${account.username}`);
+      const raw = await window.storage.get(`player-party:${account.username}`, true);
       if (raw) {
         const pRaw = await window.storage.get(`party:${raw.value}`, true);
         if (pRaw) { const p = JSON.parse(pRaw.value); setParty(p); if (p.status !== "waiting") setPartyView("active"); return p; }
@@ -1675,7 +1675,7 @@ function GameUI({ account, initialSave, onLogout, onDeleteAccount }) {
     const p = { id: partyId, leader: account.username, monster: monsterIdx, monsterName: m.name, monsterEmoji: m.emoji, monsterLvl: m.lvl, members: [me], status: "waiting", created: Date.now() };
     try {
       await window.storage.set(`party:${partyId}`, JSON.stringify(p), true);
-      await window.storage.set(`player-party:${account.username}`, partyId);
+      await window.storage.set(`player-party:${account.username}`, partyId, true);
       setParty(p); setPartyView("active");
       addLog(`🛡️ Created party to fight ${m.emoji} ${m.name}`);
     } catch {}
@@ -1692,7 +1692,7 @@ function GameUI({ account, initialSave, onLogout, onDeleteAccount }) {
       const me = { username: account.username, displayName: account.displayName || account.username, atk: playerAtk, def: playerDef, hp: player.hp, maxHp: player.maxHp };
       p.members.push(me);
       await window.storage.set(`party:${partyId}`, JSON.stringify(p), true);
-      await window.storage.set(`player-party:${account.username}`, partyId);
+      await window.storage.set(`player-party:${account.username}`, partyId, true);
       setParty(p); setPartyView("active");
       addLog(`🛡️ Joined party vs ${p.monsterEmoji} ${p.monsterName}`);
     } catch {}
@@ -1709,7 +1709,7 @@ function GameUI({ account, initialSave, onLogout, onDeleteAccount }) {
         if (p.members.length === 0) await window.storage.delete(`party:${party.id}`, true);
         else { if (p.leader === account.username) p.leader = p.members[0].username; await window.storage.set(`party:${party.id}`, JSON.stringify(p), true); }
       }
-      await window.storage.delete(`player-party:${account.username}`);
+      await window.storage.delete(`player-party:${account.username}`, true);
     } catch {}
     setParty(null); setPartyView("browse");
     if (partyCombatRef.current) { clearInterval(partyCombatRef.current); partyCombatRef.current = null; }
@@ -2188,7 +2188,7 @@ function GameUI({ account, initialSave, onLogout, onDeleteAccount }) {
 
   const fetchMyClan = useCallback(async () => {
     try {
-      const raw = await window.storage.get(`player-clan:${account.username}`);
+      const raw = await window.storage.get(`player-clan:${account.username}`, true);
       if (raw) {
         const clanName = raw.value;
         const clanRaw = await window.storage.get(`clan:${clanName}`, true);
@@ -2254,7 +2254,7 @@ function GameUI({ account, initialSave, onLogout, onDeleteAccount }) {
       await window.storage.set(`clan:${name.toLowerCase()}`, JSON.stringify(clan), true);
       await window.storage.set(`clan-members:${name.toLowerCase()}`, JSON.stringify(members), true);
       await window.storage.set(`clan-requests:${name.toLowerCase()}`, JSON.stringify([]), true);
-      await window.storage.set(`player-clan:${account.username}`, name.toLowerCase());
+      await window.storage.set(`player-clan:${account.username}`, name.toLowerCase(), true);
       setGold(g => g - 500);
       addLog(`🏰 Created clan [${tag.toUpperCase()}] ${name}!`);
       setMyClan(clan);
@@ -2290,7 +2290,7 @@ function GameUI({ account, initialSave, onLogout, onDeleteAccount }) {
         if (members.find(m => m.username === account.username)) { setClanLoading(false); return; }
         members.push({ username: account.username, displayName: account.displayName || account.username, role: "member", joined: Date.now() });
         await window.storage.set(`clan-members:${clanName}`, JSON.stringify(members), true);
-        await window.storage.set(`player-clan:${account.username}`, clanName);
+        await window.storage.set(`player-clan:${account.username}`, clanName, true);
         addLog(`🏰 Joined clan ${clan.displayName || clanName}!`);
         await fetchMyClan();
         setClanTab("info");
@@ -2324,7 +2324,7 @@ function GameUI({ account, initialSave, onLogout, onDeleteAccount }) {
         if (!members.find(m => m.username === username)) {
           members.push({ username: req.username, displayName: req.displayName, role: "member", joined: Date.now() });
           await window.storage.set(`clan-members:${myClan.name}`, JSON.stringify(members), true);
-          await window.storage.set(`player-clan:${username}`, myClan.name);
+          await window.storage.set(`player-clan:${username}`, myClan.name, true);
           setClanMembers(members);
           addLog(`🏰 Accepted ${req.displayName} into the clan!`);
         }
@@ -2342,10 +2342,10 @@ function GameUI({ account, initialSave, onLogout, onDeleteAccount }) {
     try {
       // Store invite for the target player
       let invites = [];
-      try { const invRaw = await window.storage.get(`clan-invites:${targetName.trim()}`); if (invRaw) invites = JSON.parse(invRaw.value); } catch {}
+      try { const invRaw = await window.storage.get(`clan-invites:${targetName.trim()}`, true); if (invRaw) invites = JSON.parse(invRaw.value); } catch {}
       if (invites.find(i => i.clanName === myClan.name)) { setClanError("Already invited"); setClanLoading(false); return; }
       invites.push({ clanName: myClan.name, clanTag: myClan.tag, clanDisplayName: myClan.displayName, invitedBy: account.displayName || account.username, invitedAt: Date.now() });
-      await window.storage.set(`clan-invites:${targetName.trim()}`, JSON.stringify(invites));
+      await window.storage.set(`clan-invites:${targetName.trim()}`, JSON.stringify(invites), true);
       addLog(`📩 Invited ${targetName} to the clan`);
       setClanInviteUser("");
     } catch { setClanError("Failed to invite"); }
@@ -2406,7 +2406,7 @@ function GameUI({ account, initialSave, onLogout, onDeleteAccount }) {
     if (myClan) return; // already in a clan
     (async () => {
       try {
-        const invRaw = await window.storage.get(`clan-invites:${account.username}`);
+        const invRaw = await window.storage.get(`clan-invites:${account.username}`, true);
         if (invRaw) setClanInvites(JSON.parse(invRaw.value));
       } catch {}
     })();
@@ -2419,9 +2419,9 @@ function GameUI({ account, initialSave, onLogout, onDeleteAccount }) {
       try { const memRaw = await window.storage.get(`clan-members:${invite.clanName}`, true); if (memRaw) members = JSON.parse(memRaw.value); } catch {}
       members.push({ username: account.username, displayName: account.displayName || account.username, role: "member", joined: Date.now() });
       await window.storage.set(`clan-members:${invite.clanName}`, JSON.stringify(members), true);
-      await window.storage.set(`player-clan:${account.username}`, invite.clanName);
+      await window.storage.set(`player-clan:${account.username}`, invite.clanName, true);
       // Clear invites
-      await window.storage.delete(`clan-invites:${account.username}`);
+      await window.storage.delete(`clan-invites:${account.username}`, true);
       setClanInvites([]);
       addLog(`🏰 Joined ${invite.clanDisplayName} via invite!`);
       await fetchMyClan();
@@ -2449,7 +2449,7 @@ function GameUI({ account, initialSave, onLogout, onDeleteAccount }) {
         if (myClan.creator === account.username && members.length > 0) members[0].role = "leader";
         await window.storage.set(`clan-members:${myClan.name}`, JSON.stringify(members), true);
       }
-      await window.storage.delete(`player-clan:${account.username}`);
+      await window.storage.delete(`player-clan:${account.username}`, true);
       addLog(`🚪 Left clan ${myClan.displayName || myClan.name}`);
       setMyClan(null);
       setClanMembers([]);
@@ -2466,7 +2466,7 @@ function GameUI({ account, initialSave, onLogout, onDeleteAccount }) {
       let members = [...clanMembers];
       members = members.filter(m => m.username !== username);
       await window.storage.set(`clan-members:${myClan.name}`, JSON.stringify(members), true);
-      try { await window.storage.delete(`player-clan:${username}`); } catch {}
+      try { await window.storage.delete(`player-clan:${username}`, true); } catch {}
       setClanMembers(members);
       addLog(`🏰 Kicked ${username} from clan`);
     } catch {}
@@ -2510,7 +2510,7 @@ function GameUI({ account, initialSave, onLogout, onDeleteAccount }) {
     try {
       // Remove all members' player-clan references
       for (const m of clanMembers) {
-        try { await window.storage.delete(`player-clan:${m.username}`); } catch {}
+        try { await window.storage.delete(`player-clan:${m.username}`, true); } catch {}
       }
       await window.storage.delete(`clan:${myClan.name}`, true);
       await window.storage.delete(`clan-members:${myClan.name}`, true);
@@ -2572,14 +2572,39 @@ function GameUI({ account, initialSave, onLogout, onDeleteAccount }) {
   }, []); // eslint-disable-line
 
   // Fetch clan on mount and page open
+  // Auto-switch to clan info when joining a clan, or to browse when leaving
+  useEffect(() => {
+    if (myClan && (clanTab === "browse" || clanTab === "create")) {
+      setClanTab("info");
+    }
+    if (!myClan && (clanTab === "info" || clanTab === "members" || clanTab === "requests" || clanTab === "settings")) {
+      setClanTab("browse");
+    }
+  }, [myClan]);
+
   useEffect(() => { fetchMyClan(); }, [fetchMyClan]);
   useEffect(() => {
     if (page === "clan") {
       fetchMyClan();
       fetchLeaderboard();
-      if (!myClan) { fetchClanList(); if (clanTab === "info" || clanTab === "members") setClanTab("browse"); }
+      if (!myClan) fetchClanList();
     }
-  }, [page, fetchMyClan, fetchClanList, fetchLeaderboard, myClan, clanTab]);
+  }, [page, fetchMyClan, fetchClanList, fetchLeaderboard, myClan]);
+
+  // Global polling — clan data refreshes every 8s, clan list every 15s on browse tab
+  useEffect(() => {
+    const iv = setInterval(() => {
+      fetchMyClan();
+    }, 8000);
+    return () => clearInterval(iv);
+  }, [fetchMyClan]);
+
+  useEffect(() => {
+    if (page === "clan" && clanTab === "browse") {
+      const iv = setInterval(() => fetchClanList(), 15000);
+      return () => clearInterval(iv);
+    }
+  }, [page, clanTab, fetchClanList]);
 
   // ─── CHAT STATE ───
   const [chatChannel, setChatChannel] = useState("global"); // global | clan | system | dm
@@ -2732,12 +2757,15 @@ function GameUI({ account, initialSave, onLogout, onDeleteAccount }) {
 
   useEffect(() => { fetchFriends(); fetchFriendRequests(); fetchBlocked(); fetchSentRequests(); }, [fetchFriends, fetchFriendRequests, fetchBlocked, fetchSentRequests]);
 
-  // Poll for friend requests
+  // Poll for all friend data (requests, friends list, sent requests)
   useEffect(() => {
-    if (page !== "chat") return;
-    const iv = setInterval(() => fetchFriendRequests(), 8000);
+    const iv = setInterval(() => {
+      fetchFriendRequests();
+      fetchFriends();
+      fetchSentRequests();
+    }, 5000);
     return () => clearInterval(iv);
-  }, [page, fetchFriendRequests]);
+  }, [fetchFriendRequests, fetchFriends, fetchSentRequests]);
 
   const [friendStatus, setFriendStatus] = useState(""); // success/error message shown in UI
 
@@ -2881,7 +2909,7 @@ function GameUI({ account, initialSave, onLogout, onDeleteAccount }) {
     if (!target) return;
     try {
       const key1 = [account.username, target].sort().join("-");
-      const raw = await window.storage.get(`dm:${key1}`);
+      const raw = await window.storage.get(`dm:${key1}`, true);
       if (raw) setDmMessages(prev => ({ ...prev, [target]: JSON.parse(raw.value) }));
       else setDmMessages(prev => ({ ...prev, [target]: [] }));
     } catch {}
@@ -2894,7 +2922,7 @@ function GameUI({ account, initialSave, onLogout, onDeleteAccount }) {
     const newMsg = { user: account.displayName || account.username, username: account.username, text: text.trim(), t: Date.now() };
     const updated = [...msgs, newMsg].slice(-100);
     setDmMessages(prev => ({ ...prev, [target]: updated }));
-    await window.storage.set(`dm:${key1}`, JSON.stringify(updated));
+    await window.storage.set(`dm:${key1}`, JSON.stringify(updated), true);
     setChatInput("");
   }, [account, dmMessages]);
 

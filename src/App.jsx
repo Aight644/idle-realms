@@ -2695,35 +2695,58 @@ function GameUI({ account, initialSave, onLogout, onDeleteAccount }) {
     return () => clearInterval(iv);
   }, [page, fetchFriendRequests]);
 
+  const [friendStatus, setFriendStatus] = useState(""); // success/error message shown in UI
+
   const sendFriendRequest = useCallback(async (targetName) => {
     if (!targetName.trim()) return;
     const name = targetName.trim().toLowerCase();
-    if (name === account.username) return;
-    if (friendsList.find(f => f.username === name)) { addLog("👥 Already friends!"); return; }
-    if (sentRequests.includes(name)) { addLog("👥 Request already sent!"); return; }
-    if (blockedUsers.includes(name)) { addLog("🚫 User is blocked"); return; }
-    // Verify the target user exists
-    try {
-      await window.storage.get(`username:${name}`, true);
-    } catch {
-      addLog("❌ Player not found"); return;
+    if (name === account.username) { setFriendStatus("❌ You can't add yourself!"); return; }
+    if (friendsList.find(f => f.username === name)) { setFriendStatus("👥 Already friends!"); return; }
+    if (sentRequests.includes(name)) { setFriendStatus("📤 Request already sent!"); return; }
+    if (blockedUsers.includes(name)) { setFriendStatus("🚫 User is blocked"); return; }
+    // Check if player exists via leaderboard or username reservation
+    let playerExists = lbData.some(e => e.username === name);
+    if (!playerExists) {
+      try {
+        await window.storage.get(`username:${name}`, true);
+        playerExists = true;
+      } catch {}
     }
+    if (!playerExists) { setFriendStatus("❌ Player not found"); return; }
     // Add to their incoming requests
     let existing = [];
     try {
       const raw = await window.storage.get(`freq:${name}`, true);
       existing = JSON.parse(raw.value);
     } catch {}
-    if (existing.find(r => r.from === account.username)) { addLog("👥 Request already sent!"); return; }
+    if (existing.find(r => r.from === account.username)) { setFriendStatus("📤 Request already sent!"); return; }
     existing.push({ from: account.username, displayName: account.displayName, at: Date.now() });
     await window.storage.set(`freq:${name}`, JSON.stringify(existing), true);
     // Track our sent requests
     const newSent = [...sentRequests, name];
     setSentRequests(newSent);
     await window.storage.set(`freqsent:${account.username}`, JSON.stringify(newSent), true);
+    setFriendStatus(`✅ Friend request sent to ${name}!`);
     addLog(`👥 Friend request sent to ${name}`);
     setFriendInput("");
-  }, [friendsList, sentRequests, blockedUsers, account, addLog]);
+  }, [friendsList, sentRequests, blockedUsers, account, addLog, lbData]);
+
+  const cancelFriendRequest = useCallback(async (targetName) => {
+    const name = targetName.trim().toLowerCase();
+    // Remove from their incoming requests
+    try {
+      const raw = await window.storage.get(`freq:${name}`, true);
+      const existing = JSON.parse(raw.value);
+      const updated = existing.filter(r => r.from !== account.username);
+      await window.storage.set(`freq:${name}`, JSON.stringify(updated), true);
+    } catch {}
+    // Remove from our sent requests
+    const newSent = sentRequests.filter(n => n !== name);
+    setSentRequests(newSent);
+    await window.storage.set(`freqsent:${account.username}`, JSON.stringify(newSent), true);
+    setFriendStatus(`🗑️ Request to ${name} cancelled`);
+    addLog(`👥 Cancelled friend request to ${name}`);
+  }, [sentRequests, account, addLog]);
 
   const acceptFriendRequest = useCallback(async (fromUser) => {
     // Add to both friend lists
@@ -5062,11 +5085,11 @@ function GameUI({ account, initialSave, onLogout, onDeleteAccount }) {
                       {/* ── Add Friend Tab ── */}
                       {friendsTab === "add" && (
                         <div>
-                          <div style={{ position: "relative", marginBottom: 16 }}>
+                          <div style={{ position: "relative", marginBottom: 12 }}>
                             <div style={{ display: "flex", gap: 8 }}>
-                              <input value={friendInput} onChange={e => { setFriendInput(e.target.value); if (!lbData.length) fetchLeaderboard(); }}
+                              <input value={friendInput} onChange={e => { setFriendInput(e.target.value); setFriendStatus(""); if (!lbData.length) fetchLeaderboard(); }}
                                 onKeyDown={e => { if (e.key === "Enter" && friendInput.trim()) { sendFriendRequest(friendInput); } if (e.key === "Escape") setFriendInput(""); }}
-                                placeholder="Search players by name..."
+                                placeholder="Enter player name..."
                                 style={{ flex: 1, padding: "8px 12px", background: T.bgDeep, border: `1px solid ${T.border}`, borderRadius: 8, color: T.text, fontSize: 12, outline: "none" }} />
                               <Btn color={T.success} small onClick={() => sendFriendRequest(friendInput)}>Send</Btn>
                             </div>
@@ -5112,26 +5135,40 @@ function GameUI({ account, initialSave, onLogout, onDeleteAccount }) {
                             })()}
                           </div>
 
+                          {/* Status message */}
+                          {friendStatus && (
+                            <div style={{
+                              fontSize: 12, padding: "8px 12px", borderRadius: 8, marginBottom: 12,
+                              background: friendStatus.startsWith("✅") ? T.success + "12" : friendStatus.startsWith("❌") || friendStatus.startsWith("🚫") ? T.danger + "12" : T.warning + "12",
+                              color: friendStatus.startsWith("✅") ? T.success : friendStatus.startsWith("❌") || friendStatus.startsWith("🚫") ? T.danger : T.warning,
+                              border: `1px solid ${friendStatus.startsWith("✅") ? T.success + "30" : friendStatus.startsWith("❌") || friendStatus.startsWith("🚫") ? T.danger + "30" : T.warning + "30"}`,
+                            }}>{friendStatus}</div>
+                          )}
+
                           {/* Sent Requests */}
                           {sentRequests.length > 0 && (
                             <div>
                               <div style={{ fontSize: 12, fontWeight: 700, color: T.textDim, marginBottom: 8 }}>📤 Sent Requests ({sentRequests.length})</div>
                               {sentRequests.map((name, i) => (
-                                <div key={i} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 12px", marginBottom: 4, background: T.bgDeep, borderRadius: 8, border: `1px solid ${T.divider}` }}>
-                                  <div style={{ width: 28, height: 28, borderRadius: "50%", background: T.textDim + "18", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, fontWeight: 800, color: T.textDim }}>
+                                <div key={i} style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 12px", marginBottom: 6, background: T.bgDeep, borderRadius: 10, border: `1px solid ${T.divider}` }}>
+                                  <div style={{ width: 30, height: 30, borderRadius: "50%", background: T.textDim + "18", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, fontWeight: 800, color: T.textDim }}>
                                     {name[0]?.toUpperCase()}
                                   </div>
                                   <span style={{ fontSize: 12, color: T.textSec, flex: 1 }}>{name}</span>
-                                  <span style={{ fontSize: 10, color: T.textDim }}>Pending...</span>
+                                  <span style={{ fontSize: 10, color: T.textDim, marginRight: 4 }}>Pending</span>
+                                  <div onClick={() => cancelFriendRequest(name)} style={{
+                                    padding: "5px 10px", borderRadius: 6, cursor: "pointer", fontSize: 10, fontWeight: 600,
+                                    background: T.danger + "18", color: T.danger, border: `1px solid ${T.danger}30`,
+                                  }}>Cancel</div>
                                 </div>
                               ))}
                             </div>
                           )}
 
-                          {sentRequests.length === 0 && !friendInput && (
+                          {sentRequests.length === 0 && !friendInput && !friendStatus && (
                             <div style={{ textAlign: "center", padding: "30px 0", color: T.textDim }}>
                               <div style={{ fontSize: 28, marginBottom: 8 }}>🔍</div>
-                              <div style={{ fontSize: 12 }}>Search for a player to send a friend request</div>
+                              <div style={{ fontSize: 12 }}>Type a player name above to send a friend request</div>
                             </div>
                           )}
                         </div>

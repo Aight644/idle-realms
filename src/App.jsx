@@ -985,9 +985,9 @@ export default function IdleRealmsUI() {
     try {
       // ── Remove from clan ──
       try {
-        const clanRaw = await window.storage.get(`player-clan:${uname}`, true);
-        if (clanRaw) {
-          const clanName = clanRaw.value;
+        const clanSnap = await getDoc(doc(db, "shared", `player-clan:${uname}`));
+        if (clanSnap.exists()) {
+          const clanName = clanSnap.data().value;
           let members = [];
           try {
             const memRaw = await window.storage.get(`clan-members:${clanName}`, true);
@@ -1041,7 +1041,7 @@ export default function IdleRealmsUI() {
       try { await window.storage.delete(`quests:${uname}`); } catch {}
       try { await window.storage.delete(`presence:${uname}`, true); } catch {}
       try { await window.storage.delete(`wallet:${uname}`, true); } catch {}
-      try { await window.storage.delete(`player-clan:${uname}`, true); } catch {}
+      try { await firestoreDeleteDoc(doc(db, "shared", `player-clan:${uname}`)); } catch {}
       try { await window.storage.delete(`player-party:${uname}`, true); } catch {}
       try { await firestoreDeleteDoc(doc(db, "sessions", uid)); } catch {}
       // Delete Firebase Auth account
@@ -2190,13 +2190,15 @@ function GameUI({ account, initialSave, onLogout, onDeleteAccount }) {
   const fetchMyClan = useCallback(async () => {
     try {
       let clanName = null;
-      // Try shared storage first (new format)
+      // Read player-clan directly from Firestore shared collection
       try {
-        const raw = await window.storage.get(`player-clan:${account.username}`, true);
-        if (raw) clanName = raw.value;
-        console.log("[fetchMyClan] shared player-clan:", account.username, "->", clanName);
+        const pcDoc = await getDoc(doc(db, "shared", `player-clan:${account.username}`));
+        if (pcDoc.exists()) {
+          clanName = pcDoc.data().value;
+          console.log("[fetchMyClan] Found player-clan:", account.username, "->", clanName);
+        }
       } catch (e) {
-        console.log("[fetchMyClan] shared player-clan not found for", account.username, e.message);
+        console.log("[fetchMyClan] Firestore read error:", e.message);
       }
       // Fallback to private storage (old format) and migrate
       if (!clanName) {
@@ -2204,14 +2206,17 @@ function GameUI({ account, initialSave, onLogout, onDeleteAccount }) {
           const raw = await window.storage.get(`player-clan:${account.username}`);
           if (raw) {
             clanName = raw.value;
-            console.log("[fetchMyClan] private player-clan found, migrating:", clanName);
-            await window.storage.set(`player-clan:${account.username}`, clanName, true);
+            console.log("[fetchMyClan] Found in private, migrating:", clanName);
+            await setDoc(doc(db, "shared", `player-clan:${account.username}`), {
+              value: clanName,
+              key: `player-clan:${account.username}`,
+              updatedAt: Date.now(),
+            });
           }
         } catch {}
       }
 
       if (clanName) {
-        console.log("[fetchMyClan] Loading clan:", clanName);
         try {
           const clanRaw = await window.storage.get(`clan:${clanName}`, true);
           if (clanRaw) {
@@ -2225,10 +2230,10 @@ function GameUI({ account, initialSave, onLogout, onDeleteAccount }) {
               if (reqRaw) setClanRequests(JSON.parse(reqRaw.value));
               else setClanRequests([]);
             } catch { setClanRequests([]); }
-          } else { console.log("[fetchMyClan] clan doc not found:", clanName); setMyClan(null); setClanMembers([]); setClanRequests([]); }
-        } catch (e) { console.log("[fetchMyClan] error loading clan:", e.message); setMyClan(null); setClanMembers([]); setClanRequests([]); }
+          } else { setMyClan(null); setClanMembers([]); setClanRequests([]); }
+        } catch { setMyClan(null); setClanMembers([]); setClanRequests([]); }
       } else { setMyClan(null); setClanMembers([]); setClanRequests([]); }
-    } catch (e) { console.log("[fetchMyClan] outer error:", e.message); setMyClan(null); }
+    } catch { setMyClan(null); }
   }, [account.username]);
 
   const isLeader = myClan && myClan.creator === account.username;
@@ -2278,7 +2283,7 @@ function GameUI({ account, initialSave, onLogout, onDeleteAccount }) {
       await window.storage.set(`clan:${name.toLowerCase()}`, JSON.stringify(clan), true);
       await window.storage.set(`clan-members:${name.toLowerCase()}`, JSON.stringify(members), true);
       await window.storage.set(`clan-requests:${name.toLowerCase()}`, JSON.stringify([]), true);
-      await window.storage.set(`player-clan:${account.username}`, name.toLowerCase(), true);
+      await setDoc(doc(db, "shared", `player-clan:${account.username}`), { value: name.toLowerCase(), key: `player-clan:${account.username}`, updatedAt: Date.now() });
       setGold(g => g - 500);
       addLog(`🏰 Created clan [${tag.toUpperCase()}] ${name}!`);
       setMyClan(clan);
@@ -2314,7 +2319,11 @@ function GameUI({ account, initialSave, onLogout, onDeleteAccount }) {
         if (members.find(m => m.username === account.username)) { setClanLoading(false); return; }
         members.push({ username: account.username, displayName: account.displayName || account.username, role: "member", joined: Date.now() });
         await window.storage.set(`clan-members:${clanName}`, JSON.stringify(members), true);
-        await window.storage.set(`player-clan:${account.username}`, clanName, true);
+        await setDoc(doc(db, "shared", `player-clan:${account.username}`), {
+          value: clanName,
+          key: `player-clan:${account.username}`,
+          updatedAt: Date.now(),
+        });
         addLog(`🏰 Joined clan ${clan.displayName || clanName}!`);
         await fetchMyClan();
         setClanTab("info");
@@ -2350,8 +2359,17 @@ function GameUI({ account, initialSave, onLogout, onDeleteAccount }) {
         if (!members.find(m => m.username === username)) {
           members.push({ username: req.username, displayName: req.displayName, role: "member", joined: Date.now() });
           await window.storage.set(`clan-members:${myClan.name}`, JSON.stringify(members), true);
-          const setResult = await window.storage.set(`player-clan:${username}`, myClan.name, true);
-          console.log("[handleJoinRequest] Wrote player-clan:", username, "->", myClan.name, "result:", setResult);
+          // Write player-clan directly via Firestore to ensure it works
+          try {
+            await setDoc(doc(db, "shared", `player-clan:${username}`), {
+              value: myClan.name,
+              key: `player-clan:${username}`,
+              updatedAt: Date.now(),
+            });
+            console.log("[handleJoinRequest] Wrote player-clan:", username, "->", myClan.name);
+          } catch (e) {
+            console.error("[handleJoinRequest] FAILED to write player-clan:", e);
+          }
           setClanMembers(members);
           addLog(`🏰 Accepted ${req.displayName} into the clan!`);
         }
@@ -2446,7 +2464,7 @@ function GameUI({ account, initialSave, onLogout, onDeleteAccount }) {
       try { const memRaw = await window.storage.get(`clan-members:${invite.clanName}`, true); if (memRaw) members = JSON.parse(memRaw.value); } catch {}
       members.push({ username: account.username, displayName: account.displayName || account.username, role: "member", joined: Date.now() });
       await window.storage.set(`clan-members:${invite.clanName}`, JSON.stringify(members), true);
-      await window.storage.set(`player-clan:${account.username}`, invite.clanName, true);
+      await setDoc(doc(db, "shared", `player-clan:${account.username}`), { value: invite.clanName, key: `player-clan:${account.username}`, updatedAt: Date.now() });
       // Clear invites
       await window.storage.delete(`clan-invites:${account.username}`, true);
       setClanInvites([]);
@@ -2476,7 +2494,7 @@ function GameUI({ account, initialSave, onLogout, onDeleteAccount }) {
         if (myClan.creator === account.username && members.length > 0) members[0].role = "leader";
         await window.storage.set(`clan-members:${myClan.name}`, JSON.stringify(members), true);
       }
-      await window.storage.delete(`player-clan:${account.username}`, true);
+      await firestoreDeleteDoc(doc(db, "shared", `player-clan:${account.username}`));
       addLog(`🚪 Left clan ${myClan.displayName || myClan.name}`);
       setMyClan(null);
       setClanMembers([]);
@@ -2493,7 +2511,7 @@ function GameUI({ account, initialSave, onLogout, onDeleteAccount }) {
       let members = [...clanMembers];
       members = members.filter(m => m.username !== username);
       await window.storage.set(`clan-members:${myClan.name}`, JSON.stringify(members), true);
-      try { await window.storage.delete(`player-clan:${username}`, true); } catch {}
+      try { await firestoreDeleteDoc(doc(db, "shared", `player-clan:${username}`)); } catch {}
       setClanMembers(members);
       addLog(`🏰 Kicked ${username} from clan`);
     } catch {}
@@ -2537,7 +2555,7 @@ function GameUI({ account, initialSave, onLogout, onDeleteAccount }) {
     try {
       // Remove all members' player-clan references
       for (const m of clanMembers) {
-        try { await window.storage.delete(`player-clan:${m.username}`, true); } catch {}
+        try { await firestoreDeleteDoc(doc(db, "shared", `player-clan:${m.username}`)); } catch {}
       }
       await window.storage.delete(`clan:${myClan.name}`, true);
       await window.storage.delete(`clan-members:${myClan.name}`, true);

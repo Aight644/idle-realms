@@ -9,7 +9,7 @@ import {
   updateProfile,
   deleteUser,
 } from 'firebase/auth';
-import { doc, setDoc, deleteDoc as firestoreDeleteDoc, onSnapshot, serverTimestamp } from 'firebase/firestore';
+import { doc, getDoc, setDoc, deleteDoc as firestoreDeleteDoc, onSnapshot, serverTimestamp } from 'firebase/firestore';
 
 // ─── THEME ───
 const T = {
@@ -628,16 +628,9 @@ function AuthScreen({ onLogin }) {
       // Create Firebase Auth account first (so we're authenticated for Firestore)
       const cred = await createUserWithEmailAndPassword(auth, email.trim(), password);
       
-      // Now check name uniqueness (we're authenticated so Firestore rules allow the read)
-      let nameTaken = false;
-      try {
-        const existing = await window.storage.get(`username:${nameKey}`, true);
-        if (existing) nameTaken = true;
-      } catch {
-        // Key not found = name is available
-      }
-      
-      if (nameTaken) {
+      // Check name uniqueness using direct Firestore read (bypasses storage wrapper issues)
+      const nameDoc = await getDoc(doc(db, "shared", `username:${nameKey}`));
+      if (nameDoc.exists()) {
         // Name taken — delete the Firebase Auth account we just created
         try { await cred.user.delete(); } catch {}
         setError("Name already taken");

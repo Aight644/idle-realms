@@ -7,8 +7,9 @@ import {
   signOut,
   onAuthStateChanged,
   updateProfile,
+  deleteUser,
 } from 'firebase/auth';
-import { doc, setDoc, onSnapshot, serverTimestamp } from 'firebase/firestore';
+import { doc, setDoc, deleteDoc as firestoreDeleteDoc, onSnapshot, serverTimestamp } from 'firebase/firestore';
 
 // ─── THEME ───
 const T = {
@@ -904,6 +905,49 @@ export default function IdleRealmsUI() {
     setInitialSave(null);
   }, []);
 
+  const handleDeleteAccount = useCallback(async () => {
+    const user = auth.currentUser;
+    if (!user || !account) return;
+    const uid = user.uid;
+    const uname = account.username;
+    try {
+      // Delete save data
+      try { await window.storage.delete(`save:${uname}`); } catch {}
+      // Delete username reservation
+      try { await window.storage.delete(`username:${uname}`, true); } catch {}
+      // Delete uid mapping
+      try { await window.storage.delete(`uidmap:${uid}`, true); } catch {}
+      // Delete leaderboard entry
+      try { await window.storage.delete(`lb:${uname}`, true); } catch {}
+      // Delete friends list
+      try { await window.storage.delete(`friends:${uname}`); } catch {}
+      // Delete friend requests
+      try { await window.storage.delete(`freq:${uname}`); } catch {}
+      try { await window.storage.delete(`freqsent:${uname}`); } catch {}
+      // Delete blocked list
+      try { await window.storage.delete(`blocked:${uname}`); } catch {}
+      // Delete quest data
+      try { await window.storage.delete(`quests:${uname}`); } catch {}
+      // Delete presence
+      try { await window.storage.delete(`presence:${uname}`, true); } catch {}
+      // Delete wallet
+      try { await window.storage.delete(`wallet:${uname}`, true); } catch {}
+      // Delete clan membership
+      try { await window.storage.delete(`player-clan:${uname}`); } catch {}
+      // Delete party membership
+      try { await window.storage.delete(`player-party:${uname}`); } catch {}
+      // Delete session doc
+      try { await firestoreDeleteDoc(doc(db, "sessions", uid)); } catch {}
+      // Delete Firebase Auth account
+      await deleteUser(user);
+      setAccount(null);
+      setInitialSave(null);
+    } catch (e) {
+      console.error("Delete account error:", e);
+      throw e;
+    }
+  }, [account]);
+
 
   if (!authChecked) {
     return (
@@ -936,11 +980,11 @@ export default function IdleRealmsUI() {
 
   if (!account) return <AuthScreen onLogin={handleLogin} />;
 
-  return <GameUI key={account.username} account={account} initialSave={initialSave} onLogout={handleLogout} />;
+  return <GameUI key={account.username} account={account} initialSave={initialSave} onLogout={handleLogout} onDeleteAccount={handleDeleteAccount} />;
 }
 
 // ═══ GAME UI ═══
-function GameUI({ account, initialSave, onLogout }) {
+function GameUI({ account, initialSave, onLogout, onDeleteAccount }) {
   const [page, setPage] = useState("skills");
   const [mobileNav, setMobileNav] = useState(false);
   const [isMobile, setIsMobile] = useState(() => window.innerWidth < 768);
@@ -5824,6 +5868,29 @@ function GameUI({ account, initialSave, onLogout }) {
                       </div>
                     );
                   })}
+                </Card>
+
+                {/* Danger Zone */}
+                <Card style={{ marginTop: 24, background: T.danger + "06", border: `1px solid ${T.danger}20` }}>
+                  <div style={{ fontSize: 13, fontWeight: 700, color: T.danger, marginBottom: 6 }}>⚠️ Danger Zone</div>
+                  <div style={{ fontSize: 11, color: T.textDim, marginBottom: 12, lineHeight: 1.5 }}>
+                    Permanently delete your account and all associated data. This action cannot be undone — your name, progress, inventory, friends, and clan membership will be erased forever.
+                  </div>
+                  <button onClick={async () => {
+                    const confirmText = prompt("Type DELETE to permanently delete your account:");
+                    if (confirmText !== "DELETE") return;
+                    if (!confirm("Are you absolutely sure? This cannot be undone.")) return;
+                    try {
+                      await onDeleteAccount();
+                    } catch (e) {
+                      alert("Failed to delete account. You may need to log out and log back in first, then try again.");
+                    }
+                  }} style={{
+                    padding: "9px 18px", borderRadius: 8, border: `1px solid ${T.danger}40`,
+                    background: T.danger + "15", color: T.danger,
+                    fontWeight: 700, fontSize: 12, cursor: "pointer",
+                    fontFamily: FONT, transition: "all 0.15s",
+                  }}>🗑️ Delete Account Permanently</button>
                 </Card>
               </div>
             );

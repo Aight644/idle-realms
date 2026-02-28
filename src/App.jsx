@@ -2188,9 +2188,25 @@ function GameUI({ account, initialSave, onLogout, onDeleteAccount }) {
 
   const fetchMyClan = useCallback(async () => {
     try {
-      const raw = await window.storage.get(`player-clan:${account.username}`, true);
-      if (raw) {
-        const clanName = raw.value;
+      let clanName = null;
+      // Try shared storage first (new format)
+      try {
+        const raw = await window.storage.get(`player-clan:${account.username}`, true);
+        if (raw) clanName = raw.value;
+      } catch {}
+      // Fallback to private storage (old format) and migrate
+      if (!clanName) {
+        try {
+          const raw = await window.storage.get(`player-clan:${account.username}`);
+          if (raw) {
+            clanName = raw.value;
+            // Migrate to shared
+            await window.storage.set(`player-clan:${account.username}`, clanName, true);
+          }
+        } catch {}
+      }
+
+      if (clanName) {
         const clanRaw = await window.storage.get(`clan:${clanName}`, true);
         if (clanRaw) {
           setMyClan(JSON.parse(clanRaw.value));
@@ -2203,7 +2219,7 @@ function GameUI({ account, initialSave, onLogout, onDeleteAccount }) {
             if (reqRaw) setClanRequests(JSON.parse(reqRaw.value));
             else setClanRequests([]);
           } catch { setClanRequests([]); }
-        }
+        } else { setMyClan(null); setClanMembers([]); setClanRequests([]); }
       } else { setMyClan(null); setClanMembers([]); setClanRequests([]); }
     } catch { setMyClan(null); }
   }, [account.username]);
@@ -2303,6 +2319,7 @@ function GameUI({ account, initialSave, onLogout, onDeleteAccount }) {
         await window.storage.set(`clan-requests:${clanName}`, JSON.stringify(requests), true);
         addLog(`📩 Sent join request to ${clan.displayName || clanName}`);
         setClanError("✅ Join request sent! Wait for the leader to accept.");
+        setTimeout(() => setClanError(""), 5000);
       }
     } catch { setClanError("Failed to join clan"); }
     setClanLoading(false);
@@ -2576,9 +2593,11 @@ function GameUI({ account, initialSave, onLogout, onDeleteAccount }) {
   useEffect(() => {
     if (myClan && (clanTab === "browse" || clanTab === "create")) {
       setClanTab("info");
+      setClanError("");
     }
     if (!myClan && (clanTab === "info" || clanTab === "members" || clanTab === "requests" || clanTab === "settings")) {
       setClanTab("browse");
+      setClanError("");
     }
   }, [myClan]);
 
@@ -5848,7 +5867,9 @@ function GameUI({ account, initialSave, onLogout, onDeleteAccount }) {
                       </Card>
                     ) : (
                       <div style={{ display: "grid", gridTemplateColumns: `repeat(auto-fill, minmax(${isMobile ? "100%" : "280px"}, 1fr))`, gap: 10 }}>
-                        {clanList.map((c, i) => (
+                        {clanList.filter(c => !myClan || c.name !== myClan.name).map((c, i) => {
+                          const isMember = clanMembers.some(m => m.username === account.username) && myClan && myClan.name === c.name;
+                          return (
                           <Card key={i}>
                             <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 8 }}>
                               <div style={{
@@ -5866,11 +5887,16 @@ function GameUI({ account, initialSave, onLogout, onDeleteAccount }) {
                               <span>📊 Min Lv {c.minLevel || 1}</span>
                               <span>{(c.joinMode || "request") === "open" ? "🟢 Open" : "🔒 Request"}</span>
                             </div>
-                            <Btn color={T.purple} small onClick={() => joinClan(c.name)} disabled={clanLoading || !!myClan}>
-                              {myClan ? "Leave your clan first" : (c.joinMode || "request") === "open" ? "Join Clan" : "Request to Join"}
-                            </Btn>
+                            {isMember ? (
+                              <div style={{ fontSize: 11, color: T.success, fontWeight: 600, padding: "6px 0" }}>✓ You're in this clan</div>
+                            ) : (
+                              <Btn color={T.purple} small onClick={() => joinClan(c.name)} disabled={clanLoading || !!myClan}>
+                                {myClan ? "Leave your clan first" : (c.joinMode || "request") === "open" ? "Join Clan" : "Request to Join"}
+                              </Btn>
+                            )}
                           </Card>
-                        ))}
+                          );
+                        })}
                       </div>
                     )}
                   </div>

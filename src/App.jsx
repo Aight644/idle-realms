@@ -2194,20 +2194,24 @@ function GameUI({ account, initialSave, onLogout, onDeleteAccount }) {
       try {
         const raw = await window.storage.get(`player-clan:${account.username}`, true);
         if (raw) clanName = raw.value;
-      } catch {}
+        console.log("[fetchMyClan] shared player-clan:", account.username, "->", clanName);
+      } catch (e) {
+        console.log("[fetchMyClan] shared player-clan not found for", account.username, e.message);
+      }
       // Fallback to private storage (old format) and migrate
       if (!clanName) {
         try {
           const raw = await window.storage.get(`player-clan:${account.username}`);
           if (raw) {
             clanName = raw.value;
-            // Migrate to shared
+            console.log("[fetchMyClan] private player-clan found, migrating:", clanName);
             await window.storage.set(`player-clan:${account.username}`, clanName, true);
           }
         } catch {}
       }
 
       if (clanName) {
+        console.log("[fetchMyClan] Loading clan:", clanName);
         try {
           const clanRaw = await window.storage.get(`clan:${clanName}`, true);
           if (clanRaw) {
@@ -2221,10 +2225,10 @@ function GameUI({ account, initialSave, onLogout, onDeleteAccount }) {
               if (reqRaw) setClanRequests(JSON.parse(reqRaw.value));
               else setClanRequests([]);
             } catch { setClanRequests([]); }
-          } else { setMyClan(null); setClanMembers([]); setClanRequests([]); }
-        } catch { setMyClan(null); setClanMembers([]); setClanRequests([]); }
+          } else { console.log("[fetchMyClan] clan doc not found:", clanName); setMyClan(null); setClanMembers([]); setClanRequests([]); }
+        } catch (e) { console.log("[fetchMyClan] error loading clan:", e.message); setMyClan(null); setClanMembers([]); setClanRequests([]); }
       } else { setMyClan(null); setClanMembers([]); setClanRequests([]); }
-    } catch { setMyClan(null); }
+    } catch (e) { console.log("[fetchMyClan] outer error:", e.message); setMyClan(null); }
   }, [account.username]);
 
   const isLeader = myClan && myClan.creator === account.username;
@@ -2346,7 +2350,8 @@ function GameUI({ account, initialSave, onLogout, onDeleteAccount }) {
         if (!members.find(m => m.username === username)) {
           members.push({ username: req.username, displayName: req.displayName, role: "member", joined: Date.now() });
           await window.storage.set(`clan-members:${myClan.name}`, JSON.stringify(members), true);
-          await window.storage.set(`player-clan:${username}`, myClan.name, true);
+          const setResult = await window.storage.set(`player-clan:${username}`, myClan.name, true);
+          console.log("[handleJoinRequest] Wrote player-clan:", username, "->", myClan.name, "result:", setResult);
           setClanMembers(members);
           addLog(`🏰 Accepted ${req.displayName} into the clan!`);
         }

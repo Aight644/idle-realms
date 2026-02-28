@@ -624,13 +624,26 @@ function AuthScreen({ onLogin }) {
     if (password !== confirmPw) return setError("Passwords do not match");
     setLoading(true);
     try {
-      // Check name uniqueness (case-insensitive)
+      // Create Firebase Auth account first (so we're authenticated for Firestore)
+      const cred = await createUserWithEmailAndPassword(auth, email.trim(), password);
+      
+      // Now check name uniqueness (we're authenticated so Firestore rules allow the read)
+      let nameTaken = false;
       try {
         const existing = await window.storage.get(`username:${nameKey}`, true);
-        if (existing) { setError("Name already taken"); setLoading(false); return; }
-      } catch {}
+        if (existing) nameTaken = true;
+      } catch {
+        // Key not found = name is available
+      }
+      
+      if (nameTaken) {
+        // Name taken — delete the Firebase Auth account we just created
+        try { await cred.user.delete(); } catch {}
+        setError("Name already taken");
+        setLoading(false);
+        return;
+      }
 
-      const cred = await createUserWithEmailAndPassword(auth, email.trim(), password);
       await updateProfile(cred.user, { displayName: name });
       // Reserve name globally (shared storage)
       await window.storage.set(`username:${nameKey}`, JSON.stringify({ uid: cred.user.uid, displayName: name }), true);

@@ -702,6 +702,23 @@ function AuthScreen({ onLogin, signingUp }) {
         const mapRaw = await window.storage.get(`uidmap:${uid}`, true);
         if (mapRaw) uname = mapRaw.value;
       } catch {}
+      
+      // If still using uid, try to find name from Firebase displayName
+      if (uname === uid && cred.user.displayName) {
+        const possibleName = cred.user.displayName.toLowerCase();
+        try {
+          const nameCheck = await getDoc(doc(db, "shared", `username:${possibleName}`));
+          if (nameCheck.exists()) {
+            const data = JSON.parse(nameCheck.data().value);
+            if (data.uid === uid) {
+              uname = possibleName;
+              // Fix missing uidmap for next time
+              try { await window.storage.set(`uidmap:${uid}`, possibleName, true); } catch {}
+            }
+          }
+        } catch {}
+      }
+      
       let save;
       try {
         const sr = await window.storage.get(`save:${uname}`);
@@ -713,9 +730,20 @@ function AuthScreen({ onLogin, signingUp }) {
           save = JSON.parse(sr.value);
         } catch { save = DEFAULT_SAVE(); }
       }
+      // Look up display name
+      let dName = cred.user.displayName || email.split("@")[0];
+      if (uname !== uid) {
+        try {
+          const unameRaw = await window.storage.get(`username:${uname}`, true);
+          if (unameRaw) {
+            const parsed = JSON.parse(unameRaw.value);
+            if (parsed.displayName) dName = parsed.displayName;
+          }
+        } catch {}
+      }
       onLogin({
         username: uname,
-        displayName: cred.user.displayName || email.split("@")[0],
+        displayName: dName,
         email: cred.user.email,
         uid,
         isGuest: false,
@@ -863,6 +891,22 @@ export default function IdleRealmsUI() {
           const mapRaw = await window.storage.get(`uidmap:${uid}`, true);
           if (mapRaw) uname = mapRaw.value;
         } catch {}
+
+        // If still using uid as username, try to find name from Firebase displayName
+        if (uname === uid && user.displayName) {
+          const possibleName = user.displayName.toLowerCase();
+          try {
+            const nameCheck = await getDoc(doc(db, "shared", `username:${possibleName}`));
+            if (nameCheck.exists()) {
+              const data = JSON.parse(nameCheck.data().value);
+              if (data.uid === uid) {
+                uname = possibleName;
+                // Fix missing uidmap for next time
+                try { await window.storage.set(`uidmap:${uid}`, possibleName, true); } catch {}
+              }
+            }
+          } catch {}
+        }
 
         let save;
         try {
@@ -2749,24 +2793,40 @@ function GameUI({ account, initialSave, onLogout, onDeleteAccount }) {
   }, [sentRequests, account, addLog]);
 
   const acceptFriendRequest = useCallback(async (fromUser) => {
-    // Add to both friend lists
-    const myUpdated = [...friendsList, { username: fromUser, addedAt: Date.now() }];
+    // Find the request to get display info
+    const req = friendRequests.find(r => r.from === fromUser);
+    const fromDisplay = req?.displayName || fromUser;
+    
+    // Add to my friend list (with displayName)
+    const myUpdated = [...friendsList, { username: fromUser, displayName: fromDisplay, addedAt: Date.now() }];
     setFriendsList(myUpdated);
     await window.storage.set(`friends:${account.username}`, JSON.stringify(myUpdated), true);
-    // Add us to their friend list
+    
+    // Add me to their friend list
+    let theirList = [];
     try {
       const raw = await window.storage.get(`friends:${fromUser}`, true);
-      const theirList = raw ? JSON.parse(raw.value) : [];
-      if (!theirList.find(f => f.username === account.username)) {
-        theirList.push({ username: account.username, addedAt: Date.now() });
-        await window.storage.set(`friends:${fromUser}`, JSON.stringify(theirList), true);
-      }
+      theirList = JSON.parse(raw.value);
     } catch {}
-    // Remove from requests
+    if (!theirList.find(f => f.username === account.username)) {
+      theirList.push({ username: account.username, displayName: account.displayName || account.username, addedAt: Date.now() });
+      await window.storage.set(`friends:${fromUser}`, JSON.stringify(theirList), true);
+    }
+    
+    // Remove from my incoming requests
     const updatedReqs = friendRequests.filter(r => r.from !== fromUser);
     setFriendRequests(updatedReqs);
     await window.storage.set(`freq:${account.username}`, JSON.stringify(updatedReqs), true);
-    addLog(`👥 You are now friends with ${fromUser}!`);
+    
+    // Clean up sender's sent requests list
+    try {
+      const sentRaw = await window.storage.get(`freqsent:${fromUser}`, true);
+      const theirSent = JSON.parse(sentRaw.value);
+      const updatedSent = theirSent.filter(n => n !== account.username);
+      await window.storage.set(`freqsent:${fromUser}`, JSON.stringify(updatedSent), true);
+    } catch {}
+    
+    addLog(`👥 You are now friends with ${fromDisplay}!`);
   }, [friendsList, friendRequests, account, addLog]);
 
   const denyFriendRequest = useCallback(async (fromUser) => {
@@ -5229,13 +5289,14 @@ function GameUI({ account, initialSave, onLogout, onDeleteAccount }) {
                               <div style={{ fontSize: 12, fontWeight: 700, color: T.success, marginBottom: 8 }}>👥 Friends ({friendsList.length})</div>
                               {friendsList.map((f, i) => {
                                 const lb = lbData.find(e => e.username === f.username || e.displayName === f.username);
+                                const friendName = f.displayName || lb?.displayName || f.username;
                                 return (
                                   <div key={i} style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 12px", marginBottom: 6, background: T.card, borderRadius: 10, border: `1px solid ${T.border}` }}>
                                     <div style={{ width: 36, height: 36, borderRadius: "50%", background: T.accent + "20", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16, fontWeight: 800, color: T.accent }}>
-                                      {f.username[0]?.toUpperCase()}
+                                      {friendName[0]?.toUpperCase()}
                                     </div>
                                     <div style={{ flex: 1 }}>
-                                      <div style={{ fontSize: 13, fontWeight: 700, color: T.white }}>{f.username}</div>
+                                      <div style={{ fontSize: 13, fontWeight: 700, color: T.white }}>{friendName}</div>
                                       <div style={{ fontSize: 10, color: T.textDim }}>
                                         {lb ? `Lv ${lb.totalLevel} · ${fmt(lb.kills || 0)} kills` : "Adventurer"}
                                       </div>

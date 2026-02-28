@@ -2073,6 +2073,7 @@ function GameUI({ account, initialSave, onLogout, onDeleteAccount }) {
       // Publish leaderboard data (shared)
       try {
         const lb = {
+          username: account.username,
           displayName: account.displayName || account.username,
           totalLevel,
           skills: Object.fromEntries(SKILL_IDS.map(id => [id, skills[id].level])),
@@ -2221,6 +2222,7 @@ function GameUI({ account, initialSave, onLogout, onDeleteAccount }) {
   }, [clanForm, gold, account, addLog]);
 
   const joinClan = useCallback(async (clanName) => {
+    if (myClan) { setClanError("You must leave your current clan before joining another"); setClanLoading(false); return; }
     setClanLoading(true);
     try {
       const clanRaw = await window.storage.get(`clan:${clanName}`, true);
@@ -2260,7 +2262,7 @@ function GameUI({ account, initialSave, onLogout, onDeleteAccount }) {
       }
     } catch { setClanError("Failed to join clan"); }
     setClanLoading(false);
-  }, [account, addLog, fetchMyClan, totalLevel]);
+  }, [account, addLog, fetchMyClan, totalLevel, myClan]);
 
   // Accept/reject join request
   const handleJoinRequest = useCallback(async (username, accept) => {
@@ -5738,8 +5740,8 @@ function GameUI({ account, initialSave, onLogout, onDeleteAccount }) {
                               <span>📊 Min Lv {c.minLevel || 1}</span>
                               <span>{(c.joinMode || "request") === "open" ? "🟢 Open" : "🔒 Request"}</span>
                             </div>
-                            <Btn color={T.purple} small onClick={() => joinClan(c.name)} disabled={clanLoading}>
-                              {(c.joinMode || "request") === "open" ? "Join Clan" : "Request to Join"}
+                            <Btn color={T.purple} small onClick={() => joinClan(c.name)} disabled={clanLoading || !!myClan}>
+                              {myClan ? "Leave your clan first" : (c.joinMode || "request") === "open" ? "Join Clan" : "Request to Join"}
                             </Btn>
                           </Card>
                         ))}

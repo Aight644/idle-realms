@@ -9,7 +9,7 @@ import {
   updateProfile,
   deleteUser,
 } from 'firebase/auth';
-import { doc, getDoc, setDoc, deleteDoc as firestoreDeleteDoc, onSnapshot, serverTimestamp } from 'firebase/firestore';
+import { doc, getDoc, setDoc, deleteDoc as firestoreDeleteDoc, onSnapshot, serverTimestamp, runTransaction } from 'firebase/firestore';
 
 // ─── THEME ───
 const T = {
@@ -628,10 +628,33 @@ function AuthScreen({ onLogin }) {
       // Create Firebase Auth account first (so we're authenticated for Firestore)
       const cred = await createUserWithEmailAndPassword(auth, email.trim(), password);
       
-      // Check name uniqueness using direct Firestore read (bypasses storage wrapper issues)
-      const nameDoc = await getDoc(doc(db, "shared", `username:${nameKey}`));
-      if (nameDoc.exists()) {
-        // Name taken — delete the Firebase Auth account we just created
+      // Atomically check + reserve the name using a Firestore transaction
+      const nameRef = doc(db, "shared", `username:${nameKey}`);
+      let nameTaken = false;
+      try {
+        await runTransaction(db, async (transaction) => {
+          const nameSnap = await transaction.get(nameRef);
+          if (nameSnap.exists()) {
+            nameTaken = true;
+            return; // abort — don't write
+          }
+          // Name is free — reserve it atomically
+          transaction.set(nameRef, {
+            value: JSON.stringify({ uid: cred.user.uid, displayName: name }),
+            key: `username:${nameKey}`,
+            updatedAt: Date.now(),
+          });
+        });
+      } catch (e) {
+        console.error("Transaction error:", e);
+        // If transaction fails, assume name might be taken
+        try { await cred.user.delete(); } catch {}
+        setError("Could not verify name availability. Please try again.");
+        setLoading(false);
+        return;
+      }
+
+      if (nameTaken) {
         try { await cred.user.delete(); } catch {}
         setError("Name already taken");
         setLoading(false);
@@ -639,8 +662,6 @@ function AuthScreen({ onLogin }) {
       }
 
       await updateProfile(cred.user, { displayName: name });
-      // Reserve name globally (shared storage)
-      await window.storage.set(`username:${nameKey}`, JSON.stringify({ uid: cred.user.uid, displayName: name }), true);
       // Save initial game data
       const save = DEFAULT_SAVE();
       await window.storage.set(`save:${nameKey}`, JSON.stringify(save));

@@ -904,32 +904,66 @@ export default function IdleRealmsUI() {
     const uid = user.uid;
     const uname = account.username;
     try {
-      // Delete save data
+      // ── Remove from clan ──
+      try {
+        const clanRaw = await window.storage.get(`player-clan:${uname}`);
+        if (clanRaw) {
+          const clanName = clanRaw.value;
+          let members = [];
+          try {
+            const memRaw = await window.storage.get(`clan-members:${clanName}`, true);
+            if (memRaw) members = JSON.parse(memRaw.value);
+          } catch {}
+          members = members.filter(m => m.username !== uname);
+          if (members.length === 0) {
+            // Delete clan if empty
+            try { await window.storage.delete(`clan:${clanName}`, true); } catch {}
+            try { await window.storage.delete(`clan-members:${clanName}`, true); } catch {}
+            try { await window.storage.delete(`clan-requests:${clanName}`, true); } catch {}
+          } else {
+            // If we were the leader, promote the first remaining member
+            const clan = await (async () => { try { const r = await window.storage.get(`clan:${clanName}`, true); return JSON.parse(r.value); } catch { return null; } })();
+            if (clan && clan.creator === uname) {
+              members[0].role = "leader";
+              clan.creator = members[0].username;
+              try { await window.storage.set(`clan:${clanName}`, JSON.stringify(clan), true); } catch {}
+            }
+            await window.storage.set(`clan-members:${clanName}`, JSON.stringify(members), true);
+          }
+        }
+      } catch {}
+
+      // ── Remove from friends' friend lists ──
+      try {
+        const friendsRaw = await window.storage.get(`friends:${uname}`);
+        if (friendsRaw) {
+          const myFriends = JSON.parse(friendsRaw.value);
+          for (const f of myFriends) {
+            try {
+              const theirRaw = await window.storage.get(`friends:${f.username}`);
+              if (theirRaw) {
+                const theirList = JSON.parse(theirRaw.value).filter(fr => fr.username !== uname);
+                await window.storage.set(`friends:${f.username}`, JSON.stringify(theirList));
+              }
+            } catch {}
+          }
+        }
+      } catch {}
+
+      // ── Delete all user data ──
       try { await window.storage.delete(`save:${uname}`); } catch {}
-      // Delete username reservation
       try { await window.storage.delete(`username:${uname}`, true); } catch {}
-      // Delete uid mapping
       try { await window.storage.delete(`uidmap:${uid}`, true); } catch {}
-      // Delete leaderboard entry
       try { await window.storage.delete(`lb:${uname}`, true); } catch {}
-      // Delete friends list
       try { await window.storage.delete(`friends:${uname}`); } catch {}
-      // Delete friend requests
       try { await window.storage.delete(`freq:${uname}`); } catch {}
       try { await window.storage.delete(`freqsent:${uname}`); } catch {}
-      // Delete blocked list
       try { await window.storage.delete(`blocked:${uname}`); } catch {}
-      // Delete quest data
       try { await window.storage.delete(`quests:${uname}`); } catch {}
-      // Delete presence
       try { await window.storage.delete(`presence:${uname}`, true); } catch {}
-      // Delete wallet
       try { await window.storage.delete(`wallet:${uname}`, true); } catch {}
-      // Delete clan membership
       try { await window.storage.delete(`player-clan:${uname}`); } catch {}
-      // Delete party membership
       try { await window.storage.delete(`player-party:${uname}`); } catch {}
-      // Delete session doc
       try { await firestoreDeleteDoc(doc(db, "sessions", uid)); } catch {}
       // Delete Firebase Auth account
       await deleteUser(user);

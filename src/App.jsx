@@ -2167,6 +2167,7 @@ function GameUI({ account, initialSave, onLogout, onDeleteAccount }) {
   const [clanTab, setClanTab] = useState("info"); // info | members | browse | create | quests | shop | requests | settings
   const [clanForm, setClanForm] = useState({ name: "", tag: "", desc: "" });
   const [clanError, setClanError] = useState("");
+  const [pendingClanReqs, setPendingClanReqs] = useState([]); // clan names we've requested to join
   const [clanRequests, setClanRequests] = useState([]); // join requests
   const [clanInviteUser, setClanInviteUser] = useState("");
 
@@ -2207,19 +2208,21 @@ function GameUI({ account, initialSave, onLogout, onDeleteAccount }) {
       }
 
       if (clanName) {
-        const clanRaw = await window.storage.get(`clan:${clanName}`, true);
-        if (clanRaw) {
-          setMyClan(JSON.parse(clanRaw.value));
-          try {
-            const memRaw = await window.storage.get(`clan-members:${clanName}`, true);
-            if (memRaw) setClanMembers(JSON.parse(memRaw.value));
-          } catch { setClanMembers([]); }
-          try {
-            const reqRaw = await window.storage.get(`clan-requests:${clanName}`, true);
-            if (reqRaw) setClanRequests(JSON.parse(reqRaw.value));
-            else setClanRequests([]);
-          } catch { setClanRequests([]); }
-        } else { setMyClan(null); setClanMembers([]); setClanRequests([]); }
+        try {
+          const clanRaw = await window.storage.get(`clan:${clanName}`, true);
+          if (clanRaw) {
+            setMyClan(JSON.parse(clanRaw.value));
+            try {
+              const memRaw = await window.storage.get(`clan-members:${clanName}`, true);
+              if (memRaw) setClanMembers(JSON.parse(memRaw.value));
+            } catch { setClanMembers([]); }
+            try {
+              const reqRaw = await window.storage.get(`clan-requests:${clanName}`, true);
+              if (reqRaw) setClanRequests(JSON.parse(reqRaw.value));
+              else setClanRequests([]);
+            } catch { setClanRequests([]); }
+          } else { setMyClan(null); setClanMembers([]); setClanRequests([]); }
+        } catch { setMyClan(null); setClanMembers([]); setClanRequests([]); }
       } else { setMyClan(null); setClanMembers([]); setClanRequests([]); }
     } catch { setMyClan(null); }
   }, [account.username]);
@@ -2234,7 +2237,8 @@ function GameUI({ account, initialSave, onLogout, onDeleteAccount }) {
       if (result && result.keys) {
         const clans = [];
         for (const key of result.keys) {
-          if (key.includes("clan-members:")) continue;
+          if (key.includes("clan-members:") || key.includes("clan-requests:") || key.includes("clan-invites:")) continue;
+          if (!key.startsWith("clan:")) continue;
           try {
             const raw = await window.storage.get(key, true);
             if (raw) {
@@ -2319,6 +2323,7 @@ function GameUI({ account, initialSave, onLogout, onDeleteAccount }) {
         await window.storage.set(`clan-requests:${clanName}`, JSON.stringify(requests), true);
         addLog(`📩 Sent join request to ${clan.displayName || clanName}`);
         setClanError("✅ Join request sent! Wait for the leader to accept.");
+        setPendingClanReqs(prev => [...prev, clanName]);
         setTimeout(() => setClanError(""), 5000);
       }
     } catch { setClanError("Failed to join clan"); }
@@ -2594,6 +2599,7 @@ function GameUI({ account, initialSave, onLogout, onDeleteAccount }) {
     if (myClan && (clanTab === "browse" || clanTab === "create")) {
       setClanTab("info");
       setClanError("");
+      setPendingClanReqs([]);
     }
     if (!myClan && (clanTab === "info" || clanTab === "members" || clanTab === "requests" || clanTab === "settings")) {
       setClanTab("browse");
@@ -5868,7 +5874,7 @@ function GameUI({ account, initialSave, onLogout, onDeleteAccount }) {
                     ) : (
                       <div style={{ display: "grid", gridTemplateColumns: `repeat(auto-fill, minmax(${isMobile ? "100%" : "280px"}, 1fr))`, gap: 10 }}>
                         {clanList.filter(c => !myClan || c.name !== myClan.name).map((c, i) => {
-                          const isMember = clanMembers.some(m => m.username === account.username) && myClan && myClan.name === c.name;
+                          const isPending = pendingClanReqs.includes(c.name);
                           return (
                           <Card key={i}>
                             <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 8 }}>
@@ -5887,11 +5893,13 @@ function GameUI({ account, initialSave, onLogout, onDeleteAccount }) {
                               <span>📊 Min Lv {c.minLevel || 1}</span>
                               <span>{(c.joinMode || "request") === "open" ? "🟢 Open" : "🔒 Request"}</span>
                             </div>
-                            {isMember ? (
-                              <div style={{ fontSize: 11, color: T.success, fontWeight: 600, padding: "6px 0" }}>✓ You're in this clan</div>
+                            {myClan ? (
+                              <div style={{ fontSize: 11, color: T.warning, fontWeight: 600, padding: "6px 0" }}>⚠️ Leave your clan first</div>
+                            ) : isPending ? (
+                              <div style={{ fontSize: 11, color: T.warning, fontWeight: 600, padding: "6px 0" }}>⏳ Request pending...</div>
                             ) : (
-                              <Btn color={T.purple} small onClick={() => joinClan(c.name)} disabled={clanLoading || !!myClan}>
-                                {myClan ? "Leave your clan first" : (c.joinMode || "request") === "open" ? "Join Clan" : "Request to Join"}
+                              <Btn color={T.purple} small onClick={() => joinClan(c.name)} disabled={clanLoading}>
+                                {(c.joinMode || "request") === "open" ? "Join Clan" : "Request to Join"}
                               </Btn>
                             )}
                           </Card>

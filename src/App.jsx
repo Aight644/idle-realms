@@ -2544,6 +2544,7 @@ function GameUI({ account, initialSave, onLogout, onDeleteAccount }) {
   const [dmMessages, setDmMessages] = useState({});
   const [playerProfile, setPlayerProfile] = useState(null); // popup profile
   const [friendInput, setFriendInput] = useState("");
+  const [friendsTab, setFriendsTab] = useState("list"); // list | requests | blocked
   const [chatLoading, setChatLoading] = useState(false);
   const [unreadChat, setUnreadChat] = useState(0);
   const chatPollRef = useRef(null);
@@ -2693,19 +2694,27 @@ function GameUI({ account, initialSave, onLogout, onDeleteAccount }) {
   }, [page, fetchFriendRequests]);
 
   const sendFriendRequest = useCallback(async (targetName) => {
-    if (!targetName.trim() || targetName.trim() === account.username) return;
-    const name = targetName.trim();
+    if (!targetName.trim()) return;
+    const name = targetName.trim().toLowerCase();
+    if (name === account.username) return;
     if (friendsList.find(f => f.username === name)) { addLog("👥 Already friends!"); return; }
     if (sentRequests.includes(name)) { addLog("👥 Request already sent!"); return; }
     if (blockedUsers.includes(name)) { addLog("🚫 User is blocked"); return; }
+    // Verify the target user exists
+    try {
+      await window.storage.get(`username:${name}`, true);
+    } catch {
+      addLog("❌ Player not found"); return;
+    }
     // Add to their incoming requests
+    let existing = [];
     try {
       const raw = await window.storage.get(`freq:${name}`, true);
-      const existing = raw ? JSON.parse(raw.value) : [];
-      if (existing.find(r => r.from === account.username)) { addLog("👥 Request already sent!"); return; }
-      existing.push({ from: account.username, displayName: account.displayName, at: Date.now() });
-      await window.storage.set(`freq:${name}`, JSON.stringify(existing), true);
+      existing = JSON.parse(raw.value);
     } catch {}
+    if (existing.find(r => r.from === account.username)) { addLog("👥 Request already sent!"); return; }
+    existing.push({ from: account.username, displayName: account.displayName, at: Date.now() });
+    await window.storage.set(`freq:${name}`, JSON.stringify(existing), true);
     // Track our sent requests
     const newSent = [...sentRequests, name];
     setSentRequests(newSent);
@@ -5028,147 +5037,219 @@ function GameUI({ account, initialSave, onLogout, onDeleteAccount }) {
                 <div style={{ flex: 1, overflowY: "auto", padding: "12px 20px" }}>
                   {isFriends ? (
                     <div>
-                      {/* Add Friend */}
-                      <div style={{ position: "relative", marginBottom: 16 }}>
-                        <div style={{ display: "flex", gap: 8 }}>
-                          <input value={friendInput} onChange={e => { setFriendInput(e.target.value); if (!lbData.length) fetchLeaderboard(); }}
-                            onKeyDown={e => { if (e.key === "Enter" && friendInput.trim()) { sendFriendRequest(friendInput); } if (e.key === "Escape") setFriendInput(""); }}
-                            placeholder="Search players..."
-                            style={{ flex: 1, padding: "8px 12px", background: T.bgDeep, border: `1px solid ${T.border}`, borderRadius: 8, color: T.text, fontSize: 12, outline: "none" }} />
-                          <Btn color={T.success} small onClick={() => sendFriendRequest(friendInput)}>Request</Btn>
-                        </div>
-                        {friendInput.trim().length >= 1 && (() => {
-                          const q = friendInput.trim().toLowerCase();
-                          const myName = account.username;
-                          const alreadyFriends = friendsList.map(f => f.username);
-                          const suggestions = lbData
-                            .filter(e => e.username !== myName && !alreadyFriends.includes(e.username))
-                            .filter(e => (e.displayName || "").toLowerCase().includes(q) || (e.username || "").toLowerCase().includes(q))
-                            .slice(0, 6);
-                          if (suggestions.length === 0) return null;
-                          return (
-                            <div style={{
-                              position: "absolute", top: "100%", left: 0, right: 48, marginTop: 4, zIndex: 20,
-                              background: T.card, border: `1px solid ${T.border}`, borderRadius: 10,
-                              boxShadow: "0 8px 24px rgba(0,0,0,0.4)", overflow: "hidden", maxHeight: 220, overflowY: "auto",
-                            }}>
-                              {suggestions.map((s, i) => (
-                                <div key={i} onMouseDown={e => { e.preventDefault(); sendFriendRequest(s.username); setFriendInput(""); }}
-                                  style={{
-                                    display: "flex", alignItems: "center", gap: 10, padding: "10px 14px",
-                                    cursor: "pointer", borderBottom: `1px solid ${T.divider}`,
-                                    background: "transparent", transition: "background 0.1s",
-                                  }}
-                                  onMouseEnter={e => e.currentTarget.style.background = T.accent + "10"}
-                                  onMouseLeave={e => e.currentTarget.style.background = "transparent"}
-                                >
-                                  <div style={{
-                                    width: 32, height: 32, borderRadius: "50%", background: T.accent + "18",
-                                    display: "flex", alignItems: "center", justifyContent: "center",
-                                    fontSize: 14, fontWeight: 800, color: T.accent, flexShrink: 0,
-                                  }}>{(s.displayName || s.username || "?")[0]?.toUpperCase()}</div>
-                                  <div style={{ flex: 1, minWidth: 0 }}>
-                                    <div style={{ fontSize: 13, fontWeight: 700, color: T.white, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{s.displayName || s.username}</div>
-                                    <div style={{ fontSize: 10, color: T.textDim }}>@{s.username} · Lv {s.totalLevel || "?"}</div>
+                      {/* Friends Sub-Tabs */}
+                      <div style={{ display: "flex", gap: 6, marginBottom: 14 }}>
+                        {[
+                          { id: "list", label: "Friends", icon: "👥", count: friendsList.length },
+                          { id: "requests", label: "Requests", icon: "📬", count: friendRequests.length },
+                          { id: "add", label: "Add Friend", icon: "➕", count: 0 },
+                          { id: "blocked", label: "Blocked", icon: "🚫", count: blockedUsers.length },
+                        ].map(t => (
+                          <div key={t.id} onClick={() => setFriendsTab(t.id)} style={{
+                            padding: "7px 14px", borderRadius: T.rs, cursor: "pointer", fontSize: 11, fontWeight: 600,
+                            background: friendsTab === t.id ? (t.id === "requests" ? T.warning : T.success) + "20" : T.bgDeep,
+                            color: friendsTab === t.id ? (t.id === "requests" ? T.warning : t.id === "blocked" ? T.danger : T.success) : T.textSec,
+                            border: `1px solid ${friendsTab === t.id ? (t.id === "requests" ? T.warning : T.success) + "40" : T.divider}`,
+                            display: "flex", alignItems: "center", gap: 5, transition: "all 0.12s",
+                          }}>
+                            {t.icon} {t.label}{t.count > 0 ? ` (${t.count})` : ""}
+                          </div>
+                        ))}
+                      </div>
+
+                      {/* ── Add Friend Tab ── */}
+                      {friendsTab === "add" && (
+                        <div>
+                          <div style={{ position: "relative", marginBottom: 16 }}>
+                            <div style={{ display: "flex", gap: 8 }}>
+                              <input value={friendInput} onChange={e => { setFriendInput(e.target.value); if (!lbData.length) fetchLeaderboard(); }}
+                                onKeyDown={e => { if (e.key === "Enter" && friendInput.trim()) { sendFriendRequest(friendInput); } if (e.key === "Escape") setFriendInput(""); }}
+                                placeholder="Search players by name..."
+                                style={{ flex: 1, padding: "8px 12px", background: T.bgDeep, border: `1px solid ${T.border}`, borderRadius: 8, color: T.text, fontSize: 12, outline: "none" }} />
+                              <Btn color={T.success} small onClick={() => sendFriendRequest(friendInput)}>Send</Btn>
+                            </div>
+                            {friendInput.trim().length >= 1 && (() => {
+                              const q = friendInput.trim().toLowerCase();
+                              const myName = account.username;
+                              const alreadyFriends = friendsList.map(f => f.username);
+                              const suggestions = lbData
+                                .filter(e => e.username !== myName && !alreadyFriends.includes(e.username))
+                                .filter(e => (e.displayName || "").toLowerCase().includes(q) || (e.username || "").toLowerCase().includes(q))
+                                .slice(0, 6);
+                              if (suggestions.length === 0) return null;
+                              return (
+                                <div style={{
+                                  position: "absolute", top: "100%", left: 0, right: 48, marginTop: 4, zIndex: 20,
+                                  background: T.card, border: `1px solid ${T.border}`, borderRadius: 10,
+                                  boxShadow: "0 8px 24px rgba(0,0,0,0.4)", overflow: "hidden", maxHeight: 220, overflowY: "auto",
+                                }}>
+                                  {suggestions.map((s, i) => (
+                                    <div key={i} onMouseDown={e => { e.preventDefault(); sendFriendRequest(s.username); setFriendInput(""); }}
+                                      style={{
+                                        display: "flex", alignItems: "center", gap: 10, padding: "10px 14px",
+                                        cursor: "pointer", borderBottom: `1px solid ${T.divider}`,
+                                        background: "transparent", transition: "background 0.1s",
+                                      }}
+                                      onMouseEnter={e => e.currentTarget.style.background = T.accent + "10"}
+                                      onMouseLeave={e => e.currentTarget.style.background = "transparent"}
+                                    >
+                                      <div style={{
+                                        width: 32, height: 32, borderRadius: "50%", background: T.accent + "18",
+                                        display: "flex", alignItems: "center", justifyContent: "center",
+                                        fontSize: 14, fontWeight: 800, color: T.accent, flexShrink: 0,
+                                      }}>{(s.displayName || s.username || "?")[0]?.toUpperCase()}</div>
+                                      <div style={{ flex: 1, minWidth: 0 }}>
+                                        <div style={{ fontSize: 13, fontWeight: 700, color: T.white, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{s.displayName || s.username}</div>
+                                        <div style={{ fontSize: 10, color: T.textDim }}>Lv {s.totalLevel || "?"}</div>
+                                      </div>
+                                      <span style={{ fontSize: 10, color: T.success, fontWeight: 600 }}>+ Add</span>
+                                    </div>
+                                  ))}
+                                </div>
+                              );
+                            })()}
+                          </div>
+
+                          {/* Sent Requests */}
+                          {sentRequests.length > 0 && (
+                            <div>
+                              <div style={{ fontSize: 12, fontWeight: 700, color: T.textDim, marginBottom: 8 }}>📤 Sent Requests ({sentRequests.length})</div>
+                              {sentRequests.map((name, i) => (
+                                <div key={i} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 12px", marginBottom: 4, background: T.bgDeep, borderRadius: 8, border: `1px solid ${T.divider}` }}>
+                                  <div style={{ width: 28, height: 28, borderRadius: "50%", background: T.textDim + "18", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, fontWeight: 800, color: T.textDim }}>
+                                    {name[0]?.toUpperCase()}
                                   </div>
-                                  <span style={{ fontSize: 10, color: T.success, fontWeight: 600 }}>+ Request</span>
+                                  <span style={{ fontSize: 12, color: T.textSec, flex: 1 }}>{name}</span>
+                                  <span style={{ fontSize: 10, color: T.textDim }}>Pending...</span>
                                 </div>
                               ))}
                             </div>
-                          );
-                        })()}
-                      </div>
+                          )}
 
-                      {/* Incoming Friend Requests */}
-                      {friendRequests.length > 0 && (
-                        <div style={{ marginBottom: 16 }}>
-                          <div style={{ fontSize: 12, fontWeight: 700, color: T.warning, marginBottom: 8 }}>📬 Friend Requests ({friendRequests.length})</div>
-                          {friendRequests.map((r, i) => (
-                            <div key={i} style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 12px", marginBottom: 6, background: T.warning + "08", borderRadius: 10, border: `1px solid ${T.warning}25` }}>
-                              <div style={{ width: 32, height: 32, borderRadius: "50%", background: T.warning + "18", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14, fontWeight: 800, color: T.warning }}>
-                                {(r.displayName || r.from || "?")[0]?.toUpperCase()}
-                              </div>
-                              <div style={{ flex: 1 }}>
-                                <div style={{ fontSize: 13, fontWeight: 700, color: T.white }}>{r.displayName || r.from}</div>
-                                <div style={{ fontSize: 10, color: T.textDim }}>@{r.from}</div>
-                              </div>
-                              <div style={{ display: "flex", gap: 4 }}>
-                                <div onMouseDown={e => { e.preventDefault(); acceptFriendRequest(r.from); }} style={{
-                                  padding: "5px 10px", borderRadius: 6, cursor: "pointer", fontSize: 11, fontWeight: 600,
-                                  background: T.success + "18", color: T.success, border: `1px solid ${T.success}30`,
-                                }}>✓ Accept</div>
-                                <div onMouseDown={e => { e.preventDefault(); denyFriendRequest(r.from); }} style={{
-                                  padding: "5px 10px", borderRadius: 6, cursor: "pointer", fontSize: 11, fontWeight: 600,
-                                  background: T.danger + "18", color: T.danger, border: `1px solid ${T.danger}30`,
-                                }}>✕</div>
-                                <div onMouseDown={e => { e.preventDefault(); blockUser(r.from); }} style={{
-                                  padding: "5px 10px", borderRadius: 6, cursor: "pointer", fontSize: 11, fontWeight: 600,
-                                  background: T.textDim + "15", color: T.textDim, border: `1px solid ${T.textDim}20`,
-                                }}>🚫</div>
-                              </div>
+                          {sentRequests.length === 0 && !friendInput && (
+                            <div style={{ textAlign: "center", padding: "30px 0", color: T.textDim }}>
+                              <div style={{ fontSize: 28, marginBottom: 8 }}>🔍</div>
+                              <div style={{ fontSize: 12 }}>Search for a player to send a friend request</div>
                             </div>
-                          ))}
+                          )}
                         </div>
                       )}
 
-                      {friendsList.length === 0 && friendRequests.length === 0 ? (
-                        <div style={{ textAlign: "center", padding: "40px 0", color: T.textDim }}>
-                          <div style={{ fontSize: 32, marginBottom: 8 }}>👥</div>
-                          <div style={{ fontSize: 13 }}>No friends yet. Send a request above!</div>
-                        </div>
-                      ) : friendsList.length > 0 && (
-                        <>
-                        <div style={{ fontSize: 12, fontWeight: 700, color: T.success, marginBottom: 8 }}>👥 Friends ({friendsList.length})</div>
-                        {friendsList.map((f, i) => {
-                          const lb = lbData.find(e => e.username === f.username || e.displayName === f.username);
-                          return (
-                            <div key={i} style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 12px", marginBottom: 6, background: T.card, borderRadius: 10, border: `1px solid ${T.border}` }}>
-                              <div style={{ width: 36, height: 36, borderRadius: "50%", background: T.accent + "20", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16, fontWeight: 800, color: T.accent }}>
-                                {f.username[0]?.toUpperCase()}
-                              </div>
-                              <div style={{ flex: 1 }}>
-                                <div style={{ fontSize: 13, fontWeight: 700, color: T.white }}>{f.username}</div>
-                                <div style={{ fontSize: 10, color: T.textDim }}>
-                                  {lb ? `Lv ${lb.totalLevel} · ${fmt(lb.kills || 0)} kills` : "Adventurer"}
+                      {/* ── Requests Tab ── */}
+                      {friendsTab === "requests" && (
+                        <div>
+                          {friendRequests.length === 0 ? (
+                            <div style={{ textAlign: "center", padding: "40px 0", color: T.textDim }}>
+                              <div style={{ fontSize: 28, marginBottom: 8 }}>📭</div>
+                              <div style={{ fontSize: 12 }}>No pending friend requests</div>
+                            </div>
+                          ) : (
+                            <>
+                              <div style={{ fontSize: 12, fontWeight: 700, color: T.warning, marginBottom: 10 }}>📬 Incoming Requests ({friendRequests.length})</div>
+                              {friendRequests.map((r, i) => (
+                                <div key={i} style={{ display: "flex", alignItems: "center", gap: 10, padding: "12px 14px", marginBottom: 8, background: T.warning + "08", borderRadius: 10, border: `1px solid ${T.warning}25` }}>
+                                  <div style={{ width: 36, height: 36, borderRadius: "50%", background: T.warning + "18", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16, fontWeight: 800, color: T.warning }}>
+                                    {(r.displayName || r.from || "?")[0]?.toUpperCase()}
+                                  </div>
+                                  <div style={{ flex: 1 }}>
+                                    <div style={{ fontSize: 13, fontWeight: 700, color: T.white }}>{r.displayName || r.from}</div>
+                                    <div style={{ fontSize: 10, color: T.textDim }}>Sent {new Date(r.at).toLocaleDateString()}</div>
+                                  </div>
+                                  <div style={{ display: "flex", gap: 4 }}>
+                                    <div onClick={() => acceptFriendRequest(r.from)} style={{
+                                      padding: "6px 12px", borderRadius: 6, cursor: "pointer", fontSize: 11, fontWeight: 600,
+                                      background: T.success + "18", color: T.success, border: `1px solid ${T.success}30`,
+                                    }}>✓ Accept</div>
+                                    <div onClick={() => denyFriendRequest(r.from)} style={{
+                                      padding: "6px 12px", borderRadius: 6, cursor: "pointer", fontSize: 11, fontWeight: 600,
+                                      background: T.danger + "18", color: T.danger, border: `1px solid ${T.danger}30`,
+                                    }}>✕ Deny</div>
+                                    <div onClick={() => blockUser(r.from)} style={{
+                                      padding: "6px 12px", borderRadius: 6, cursor: "pointer", fontSize: 11, fontWeight: 600,
+                                      background: T.textDim + "15", color: T.textDim, border: `1px solid ${T.textDim}20`,
+                                    }}>🚫</div>
+                                  </div>
                                 </div>
-                              </div>
-                              <div style={{ display: "flex", gap: 4 }}>
-                                <div onClick={() => { setDmTarget(f.username); setChatChannel("dm"); fetchDMs(f.username); }} style={{
-                                  padding: "5px 10px", borderRadius: 6, cursor: "pointer", fontSize: 11, fontWeight: 600,
-                                  background: T.pink + "18", color: T.pink, border: `1px solid ${T.pink}30`,
-                                }}>✉️ DM</div>
-                                <div onClick={() => viewProfile(f.username)} style={{
-                                  padding: "5px 10px", borderRadius: 6, cursor: "pointer", fontSize: 11, fontWeight: 600,
-                                  background: T.info + "18", color: T.info, border: `1px solid ${T.info}30`,
-                                }}>👤</div>
-                                <div onClick={() => removeFriend(f.username)} style={{
-                                  padding: "5px 10px", borderRadius: 6, cursor: "pointer", fontSize: 11, fontWeight: 600,
-                                  background: T.danger + "18", color: T.danger, border: `1px solid ${T.danger}30`,
-                                }}>✕</div>
-                                <div onClick={() => blockUser(f.username)} style={{
-                                  padding: "5px 10px", borderRadius: 6, cursor: "pointer", fontSize: 11, fontWeight: 600,
-                                  background: T.textDim + "15", color: T.textDim, border: `1px solid ${T.textDim}20`,
-                                }}>🚫</div>
-                              </div>
-                            </div>
-                          );
-                        })}
-                        </>
+                              ))}
+                            </>
+                          )}
+                        </div>
                       )}
 
-                      {/* Blocked Users */}
-                      {blockedUsers.length > 0 && (
-                        <div style={{ marginTop: 16 }}>
-                          <div style={{ fontSize: 12, fontWeight: 700, color: T.danger, marginBottom: 8 }}>🚫 Blocked ({blockedUsers.length})</div>
-                          {blockedUsers.map((name, i) => (
-                            <div key={i} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "8px 12px", marginBottom: 4, background: T.danger + "06", borderRadius: 8, border: `1px solid ${T.danger}15` }}>
-                              <span style={{ fontSize: 12, color: T.textDim }}>{name}</span>
-                              <div onClick={() => unblockUser(name)} style={{
-                                padding: "4px 10px", borderRadius: 6, cursor: "pointer", fontSize: 10, fontWeight: 600,
-                                background: T.success + "18", color: T.success, border: `1px solid ${T.success}30`,
-                              }}>Unblock</div>
+                      {/* ── Friends List Tab ── */}
+                      {friendsTab === "list" && (
+                        <div>
+                          {friendsList.length === 0 ? (
+                            <div style={{ textAlign: "center", padding: "40px 0", color: T.textDim }}>
+                              <div style={{ fontSize: 28, marginBottom: 8 }}>👥</div>
+                              <div style={{ fontSize: 12 }}>No friends yet</div>
+                              <div onClick={() => setFriendsTab("add")} style={{ fontSize: 12, color: T.success, cursor: "pointer", marginTop: 6, fontWeight: 600 }}>+ Add a friend</div>
                             </div>
-                          ))}
+                          ) : (
+                            <>
+                              <div style={{ fontSize: 12, fontWeight: 700, color: T.success, marginBottom: 8 }}>👥 Friends ({friendsList.length})</div>
+                              {friendsList.map((f, i) => {
+                                const lb = lbData.find(e => e.username === f.username || e.displayName === f.username);
+                                return (
+                                  <div key={i} style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 12px", marginBottom: 6, background: T.card, borderRadius: 10, border: `1px solid ${T.border}` }}>
+                                    <div style={{ width: 36, height: 36, borderRadius: "50%", background: T.accent + "20", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16, fontWeight: 800, color: T.accent }}>
+                                      {f.username[0]?.toUpperCase()}
+                                    </div>
+                                    <div style={{ flex: 1 }}>
+                                      <div style={{ fontSize: 13, fontWeight: 700, color: T.white }}>{f.username}</div>
+                                      <div style={{ fontSize: 10, color: T.textDim }}>
+                                        {lb ? `Lv ${lb.totalLevel} · ${fmt(lb.kills || 0)} kills` : "Adventurer"}
+                                      </div>
+                                    </div>
+                                    <div style={{ display: "flex", gap: 4 }}>
+                                      <div onClick={() => { setDmTarget(f.username); setChatChannel("dm"); fetchDMs(f.username); }} style={{
+                                        padding: "5px 10px", borderRadius: 6, cursor: "pointer", fontSize: 11, fontWeight: 600,
+                                        background: T.pink + "18", color: T.pink, border: `1px solid ${T.pink}30`,
+                                      }}>✉️</div>
+                                      <div onClick={() => viewProfile(f.username)} style={{
+                                        padding: "5px 10px", borderRadius: 6, cursor: "pointer", fontSize: 11, fontWeight: 600,
+                                        background: T.info + "18", color: T.info, border: `1px solid ${T.info}30`,
+                                      }}>👤</div>
+                                      <div onClick={() => removeFriend(f.username)} style={{
+                                        padding: "5px 10px", borderRadius: 6, cursor: "pointer", fontSize: 11, fontWeight: 600,
+                                        background: T.danger + "18", color: T.danger, border: `1px solid ${T.danger}30`,
+                                      }}>✕</div>
+                                    </div>
+                                  </div>
+                                );
+                              })}
+                            </>
+                          )}
+                        </div>
+                      )}
+
+                      {/* ── Blocked Tab ── */}
+                      {friendsTab === "blocked" && (
+                        <div>
+                          {blockedUsers.length === 0 ? (
+                            <div style={{ textAlign: "center", padding: "40px 0", color: T.textDim }}>
+                              <div style={{ fontSize: 28, marginBottom: 8 }}>🚫</div>
+                              <div style={{ fontSize: 12 }}>No blocked users</div>
+                            </div>
+                          ) : (
+                            <>
+                              <div style={{ fontSize: 12, fontWeight: 700, color: T.danger, marginBottom: 8 }}>🚫 Blocked ({blockedUsers.length})</div>
+                              {blockedUsers.map((name, i) => (
+                                <div key={i} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 14px", marginBottom: 6, background: T.danger + "06", borderRadius: 10, border: `1px solid ${T.danger}15` }}>
+                                  <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                                    <div style={{ width: 28, height: 28, borderRadius: "50%", background: T.danger + "18", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, fontWeight: 800, color: T.danger }}>
+                                      {name[0]?.toUpperCase()}
+                                    </div>
+                                    <span style={{ fontSize: 12, color: T.textSec }}>{name}</span>
+                                  </div>
+                                  <div onClick={() => unblockUser(name)} style={{
+                                    padding: "5px 12px", borderRadius: 6, cursor: "pointer", fontSize: 11, fontWeight: 600,
+                                    background: T.success + "18", color: T.success, border: `1px solid ${T.success}30`,
+                                  }}>Unblock</div>
+                                </div>
+                              ))}
+                            </>
+                          )}
                         </div>
                       )}
                     </div>

@@ -647,7 +647,7 @@ function AuthScreen({ onLogin }) {
         });
       } catch (e) {
         console.error("Transaction error:", e);
-        // If transaction fails, assume name might be taken
+        try { await signOut(auth); } catch {}
         try { await cred.user.delete(); } catch {}
         setError("Could not verify name availability. Please try again.");
         setLoading(false);
@@ -655,8 +655,10 @@ function AuthScreen({ onLogin }) {
       }
 
       if (nameTaken) {
+        // Sign out first so onAuthStateChanged doesn't trigger a page reload
+        try { await signOut(auth); } catch {}
         try { await cred.user.delete(); } catch {}
-        setError("Name already taken");
+        setError("Name already taken. Please choose a different name.");
         setLoading(false);
         return;
       }

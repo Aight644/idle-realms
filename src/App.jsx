@@ -604,7 +604,7 @@ const DEFAULT_SAVE = () => ({
 });
 
 // ═══ AUTH SCREEN (Firebase Auth) ═══
-function AuthScreen({ onLogin }) {
+function AuthScreen({ onLogin, signingUp }) {
   const [tab, setTab] = useState("login"); // login | signup
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
@@ -624,6 +624,17 @@ function AuthScreen({ onLogin }) {
     if (!password || password.length < 6) return setError("Password must be at least 6 characters");
     if (password !== confirmPw) return setError("Passwords do not match");
     setLoading(true);
+    signingUp.current = true;
+
+    const cleanupFailedSignup = async (user) => {
+      try { await user.delete(); } catch {}
+      try { await signOut(auth); } catch {}
+      // Delay resetting the flag so onAuthStateChanged callbacks triggered by
+      // delete/signOut are still suppressed when they fire on the next tick
+      await new Promise(r => setTimeout(r, 500));
+      signingUp.current = false;
+    };
+
     try {
       // Create Firebase Auth account first (so we're authenticated for Firestore)
       const cred = await createUserWithEmailAndPassword(auth, email.trim(), password);
@@ -636,9 +647,8 @@ function AuthScreen({ onLogin }) {
           const nameSnap = await transaction.get(nameRef);
           if (nameSnap.exists()) {
             nameTaken = true;
-            return; // abort — don't write
+            return;
           }
-          // Name is free — reserve it atomically
           transaction.set(nameRef, {
             value: JSON.stringify({ uid: cred.user.uid, displayName: name }),
             key: `username:${nameKey}`,
@@ -647,17 +657,14 @@ function AuthScreen({ onLogin }) {
         });
       } catch (e) {
         console.error("Transaction error:", e);
-        try { await signOut(auth); } catch {}
-        try { await cred.user.delete(); } catch {}
+        await cleanupFailedSignup(cred.user);
         setError("Could not verify name availability. Please try again.");
         setLoading(false);
         return;
       }
 
       if (nameTaken) {
-        // Sign out first so onAuthStateChanged doesn't trigger a page reload
-        try { await signOut(auth); } catch {}
-        try { await cred.user.delete(); } catch {}
+        await cleanupFailedSignup(cred.user);
         setError("Name already taken. Please choose a different name.");
         setLoading(false);
         return;
@@ -669,8 +676,10 @@ function AuthScreen({ onLogin }) {
       await window.storage.set(`save:${nameKey}`, JSON.stringify(save));
       // Map uid -> name key for login lookups
       await window.storage.set(`uidmap:${cred.user.uid}`, nameKey, true);
+      signingUp.current = false;
       onLogin({ username: nameKey, displayName: name, email: email.trim(), uid: cred.user.uid, isGuest: false }, save);
     } catch (e) {
+      signingUp.current = false;
       const msg = e.code === "auth/email-already-in-use" ? "An account with this email already exists"
         : e.code === "auth/invalid-email" ? "Invalid email address"
         : e.code === "auth/weak-password" ? "Password is too weak"
@@ -832,10 +841,13 @@ export default function IdleRealmsUI() {
   const [initialSave, setInitialSave] = useState(null);
   const [authChecked, setAuthChecked] = useState(false);
   const [kicked, setKicked] = useState(false);
+  const signingUp = useRef(false);
 
   // Listen for Firebase auth state
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, async (user) => {
+      // Skip if we're in the middle of a signup flow
+      if (signingUp.current) return;
       if (user) {
         const uid = user.uid;
 
@@ -958,15 +970,15 @@ export default function IdleRealmsUI() {
 
       // ── Remove from friends' friend lists ──
       try {
-        const friendsRaw = await window.storage.get(`friends:${uname}`);
+        const friendsRaw = await window.storage.get(`friends:${uname}`, true);
         if (friendsRaw) {
           const myFriends = JSON.parse(friendsRaw.value);
           for (const f of myFriends) {
             try {
-              const theirRaw = await window.storage.get(`friends:${f.username}`);
+              const theirRaw = await window.storage.get(`friends:${f.username}`, true);
               if (theirRaw) {
                 const theirList = JSON.parse(theirRaw.value).filter(fr => fr.username !== uname);
-                await window.storage.set(`friends:${f.username}`, JSON.stringify(theirList));
+                await window.storage.set(`friends:${f.username}`, JSON.stringify(theirList), true);
               }
             } catch {}
           }
@@ -978,10 +990,10 @@ export default function IdleRealmsUI() {
       try { await window.storage.delete(`username:${uname}`, true); } catch {}
       try { await window.storage.delete(`uidmap:${uid}`, true); } catch {}
       try { await window.storage.delete(`lb:${uname}`, true); } catch {}
-      try { await window.storage.delete(`friends:${uname}`); } catch {}
-      try { await window.storage.delete(`freq:${uname}`); } catch {}
-      try { await window.storage.delete(`freqsent:${uname}`); } catch {}
-      try { await window.storage.delete(`blocked:${uname}`); } catch {}
+      try { await window.storage.delete(`friends:${uname}`, true); } catch {}
+      try { await window.storage.delete(`freq:${uname}`, true); } catch {}
+      try { await window.storage.delete(`freqsent:${uname}`, true); } catch {}
+      try { await window.storage.delete(`blocked:${uname}`, true); } catch {}
       try { await window.storage.delete(`quests:${uname}`); } catch {}
       try { await window.storage.delete(`presence:${uname}`, true); } catch {}
       try { await window.storage.delete(`wallet:${uname}`, true); } catch {}
@@ -1028,7 +1040,7 @@ export default function IdleRealmsUI() {
     );
   }
 
-  if (!account) return <AuthScreen onLogin={handleLogin} />;
+  if (!account) return <AuthScreen onLogin={handleLogin} signingUp={signingUp} />;
 
   return <GameUI key={account.username} account={account} initialSave={initialSave} onLogout={handleLogout} onDeleteAccount={handleDeleteAccount} />;
 }
@@ -2638,7 +2650,7 @@ function GameUI({ account, initialSave, onLogout, onDeleteAccount }) {
   // ─── FRIENDS LIST ───
   const fetchFriends = useCallback(async () => {
     try {
-      const raw = await window.storage.get(`friends:${account.username}`);
+      const raw = await window.storage.get(`friends:${account.username}`, true);
       if (raw) setFriendsList(JSON.parse(raw.value));
     } catch { setFriendsList([]); }
   }, [account.username]);
@@ -2649,7 +2661,7 @@ function GameUI({ account, initialSave, onLogout, onDeleteAccount }) {
 
   const fetchFriendRequests = useCallback(async () => {
     try {
-      const raw = await window.storage.get(`freq:${account.username}`);
+      const raw = await window.storage.get(`freq:${account.username}`, true);
       if (raw) setFriendRequests(JSON.parse(raw.value));
       else setFriendRequests([]);
     } catch { setFriendRequests([]); }
@@ -2657,7 +2669,7 @@ function GameUI({ account, initialSave, onLogout, onDeleteAccount }) {
 
   const fetchBlocked = useCallback(async () => {
     try {
-      const raw = await window.storage.get(`blocked:${account.username}`);
+      const raw = await window.storage.get(`blocked:${account.username}`, true);
       if (raw) setBlockedUsers(JSON.parse(raw.value));
       else setBlockedUsers([]);
     } catch { setBlockedUsers([]); }
@@ -2665,7 +2677,7 @@ function GameUI({ account, initialSave, onLogout, onDeleteAccount }) {
 
   const fetchSentRequests = useCallback(async () => {
     try {
-      const raw = await window.storage.get(`freqsent:${account.username}`);
+      const raw = await window.storage.get(`freqsent:${account.username}`, true);
       if (raw) setSentRequests(JSON.parse(raw.value));
       else setSentRequests([]);
     } catch { setSentRequests([]); }
@@ -2688,16 +2700,16 @@ function GameUI({ account, initialSave, onLogout, onDeleteAccount }) {
     if (blockedUsers.includes(name)) { addLog("🚫 User is blocked"); return; }
     // Add to their incoming requests
     try {
-      const raw = await window.storage.get(`freq:${name}`);
+      const raw = await window.storage.get(`freq:${name}`, true);
       const existing = raw ? JSON.parse(raw.value) : [];
       if (existing.find(r => r.from === account.username)) { addLog("👥 Request already sent!"); return; }
       existing.push({ from: account.username, displayName: account.displayName, at: Date.now() });
-      await window.storage.set(`freq:${name}`, JSON.stringify(existing));
+      await window.storage.set(`freq:${name}`, JSON.stringify(existing), true);
     } catch {}
     // Track our sent requests
     const newSent = [...sentRequests, name];
     setSentRequests(newSent);
-    await window.storage.set(`freqsent:${account.username}`, JSON.stringify(newSent));
+    await window.storage.set(`freqsent:${account.username}`, JSON.stringify(newSent), true);
     addLog(`👥 Friend request sent to ${name}`);
     setFriendInput("");
   }, [friendsList, sentRequests, blockedUsers, account, addLog]);
@@ -2706,39 +2718,39 @@ function GameUI({ account, initialSave, onLogout, onDeleteAccount }) {
     // Add to both friend lists
     const myUpdated = [...friendsList, { username: fromUser, addedAt: Date.now() }];
     setFriendsList(myUpdated);
-    await window.storage.set(`friends:${account.username}`, JSON.stringify(myUpdated));
+    await window.storage.set(`friends:${account.username}`, JSON.stringify(myUpdated), true);
     // Add us to their friend list
     try {
-      const raw = await window.storage.get(`friends:${fromUser}`);
+      const raw = await window.storage.get(`friends:${fromUser}`, true);
       const theirList = raw ? JSON.parse(raw.value) : [];
       if (!theirList.find(f => f.username === account.username)) {
         theirList.push({ username: account.username, addedAt: Date.now() });
-        await window.storage.set(`friends:${fromUser}`, JSON.stringify(theirList));
+        await window.storage.set(`friends:${fromUser}`, JSON.stringify(theirList), true);
       }
     } catch {}
     // Remove from requests
     const updatedReqs = friendRequests.filter(r => r.from !== fromUser);
     setFriendRequests(updatedReqs);
-    await window.storage.set(`freq:${account.username}`, JSON.stringify(updatedReqs));
+    await window.storage.set(`freq:${account.username}`, JSON.stringify(updatedReqs), true);
     addLog(`👥 You are now friends with ${fromUser}!`);
   }, [friendsList, friendRequests, account, addLog]);
 
   const denyFriendRequest = useCallback(async (fromUser) => {
     const updatedReqs = friendRequests.filter(r => r.from !== fromUser);
     setFriendRequests(updatedReqs);
-    await window.storage.set(`freq:${account.username}`, JSON.stringify(updatedReqs));
+    await window.storage.set(`freq:${account.username}`, JSON.stringify(updatedReqs), true);
   }, [friendRequests, account.username]);
 
   const removeFriend = useCallback(async (friendName) => {
     const updated = friendsList.filter(f => f.username !== friendName);
     setFriendsList(updated);
-    await window.storage.set(`friends:${account.username}`, JSON.stringify(updated));
+    await window.storage.set(`friends:${account.username}`, JSON.stringify(updated), true);
     // Also remove from their list
     try {
-      const raw = await window.storage.get(`friends:${friendName}`);
+      const raw = await window.storage.get(`friends:${friendName}`, true);
       const theirList = raw ? JSON.parse(raw.value) : [];
       const theirUpdated = theirList.filter(f => f.username !== account.username);
-      await window.storage.set(`friends:${friendName}`, JSON.stringify(theirUpdated));
+      await window.storage.set(`friends:${friendName}`, JSON.stringify(theirUpdated), true);
     } catch {}
     addLog(`👥 Removed ${friendName} from friends`);
   }, [friendsList, account.username, addLog]);
@@ -2747,18 +2759,18 @@ function GameUI({ account, initialSave, onLogout, onDeleteAccount }) {
     if (blockedUsers.includes(targetName)) return;
     const updated = [...blockedUsers, targetName];
     setBlockedUsers(updated);
-    await window.storage.set(`blocked:${account.username}`, JSON.stringify(updated));
+    await window.storage.set(`blocked:${account.username}`, JSON.stringify(updated), true);
     // Also remove from friends if they were
     const friendUpdated = friendsList.filter(f => f.username !== targetName);
     if (friendUpdated.length !== friendsList.length) {
       setFriendsList(friendUpdated);
-      await window.storage.set(`friends:${account.username}`, JSON.stringify(friendUpdated));
+      await window.storage.set(`friends:${account.username}`, JSON.stringify(friendUpdated), true);
     }
     // Remove any pending requests from them
     const reqUpdated = friendRequests.filter(r => r.from !== targetName);
     if (reqUpdated.length !== friendRequests.length) {
       setFriendRequests(reqUpdated);
-      await window.storage.set(`freq:${account.username}`, JSON.stringify(reqUpdated));
+      await window.storage.set(`freq:${account.username}`, JSON.stringify(reqUpdated), true);
     }
     addLog(`🚫 Blocked ${targetName}`);
   }, [blockedUsers, friendsList, friendRequests, account.username, addLog]);
@@ -2766,7 +2778,7 @@ function GameUI({ account, initialSave, onLogout, onDeleteAccount }) {
   const unblockUser = useCallback(async (targetName) => {
     const updated = blockedUsers.filter(n => n !== targetName);
     setBlockedUsers(updated);
-    await window.storage.set(`blocked:${account.username}`, JSON.stringify(updated));
+    await window.storage.set(`blocked:${account.username}`, JSON.stringify(updated), true);
     addLog(`✅ Unblocked ${targetName}`);
   }, [blockedUsers, account.username, addLog]);
 

@@ -2617,6 +2617,8 @@ function GameUI({ account, initialSave, onLogout, onDeleteAccount }) {
   }, []); // eslint-disable-line
 
   // Fetch clan on mount and page open
+  // Clan temporarily disabled
+  /*
   // Auto-switch to clan info when joining a clan, or to browse when leaving
   useEffect(() => {
     if (myClan && (clanTab === "browse" || clanTab === "create")) {
@@ -2629,8 +2631,12 @@ function GameUI({ account, initialSave, onLogout, onDeleteAccount }) {
       setClanError("");
     }
   }, [myClan]);
+  */
 
-  useEffect(() => { fetchMyClan(); }, [fetchMyClan]);
+  // Clan temporarily disabled
+  // useEffect(() => { fetchMyClan(); }, [fetchMyClan]);
+  // Clan temporarily disabled
+  /*
   useEffect(() => {
     if (page === "clan") {
       fetchMyClan();
@@ -2638,7 +2644,10 @@ function GameUI({ account, initialSave, onLogout, onDeleteAccount }) {
       if (!myClan) fetchClanList();
     }
   }, [page, fetchMyClan, fetchClanList, fetchLeaderboard, myClan]);
+  */
 
+  // Clan temporarily disabled
+  /*
   // Global polling — clan data refreshes every 8s, clan list every 15s on browse tab
   useEffect(() => {
     const iv = setInterval(() => {
@@ -2653,6 +2662,7 @@ function GameUI({ account, initialSave, onLogout, onDeleteAccount }) {
       return () => clearInterval(iv);
     }
   }, [page, clanTab, fetchClanList]);
+  */
 
   // ─── CHAT STATE ───
   const [chatChannel, setChatChannel] = useState("global"); // global | clan | system | dm
@@ -3292,7 +3302,8 @@ function GameUI({ account, initialSave, onLogout, onDeleteAccount }) {
           <div style={{ flex: 1 }} />
           <div style={{ borderTop: `1px solid ${T.sidebarBorder}`, margin: "8px 0", padding: "8px 0 0" }}>
             <SidebarItem icon="💬" label="Chat" active={page==="chat"} onClick={() => nav("chat")} color={T.teal} badge={unreadChat > 0 ? `${unreadChat}` : undefined} />
-            <SidebarItem icon="🏰" label={myClan ? `[${myClan.tag}] Clan` : "Clans"} active={page==="clan"} onClick={() => nav("clan")} color={T.purple} badge={myClan ? undefined : "Join"} />
+            {/* Clan temporarily disabled */}
+            {/* <SidebarItem icon="🏰" label={myClan ? `[${myClan.tag}] Clan` : "Clans"} active={page==="clan"} onClick={() => nav("clan")} color={T.purple} badge={myClan ? undefined : "Join"} /> */}
             <SidebarItem icon="🏆" label="Leaderboard" active={page==="leaderboard"} onClick={() => nav("leaderboard")} color={T.gold} />
             <SidebarItem icon="📊" label="Stats" active={page==="stats"} onClick={() => nav("stats")} color={T.info} />
             <SidebarItem icon="🏅" label="Achievements" active={page==="achievements"} onClick={() => nav("achievements")} color={T.gold} badge={`${Object.keys(achievementsUnlocked).length}/${ACHIEVEMENTS.length}`} />
@@ -5141,7 +5152,8 @@ function GameUI({ account, initialSave, onLogout, onDeleteAccount }) {
           {page === "chat" && (() => {
             const channels = [
               { id: "global", label: "Global", icon: "🌍", color: T.accent },
-              ...(myClan ? [{ id: "clan", label: `[${myClan.tag}] Clan`, icon: "🏰", color: T.purple }] : []),
+              // Clan tab temporarily disabled
+              // ...(myClan ? [{ id: "clan", label: `[${myClan.tag}] Clan`, icon: "🏰", color: T.purple }] : []),
               { id: "system", label: "System", icon: "📢", color: T.warning },
               { id: "friends", label: friendRequests.length > 0 ? `Friends (${friendRequests.length})` : "Friends", icon: "👥", color: T.success },
               ...(dmTarget ? [{ id: "dm", label: `DM: ${dmTarget}`, icon: "✉️", color: T.pink }] : []),

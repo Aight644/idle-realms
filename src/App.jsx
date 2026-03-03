@@ -1354,6 +1354,10 @@ function GameUI({ account, initialSave, onLogout }) {
                 <div style={{ width: 40, height: 40, borderRadius: "50%", background: `linear-gradient(135deg, ${T.accent}30, ${T.purple}30)`, border: `2px solid ${T.accent}60`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 20, boxShadow: `0 0 12px ${T.accent}30` }}>{heroEmoji}</div>
                 <div style={{ position: "absolute", bottom: -2, right: -2, width: 14, height: 14, borderRadius: "50%", background: T.success, border: "2px solid #0a0c14", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 6 }}>▶</div>
               </div>
+              <div style={{ flexShrink: 0 }}>
+                <div style={{ fontSize: 10, fontWeight: 800, color: T.white, fontFamily: FONT_DISPLAY, lineHeight: 1.1 }}>{account.displayName}</div>
+                <div style={{ fontSize: 8, fontWeight: 700, color: T.accent, fontFamily: FONT_DISPLAY }}>⚡{fmt(totalAtk + totalDef + totalMaxHp)}</div>
+              </div>
               <div style={{ flex: 1 }} />
               {[
                 { icon: "🪙", val: fmt(gold), c: "#f5c542" },
@@ -1639,95 +1643,100 @@ function GameUI({ account, initialSave, onLogout }) {
           {/* ═══ GROWTH ═══ */}
           {page === "growth" && (
             <div>
-              <PageTitle icon="📊" title="GROWTH STATS" subtitle="Spend gold to power up your hero" />
-              <div style={{ display: "grid", gridTemplateColumns: `repeat(auto-fill, minmax(${isMobile ? "100%" : "280px"}, 1fr))`, gap: 14, marginBottom: 24 }}>
+              {/* Stat upgrade rows — compact for bottom panel */}
+              <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 14 }}>
                 {[
-                  { stat: "atk", label: "Attack", icon: "⚔️", color: T.danger, desc: "+3 ATK per level", val: `${baseAtk} ATK` },
-                  { stat: "hp", label: "Health", icon: "❤️", color: T.success, desc: "+20 Max HP per level", val: `${baseHp} HP` },
-                  { stat: "def", label: "Defense", icon: "🛡️", color: T.info, desc: "+2 DEF per level", val: `${baseDef} DEF` },
+                  { stat: "atk", label: "Attack", icon: "⚔️", color: T.danger, desc: "+3 ATK/lv", val: baseAtk },
+                  { stat: "hp", label: "Health", icon: "❤️", color: T.success, desc: "+20 HP/lv", val: baseHp },
+                  { stat: "def", label: "Defense", icon: "🛡️", color: T.info, desc: "+2 DEF/lv", val: baseDef },
                 ].map(g => {
                   const cost = growthCost(growth[g.stat]);
                   const ok = gold >= cost;
-                  const lvlProg = (growth[g.stat] % 10) / 10; // progress to next 10-level milestone
                   return (
-                    <Card key={g.stat} hover accent={g.color}>
-                      <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 16 }}>
-                        {/* Circular progress ring */}
-                        <div style={{ position: "relative", width: 56, height: 56, flexShrink: 0 }}>
-                          <svg width="56" height="56" style={{ transform: "rotate(-90deg)" }}>
-                            <circle cx="28" cy="28" r="24" fill="none" stroke={`${g.color}15`} strokeWidth="3" />
-                            <circle cx="28" cy="28" r="24" fill="none" stroke={g.color} strokeWidth="3"
-                              strokeDasharray={`${lvlProg * 150.8} 150.8`}
-                              strokeLinecap="round" style={{ transition: "stroke-dasharray 0.5s ease" }} />
-                          </svg>
-                          <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 22 }}>{g.icon}</div>
+                    <div key={g.stat} style={{
+                      display: "flex", alignItems: "center", gap: 10, padding: "10px 12px",
+                      borderRadius: 10, background: `${g.color}06`, border: `1px solid ${g.color}15`,
+                    }}>
+                      <div style={{ width: 38, height: 38, borderRadius: 10, background: `${g.color}12`, border: `1px solid ${g.color}25`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18, flexShrink: 0 }}>{g.icon}</div>
+                      <div style={{ flex: 1 }}>
+                        <div style={{ display: "flex", alignItems: "baseline", gap: 6 }}>
+                          <span style={{ fontSize: 13, fontWeight: 900, color: T.white, fontFamily: FONT_DISPLAY }}>{g.label}</span>
+                          <span style={{ fontSize: 11, fontWeight: 800, color: g.color, fontFamily: FONT_DISPLAY }}>Lv.{growth[g.stat]}</span>
                         </div>
-                        <div>
-                          <div style={{ fontSize: 16, fontWeight: 900, color: T.white, fontFamily: FONT_DISPLAY }}>{g.label}</div>
-                          <div style={{ fontSize: 13, fontWeight: 800, color: g.color, fontFamily: FONT_DISPLAY }}>Lv.{growth[g.stat]}</div>
-                          <div style={{ fontSize: 10, color: T.textSec }}>{g.val}</div>
-                        </div>
+                        <div style={{ fontSize: 9, color: T.textDim }}>{g.val} • {g.desc}</div>
                       </div>
-                      <div style={{ fontSize: 11, color: T.textDim, marginBottom: 12 }}>{g.desc}</div>
-                      <div style={{ display: "flex", gap: 8 }}>
-                        <Btn small color={ok ? g.color : T.textDim} disabled={!ok} onClick={() => upgradeGrowth(g.stat)} style={{ flex: 1 }}>+1 (💰{fmt(cost)})</Btn>
-                        <Btn small color={ok ? g.color : T.textDim} disabled={!ok} onClick={() => upgradeGrowthMax(g.stat)}>MAX</Btn>
+                      <div style={{ display: "flex", gap: 4, flexShrink: 0 }}>
+                        <div onClick={ok ? () => upgradeGrowth(g.stat) : undefined} style={{
+                          padding: "6px 10px", borderRadius: 7, cursor: ok ? "pointer" : "default",
+                          background: ok ? `${g.color}18` : "#ffffff06",
+                          border: `1px solid ${ok ? g.color + "30" : "#ffffff08"}`,
+                          fontSize: 9, fontWeight: 800, color: ok ? g.color : T.textDim, fontFamily: FONT_DISPLAY,
+                          transition: "all 0.15s",
+                        }}>+1 🪙{fmt(cost)}</div>
+                        <div onClick={ok ? () => upgradeGrowthMax(g.stat) : undefined} style={{
+                          padding: "6px 8px", borderRadius: 7, cursor: ok ? "pointer" : "default",
+                          background: ok ? `${g.color}10` : "#ffffff04",
+                          border: `1px solid ${ok ? g.color + "20" : "#ffffff06"}`,
+                          fontSize: 9, fontWeight: 800, color: ok ? g.color : T.textDim, fontFamily: FONT_DISPLAY,
+                        }}>MAX</div>
                       </div>
-                    </Card>
+                    </div>
                   );
                 })}
               </div>
 
-              {/* Power overview */}
-              <Card glow={T.accent} style={{ marginBottom: 18, background: `linear-gradient(135deg, ${T.card} 0%, #161030 100%)` }}>
-                <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 14 }}>
-                  <span style={{ fontSize: 20 }}>⚡</span>
-                  <div>
-                    <div style={{ fontSize: 15, fontWeight: 900, color: T.white, fontFamily: FONT_DISPLAY }}>TOTAL POWER</div>
-                    <div style={{ fontSize: 11, color: T.textSec }}>Combined combat rating: <span style={{ color: T.accent, fontWeight: 700 }}>{fmt(totalAtk + totalDef + totalMaxHp)} CP</span></div>
-                  </div>
-                </div>
-                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(130px, 1fr))", gap: 10 }}>
+              {/* Power overview — compact grid */}
+              <div style={{ padding: "10px 12px", borderRadius: 10, background: "#ffffff04", border: "1px solid #ffffff08", marginBottom: 14 }}>
+                <div style={{ fontSize: 11, fontWeight: 900, color: T.white, fontFamily: FONT_DISPLAY, marginBottom: 8 }}>⚡ TOTAL POWER — <span style={{ color: T.accent }}>{fmt(totalAtk + totalDef + totalMaxHp)} CP</span></div>
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 6 }}>
                   {[
                     { l: "ATK", v: fmt(totalAtk), c: T.danger }, { l: "DEF", v: fmt(totalDef), c: T.info },
-                    { l: "HP", v: fmt(totalMaxHp), c: T.success }, { l: "Crit Rate", v: `${critRate}%`, c: T.orange },
-                    { l: "Crit DMG", v: `${critDmg}%`, c: T.warning }, { l: "Gold+", v: `+${Math.floor((goldMult - 1) * 100)}%`, c: T.gold },
+                    { l: "HP", v: fmt(totalMaxHp), c: T.success }, { l: "Crit%", v: `${critRate}%`, c: T.orange },
+                    { l: "CritDMG", v: `${critDmg}%`, c: T.warning }, { l: "Gold+", v: `+${Math.floor((goldMult - 1) * 100)}%`, c: T.gold },
                   ].map((s, i) => (
-                    <div key={i} style={{ textAlign: "center", padding: 14, borderRadius: T.rs, background: T.bgDeep, border: `1px solid ${T.divider}` }}>
-                      <div style={{ fontSize: 18, fontWeight: 900, color: s.c, fontFamily: FONT_DISPLAY }}>{s.v}</div>
-                      <div style={{ fontSize: 9, color: T.textDim, fontWeight: 600, marginTop: 2 }}>{s.l}</div>
+                    <div key={i} style={{ textAlign: "center", padding: "8px 4px", borderRadius: 7, background: "#0a0c14", border: "1px solid #ffffff06" }}>
+                      <div style={{ fontSize: 14, fontWeight: 900, color: s.c, fontFamily: FONT_DISPLAY }}>{s.v}</div>
+                      <div style={{ fontSize: 7, color: T.textDim, fontWeight: 700 }}>{s.l}</div>
                     </div>
                   ))}
                 </div>
-              </Card>
+              </div>
 
-              {/* Skills */}
-              <Card>
-                <div style={{ fontSize: 15, fontWeight: 900, color: T.white, marginBottom: 14, fontFamily: FONT_DISPLAY }}>⚡ COMBAT SKILLS</div>
-                <div style={{ display: "grid", gridTemplateColumns: `repeat(auto-fill, minmax(${isMobile ? "100%" : "240px"}, 1fr))`, gap: 10 }}>
+              {/* Skills — compact */}
+              <div style={{ padding: "10px 12px", borderRadius: 10, background: "#ffffff04", border: "1px solid #ffffff08" }}>
+                <div style={{ fontSize: 11, fontWeight: 900, color: T.white, fontFamily: FONT_DISPLAY, marginBottom: 8 }}>⚡ SKILLS</div>
+                <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
                   {COMBAT_SKILLS.map(sk => {
                     const unlocked = unlockedSkills.includes(sk.id);
                     const isEq = equippedSkills.includes(sk.id);
                     return (
-                      <div key={sk.id} style={{ padding: 14, borderRadius: T.rs, background: unlocked ? `${sk.color}06` : T.bgDeep, border: `1px solid ${unlocked ? sk.color + "20" : T.divider}`, opacity: unlocked ? 1 : 0.35 }}>
-                        <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
-                          <span style={{ fontSize: 20 }}>{sk.emoji}</span>
-                          <div style={{ flex: 1 }}>
-                            <div style={{ fontSize: 12, fontWeight: 700, color: unlocked ? sk.color : T.textDim }}>{sk.name}</div>
-                            <div style={{ fontSize: 10, color: T.textDim }}>{sk.desc} • {sk.cooldown / 1000}s</div>
-                          </div>
-                          {unlocked ? (
-                            <Btn small color={isEq ? T.danger : T.success} onClick={() => {
-                              if (isEq) setEquippedSkills(p => p.map(s => s === sk.id ? null : s));
-                              else setEquippedSkills(p => { const i = p.indexOf(null); if (i >= 0) { const n = [...p]; n[i] = sk.id; return n; } return p; });
-                            }}>{isEq ? "−" : "+"}</Btn>
-                          ) : <Badge color={T.textDim}>Stage {sk.unlockStage}</Badge>}
+                      <div key={sk.id} style={{
+                        display: "flex", alignItems: "center", gap: 8, padding: "8px 10px",
+                        borderRadius: 8, background: unlocked ? `${sk.color}06` : "#0a0c14",
+                        border: `1px solid ${unlocked ? sk.color + "15" : "#ffffff06"}`,
+                        opacity: unlocked ? 1 : 0.35,
+                      }}>
+                        <span style={{ fontSize: 18 }}>{sk.emoji}</span>
+                        <div style={{ flex: 1 }}>
+                          <div style={{ fontSize: 11, fontWeight: 700, color: unlocked ? sk.color : T.textDim }}>{sk.name}</div>
+                          <div style={{ fontSize: 8, color: T.textDim }}>{sk.desc} • {sk.cooldown / 1000}s cd</div>
                         </div>
+                        {unlocked ? (
+                          <div onClick={() => {
+                            if (isEq) setEquippedSkills(p => p.map(s => s === sk.id ? null : s));
+                            else setEquippedSkills(p => { const i = p.indexOf(null); if (i >= 0) { const n = [...p]; n[i] = sk.id; return n; } return p; });
+                          }} style={{
+                            padding: "4px 10px", borderRadius: 6, cursor: "pointer",
+                            background: isEq ? `${T.danger}15` : `${T.success}15`,
+                            border: `1px solid ${isEq ? T.danger + "30" : T.success + "30"}`,
+                            fontSize: 9, fontWeight: 800, color: isEq ? T.danger : T.success, fontFamily: FONT_DISPLAY,
+                          }}>{isEq ? "Remove" : "Equip"}</div>
+                        ) : <span style={{ fontSize: 8, color: T.textDim, fontWeight: 700 }}>Stage {sk.unlockStage}</span>}
                       </div>
                     );
                   })}
                 </div>
-              </Card>
+              </div>
             </div>
           )}
 

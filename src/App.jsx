@@ -778,9 +778,57 @@ const LOGIN_REWARDS = [
 ];
 
 // ─── OFFLINE EARNINGS CONFIG ───
-const OFFLINE_GOLD_PER_SEC = 1; // base gold per second offline (multiplied by stage)
-const OFFLINE_MAX_HOURS = 12; // max offline earnings cap
-const OFFLINE_STAGE_MULT = 0.05; // extra gold per stage per second
+const OFFLINE_GOLD_PER_SEC = 1;
+const OFFLINE_MAX_HOURS = 24; // increased from 12
+const OFFLINE_STAGE_MULT = 0.1; // doubled
+
+// ─── IDLE SKILLS (passive resource generators) ───
+const IDLE_SKILLS = [
+  { id: "mining", name: "Mining", emoji: "⛏️", resource: "ore", baseRate: 1, desc: "Extract ore for gear upgrades", color: "#78909c", unlockStage: 5 },
+  { id: "foraging", name: "Foraging", emoji: "🌿", resource: "herbs", baseRate: 0.8, desc: "Gather herbs for potions", color: "#66bb6a", unlockStage: 10 },
+  { id: "enchanting", name: "Enchanting", emoji: "🔮", resource: "essence", baseRate: 0.5, desc: "Channel essence for enchantments", color: "#7c4dff", unlockStage: 25 },
+  { id: "smithing", name: "Smithing", emoji: "🔨", resource: "ingots", baseRate: 0.4, desc: "Smelt ore into ingots for crafting", color: "#ff7043", unlockStage: 40 },
+  { id: "alchemy", name: "Alchemy", emoji: "⚗️", resource: "potions", baseRate: 0.3, desc: "Brew potions from herbs", color: "#ce93d8", unlockStage: 60 },
+];
+
+// Skill level XP curve
+function idleSkillXp(level) { return Math.floor(50 * Math.pow(1.15, level)); }
+// Each skill level increases its rate by 5%
+function idleSkillRate(skill, level) { return skill.baseRate * (1 + level * 0.05); }
+
+// ─── MULTI-ZONE FARMING ───
+const MAX_FARM_ZONES = 5;
+// Zone slots unlock at stages: 1 (free), 50, 100, 200, 400
+const ZONE_UNLOCK_STAGES = [1, 50, 100, 200, 400];
+
+// ─── AUTO-BATTLE SETTINGS ───
+const AUTO_SETTINGS_DEFAULTS = {
+  autoEquipBetter: true, // auto equip higher power gear
+  autoSellRarity: -1, // -1 = off, 0 = common, 1 = uncommon, etc
+  autoSkill: true, // auto-cast skills
+  autoProgress: true, // push to next stage
+  autoPotion: true, // auto-use potions in combat
+};
+
+// ─── POTIONS (crafted from alchemy) ───
+const POTIONS = [
+  { id: "pot_hp", name: "Health Potion", emoji: "❤️‍🩹", effect: "healPct", value: 30, cost: { herbs: 3 }, desc: "Heal 30% HP", color: T.success },
+  { id: "pot_atk", name: "Power Elixir", emoji: "⚔️", effect: "atkBuff", value: 20, duration: 30, cost: { herbs: 5, essence: 2 }, desc: "+20% ATK for 30s", color: T.danger },
+  { id: "pot_crit", name: "Precision Tonic", emoji: "🎯", effect: "critBuff", value: 15, duration: 30, cost: { herbs: 4, essence: 3 }, desc: "+15% Crit for 30s", color: T.warning },
+  { id: "pot_gold", name: "Fortune Flask", emoji: "🪙", effect: "goldBuff", value: 50, duration: 60, cost: { herbs: 6, potions: 2 }, desc: "+50% Gold for 60s", color: T.gold },
+  { id: "pot_xp", name: "Wisdom Brew", emoji: "📘", effect: "xpBuff", value: 30, duration: 60, cost: { essence: 5, potions: 3 }, desc: "+30% Skill XP for 60s", color: T.info },
+];
+
+// ─── ASCENSION (deeper prestige) ───
+const ASCENSION_TIERS = [
+  { tier: 1, soulsNeeded: 50, name: "Awakened", mult: 1.5, color: "#7c4dff", perk: "Unlock 2nd farm zone" },
+  { tier: 2, soulsNeeded: 200, name: "Transcended", mult: 2.0, color: "#ce93d8", perk: "+50% idle skill rates" },
+  { tier: 3, soulsNeeded: 500, name: "Ethereal", mult: 3.0, color: "#ffd740", perk: "Unlock 3rd farm zone" },
+  { tier: 4, soulsNeeded: 1500, name: "Celestial", mult: 5.0, color: "#69f0ae", perk: "+100% offline earnings" },
+  { tier: 5, soulsNeeded: 5000, name: "Divine", mult: 10.0, color: "#ff6e40", perk: "Unlock all farm zones" },
+];
+
+
 
 // ═══════════════════════════════════════════════
 // HELPERS
@@ -988,6 +1036,15 @@ const DEFAULT_SAVE = () => ({
   pvpElo: 800, pvpWins: 0, pvpLosses: 0, pvpDailyFights: 0, pvpLastDay: "",
   heroElement: null, // selected element
   dodgeChance: 0, blockChance: 0,
+  idleSkills: {}, // { skillId: { level, xp } }
+  idleResources: {}, // { ore: 0, herbs: 0, essence: 0, ingots: 0, potions: 0 }
+  farmZones: [null], // array of stage numbers being farmed (null = empty slot)
+  autoSettings: { ...AUTO_SETTINGS_DEFAULTS },
+  potionInventory: {}, // { potionId: count }
+  activeBuffs: [], // { id, effect, value, expiresAt }
+  ascensionTier: 0,
+  totalSoulsEarned: 0,
+  idleTickGold: 0, // tracks gold/s for display
 });
 
 // ═══════════════════════════════════════════════
@@ -1379,6 +1436,18 @@ function GameUI({ account, initialSave, onLogout }) {
   const [pvpResult, setPvpResult] = useState(null);
   const [heroElement, setHeroElement] = useState(() => sv.heroElement || null);
   const [dodgeText, setDodgeText] = useState(null);
+  const [idleSkills, setIdleSkills] = useState(() => sv.idleSkills || {});
+  const [idleResources, setIdleResources] = useState(() => sv.idleResources || {});
+  const [farmZones, setFarmZones] = useState(() => sv.farmZones || [null]);
+  const [autoSettings, setAutoSettings] = useState(() => sv.autoSettings || { ...AUTO_SETTINGS_DEFAULTS });
+  const [potionInventory, setPotionInventory] = useState(() => sv.potionInventory || {});
+  const [activeBuffs, setActiveBuffs] = useState([]);
+  const [ascensionTier, setAscensionTier] = useState(() => sv.ascensionTier || 0);
+  const [totalSoulsEarned, setTotalSoulsEarned] = useState(() => sv.totalSoulsEarned || 0);
+  const [goldPerSec, setGoldPerSec] = useState(0);
+  const [killsPerMin, setKillsPerMin] = useState(0);
+  const goldAccum = useRef(0);
+  const killAccum = useRef(0);
 
   const buyRelic = useCallback((relicId) => {
     const r = RELICS.find(x => x.id === relicId);
@@ -1981,6 +2050,45 @@ function GameUI({ account, initialSave, onLogout }) {
     setPvpResult({ won, opponent: opp, eloChange, rounds, playerHpLeft: Math.max(0, pHp), oppHpLeft: Math.max(0, oHp) });
   }, [totalAtk, totalDef, totalMaxHp, critRate, critDmg, pvpElo, pvpDailyFights, pvpLastDay, heroElement, equipBonus.spd]);
 
+  // ─── BREW POTION ───
+  const brewPotion = useCallback((potionId) => {
+    const pot = POTIONS.find(p => p.id === potionId);
+    if (!pot) return;
+    for (const [res, cost] of Object.entries(pot.cost)) {
+      if ((idleResources[res] || 0) < cost) return;
+    }
+    setIdleResources(prev => {
+      const n = { ...prev };
+      for (const [res, cost] of Object.entries(pot.cost)) { n[res] = (n[res] || 0) - cost; }
+      return n;
+    });
+    setPotionInventory(prev => ({ ...prev, [potionId]: (prev[potionId] || 0) + 1 }));
+  }, [idleResources]);
+
+  // ─── USE POTION ───
+  const usePotion = useCallback((potionId) => {
+    if ((potionInventory[potionId] || 0) <= 0) return;
+    const pot = POTIONS.find(p => p.id === potionId);
+    if (!pot) return;
+    setPotionInventory(prev => ({ ...prev, [potionId]: (prev[potionId] || 0) - 1 }));
+    if (pot.effect === "healPct") {
+      setPlayerHp(hp => Math.min(totalMaxHp, hp + Math.floor(totalMaxHp * pot.value / 100)));
+    } else {
+      setActiveBuffs(prev => [...prev.filter(b => b.id !== potionId), { id: potionId, effect: pot.effect, value: pot.value, expiresAt: Date.now() + (pot.duration || 30) * 1000 }]);
+    }
+  }, [potionInventory, totalMaxHp]);
+
+  // ─── ASCEND ───
+  const doAscend = useCallback(() => {
+    const nextTier = ascensionTier + 1;
+    if (nextTier > ASCENSION_TIERS.length) return;
+    const tier = ASCENSION_TIERS[nextTier - 1];
+    if (prestigeSouls < tier.soulsNeeded) return;
+    setPrestigeSouls(s => s - tier.soulsNeeded);
+    setAscensionTier(nextTier);
+    setTotalSoulsEarned(t => t + tier.soulsNeeded);
+  }, [ascensionTier, prestigeSouls]);
+
 // Tower of Trials - fight one floor
   const attemptTowerFloor = useCallback(() => {
     const floor = towerFloor;
@@ -2114,6 +2222,7 @@ function GameUI({ account, initialSave, onLogout }) {
     bestiary, gems, socketedGems,
     weaponEvo, dojoTraining, dojoStats, challengesCompleted,
     craftMaterials, craftedRunes, pvpElo, pvpWins, pvpLosses, pvpDailyFights, pvpLastDay, heroElement,
+    idleSkills, idleResources, farmZones, autoSettings, potionInventory, ascensionTier, totalSoulsEarned,
     player: { hp: playerHp, maxHp: totalMaxHp },
     isPremium: false, storePurchases: {},
     lastActiveTime: Date.now(),
@@ -2133,6 +2242,52 @@ function GameUI({ account, initialSave, onLogout }) {
 
   // Passive diamond drip — 1 diamond every 60s of active play
   useEffect(() => { const t = setInterval(() => setDiamonds(d => d + 1), 60000); return () => clearInterval(t); }, []);
+
+  // ─── IDLE SKILL TICK (1s) ─── generates resources + XP
+  useEffect(() => {
+    const ascMult = ASCENSION_TIERS[ascensionTier - 1]?.mult || 1;
+    const t = setInterval(() => {
+      IDLE_SKILLS.forEach(skill => {
+        if (highestStage < skill.unlockStage) return;
+        const sl = idleSkills[skill.id] || { level: 0, xp: 0 };
+        const rate = idleSkillRate(skill, sl.level) * (ascensionTier >= 2 ? 1.5 : 1);
+        // Generate resource
+        setIdleResources(prev => ({ ...prev, [skill.resource]: (prev[skill.resource] || 0) + rate / 10 })); // /10 since we tick at 100ms granularity below
+        // XP
+        const xpGain = 1 + sl.level * 0.2;
+        const needed = idleSkillXp(sl.level);
+        setIdleSkills(prev => {
+          const cur = prev[skill.id] || { level: 0, xp: 0 };
+          let newXp = cur.xp + xpGain;
+          let newLevel = cur.level;
+          while (newXp >= idleSkillXp(newLevel)) { newXp -= idleSkillXp(newLevel); newLevel++; }
+          return { ...prev, [skill.id]: { level: newLevel, xp: newXp } };
+        });
+      });
+    }, 1000);
+    return () => clearInterval(t);
+  }, [highestStage, idleSkills, ascensionTier]);
+
+  // ─── GOLD/S & KILLS/MIN TRACKER ───
+  useEffect(() => {
+    let lastGold = gold;
+    let lastKills = combatStats.kills;
+    const t = setInterval(() => {
+      setGoldPerSec(Math.max(0, gold - lastGold));
+      setKillsPerMin(Math.max(0, (combatStats.kills - lastKills) * 6)); // 10s window * 6
+      lastGold = gold;
+      lastKills = combatStats.kills;
+    }, 10000);
+    return () => clearInterval(t);
+  }, [gold, combatStats.kills]);
+
+  // ─── BUFF EXPIRY ───
+  useEffect(() => {
+    const t = setInterval(() => {
+      setActiveBuffs(prev => prev.filter(b => b.expiresAt > Date.now()));
+    }, 1000);
+    return () => clearInterval(t);
+  }, []);
 
   // ─── ACHIEVEMENT CHECKER ───
   const achCheckRef = useRef(null);
@@ -2370,8 +2525,10 @@ function GameUI({ account, initialSave, onLogout }) {
 
         if (pE >= atkSpd && target) {
           pE = 0;
-          const penReduction = Math.min(0.8, (equipBonus.pen || 0) * 0.01); // PEN: each point ignores 1% DEF, max 80%
-          let dmg = Math.max(1, totalAtk - Math.floor(target.def * (1 - penReduction)) + Math.floor(Math.random() * 4));
+          const penReduction = Math.min(0.8, (equipBonus.pen || 0) * 0.01);
+          const atkBuff = activeBuffs.find(b => b.effect === "atkBuff");
+          const buffedAtk = Math.floor(totalAtk * (atkBuff ? (1 + atkBuff.value / 100) : 1));
+          let dmg = Math.max(1, buffedAtk - Math.floor(target.def * (1 - penReduction)) + Math.floor(Math.random() * 4));
           // Element advantage
           if (heroElement) {
             const el = ELEMENTS[heroElement];
@@ -2379,7 +2536,9 @@ function GameUI({ account, initialSave, onLogout }) {
             if (monsterEl && el.strong === monsterEl) dmg = Math.floor(dmg * 1.3);
             else if (monsterEl && el.weak === monsterEl) dmg = Math.floor(dmg * 0.75);
           }
-          const wasCrit = Math.random() * 100 < critRate;
+          const critBuff = activeBuffs.find(b => b.effect === "critBuff");
+          const buffedCrit = critRate + (critBuff ? critBuff.value : 0);
+          const wasCrit = Math.random() * 100 < buffedCrit;
           if (wasCrit) dmg = Math.floor(dmg * critDmg / 100);
           target.hp -= dmg;
           target.anim = "hit";
@@ -2474,7 +2633,8 @@ function GameUI({ account, initialSave, onLogout }) {
         newEnemies.forEach(e => {
           if (e.hp <= 0 && e.anim !== "die") {
             e.anim = "die";
-            const effGold = Math.floor(e.gold * goldMult);
+            const goldBuff = activeBuffs.find(b => b.effect === "goldBuff");
+            const effGold = Math.floor(e.gold * goldMult * (goldBuff ? (1 + goldBuff.value / 100) : 1));
             stageGold += effGold;
             killCount++;
             addGold(effGold);
@@ -2823,6 +2983,9 @@ function GameUI({ account, initialSave, onLogout }) {
             { icon: "🎯", label: "Chall.", p: "challenge" },
             { icon: "🔨", label: "Craft", p: "crafting" },
             { icon: "🏟️", label: "PvP", p: "pvp" },
+            { icon: "📊", label: "Idle", p: "idle" },
+            { icon: "⚗️", label: "Potions", p: "potions" },
+            { icon: "🌟", label: "Ascend", p: "ascend" },
             { icon: "⋯", label: "More", p: "_more" },
           ].map(tab => {
             const act = page === tab.p;
@@ -3028,6 +3191,40 @@ function GameUI({ account, initialSave, onLogout }) {
                 }} />
               ))}
 
+              {/* ── IDLE INCOME HUD ── */}
+              <div style={{ position: "absolute", top: isMobile ? 56 : 60, left: 8, zIndex: 15, pointerEvents: "none" }}>
+                <div style={{ fontSize: isMobile ? 8 : 10, fontWeight: 800, color: T.gold, fontFamily: FONT_DISPLAY, textShadow: "0 1px 3px #000", marginBottom: 2 }}>
+                  🪙 {fmt(goldPerSec)}/s
+                </div>
+                <div style={{ fontSize: isMobile ? 8 : 10, fontWeight: 800, color: T.danger, fontFamily: FONT_DISPLAY, textShadow: "0 1px 3px #000", marginBottom: 2 }}>
+                  💀 {fmt(killsPerMin)}/min
+                </div>
+                {activeBuffs.length > 0 && activeBuffs.map(b => {
+                  const pot = POTIONS.find(p => p.id === b.id);
+                  const secs = Math.max(0, Math.floor((b.expiresAt - Date.now()) / 1000));
+                  return pot ? (
+                    <div key={b.id} style={{ fontSize: isMobile ? 7 : 8, fontWeight: 700, color: pot.color, fontFamily: FONT_DISPLAY, textShadow: "0 1px 2px #000" }}>
+                      {pot.emoji} {pot.name} ({secs}s)
+                    </div>
+                  ) : null;
+                })}
+              </div>
+
+              {/* ── IDLE SKILLS MINI (desktop only) ── */}
+              {!isMobile && (
+                <div style={{ position: "absolute", bottom: "15%", left: 8, zIndex: 15, pointerEvents: "none" }}>
+                  {IDLE_SKILLS.filter(s => highestStage >= s.unlockStage).map(skill => {
+                    const sl = idleSkills[skill.id] || { level: 0, xp: 0 };
+                    const rate = idleSkillRate(skill, sl.level);
+                    return (
+                      <div key={skill.id} style={{ fontSize: 8, fontWeight: 700, color: skill.color, fontFamily: FONT_DISPLAY, textShadow: "0 1px 2px #000", marginBottom: 1 }}>
+                        {skill.emoji} Lv{sl.level} {Math.floor(idleResources[skill.resource] || 0)}
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+
               {/* ── RAGE METER ── */}
               {rage > 0 && (
                 <div style={{ position: "absolute", bottom: "8%", left: "10%", right: "10%", zIndex: 15, pointerEvents: "none" }}>
@@ -3192,7 +3389,7 @@ function GameUI({ account, initialSave, onLogout }) {
               {showMoreMenu&&(<div style={{position:"absolute",right:46,top:"18%",zIndex:30,background:"linear-gradient(145deg,#1c1f2e,#141620)",border:"1px solid #ffffff15",borderRadius:14,padding:12,boxShadow:"0 12px 40px #000000b0",minWidth:180}}>
               <div style={{fontSize:10,fontWeight:800,color:T.textDim,fontFamily:FONT_DISPLAY,marginBottom:8,textAlign:"center",textTransform:"uppercase",letterSpacing:2}}>More</div>
               <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:6}}>
-              {[{icon:"🏺",label:"Relics",p:"relics"},{icon:"🏅",label:"Emblems",p:"emblems"},{icon:"🗼",label:"Tower",p:"tower"},{icon:"⚗️",label:"Alchemy",p:"alchemy"},{icon:"💠",label:"Gems",p:"gems"},{icon:"✨",label:"Resonance",p:"resonance"},{icon:"🎡",label:"Spin",p:"spin"},{icon:"💥",label:"BossRush",p:"bossrush"},{icon:"📖",label:"Bestiary",p:"bestiary"},{icon:"🏷️",label:"Titles",p:"titles"},{icon:"🗿",label:"Figures",p:"figures"},{icon:"💀",label:"Achieve",p:"achievements"},{icon:"📊",label:"Power",p:"power"},{icon:"⚔️",label:"Evolve",p:"weaponevo"},{icon:"🥋",label:"Dojo",p:"dojo"},{icon:"🎯",label:"Challenge",p:"challenge"},{icon:"🔨",label:"Craft",p:"crafting"},{icon:"🏟️",label:"PvP",p:"pvp"}].map(b=>(<div key={b.p} onClick={()=>{nav(b.p);setShowMoreMenu(false)}} style={{display:"flex",flexDirection:"column",alignItems:"center",gap:3,padding:"8px 2px",borderRadius:8,cursor:"pointer",background:"#ffffff04",border:"1px solid #ffffff08"}}><span style={{fontSize:18}}>{b.icon}</span><span style={{fontSize:7,fontWeight:700,color:T.textSec,fontFamily:FONT_DISPLAY,lineHeight:1}}>{b.label}</span></div>))}
+              {[{icon:"🏺",label:"Relics",p:"relics"},{icon:"🏅",label:"Emblems",p:"emblems"},{icon:"🗼",label:"Tower",p:"tower"},{icon:"⚗️",label:"Alchemy",p:"alchemy"},{icon:"💠",label:"Gems",p:"gems"},{icon:"✨",label:"Resonance",p:"resonance"},{icon:"🎡",label:"Spin",p:"spin"},{icon:"💥",label:"BossRush",p:"bossrush"},{icon:"📖",label:"Bestiary",p:"bestiary"},{icon:"🏷️",label:"Titles",p:"titles"},{icon:"🗿",label:"Figures",p:"figures"},{icon:"💀",label:"Achieve",p:"achievements"},{icon:"📊",label:"Power",p:"power"},{icon:"⚔️",label:"Evolve",p:"weaponevo"},{icon:"🥋",label:"Dojo",p:"dojo"},{icon:"🎯",label:"Challenge",p:"challenge"},{icon:"🔨",label:"Craft",p:"crafting"},{icon:"🏟️",label:"PvP",p:"pvp"},{icon:"📊",label:"Idle",p:"idle"},{icon:"⚗️",label:"Potions",p:"potions"},{icon:"🌟",label:"Ascend",p:"ascend"}].map(b=>(<div key={b.p} onClick={()=>{nav(b.p);setShowMoreMenu(false)}} style={{display:"flex",flexDirection:"column",alignItems:"center",gap:3,padding:"8px 2px",borderRadius:8,cursor:"pointer",background:"#ffffff04",border:"1px solid #ffffff08"}}><span style={{fontSize:18}}>{b.icon}</span><span style={{fontSize:7,fontWeight:700,color:T.textSec,fontFamily:FONT_DISPLAY,lineHeight:1}}>{b.label}</span></div>))}
               </div></div>)}
             </div>
 
@@ -3296,7 +3493,7 @@ function GameUI({ account, initialSave, onLogout }) {
             <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
               {isMobile && <div onClick={() => nav("battle")} style={{ width: 28, height: 28, borderRadius: 7, cursor: "pointer", background: "#1a1c28", border: "1px solid #ffffff0a", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 10, color: T.textSec, fontWeight: 900 }}>✕</div>}
               <div style={{ flex: 1, fontSize: isMobile ? 13 : 15, fontWeight: 900, color: T.white, fontFamily: FONT_DISPLAY, textTransform: "uppercase" }}>
-                {page === "dungeons" && "🏰 Dungeons"}{page === "growth" && "📊 Growth"}{page === "equipment" && "🗡️ Equipment"}{page === "summon" && "✨ Summon"}{page === "pets" && "🐾 Pets"}{page === "costumes" && "👗 Costumes"}{page === "achievements" && "💀 Achievements"}{page === "stats" && "📈 Stats"}{page === "settings" && "⚙️ Settings"}{page === "quests" && "📜 Quests"}{page === "relics" && "🏺 Relics & Insignias"}{page === "prestige" && "🔄 Rebirth & Skills"}{page === "raids" && "⚔️ Raid Bosses"}{page === "shop" && "🛒 Shop"}{page === "titles" && "🏷️ Titles"}{page === "emblems" && "🏅 Emblems"}{page === "alchemy" && "⚗️ Alchemy"}{page === "resonance" && "✨ Resonance"}{page === "figures" && "🗿 Figures"}{page === "tower" && "🗼 Tower"}{page === "spin" && "🎡 Daily Spin"}{page === "bossrush" && "💥 Boss Rush"}{page === "battlepass" && "🎖️ Battle Pass"}{page === "gems" && "💎 Gems"}{page === "bestiary" && "📖 Bestiary"}{page === "power" && "📊 Power"}{page === "weaponevo" && "⚔️ Weapon Evolution"}{page === "dojo" && "🥋 Training Dojo"}{page === "challenge" && "🎯 Challenges"}{page === "crafting" && "🔨 Crafting"}{page === "pvp" && "🏟️ PvP Arena"}{page === "battle" && !isMobile && "⚔️ Quick Stats"}
+                {page === "dungeons" && "🏰 Dungeons"}{page === "growth" && "📊 Growth"}{page === "equipment" && "🗡️ Equipment"}{page === "summon" && "✨ Summon"}{page === "pets" && "🐾 Pets"}{page === "costumes" && "👗 Costumes"}{page === "achievements" && "💀 Achievements"}{page === "stats" && "📈 Stats"}{page === "settings" && "⚙️ Settings"}{page === "quests" && "📜 Quests"}{page === "relics" && "🏺 Relics & Insignias"}{page === "prestige" && "🔄 Rebirth & Skills"}{page === "raids" && "⚔️ Raid Bosses"}{page === "shop" && "🛒 Shop"}{page === "titles" && "🏷️ Titles"}{page === "emblems" && "🏅 Emblems"}{page === "alchemy" && "⚗️ Alchemy"}{page === "resonance" && "✨ Resonance"}{page === "figures" && "🗿 Figures"}{page === "tower" && "🗼 Tower"}{page === "spin" && "🎡 Daily Spin"}{page === "bossrush" && "💥 Boss Rush"}{page === "battlepass" && "🎖️ Battle Pass"}{page === "gems" && "💎 Gems"}{page === "bestiary" && "📖 Bestiary"}{page === "power" && "📊 Power"}{page === "weaponevo" && "⚔️ Weapon Evolution"}{page === "dojo" && "🥋 Training Dojo"}{page === "challenge" && "🎯 Challenges"}{page === "crafting" && "🔨 Crafting"}{page === "pvp" && "🏟️ PvP Arena"}{page === "idle" && "📊 Idle Skills"}{page === "potions" && "⚗️ Potions"}{page === "ascend" && "🌟 Ascension"}{page === "battle" && !isMobile && "⚔️ Quick Stats"}
               </div>
               <div style={{ display: "flex", gap: 5 }}>
                 <span style={{ fontSize: 9, fontWeight: 800, color: "#f5c542", fontFamily: FONT_DISPLAY }}>🪙{fmt(gold)}</span>
@@ -3319,8 +3516,10 @@ function GameUI({ account, initialSave, onLogout }) {
                   { label: "CRIT", val: `${critRate}%`, color: T.warning, icon: "🎯" },
                   { label: "STAGE", val: stageLabel(currentStage), color: T.accent, icon: "📍" },
                   { label: "HIGHEST", val: stageLabel(highestStage), color: T.purple, icon: "🏆" },
-                  { label: "KILLS", val: fmt(combatStats.kills), color: T.orange, icon: "💀" },
+                  { label: "GOLD/S", val: fmt(goldPerSec), color: T.gold, icon: "📈" },
+                  { label: "KILLS/M", val: fmt(killsPerMin), color: T.orange, icon: "💀" },
                   { label: "GOLD", val: fmt(gold), color: T.gold, icon: "🪙" },
+                  { label: "ASCEND", val: ascensionTier > 0 ? ASCENSION_TIERS[ascensionTier - 1].name : "None", color: ascensionTier > 0 ? ASCENSION_TIERS[ascensionTier - 1].color : T.textDim, icon: "🌟" },
                 ].map(s => (
                   <div key={s.label} style={{ padding: "10px 12px", borderRadius: 10, background: `${s.color}06`, border: `1px solid ${s.color}15` }}>
                     <div style={{ fontSize: 8, fontWeight: 700, color: s.color, fontFamily: FONT_DISPLAY, marginBottom: 4 }}>{s.icon} {s.label}</div>
@@ -3352,12 +3551,15 @@ function GameUI({ account, initialSave, onLogout }) {
               {/* Quick nav buttons */}
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 6, marginTop: 12 }}>
                 {[
+                  { icon: "📊", label: "Idle Skills", p: "idle" },
+                  { icon: "⚗️", label: "Potions", p: "potions" },
+                  { icon: "🌟", label: "Ascend", p: "ascend" },
+                  { icon: "🔨", label: "Craft", p: "crafting" },
+                  { icon: "🏟️", label: "PvP", p: "pvp" },
                   { icon: "⚔️", label: "Evolve", p: "weaponevo" },
                   { icon: "🥋", label: "Dojo", p: "dojo" },
                   { icon: "🎯", label: "Challenge", p: "challenge" },
                   { icon: "⭐", label: "Growth", p: "growth" },
-                  { icon: "🗡️", label: "Equip", p: "equipment" },
-                  { icon: "📊", label: "Power", p: "power" },
                 ].map(q => (
                   <div key={q.p} onClick={() => nav(q.p)} style={{ padding: "8px 6px", borderRadius: 8, background: "#ffffff04", border: "1px solid #ffffff08", cursor: "pointer", textAlign: "center" }}>
                     <div style={{ fontSize: 18 }}>{q.icon}</div>
@@ -4822,6 +5024,187 @@ function GameUI({ account, initialSave, onLogout }) {
                     <span style={{ fontSize: isMobile ? 10 : 11, fontWeight: 800, color: pvpElo >= rank.minElo ? rank.color : T.textDim, fontFamily: FONT_DISPLAY, flex: 1 }}>{rank.name}</span>
                     <span style={{ fontSize: isMobile ? 8 : 9, color: T.textDim }}>{rank.minElo}+ ELO</span>
                     <span style={{ fontSize: isMobile ? 7 : 8, color: T.gold }}>+{fmt(rank.reward.gold)}🪙 {rank.reward.diamonds ? `+${rank.reward.diamonds}💎` : ""}</span>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+
+          {/* ═══ IDLE SKILLS ═══ */}
+          {page === "idle" && (
+            <div>
+              <div style={{ fontSize: isMobile ? 13 : 15, fontWeight: 900, color: T.white, fontFamily: FONT_DISPLAY, marginBottom: 4 }}>📊 IDLE SKILLS</div>
+              <div style={{ fontSize: isMobile ? 8 : 10, color: T.textDim, marginBottom: 12 }}>Skills generate resources passively. Level up for faster rates.</div>
+
+              {/* Income summary */}
+              <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 14, padding: "10px 12px", borderRadius: 10, background: "#ffffff04", border: "1px solid #ffffff08" }}>
+                <div><div style={{ fontSize: isMobile ? 14 : 18, fontWeight: 900, color: T.gold, fontFamily: FONT_DISPLAY }}>{fmt(goldPerSec)}/s</div><div style={{ fontSize: 7, color: T.textDim }}>GOLD</div></div>
+                <div><div style={{ fontSize: isMobile ? 14 : 18, fontWeight: 900, color: T.danger, fontFamily: FONT_DISPLAY }}>{fmt(killsPerMin)}/min</div><div style={{ fontSize: 7, color: T.textDim }}>KILLS</div></div>
+                {IDLE_SKILLS.filter(s => highestStage >= s.unlockStage).map(skill => (
+                  <div key={skill.id}><div style={{ fontSize: isMobile ? 14 : 18, fontWeight: 900, color: skill.color, fontFamily: FONT_DISPLAY }}>{Math.floor(idleResources[skill.resource] || 0)}</div><div style={{ fontSize: 7, color: T.textDim }}>{skill.resource.toUpperCase()}</div></div>
+                ))}
+              </div>
+
+              {/* Skill cards */}
+              {IDLE_SKILLS.map(skill => {
+                const unlocked = highestStage >= skill.unlockStage;
+                const sl = idleSkills[skill.id] || { level: 0, xp: 0 };
+                const rate = idleSkillRate(skill, sl.level);
+                const needed = idleSkillXp(sl.level);
+                const xpPct = Math.min(100, (sl.xp / needed) * 100);
+                return (
+                  <div key={skill.id} style={{ padding: "12px 14px", borderRadius: 10, background: unlocked ? `${skill.color}06` : "#ffffff02", border: `1px solid ${skill.color}${unlocked ? "18" : "06"}`, marginBottom: 8, opacity: unlocked ? 1 : 0.4 }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                        <span style={{ fontSize: 24 }}>{skill.emoji}</span>
+                        <div>
+                          <div style={{ fontSize: isMobile ? 12 : 14, fontWeight: 900, color: skill.color, fontFamily: FONT_DISPLAY }}>{skill.name}</div>
+                          <div style={{ fontSize: isMobile ? 8 : 9, color: T.textDim }}>{skill.desc}</div>
+                        </div>
+                      </div>
+                      <div style={{ textAlign: "right" }}>
+                        <div style={{ fontSize: isMobile ? 11 : 13, fontWeight: 900, color: T.white, fontFamily: FONT_DISPLAY }}>Lv {sl.level}</div>
+                        <div style={{ fontSize: isMobile ? 8 : 9, color: skill.color }}>+{rate.toFixed(1)}/s</div>
+                      </div>
+                    </div>
+                    {unlocked && (
+                      <div style={{ height: 6, borderRadius: 3, background: "#ffffff08", overflow: "hidden" }}>
+                        <div style={{ width: `${xpPct}%`, height: "100%", borderRadius: 3, background: `linear-gradient(90deg, ${skill.color}80, ${skill.color})`, transition: "width 0.3s" }} />
+                      </div>
+                    )}
+                    {unlocked && <div style={{ fontSize: 7, color: T.textDim, marginTop: 2, textAlign: "right" }}>{Math.floor(sl.xp)}/{needed} XP</div>}
+                    {!unlocked && <div style={{ fontSize: isMobile ? 8 : 9, color: T.textDim }}>Unlocks at stage {skill.unlockStage}</div>}
+                  </div>
+                );
+              })}
+
+              {/* Auto settings */}
+              <div style={{ marginTop: 16, padding: "12px 14px", borderRadius: 10, background: "#ffffff04", border: "1px solid #ffffff08" }}>
+                <div style={{ fontSize: isMobile ? 10 : 12, fontWeight: 900, color: T.accent, fontFamily: FONT_DISPLAY, marginBottom: 8 }}>⚙️ AUTO SETTINGS</div>
+                {[
+                  { key: "autoEquipBetter", label: "Auto-equip better gear", emoji: "🗡️" },
+                  { key: "autoSkill", label: "Auto-cast skills", emoji: "⚡" },
+                  { key: "autoProgress", label: "Auto-progress stages", emoji: "➡️" },
+                  { key: "autoPotion", label: "Auto-use potions", emoji: "❤️‍🩹" },
+                ].map(setting => (
+                  <div key={setting.key} onClick={() => setAutoSettings(prev => ({ ...prev, [setting.key]: !prev[setting.key] }))} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "6px 0", cursor: "pointer", borderBottom: "1px solid #ffffff06" }}>
+                    <span style={{ fontSize: isMobile ? 9 : 11, color: T.textSec }}>{setting.emoji} {setting.label}</span>
+                    <div style={{ width: 32, height: 16, borderRadius: 8, background: autoSettings[setting.key] ? T.success : "#ffffff15", padding: 2, transition: "background 0.2s" }}>
+                      <div style={{ width: 12, height: 12, borderRadius: 6, background: T.white, transform: autoSettings[setting.key] ? "translateX(16px)" : "translateX(0)", transition: "transform 0.2s" }} />
+                    </div>
+                  </div>
+                ))}
+                <div style={{ marginTop: 8, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                  <span style={{ fontSize: isMobile ? 9 : 11, color: T.textSec }}>🗑️ Auto-sell rarity ≤</span>
+                  <div style={{ display: "flex", gap: 3 }}>
+                    {[{ label: "Off", val: -1 }, ...RARITIES.slice(0, 4).map((r, i) => ({ label: r.name.slice(0, 3), val: i, color: r.color }))].map(opt => (
+                      <div key={opt.val} onClick={() => setAutoSettings(prev => ({ ...prev, autoSellRarity: opt.val }))} style={{ padding: "3px 6px", borderRadius: 4, fontSize: 7, fontWeight: 700, cursor: "pointer", background: autoSettings.autoSellRarity === opt.val ? (opt.color || T.accent) : "#ffffff08", color: autoSettings.autoSellRarity === opt.val ? T.white : T.textDim, fontFamily: FONT_DISPLAY }}>{opt.label}</div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* ═══ POTIONS ═══ */}
+          {page === "potions" && (
+            <div>
+              <div style={{ fontSize: isMobile ? 13 : 15, fontWeight: 900, color: T.white, fontFamily: FONT_DISPLAY, marginBottom: 4 }}>⚗️ POTIONS</div>
+              <div style={{ fontSize: isMobile ? 8 : 10, color: T.textDim, marginBottom: 12 }}>Brew potions from idle skill resources. Use them for temporary buffs.</div>
+
+              {/* Resources bar */}
+              <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 14, padding: "8px 10px", borderRadius: 8, background: "#ffffff04", border: "1px solid #ffffff08" }}>
+                {IDLE_SKILLS.map(skill => (
+                  <span key={skill.id} style={{ fontSize: isMobile ? 9 : 10, color: skill.color, fontWeight: 700 }}>{skill.emoji} {Math.floor(idleResources[skill.resource] || 0)} {skill.resource}</span>
+                ))}
+              </div>
+
+              {/* Active buffs */}
+              {activeBuffs.length > 0 && (
+                <div style={{ padding: "8px 10px", borderRadius: 8, background: `${T.accent}06`, border: `1px solid ${T.accent}15`, marginBottom: 14 }}>
+                  <div style={{ fontSize: isMobile ? 9 : 10, fontWeight: 800, color: T.accent, fontFamily: FONT_DISPLAY, marginBottom: 4 }}>ACTIVE BUFFS</div>
+                  {activeBuffs.map(b => {
+                    const pot = POTIONS.find(p => p.id === b.id);
+                    const secs = Math.max(0, Math.floor((b.expiresAt - Date.now()) / 1000));
+                    return pot ? (
+                      <div key={b.id} style={{ fontSize: isMobile ? 9 : 10, color: pot.color, marginBottom: 2 }}>{pot.emoji} {pot.name} — {secs}s remaining</div>
+                    ) : null;
+                  })}
+                </div>
+              )}
+
+              {/* Potion cards */}
+              {POTIONS.map(pot => {
+                const canBrew = Object.entries(pot.cost).every(([res, cost]) => (idleResources[res] || 0) >= cost);
+                const owned = potionInventory[pot.id] || 0;
+                return (
+                  <div key={pot.id} style={{ padding: "10px 12px", borderRadius: 10, background: `${pot.color}04`, border: `1px solid ${pot.color}12`, marginBottom: 6 }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 4 }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                        <span style={{ fontSize: 22 }}>{pot.emoji}</span>
+                        <div>
+                          <div style={{ fontSize: isMobile ? 11 : 12, fontWeight: 800, color: pot.color, fontFamily: FONT_DISPLAY }}>{pot.name} <span style={{ fontSize: 8, color: T.textDim }}>×{owned}</span></div>
+                          <div style={{ fontSize: isMobile ? 8 : 9, color: T.textDim }}>{pot.desc}</div>
+                        </div>
+                      </div>
+                    </div>
+                    <div style={{ display: "flex", gap: 4, marginBottom: 6 }}>
+                      {Object.entries(pot.cost).map(([res, cost]) => (
+                        <span key={res} style={{ fontSize: isMobile ? 8 : 9, color: (idleResources[res] || 0) >= cost ? T.success : T.danger, padding: "2px 6px", borderRadius: 4, background: "#ffffff06" }}>
+                          {Math.floor(idleResources[res] || 0)}/{cost} {res}
+                        </span>
+                      ))}
+                    </div>
+                    <div style={{ display: "flex", gap: 6 }}>
+                      <div onClick={canBrew ? () => brewPotion(pot.id) : undefined} style={{ flex: 1, padding: "5px 10px", borderRadius: 6, background: canBrew ? pot.color : "#ffffff08", cursor: canBrew ? "pointer" : "default", fontSize: isMobile ? 9 : 10, fontWeight: 800, color: T.white, fontFamily: FONT_DISPLAY, textAlign: "center", opacity: canBrew ? 1 : 0.4 }}>BREW</div>
+                      <div onClick={owned > 0 ? () => usePotion(pot.id) : undefined} style={{ flex: 1, padding: "5px 10px", borderRadius: 6, background: owned > 0 ? T.success : "#ffffff08", cursor: owned > 0 ? "pointer" : "default", fontSize: isMobile ? 9 : 10, fontWeight: 800, color: T.white, fontFamily: FONT_DISPLAY, textAlign: "center", opacity: owned > 0 ? 1 : 0.4 }}>USE</div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+
+          {/* ═══ ASCENSION ═══ */}
+          {page === "ascend" && (
+            <div>
+              <div style={{ fontSize: isMobile ? 13 : 15, fontWeight: 900, color: T.white, fontFamily: FONT_DISPLAY, marginBottom: 4 }}>🌟 ASCENSION</div>
+              <div style={{ fontSize: isMobile ? 8 : 10, color: T.textDim, marginBottom: 12 }}>Spend Prestige Souls for permanent power multipliers and perks</div>
+
+              {/* Current status */}
+              <div style={{ textAlign: "center", padding: "16px 14px", borderRadius: 12, background: ascensionTier > 0 ? `${ASCENSION_TIERS[ascensionTier - 1].color}08` : "#ffffff04", border: `1px solid ${ascensionTier > 0 ? ASCENSION_TIERS[ascensionTier - 1].color + "25" : "#ffffff08"}`, marginBottom: 14 }}>
+                {ascensionTier > 0 ? (
+                  <>
+                    <div style={{ fontSize: 36 }}>🌟</div>
+                    <div style={{ fontSize: isMobile ? 18 : 22, fontWeight: 900, color: ASCENSION_TIERS[ascensionTier - 1].color, fontFamily: FONT_DISPLAY }}>{ASCENSION_TIERS[ascensionTier - 1].name}</div>
+                    <div style={{ fontSize: isMobile ? 12 : 14, fontWeight: 900, color: T.white, fontFamily: FONT_DISPLAY }}>×{ASCENSION_TIERS[ascensionTier - 1].mult} Power</div>
+                    <div style={{ fontSize: isMobile ? 8 : 10, color: T.textSec, marginTop: 4 }}>Perk: {ASCENSION_TIERS[ascensionTier - 1].perk}</div>
+                  </>
+                ) : (
+                  <>
+                    <div style={{ fontSize: 36 }}>✨</div>
+                    <div style={{ fontSize: isMobile ? 14 : 16, fontWeight: 900, color: T.textSec, fontFamily: FONT_DISPLAY }}>Not Ascended</div>
+                  </>
+                )}
+                <div style={{ fontSize: isMobile ? 10 : 12, color: T.purple, fontWeight: 800, marginTop: 8, fontFamily: FONT_DISPLAY }}>👻 {prestigeSouls} Souls Available</div>
+              </div>
+
+              {/* Ascension tiers */}
+              {ASCENSION_TIERS.map((tier, i) => {
+                const unlocked = ascensionTier >= tier.tier;
+                const canAscend = !unlocked && ascensionTier === tier.tier - 1 && prestigeSouls >= tier.soulsNeeded;
+                return (
+                  <div key={tier.tier} style={{ padding: "10px 12px", borderRadius: 10, background: unlocked ? `${tier.color}08` : "#ffffff02", border: `1px solid ${tier.color}${unlocked ? "25" : "08"}`, marginBottom: 6, opacity: unlocked || canAscend ? 1 : 0.4 }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 4 }}>
+                      <div>
+                        <span style={{ fontSize: isMobile ? 12 : 14, fontWeight: 900, color: tier.color, fontFamily: FONT_DISPLAY }}>{tier.name}</span>
+                        <span style={{ fontSize: isMobile ? 9 : 10, color: T.textDim, marginLeft: 8 }}>×{tier.mult} power</span>
+                      </div>
+                      {unlocked && <span style={{ fontSize: 10, color: T.success }}>✓ UNLOCKED</span>}
+                      {canAscend && <div onClick={doAscend} style={{ padding: "4px 12px", borderRadius: 6, background: tier.color, cursor: "pointer", fontSize: isMobile ? 9 : 10, fontWeight: 800, color: T.white, fontFamily: FONT_DISPLAY }}>ASCEND</div>}
+                    </div>
+                    <div style={{ fontSize: isMobile ? 8 : 9, color: T.textDim }}>{tier.perk}</div>
+                    <div style={{ fontSize: isMobile ? 8 : 9, color: T.textDim }}>Cost: {tier.soulsNeeded} souls</div>
                   </div>
                 );
               })}

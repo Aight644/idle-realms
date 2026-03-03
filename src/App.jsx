@@ -54,8 +54,8 @@ const CHAPTERS = [
 ];
 
 const STAGE_MONSTERS = [
-  [{ name: "Slime", emoji: "🟢" }, { name: "Rat", emoji: "🐀" }, { name: "Goblin", emoji: "👺" }, { name: "Skeleton", emoji: "💀" }, { name: "Wild Boar", emoji: "🐗" }],
-  [{ name: "Wolf", emoji: "🐺" }, { name: "Cave Spider", emoji: "🕷️" }, { name: "Orc", emoji: "👹" }, { name: "Stone Troll", emoji: "🪨" }, { name: "Dark Bat", emoji: "🦇" }],
+  [{ name: "Slime", emoji: "🟢", sprite: "/sprites/monsters/ch1_meadow/slime_idle.png" }, { name: "Rat", emoji: "🐀", sprite: "/sprites/monsters/ch1_meadow/rat_idle.png" }, { name: "Goblin", emoji: "👺", sprite: "/sprites/monsters/ch1_meadow/goblin_idle.png" }, { name: "Skeleton", emoji: "💀", sprite: "/sprites/monsters/ch1_meadow/skeleton_idle.png" }, { name: "Wild Boar", emoji: "🐗", sprite: "/sprites/monsters/ch1_meadow/wild_boar_idle.png" }],
+  [{ name: "Wolf", emoji: "🐺", sprite: "/sprites/monsters/ch2_caves/wolf_idle.png" }, { name: "Cave Spider", emoji: "🕷️", sprite: "/sprites/monsters/ch2_caves/cave_spider_idle.png" }, { name: "Orc", emoji: "👹", sprite: "/sprites/monsters/ch2_caves/orc_idle.png" }, { name: "Stone Troll", emoji: "🪨", sprite: "/sprites/monsters/ch2_caves/stone_troll_idle.png" }, { name: "Dark Bat", emoji: "🦇", sprite: "/sprites/monsters/ch2_caves/dark_bat_idle.png" }],
   [{ name: "Bog Lurker", emoji: "🐸" }, { name: "Venomfang", emoji: "🐍" }, { name: "Dark Mage", emoji: "🧙" }, { name: "Plague Bearer", emoji: "🤢" }, { name: "Swamp Thing", emoji: "🌿" }],
   [{ name: "Haunted Armor", emoji: "🛡️" }, { name: "Wraith", emoji: "👻" }, { name: "Golem", emoji: "🗿" }, { name: "Dragon", emoji: "🐉" }, { name: "Death Knight", emoji: "⚔️" }],
   [{ name: "Magma Imp", emoji: "😈" }, { name: "Flame Serpent", emoji: "🔥" }, { name: "Obsidian Brute", emoji: "⬛" }, { name: "Ember Drake", emoji: "🐉" }, { name: "Lava Golem", emoji: "🌋" }],
@@ -65,8 +65,8 @@ const STAGE_MONSTERS = [
 ];
 
 const BOSSES = [
-  ["Meadow Golem 🗿", "Forest Guardian 🌲", "Goblin King 👺", "Undead General 💀", "Ancient Treant 🌳"],
-  ["Cave Wyrm 🐛", "Crystal Basilisk 💎", "Orc Warlord 👹", "Shadow Drake 🐉", "Troll King 🪨"],
+  [{ name: "Meadow Golem", emoji: "🗿", sprite: "/sprites/bosses/ch1_meadow/meadow_golem_idle.png" }, { name: "Forest Guardian", emoji: "🌲", sprite: "/sprites/bosses/ch1_meadow/forest_guardian_idle.png" }, { name: "Goblin King", emoji: "👺", sprite: "/sprites/bosses/ch1_meadow/goblin_king_idle.png" }, { name: "Undead General", emoji: "💀", sprite: "/sprites/bosses/ch1_meadow/undead_general_idle.png" }, { name: "Ancient Treant", emoji: "🌳", sprite: "/sprites/bosses/ch1_meadow/ancient_treant_idle.png" }],
+  [{ name: "Cave Wyrm", emoji: "🐛", sprite: "/sprites/bosses/ch2_caves/cave_wyrm_idle.png" }, { name: "Crystal Basilisk", emoji: "💎", sprite: "/sprites/bosses/ch2_caves/crystal_basilisk_idle.png" }, { name: "Orc Warlord", emoji: "👹", sprite: "/sprites/bosses/ch2_caves/orc_warlord_idle.png" }, { name: "Shadow Drake", emoji: "🐉", sprite: "/sprites/bosses/ch2_caves/shadow_drake_idle.png" }, { name: "Troll King", emoji: "🪨", sprite: "/sprites/bosses/ch2_caves/troll_king_idle.png" }],
   ["Swamp Hydra 🐲", "Poison Queen 🐍", "Witch Doctor 🧙", "Plague Lord 🤢", "Bog Titan 🌿"],
   ["Elder Lich ☠️", "Ruin Colossus 🗿", "Phantom King 👻", "Dragon Lord 🐉", "Death Emperor ⚔️"],
   ["Inferno King 👑", "Magma Titan 🌋", "Phoenix Lord 🔥", "Obsidian Emperor ⬛", "Fire God 😈"],
@@ -93,8 +93,11 @@ function getStageMonster(stageNum) {
 
   if (isBoss) {
     const b = bosses[Math.min(bossIdx, bosses.length - 1)];
+    const bName = typeof b === "string" ? b.replace(/ [^\s]+$/, '') : b.name;
+    const bEmoji = typeof b === "string" ? (b.match(/[^\w\s]+$/)?.[0] || "👑") : b.emoji;
+    const bSprite = typeof b === "object" ? b.sprite : undefined;
     return {
-      name: b.replace(/ [^\s]+$/, ''), emoji: b.match(/[^\w\s]+$/)?.[0] || "👑",
+      name: bName, emoji: bEmoji, sprite: bSprite,
       hp: Math.floor(baseHp * 3), atk: Math.floor(baseAtk * 1.5), def: Math.floor(baseDef * 1.5),
       gold: Math.floor(baseGold * 5), xp: Math.floor(baseXp * 5),
       isBoss: true, monstersToKill: 1,
@@ -1962,7 +1965,7 @@ function GameUI({ account, initialSave, onLogout }) {
       id: ++enemyIdRef.current,
       hp: monster.hp, maxHp: monster.hp,
       atk: monster.atk, def: monster.def, gold: monster.gold,
-      emoji: monster.emoji, name: monster.name, isBoss: monster.isBoss,
+      emoji: monster.emoji, sprite: monster.sprite, name: monster.name, isBoss: monster.isBoss,
       x: 72, y: 55,
       anim: "spawn",
       scale: monster.isBoss ? 1.3 : 1,
@@ -2165,7 +2168,7 @@ function GameUI({ account, initialSave, onLogout }) {
                   const newEnemy = {
                     id: ++enemyIdRef.current,
                     hp: m.hp, maxHp: m.hp, atk: m.atk, def: m.def, gold: m.gold,
-                    emoji: m.emoji, name: m.name, isBoss: false,
+                    emoji: m.emoji, sprite: m.sprite, name: m.name, isBoss: false,
                     x: 72, y: 55,
                     anim: "spawn", scale: 1,
                   };
@@ -2336,6 +2339,7 @@ function GameUI({ account, initialSave, onLogout }) {
     const c = COSTUMES.find(x => x.id === activeCostume);
     return c?.emoji || "⚔️";
   }, [activeCostume]);
+  const heroSprite = "/sprites/hero/idle.png";
 
   // ─── DUNGEONS ───
   const getDungeonAttemptsLeft = useCallback((dungeonId) => {
@@ -2536,17 +2540,20 @@ function GameUI({ account, initialSave, onLogout }) {
                 <div style={{ width: 64, height: 6, background: "#00000080", borderRadius: 3, overflow: "hidden", margin: "0 auto 4px", border: "1px solid #ffffff15" }}>
                   <div style={{ width: `${(playerHp / totalMaxHp) * 100}%`, height: "100%", background: "linear-gradient(90deg, #22c55e, #4ade80)", borderRadius: 3, transition: "width 0.15s", boxShadow: "0 0 6px #22c55e60" }} />
                 </div>
-                {/* Hero sprite placeholder - swap with <img src="/sprites/hero/idle.png"> later */}
+                {/* Hero sprite */}
                 <div style={{ width: 64, height: 64, margin: "0 auto", position: "relative" }}>
                   {/* Shadow on ground */}
                   <div style={{ position: "absolute", bottom: -6, left: "50%", transform: "translateX(-50%)", width: 40, height: 10, borderRadius: "50%", background: "#00000050", filter: "blur(3px)" }} />
                   {/* Hero body */}
                   <div style={{
-                    width: 64, height: 64, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 40,
+                    width: 64, height: 64, display: "flex", alignItems: "center", justifyContent: "center",
                     animation: heroAnim === "attack" ? "fighterAttack 0.3s ease" : heroAnim === "hit" ? "fighterHit 0.2s ease" : "fighterIdle 2s ease-in-out infinite",
                     filter: heroAnim === "hit" ? "brightness(2.5) saturate(0)" : "drop-shadow(0 2px 8px #00000080) drop-shadow(0 0 12px " + T.accent + "30)",
                     transition: "filter 0.1s",
-                  }}>{heroEmoji}</div>
+                  }}>
+                    <img src={heroSprite} alt="Hero" onError={(e) => { e.target.style.display = "none"; e.target.nextSibling.style.display = "flex"; }} style={{ width: 64, height: 64, imageRendering: "pixelated", objectFit: "contain" }} />
+                    <span style={{ display: "none", width: 64, height: 64, alignItems: "center", justifyContent: "center", fontSize: 40 }}>{heroEmoji}</span>
+                  </div>
                 </div>
                 {/* HP text */}
                 <div style={{ fontSize: 7, fontWeight: 800, color: "#22c55e", fontFamily: FONT_DISPLAY, marginTop: 1, textShadow: "0 1px 2px #000" }}>{fmt(playerHp)}/{fmt(totalMaxHp)}</div>
@@ -2579,19 +2586,24 @@ function GameUI({ account, initialSave, onLogout }) {
                       <div style={{ width: `${Math.max(0, (enemy.hp / enemy.maxHp) * 100)}%`, height: "100%", background: enemy.isBoss ? `linear-gradient(90deg, ${T.gold}, ${T.orange})` : "linear-gradient(90deg, #ef4444, #f87171)", borderRadius: 3, transition: "width 0.1s", boxShadow: `0 0 6px ${enemy.isBoss ? T.gold : "#ef4444"}60` }} />
                     </div>
                   )}
-                  {/* Enemy sprite placeholder - swap with <img> later */}
+                  {/* Enemy sprite */}
                   <div style={{ width: 64, height: 64, margin: "0 auto", position: "relative" }}>
                     {/* Shadow on ground */}
                     <div style={{ position: "absolute", bottom: -6, left: "50%", transform: "translateX(-50%)", width: 40, height: 10, borderRadius: "50%", background: "#00000050", filter: "blur(3px)", opacity: enemy.anim === "die" ? 0 : 1 }} />
                     {/* Enemy body */}
                     <div style={{
                       width: 64, height: 64, display: "flex", alignItems: "center", justifyContent: "center",
-                      fontSize: enemy.isBoss ? 44 : 36, transform: "scaleX(-1)",
+                      transform: "scaleX(-1)",
                       animation: enemy.anim === "hit" ? "fighterHit 0.2s ease" : enemy.anim === "idle" ? "fighterIdle 2s ease-in-out infinite 0.5s" : undefined,
                       filter: enemy.anim === "hit" ? "brightness(3) saturate(0)" : enemy.isBoss ? `drop-shadow(0 0 12px ${T.gold}60)` : "drop-shadow(0 2px 8px #00000080)",
                       opacity: enemy.anim === "die" ? 0 : 1,
                       transition: "filter 0.1s, opacity 0.3s",
-                    }}>{enemy.emoji}</div>
+                    }}>
+                      {enemy.sprite ? (
+                        <img src={enemy.sprite} alt={enemy.name} onError={(e) => { e.target.style.display = "none"; e.target.nextSibling.style.display = "flex"; }} style={{ width: 64, height: 64, imageRendering: "pixelated", objectFit: "contain" }} />
+                      ) : null}
+                      <span style={{ display: enemy.sprite ? "none" : "flex", width: 64, height: 64, alignItems: "center", justifyContent: "center", fontSize: enemy.isBoss ? 44 : 36 }}>{enemy.emoji}</span>
+                    </div>
                   </div>
                   {/* Enemy HP text */}
                   {enemy.anim !== "die" && (

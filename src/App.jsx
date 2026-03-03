@@ -851,7 +851,7 @@ const DEFAULT_SAVE = () => ({
   autoProgress: true,
   farmStage: 0, // 0 = auto-progress, >0 = farm that specific stage
   lastActiveTime: Date.now(),
-  autoDismantle: -1, lockedEquipment: {},
+  autoDismantle: -1, lockedEquipment: {}, tutorialDone: false,
   petLevels: {}, // -1 = off, 0+ = rarityIdx threshold (dismantle at or below)
   battlePassXp: 0, battlePassLevel: 0, battlePassClaimed: {}, battlePassPremium: false,
   bestiary: {}, // { chapterIdx_monsterIdx: killCount }
@@ -1213,6 +1213,7 @@ function GameUI({ account, initialSave, onLogout }) {
   const [petLevels, setPetLevels] = useState(() => sv.petLevels || {});
   const [showPowerBreakdown, setShowPowerBreakdown] = useState(false);
   const [showMoreMenu, setShowMoreMenu] = useState(false);
+  const [tutorialStep, setTutorialStep] = useState(() => sv.tutorialDone ? -1 : 0);
 
   // Derived values (must be before useCallbacks that reference them)
   const canPrestige = highestStage >= 50;
@@ -1786,6 +1787,7 @@ function GameUI({ account, initialSave, onLogout }) {
     skillBarPresets, activeSkillBar, resonanceLevel, resonanceXp, ownedFigures,
     towerFloor, towerBestFloor, lastSpinDay, bossRushBest,
     autoDismantle, lockedEquipment, petLevels, battlePassXp, battlePassLevel, battlePassClaimed, battlePassPremium,
+    tutorialDone: tutorialStep === -1,
     bestiary, gems, socketedGems,
     player: { hp: playerHp, maxHp: totalMaxHp },
     isPremium: false, storePurchases: {},
@@ -4507,6 +4509,15 @@ function GameUI({ account, initialSave, onLogout }) {
                   <Btn small color={T.danger} onClick={onLogout}>Logout</Btn>
                 </div>
               </Card>
+              <Card style={{ marginTop: 6 }}>
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "8px 0" }}>
+                  <div>
+                    <div style={{ fontSize: 13, fontWeight: 700, color: T.white }}>Tutorial</div>
+                    <div style={{ fontSize: 11, color: T.textSec }}>Replay the new player guide</div>
+                  </div>
+                  <Btn small color={T.info} onClick={() => { setTutorialStep(0); nav("battle"); }}>Replay</Btn>
+                </div>
+              </Card>
             </div>
           )}
 
@@ -4536,6 +4547,105 @@ function GameUI({ account, initialSave, onLogout }) {
       )}
 
       {/* ═══ GLOBAL STYLES ═══ */}
+      {/* ── TUTORIAL OVERLAY ── */}
+      {tutorialStep >= 0 && (
+        <div style={{ position: "fixed", inset: 0, zIndex: 9999, display: "flex", alignItems: "center", justifyContent: "center", background: "#000000cc", backdropFilter: "blur(4px)" }}>
+          <div style={{ width: "90%", maxWidth: 380, background: "linear-gradient(145deg, #1a1d2e, #12141e)", border: "1px solid #ffffff15", borderRadius: 16, padding: 24, boxShadow: "0 20px 60px #000000d0" }}>
+            {tutorialStep === 0 && (<>
+              <div style={{ textAlign: "center", marginBottom: 16 }}>
+                <div style={{ fontSize: 48, marginBottom: 8 }}>⚔️</div>
+                <div style={{ fontSize: 20, fontWeight: 900, color: T.white, fontFamily: FONT_DISPLAY, marginBottom: 4 }}>Welcome to Blade Realms!</div>
+                <div style={{ fontSize: 11, color: T.textSec, lineHeight: 1.6 }}>Your hero fights enemies automatically. Your job is to grow stronger, collect gear, and push deeper into the world.</div>
+              </div>
+              <div style={{ background: "#ffffff06", borderRadius: 10, padding: 12, marginBottom: 16 }}>
+                <div style={{ fontSize: 10, fontWeight: 800, color: T.accent, fontFamily: FONT_DISPLAY, marginBottom: 8, textTransform: "uppercase", letterSpacing: 1 }}>Quick Start Guide</div>
+                {[
+                  { icon: "⭐", text: "Tap Growth to level up ATK, HP & DEF" },
+                  { icon: "✨", text: "Tap Summon to pull new equipment" },
+                  { icon: "🗡️", text: "Equip your best gear for more power" },
+                  { icon: "📜", text: "Complete Quests for gold & diamonds" },
+                  { icon: "🏰", text: "Try Dungeons for big rewards" },
+                ].map((tip, i) => (
+                  <div key={i} style={{ display: "flex", alignItems: "center", gap: 8, padding: "6px 0", borderTop: i > 0 ? "1px solid #ffffff06" : "none" }}>
+                    <span style={{ fontSize: 16, width: 24, textAlign: "center" }}>{tip.icon}</span>
+                    <span style={{ fontSize: 11, color: T.textSec }}>{tip.text}</span>
+                  </div>
+                ))}
+              </div>
+            </>)}
+            {tutorialStep === 1 && (<>
+              <div style={{ textAlign: "center", marginBottom: 16 }}>
+                <div style={{ fontSize: 48, marginBottom: 8 }}>⭐</div>
+                <div style={{ fontSize: 18, fontWeight: 900, color: T.white, fontFamily: FONT_DISPLAY, marginBottom: 4 }}>Growth</div>
+                <div style={{ fontSize: 11, color: T.textSec, lineHeight: 1.6 }}>Spend gold to level up your base stats. ATK increases damage, HP keeps you alive, DEF reduces damage taken. Growth is your most reliable path to power!</div>
+              </div>
+              <div style={{ background: "#ffffff06", borderRadius: 10, padding: 12, marginBottom: 16 }}>
+                {["ATK — Your damage per hit. Prioritize this early!", "HP — Your health pool. Level when you keep dying.", "DEF — Damage reduction. Helps on tough bosses."].map((t, i) => (
+                  <div key={i} style={{ fontSize: 11, color: T.textSec, padding: "5px 0", borderTop: i > 0 ? "1px solid #ffffff06" : "none" }}>{["🗡️", "❤️", "🛡️"][i]} {t}</div>
+                ))}
+              </div>
+            </>)}
+            {tutorialStep === 2 && (<>
+              <div style={{ textAlign: "center", marginBottom: 16 }}>
+                <div style={{ fontSize: 48, marginBottom: 8 }}>✨</div>
+                <div style={{ fontSize: 18, fontWeight: 900, color: T.white, fontFamily: FONT_DISPLAY, marginBottom: 4 }}>Summoning & Equipment</div>
+                <div style={{ fontSize: 11, color: T.textSec, lineHeight: 1.6 }}>Spend diamonds to summon equipment. Each piece has random stats and a rarity tier. Merge 5 of the same rarity to get a higher tier!</div>
+              </div>
+              <div style={{ background: "#ffffff06", borderRadius: 10, padding: 12, marginBottom: 16 }}>
+                {["Equip your best gear in each slot", "Merge 5 same-rarity items → next tier", "Lock items you want to keep (🔒)", "Use Auto-Dismantle to sell low-tier drops"].map((t, i) => (
+                  <div key={i} style={{ fontSize: 11, color: T.textSec, padding: "5px 0", borderTop: i > 0 ? "1px solid #ffffff06" : "none" }}>💡 {t}</div>
+                ))}
+              </div>
+            </>)}
+            {tutorialStep === 3 && (<>
+              <div style={{ textAlign: "center", marginBottom: 16 }}>
+                <div style={{ fontSize: 48, marginBottom: 8 }}>🔄</div>
+                <div style={{ fontSize: 18, fontWeight: 900, color: T.white, fontFamily: FONT_DISPLAY, marginBottom: 4 }}>Prestige & Progression</div>
+                <div style={{ fontSize: 11, color: T.textSec, lineHeight: 1.6 }}>When you hit stage 50+, you can Prestige (Rebirth). This resets your stage but grants permanent Prestige Souls for powerful upgrades.</div>
+              </div>
+              <div style={{ background: "#ffffff06", borderRadius: 10, padding: 12, marginBottom: 16 }}>
+                {["Rebirth unlocks at Stage 50", "Prestige Souls boost ALL your stats permanently", "Spend souls on Prestige Skills for huge bonuses", "Each rebirth goes faster than the last!"].map((t, i) => (
+                  <div key={i} style={{ fontSize: 11, color: T.textSec, padding: "5px 0", borderTop: i > 0 ? "1px solid #ffffff06" : "none" }}>🔮 {t}</div>
+                ))}
+              </div>
+            </>)}
+            {tutorialStep === 4 && (<>
+              <div style={{ textAlign: "center", marginBottom: 16 }}>
+                <div style={{ fontSize: 48, marginBottom: 8 }}>🎮</div>
+                <div style={{ fontSize: 18, fontWeight: 900, color: T.white, fontFamily: FONT_DISPLAY, marginBottom: 4 }}>You're Ready!</div>
+                <div style={{ fontSize: 11, color: T.textSec, lineHeight: 1.6 }}>There's tons more to discover — pets, dungeons, raids, costumes, gems, tower climbing, boss rush, and more. Explore the ⋯ More menu on the right side!</div>
+              </div>
+              <div style={{ background: "#ffffff06", borderRadius: 10, padding: 12, marginBottom: 16 }}>
+                {[
+                  { icon: "🐾", text: "Collect Pets for passive stat boosts" },
+                  { icon: "🏰", text: "Clear Dungeons for growth & diamonds" },
+                  { icon: "⚔️", text: "Raid bosses for exclusive accessories" },
+                  { icon: "📜", text: "Daily & Weekly quests refresh regularly" },
+                  { icon: "💎", text: "Earn offline diamonds every minute!" },
+                ].map((tip, i) => (
+                  <div key={i} style={{ display: "flex", alignItems: "center", gap: 8, padding: "5px 0", borderTop: i > 0 ? "1px solid #ffffff06" : "none" }}>
+                    <span style={{ fontSize: 14, width: 22, textAlign: "center" }}>{tip.icon}</span>
+                    <span style={{ fontSize: 11, color: T.textSec }}>{tip.text}</span>
+                  </div>
+                ))}
+              </div>
+            </>)}
+            <div style={{ display: "flex", gap: 8, justifyContent: "center" }}>
+              {tutorialStep > 0 && <div onClick={() => setTutorialStep(s => s - 1)} style={{ padding: "10px 20px", borderRadius: 8, cursor: "pointer", background: "#ffffff08", border: "1px solid #ffffff10", fontSize: 12, fontWeight: 700, color: T.textSec, fontFamily: FONT_DISPLAY }}>Back</div>}
+              {tutorialStep < 4 ? (
+                <div onClick={() => setTutorialStep(s => s + 1)} style={{ padding: "10px 24px", borderRadius: 8, cursor: "pointer", background: `linear-gradient(135deg, ${T.accent}, ${T.purple})`, fontSize: 12, fontWeight: 900, color: T.white, fontFamily: FONT_DISPLAY, boxShadow: `0 4px 15px ${T.accent}40` }}>{tutorialStep === 0 ? "Let's Go!" : "Next"}</div>
+              ) : (
+                <div onClick={() => setTutorialStep(-1)} style={{ padding: "10px 24px", borderRadius: 8, cursor: "pointer", background: `linear-gradient(135deg, ${T.success}, ${T.teal})`, fontSize: 12, fontWeight: 900, color: T.white, fontFamily: FONT_DISPLAY, boxShadow: `0 4px 15px ${T.success}40` }}>Start Playing!</div>
+              )}
+            </div>
+            <div style={{ display: "flex", justifyContent: "center", gap: 6, marginTop: 12 }}>
+              {[0,1,2,3,4].map(i => (<div key={i} style={{ width: i === tutorialStep ? 16 : 6, height: 6, borderRadius: 3, background: i === tutorialStep ? T.accent : "#ffffff15", transition: "all 0.3s" }} />))}
+            </div>
+            {tutorialStep === 0 && <div onClick={() => setTutorialStep(-1)} style={{ textAlign: "center", marginTop: 10, fontSize: 10, color: T.textDim, cursor: "pointer" }}>Skip tutorial</div>}
+          </div>
+        </div>
+      )}
+
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&family=DM+Sans:wght@400;500;600;700&display=swap');
         * { box-sizing: border-box; margin: 0; padding: 0; }

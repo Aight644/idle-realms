@@ -177,6 +177,57 @@ function generateEquipment(type) {
 }
 
 // ─── GACHA LEVEL ───
+
+// ─── WEAPON EVOLUTION TREE ───
+const WEAPON_EVOLUTIONS = [
+  { id: "wev_1", name: "Iron Sword", emoji: "🗡️", tier: 1, cost: 0, atkBonus: 0, color: T.textSec },
+  { id: "wev_2", name: "Steel Blade", emoji: "⚔️", tier: 2, cost: 500, atkBonus: 15, color: T.rarUncommon },
+  { id: "wev_3", name: "Shadow Edge", emoji: "🔪", tier: 3, cost: 2000, atkBonus: 45, color: T.rarRare },
+  { id: "wev_4", name: "Flaming Sword", emoji: "🔥", tier: 4, cost: 8000, atkBonus: 120, color: T.rarEpic },
+  { id: "wev_5", name: "Void Slasher", emoji: "💜", tier: 5, cost: 25000, atkBonus: 300, color: T.rarLegendary },
+  { id: "wev_6", name: "Divine Blade", emoji: "✨", tier: 6, cost: 80000, atkBonus: 700, color: T.rarMythic },
+  { id: "wev_7", name: "God Cleaver", emoji: "⚡", tier: 7, cost: 250000, atkBonus: 1500, color: T.rarGod },
+];
+
+// ─── EQUIPMENT SET BONUSES ───
+const EQUIP_SETS = [
+  { id: "set_shadow", name: "Shadow Set", pieces: ["weapon", "armor", "helm"], bonus2: { atkPct: 5 }, bonus3: { atkPct: 12, critRate: 5 }, aura: "#8b5cf6", desc: "2pc: +5% ATK | 3pc: +12% ATK, +5% Crit" },
+  { id: "set_iron", name: "Iron Fortress", pieces: ["armor", "helm", "boots"], bonus2: { defPct: 8 }, bonus3: { defPct: 18, hpPct: 10 }, aura: "#6b7280", desc: "2pc: +8% DEF | 3pc: +18% DEF, +10% HP" },
+  { id: "set_crit", name: "Assassin's Edge", pieces: ["weapon", "gloves", "ring"], bonus2: { critRate: 4 }, bonus3: { critRate: 10, critDmg: 25 }, aura: "#ef4444", desc: "2pc: +4% Crit | 3pc: +10% Crit, +25% CritDmg" },
+  { id: "set_void", name: "Void Regalia", pieces: ["weapon", "armor", "helm", "boots", "gloves"], bonus2: { atkPct: 3 }, bonus3: { atkPct: 8, defPct: 5 }, bonus5: { atkPct: 20, defPct: 15, hpPct: 15, critRate: 5 }, aura: "#a855f7", desc: "2/3/5pc: Growing power" },
+];
+
+// ─── STAGE HAZARDS ───
+const STAGE_HAZARDS = [
+  null, // Ch1 Meadow - no hazard
+  { name: "Cave Collapse", emoji: "🪨", dmgPct: 3, interval: 8000, color: "#78909c", desc: "Falling rocks deal 3% HP" },
+  { name: "Poison Bog", emoji: "☠️", dmgPct: 2, interval: 5000, color: "#66bb6a", desc: "Poison ticks 2% HP every 5s" },
+  { name: "Cursed Ground", emoji: "💀", dmgPct: 4, interval: 10000, color: "#a1887f", desc: "Curse drains 4% HP every 10s" },
+  { name: "Lava Floor", emoji: "🌋", dmgPct: 5, interval: 6000, color: "#ff7043", desc: "Lava burns 5% HP every 6s" },
+  { name: "Void Drain", emoji: "🕳️", dmgPct: 3, interval: 4000, color: "#b388ff", desc: "Void saps 3% HP every 4s" },
+  { name: "Lightning Storm", emoji: "⚡", dmgPct: 6, interval: 7000, color: "#ffca28", desc: "Lightning strikes for 6% HP" },
+  { name: "Reality Tear", emoji: "🌀", dmgPct: 4, interval: 3000, color: "#ea80fc", desc: "Reality tears for 4% HP every 3s" },
+];
+
+// ─── CHALLENGE STAGES ───
+const CHALLENGES = [
+  { id: "ch_noCrit", name: "No Critical", emoji: "🚫", desc: "Critical hits disabled", condition: "noCrit", reward: { diamonds: 30, gold: 5000 }, minStage: 30, color: T.danger },
+  { id: "ch_speed", name: "Speed Run", emoji: "⏱️", desc: "Clear 10 stages in 60s", condition: "speedRun", stages: 10, timeLimit: 60, reward: { diamonds: 50, gold: 8000 }, minStage: 50, color: T.info },
+  { id: "ch_glass", name: "Glass Cannon", emoji: "💔", desc: "1 HP, 5x ATK", condition: "glassCannon", reward: { diamonds: 40, gold: 6000 }, minStage: 40, color: T.warning },
+  { id: "ch_tank", name: "Immovable", emoji: "🛡️", desc: "5x HP, 0.3x ATK", condition: "tank", reward: { diamonds: 35, gold: 5000 }, minStage: 35, color: T.success },
+  { id: "ch_poison", name: "Toxic Trial", emoji: "☠️", desc: "Lose 1% HP per second", condition: "poison", reward: { diamonds: 45, gold: 7000 }, minStage: 60, color: "#66bb6a" },
+  { id: "ch_boss", name: "Boss Gauntlet", emoji: "👑", desc: "5 bosses in a row", condition: "bossGauntlet", reward: { diamonds: 80, gold: 15000, souls: 5 }, minStage: 100, color: T.gold },
+];
+
+// ─── TRAINING DOJO ───
+const DOJO_SLOTS = [
+  { id: "dojo_atk", name: "Attack Training", emoji: "⚔️", stat: "atk", baseRate: 0.5, color: T.danger },
+  { id: "dojo_def", name: "Defense Training", emoji: "🛡️", stat: "def", baseRate: 0.4, color: T.info },
+  { id: "dojo_hp", name: "Vitality Training", emoji: "❤️", stat: "hp", baseRate: 2, color: T.success },
+  { id: "dojo_crit", name: "Precision Training", emoji: "🎯", stat: "critRate", baseRate: 0.1, color: T.warning },
+];
+
+
 const GACHA_LEVELS = [
   { level: 1, summons: 0, label: "Bronze", color: "#cd7f32", bonus: 0 },
   { level: 2, summons: 20, label: "Silver", color: "#c0c0c0", bonus: 3 },
@@ -861,6 +912,11 @@ const DEFAULT_SAVE = () => ({
   bestiary: {}, // { chapterIdx_monsterIdx: killCount }
   gems: [], // { id, tier, stat, value }
   socketedGems: {}, // { equipSlot: [gemId, gemId] }
+  weaponEvo: 1, // weapon evolution tier
+  rage: 0, // rage meter 0-100
+  dojoTraining: {}, // { slotId: { startTime, stat, rate } }
+  dojoStats: { atk: 0, def: 0, hp: 0, critRate: 0 }, // permanent dojo bonuses
+  challengesCompleted: {}, // { challengeId: true }
 });
 
 // ═══════════════════════════════════════════════
@@ -1236,6 +1292,12 @@ function GameUI({ account, initialSave, onLogout }) {
   // Gems
   const [gems, setGems] = useState(() => sv.gems || []);
   const [socketedGems, setSocketedGems] = useState(() => sv.socketedGems || {});
+  const [weaponEvo, setWeaponEvo] = useState(() => sv.weaponEvo || 1);
+  const [rage, setRage] = useState(0);
+  const [dojoTraining, setDojoTraining] = useState(() => sv.dojoTraining || {});
+  const [dojoStats, setDojoStats] = useState(() => sv.dojoStats || { atk: 0, def: 0, hp: 0, critRate: 0 });
+  const [challengesCompleted, setChallengesCompleted] = useState(() => sv.challengesCompleted || {});
+  const [hazardFlash, setHazardFlash] = useState(null);
 
   const buyRelic = useCallback((relicId) => {
     const r = RELICS.find(x => x.id === relicId);
@@ -1684,11 +1746,28 @@ function GameUI({ account, initialSave, onLogout }) {
   }, [socketedGems, gems]);
 
 
-  const totalAtk = Math.floor((baseAtk + equipBonus.atk + enhanceBonus.atk + (costumeBonus.atkFlat || 0) + (relicBonus.atk || 0) + (insigniaBonus.atkFlat || 0) + (titleBonus.atkFlat || 0) + (emblemBonus.atkFlat || 0) + (figureBonus.atkFlat || 0) + (gemBonus.atkFlat || 0)) * (1 + ((petBonus.atkPct || 0) + (costumeBonus.atkPct || 0) + (relicBonus.atkPct || 0) + (insigniaBonus.atkPct || 0) + (passiveBonus.atkPct || 0) + (titleBonus.atkPct || 0) + (emblemBonus.atkPct || 0) + (resonanceBonus.atkPct || 0) + (figureBonus.atkPct || 0) + (gemBonus.atkPct || 0)) / 100) * prestigeMult);
-  const totalDef = Math.floor((baseDef + equipBonus.def + enhanceBonus.def + (costumeBonus.defFlat || 0) + (relicBonus.def || 0) + (insigniaBonus.defFlat || 0) + (titleBonus.defFlat || 0) + (emblemBonus.defFlat || 0) + (figureBonus.defFlat || 0) + (gemBonus.defFlat || 0)) * (1 + ((petBonus.defPct || 0) + (costumeBonus.defPct || 0) + (relicBonus.defPct || 0) + (insigniaBonus.defPct || 0) + (passiveBonus.defPct || 0) + (titleBonus.defPct || 0) + (emblemBonus.defPct || 0) + (resonanceBonus.defPct || 0) + (figureBonus.defPct || 0)) / 100) * prestigeMult);
-  const totalMaxHp = Math.floor((baseHp + equipBonus.hp + enhanceBonus.hp + (costumeBonus.hpFlat || 0) + (relicBonus.hp || 0) + (insigniaBonus.hpFlat || 0) + (titleBonus.hpFlat || 0) + (emblemBonus.hpFlat || 0) + (figureBonus.hpFlat || 0) + (gemBonus.hpFlat || 0)) * (1 + ((petBonus.hpPct || 0) + (costumeBonus.hpPct || 0) + (relicBonus.hpPct || 0) + (insigniaBonus.hpPct || 0) + (passiveBonus.hpPct || 0) + (titleBonus.hpPct || 0) + (emblemBonus.hpPct || 0) + (resonanceBonus.hpPct || 0) + (figureBonus.hpPct || 0)) / 100) * prestigeMult);
-  const critRate = Math.min(80, (equipBonus.critRate || 0) + enhanceBonus.critRate + (petBonus.critRate || 0) + (costumeBonus.critRate || 0) + (relicBonus.critRate || 0) + (insigniaBonus.critRate || 0) + (passiveBonus.critRate || 0) + (titleBonus.critRate || 0) + (emblemBonus.critRate || 0) + (resonanceBonus.critRate || 0) + (figureBonus.critRate || 0) + (gemBonus.critRate || 0));
-  const critDmg = 150 + (equipBonus.critDmg || 0) + enhanceBonus.critDmg + (petBonus.critDmg || 0) + (costumeBonus.critDmg || 0) + (relicBonus.critDmg || 0) + (insigniaBonus.critDmg || 0) + (passiveBonus.critDmg || 0) + (titleBonus.critDmg || 0) + (emblemBonus.critDmg || 0) + (resonanceBonus.critDmg || 0) + (figureBonus.critDmg || 0) + (gemBonus.critDmg || 0);
+  // Equipment set bonus calculation
+  const setBonus = useMemo(() => {
+    const b = { atkPct: 0, defPct: 0, hpPct: 0, critRate: 0, critDmg: 0 };
+    const equippedTypes = Object.entries(equipped).filter(([, v]) => v).map(([k]) => k);
+    EQUIP_SETS.forEach(set => {
+      const matched = set.pieces.filter(p => equippedTypes.includes(p)).length;
+      const apply = (bonus) => { Object.entries(bonus).forEach(([k, v]) => { b[k] = (b[k] || 0) + v; }); };
+      if (matched >= 5 && set.bonus5) apply(set.bonus5);
+      else if (matched >= 3 && set.bonus3) apply(set.bonus3);
+      else if (matched >= 2 && set.bonus2) apply(set.bonus2);
+    });
+    return b;
+  }, [equipped]);
+
+  // Weapon evolution bonus
+  const wEvo = WEAPON_EVOLUTIONS[weaponEvo - 1] || WEAPON_EVOLUTIONS[0];
+
+  const totalAtk = Math.floor((baseAtk + equipBonus.atk + enhanceBonus.atk + (costumeBonus.atkFlat || 0) + (relicBonus.atk || 0) + (insigniaBonus.atkFlat || 0) + (titleBonus.atkFlat || 0) + (emblemBonus.atkFlat || 0) + (figureBonus.atkFlat || 0) + (gemBonus.atkFlat || 0) + wEvo.atkBonus + (dojoStats.atk || 0)) * (1 + ((petBonus.atkPct || 0) + (costumeBonus.atkPct || 0) + (relicBonus.atkPct || 0) + (insigniaBonus.atkPct || 0) + (passiveBonus.atkPct || 0) + (titleBonus.atkPct || 0) + (emblemBonus.atkPct || 0) + (resonanceBonus.atkPct || 0) + (figureBonus.atkPct || 0) + (gemBonus.atkPct || 0) + (setBonus.atkPct || 0)) / 100) * prestigeMult);
+  const totalDef = Math.floor((baseDef + equipBonus.def + enhanceBonus.def + (costumeBonus.defFlat || 0) + (relicBonus.def || 0) + (insigniaBonus.defFlat || 0) + (titleBonus.defFlat || 0) + (emblemBonus.defFlat || 0) + (figureBonus.defFlat || 0) + (gemBonus.defFlat || 0) + (dojoStats.def || 0)) * (1 + ((petBonus.defPct || 0) + (costumeBonus.defPct || 0) + (relicBonus.defPct || 0) + (insigniaBonus.defPct || 0) + (passiveBonus.defPct || 0) + (titleBonus.defPct || 0) + (emblemBonus.defPct || 0) + (resonanceBonus.defPct || 0) + (figureBonus.defPct || 0) + (setBonus.defPct || 0)) / 100) * prestigeMult);
+  const totalMaxHp = Math.floor((baseHp + equipBonus.hp + enhanceBonus.hp + (costumeBonus.hpFlat || 0) + (relicBonus.hp || 0) + (insigniaBonus.hpFlat || 0) + (titleBonus.hpFlat || 0) + (emblemBonus.hpFlat || 0) + (figureBonus.hpFlat || 0) + (gemBonus.hpFlat || 0) + (dojoStats.hp || 0)) * (1 + ((petBonus.hpPct || 0) + (costumeBonus.hpPct || 0) + (relicBonus.hpPct || 0) + (insigniaBonus.hpPct || 0) + (passiveBonus.hpPct || 0) + (titleBonus.hpPct || 0) + (emblemBonus.hpPct || 0) + (resonanceBonus.hpPct || 0) + (figureBonus.hpPct || 0) + (setBonus.hpPct || 0)) / 100) * prestigeMult);
+  const critRate = Math.min(80, (equipBonus.critRate || 0) + enhanceBonus.critRate + (petBonus.critRate || 0) + (costumeBonus.critRate || 0) + (relicBonus.critRate || 0) + (insigniaBonus.critRate || 0) + (passiveBonus.critRate || 0) + (titleBonus.critRate || 0) + (emblemBonus.critRate || 0) + (resonanceBonus.critRate || 0) + (figureBonus.critRate || 0) + (gemBonus.critRate || 0) + (setBonus.critRate || 0) + (dojoStats.critRate || 0));
+  const critDmg = 150 + (equipBonus.critDmg || 0) + enhanceBonus.critDmg + (petBonus.critDmg || 0) + (costumeBonus.critDmg || 0) + (relicBonus.critDmg || 0) + (insigniaBonus.critDmg || 0) + (passiveBonus.critDmg || 0) + (titleBonus.critDmg || 0) + (emblemBonus.critDmg || 0) + (resonanceBonus.critDmg || 0) + (figureBonus.critDmg || 0) + (gemBonus.critDmg || 0) + (setBonus.critDmg || 0);
   const goldMult = 1 + ((petBonus.goldPct || 0) + (costumeBonus.goldPct || 0) + (relicBonus.goldPct || 0) + (insigniaBonus.goldPct || 0) + (passiveBonus.goldPct || 0) + (titleBonus.goldPct || 0) + (emblemBonus.goldPct || 0) + (resonanceBonus.goldPct || 0) + (figureBonus.goldPct || 0)) / 100;
 
   // Tap-to-attack handler
@@ -1715,6 +1794,35 @@ function GameUI({ account, initialSave, onLogout }) {
     incrementCombo();
     if (wasCrit) { triggerFlash(T.warning); triggerShake(); }
   }, [isBattling, totalAtk, critRate, critDmg, triggerHeroAttack, addDmgNumber, incrementCombo, triggerFlash, triggerShake]);
+
+  // ─── WEAPON EVOLUTION ───
+  const evolveWeapon = useCallback(() => {
+    const nextTier = weaponEvo + 1;
+    if (nextTier > WEAPON_EVOLUTIONS.length) return;
+    const next = WEAPON_EVOLUTIONS[nextTier - 1];
+    if (gold < next.cost) return;
+    setGold(g => g - next.cost);
+    setWeaponEvo(nextTier);
+  }, [weaponEvo, gold]);
+
+  // ─── DOJO TRAINING ───
+  const startDojoTraining = useCallback((slotId) => {
+    const slot = DOJO_SLOTS.find(s => s.id === slotId);
+    if (!slot || dojoTraining[slotId]) return;
+    setDojoTraining(prev => ({ ...prev, [slotId]: { startTime: Date.now(), stat: slot.stat, rate: slot.baseRate } }));
+  }, [dojoTraining]);
+
+  const collectDojoTraining = useCallback((slotId) => {
+    const training = dojoTraining[slotId];
+    if (!training) return;
+    const elapsed = Math.floor((Date.now() - training.startTime) / 1000);
+    const hours = elapsed / 3600;
+    const gain = Math.floor(training.rate * hours * 10) / 10;
+    if (gain > 0) {
+      setDojoStats(prev => ({ ...prev, [training.stat]: (prev[training.stat] || 0) + gain }));
+    }
+    setDojoTraining(prev => { const n = { ...prev }; delete n[slotId]; return n; });
+  }, [dojoTraining]);
 
 // Tower of Trials - fight one floor
   const attemptTowerFloor = useCallback(() => {
@@ -1847,6 +1955,7 @@ function GameUI({ account, initialSave, onLogout }) {
     autoDismantle, lockedEquipment, petLevels, battlePassXp, battlePassLevel, battlePassClaimed, battlePassPremium,
     tutorialDone: tutorialStep === -1,
     bestiary, gems, socketedGems,
+    weaponEvo, dojoTraining, dojoStats, challengesCompleted,
     player: { hp: playerHp, maxHp: totalMaxHp },
     isPremium: false, storePurchases: {},
     lastActiveTime: Date.now(),
@@ -2060,7 +2169,7 @@ function GameUI({ account, initialSave, onLogout }) {
     const step = 100, baseAtkSpd = 1200, mSpd = 2500;
     const spdBonus = Math.min(0.5, (equipBonus.spd || 0) * 0.01); // SPD: each point = 1% faster, max 50%
     const atkSpd = Math.floor(baseAtkSpd * (1 - spdBonus));
-    let pE = 0, mE = 0;
+    let pE = 0, mE = 0, hzE = 0;
     const skillCDs = {};
 
     battleRef.current = setInterval(() => {
@@ -2068,7 +2177,29 @@ function GameUI({ account, initialSave, onLogout }) {
         if (!prev) return prev;
         let { enemies, killCount, targetKills, stageGold, monster, stageNum, spawnIdx } = prev;
         let newEnemies = enemies.map(e => ({ ...e })); // shallow copy
-        pE += step; mE += step;
+        pE += step; mE += step; hzE += step;
+
+        // ── STAGE HAZARD ──
+        const chIdx = Math.min(Math.floor((stageNum - 1) / 50), STAGE_HAZARDS.length - 1);
+        const hazard = STAGE_HAZARDS[chIdx];
+        if (hazard && hzE >= hazard.interval) {
+          hzE = 0;
+          const hzDmg = Math.max(1, Math.floor(maxHpRef.current * hazard.dmgPct / 100));
+          setPlayerHp(hp => Math.max(1, hp - hzDmg));
+          addDmgNumber(hzDmg, "left", false, hazard.emoji);
+          setHazardFlash(hazard.color);
+          setTimeout(() => setHazardFlash(null), 300);
+        }
+
+        // ── COMPANION PET ATTACK ──
+        if (pE % 3000 < step && activePets.length > 0) {
+          const petDmg = Math.max(1, Math.floor(totalAtk * 0.15));
+          const aliveForPet = newEnemies.filter(e => e.hp > 0 && e.anim !== "die");
+          if (aliveForPet.length > 0) {
+            aliveForPet[0].hp -= petDmg;
+            addDmgNumber(petDmg, "right", false, "🐾");
+          }
+        }
 
         // Tick skill cooldowns
         equippedSkills.filter(Boolean).forEach(sid => {
@@ -2096,6 +2227,29 @@ function GameUI({ account, initialSave, onLogout }) {
           addDmgNumber(dmg, "right", wasCrit);
           incrementCombo();
           if (wasCrit) { triggerFlash(T.warning); triggerShake(); }
+
+          // Rage meter — fills on hit, unleashes ultimate at 100
+          setRage(prev => {
+            const gain = wasCrit ? 8 : 3;
+            const next = Math.min(100, prev + gain);
+            if (next >= 100) {
+              // ULTIMATE ATTACK
+              setTimeout(() => {
+                const ultDmg = Math.floor(totalAtk * 5);
+                setBattleState(p => {
+                  if (!p) return p;
+                  return { ...p, enemies: p.enemies.map(e => e.hp > 0 ? { ...e, hp: e.hp - ultDmg, anim: "hit" } : e) };
+                });
+                addDmgNumber(ultDmg, "right", true, "💥");
+                triggerShake("heavy");
+                triggerFlash("#ff4444");
+                showAnnouncer("ULTIMATE!", "#ff4444");
+                setRage(0);
+              }, 100);
+              return 0;
+            }
+            return next;
+          });
 
           // Auto-cast skills on same or other targets
           equippedSkills.filter(Boolean).forEach(sid => {
@@ -2595,15 +2749,7 @@ function GameUI({ account, initialSave, onLogout }) {
                 </div>
               ))}
 
-              {/* ── COMBO COUNTER ── */}
-              {comboCount >= 3 && (
-                <div key={comboCount} style={{ position: "absolute", right: "5%", top: "15%", zIndex: 30, pointerEvents: "none", animation: "comboPopIn 0.3s ease" }}>
-                  <div style={{ fontSize: comboCount >= 10 ? 28 : comboCount >= 7 ? 24 : 20, fontWeight: 900, fontFamily: FONT_DISPLAY, color: comboCount >= 10 ? "#ff4444" : comboCount >= 7 ? "#ff8800" : "#ffcc00", textShadow: `0 0 12px ${comboCount >= 10 ? "#ff000080" : comboCount >= 7 ? "#ff880080" : "#ffcc0060"}, 0 2px 6px #000`, letterSpacing: 1 }}>
-                    {comboCount}-HIT!
-                  </div>
-                  <div style={{ fontSize: 8, fontWeight: 700, color: "#ffffff80", fontFamily: FONT_DISPLAY, textAlign: "center", textShadow: "0 1px 3px #000" }}>COMBO</div>
-                </div>
-              )}
+              {/* ── COMBO COUNTER (disabled - re-enable with buffs) ── */}
 
               {/* ── ANNOUNCER TEXT ── */}
               {announcer && (
@@ -2651,6 +2797,45 @@ function GameUI({ account, initialSave, onLogout }) {
                   animation: `dustDrift ${6 + i * 1.5}s linear infinite ${i * 1.2}s`,
                 }} />
               ))}
+
+              {/* ── RAGE METER ── */}
+              {rage > 0 && (
+                <div style={{ position: "absolute", bottom: "8%", left: "10%", right: "10%", zIndex: 15, pointerEvents: "none" }}>
+                  <div style={{ fontSize: 7, fontWeight: 800, color: rage >= 80 ? "#ff4444" : "#ff8800", fontFamily: FONT_DISPLAY, textAlign: "center", marginBottom: 2, textShadow: "0 1px 3px #000" }}>
+                    {rage >= 100 ? "⚡ ULTIMATE READY!" : `🔥 RAGE ${rage}%`}
+                  </div>
+                  <div style={{ height: 5, borderRadius: 3, background: "#ffffff15", border: "1px solid #ffffff20", overflow: "hidden" }}>
+                    <div style={{ width: `${rage}%`, height: "100%", borderRadius: 3, background: rage >= 80 ? "linear-gradient(90deg, #ff4444, #ff0000)" : "linear-gradient(90deg, #ff8800, #ffcc00)", transition: "width 0.2s", boxShadow: rage >= 80 ? "0 0 8px #ff000080" : "none", animation: rage >= 90 ? "pulse 0.5s infinite" : "none" }} />
+                  </div>
+                </div>
+              )}
+
+              {/* ── HAZARD WARNING ── */}
+              {(() => { const h = STAGE_HAZARDS[Math.min(Math.floor((currentStage - 1) / 50), STAGE_HAZARDS.length - 1)]; return h ? (
+                <div style={{ position: "absolute", top: 18, right: 8, zIndex: 15, padding: "2px 6px", borderRadius: 4, background: `${h.color}20`, border: `1px solid ${h.color}40`, fontSize: 7, fontWeight: 700, color: h.color, fontFamily: FONT_DISPLAY }}>
+                  {h.emoji} {h.name}
+                </div>
+              ) : null; })()}
+
+              {/* ── HAZARD FLASH OVERLAY ── */}
+              {hazardFlash && <div style={{ position: "absolute", inset: 0, background: `${hazardFlash}15`, zIndex: 12, pointerEvents: "none", animation: "fadeOut 0.3s ease forwards" }} />}
+
+              {/* ── COMPANION PET ── */}
+              {activePets.length > 0 && (() => { const pd = PET_DEFS.find(p => p.name === activePets[0]); return pd ? (
+                <div style={{ position: "absolute", left: "12%", bottom: "35%", zIndex: 8, animation: "fighterIdle 3s ease-in-out infinite 1s" }}>
+                  <div style={{ fontSize: 24, filter: "drop-shadow(0 2px 4px #00000080)" }}>{pd.emoji}</div>
+                  <div style={{ fontSize: 6, fontWeight: 700, color: T.textSec, fontFamily: FONT_DISPLAY, textAlign: "center", textShadow: "0 1px 2px #000" }}>{pd.name}</div>
+                </div>
+              ) : null; })()}
+
+              {/* ── SET BONUS AURA ── */}
+              {(() => {
+                const equippedTypes = Object.entries(equipped).filter(([, v]) => v).map(([k]) => k);
+                const activeSet = EQUIP_SETS.find(set => set.pieces.filter(p => equippedTypes.includes(p)).length >= 3);
+                return activeSet ? (
+                  <div style={{ position: "absolute", left: "22%", bottom: "25%", width: 80, height: 80, borderRadius: "50%", background: `radial-gradient(circle, ${activeSet.aura}20 0%, transparent 70%)`, border: `1px solid ${activeSet.aura}15`, zIndex: 3, pointerEvents: "none", animation: "pulse 3s infinite", transform: "translateX(-50%)" }} />
+                ) : null;
+              })()}
 
               {/* ── TAP INDICATOR ── */}
               <div style={{ position: "absolute", bottom: "32%", left: "50%", transform: "translateX(-50%)", zIndex: 5, pointerEvents: "none", opacity: 0.25, animation: "pulse 2s infinite" }}>
@@ -2763,7 +2948,7 @@ function GameUI({ account, initialSave, onLogout }) {
               {showMoreMenu&&(<div style={{position:"absolute",right:46,top:"18%",zIndex:30,background:"linear-gradient(145deg,#1c1f2e,#141620)",border:"1px solid #ffffff15",borderRadius:14,padding:12,boxShadow:"0 12px 40px #000000b0",minWidth:180}}>
               <div style={{fontSize:10,fontWeight:800,color:T.textDim,fontFamily:FONT_DISPLAY,marginBottom:8,textAlign:"center",textTransform:"uppercase",letterSpacing:2}}>More</div>
               <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:6}}>
-              {[{icon:"🏺",label:"Relics",p:"relics"},{icon:"🏅",label:"Emblems",p:"emblems"},{icon:"🗼",label:"Tower",p:"tower"},{icon:"⚗️",label:"Alchemy",p:"alchemy"},{icon:"💠",label:"Gems",p:"gems"},{icon:"✨",label:"Resonance",p:"resonance"},{icon:"🎡",label:"Spin",p:"spin"},{icon:"💥",label:"BossRush",p:"bossrush"},{icon:"📖",label:"Bestiary",p:"bestiary"},{icon:"🏷️",label:"Titles",p:"titles"},{icon:"🗿",label:"Figures",p:"figures"},{icon:"💀",label:"Achieve",p:"achievements"},{icon:"📊",label:"Power",p:"power"}].map(b=>(<div key={b.p} onClick={()=>{nav(b.p);setShowMoreMenu(false)}} style={{display:"flex",flexDirection:"column",alignItems:"center",gap:3,padding:"8px 2px",borderRadius:8,cursor:"pointer",background:"#ffffff04",border:"1px solid #ffffff08"}}><span style={{fontSize:18}}>{b.icon}</span><span style={{fontSize:7,fontWeight:700,color:T.textSec,fontFamily:FONT_DISPLAY,lineHeight:1}}>{b.label}</span></div>))}
+              {[{icon:"🏺",label:"Relics",p:"relics"},{icon:"🏅",label:"Emblems",p:"emblems"},{icon:"🗼",label:"Tower",p:"tower"},{icon:"⚗️",label:"Alchemy",p:"alchemy"},{icon:"💠",label:"Gems",p:"gems"},{icon:"✨",label:"Resonance",p:"resonance"},{icon:"🎡",label:"Spin",p:"spin"},{icon:"💥",label:"BossRush",p:"bossrush"},{icon:"📖",label:"Bestiary",p:"bestiary"},{icon:"🏷️",label:"Titles",p:"titles"},{icon:"🗿",label:"Figures",p:"figures"},{icon:"💀",label:"Achieve",p:"achievements"},{icon:"📊",label:"Power",p:"power"},{icon:"⚔️",label:"Evolve",p:"weaponevo"},{icon:"🥋",label:"Dojo",p:"dojo"},{icon:"🎯",label:"Challenge",p:"challenge"}].map(b=>(<div key={b.p} onClick={()=>{nav(b.p);setShowMoreMenu(false)}} style={{display:"flex",flexDirection:"column",alignItems:"center",gap:3,padding:"8px 2px",borderRadius:8,cursor:"pointer",background:"#ffffff04",border:"1px solid #ffffff08"}}><span style={{fontSize:18}}>{b.icon}</span><span style={{fontSize:7,fontWeight:700,color:T.textSec,fontFamily:FONT_DISPLAY,lineHeight:1}}>{b.label}</span></div>))}
               </div></div>)}
             </div>
 
@@ -2864,7 +3049,7 @@ function GameUI({ account, initialSave, onLogout }) {
             <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
               <div onClick={() => nav("battle")} style={{ width: 28, height: 28, borderRadius: 7, cursor: "pointer", background: "#1a1c28", border: "1px solid #ffffff0a", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 10, color: T.textSec, fontWeight: 900 }}>✕</div>
               <div style={{ flex: 1, fontSize: 13, fontWeight: 900, color: T.white, fontFamily: FONT_DISPLAY, textTransform: "uppercase" }}>
-                {page === "dungeons" && "🏰 Dungeons"}{page === "growth" && "📊 Growth"}{page === "equipment" && "🗡️ Equipment"}{page === "summon" && "✨ Summon"}{page === "pets" && "🐾 Pets"}{page === "costumes" && "👗 Costumes"}{page === "achievements" && "💀 Achievements"}{page === "stats" && "📈 Stats"}{page === "settings" && "⚙️ Settings"}{page === "quests" && "📜 Quests"}{page === "relics" && "🏺 Relics & Insignias"}{page === "prestige" && "🔄 Rebirth & Skills"}{page === "raids" && "⚔️ Raid Bosses"}{page === "shop" && "🛒 Shop"}{page === "titles" && "🏷️ Titles"}{page === "emblems" && "🏅 Emblems"}{page === "alchemy" && "⚗️ Alchemy"}{page === "resonance" && "✨ Resonance"}{page === "figures" && "🗿 Figures"}{page === "tower" && "🗼 Tower"}{page === "spin" && "🎡 Daily Spin"}{page === "bossrush" && "💥 Boss Rush"}{page === "battlepass" && "🎖️ Battle Pass"}{page === "gems" && "💎 Gems"}{page === "bestiary" && "📖 Bestiary"}{page === "power" && "📊 Power"}
+                {page === "dungeons" && "🏰 Dungeons"}{page === "growth" && "📊 Growth"}{page === "equipment" && "🗡️ Equipment"}{page === "summon" && "✨ Summon"}{page === "pets" && "🐾 Pets"}{page === "costumes" && "👗 Costumes"}{page === "achievements" && "💀 Achievements"}{page === "stats" && "📈 Stats"}{page === "settings" && "⚙️ Settings"}{page === "quests" && "📜 Quests"}{page === "relics" && "🏺 Relics & Insignias"}{page === "prestige" && "🔄 Rebirth & Skills"}{page === "raids" && "⚔️ Raid Bosses"}{page === "shop" && "🛒 Shop"}{page === "titles" && "🏷️ Titles"}{page === "emblems" && "🏅 Emblems"}{page === "alchemy" && "⚗️ Alchemy"}{page === "resonance" && "✨ Resonance"}{page === "figures" && "🗿 Figures"}{page === "tower" && "🗼 Tower"}{page === "spin" && "🎡 Daily Spin"}{page === "bossrush" && "💥 Boss Rush"}{page === "battlepass" && "🎖️ Battle Pass"}{page === "gems" && "💎 Gems"}{page === "bestiary" && "📖 Bestiary"}{page === "power" && "📊 Power"}{page === "weaponevo" && "⚔️ Weapon Evolution"}{page === "dojo" && "🥋 Training Dojo"}{page === "challenge" && "🎯 Challenges"}
               </div>
               <div style={{ display: "flex", gap: 5 }}>
                 <span style={{ fontSize: 9, fontWeight: 800, color: "#f5c542", fontFamily: FONT_DISPLAY }}>🪙{fmt(gold)}</span>
@@ -4074,6 +4259,123 @@ function GameUI({ account, initialSave, onLogout }) {
             </div>
           )}
 
+          {/* ═══ WEAPON EVOLUTION ═══ */}
+          {page === "weaponevo" && (
+            <div>
+              <div style={{ fontSize: 13, fontWeight: 900, color: T.white, fontFamily: FONT_DISPLAY, marginBottom: 4 }}>⚔️ WEAPON EVOLUTION</div>
+              <div style={{ fontSize: 8, color: T.textDim, marginBottom: 12 }}>Evolve your weapon for permanent ATK bonuses</div>
+              {/* Current weapon */}
+              <div style={{ textAlign: "center", padding: "14px 10px", borderRadius: 10, background: `${wEvo.color}08`, border: `1px solid ${wEvo.color}25`, marginBottom: 12 }}>
+                <div style={{ fontSize: 36, marginBottom: 6, filter: `drop-shadow(0 0 12px ${wEvo.color}60)` }}>{wEvo.emoji}</div>
+                <div style={{ fontSize: 14, fontWeight: 900, color: wEvo.color, fontFamily: FONT_DISPLAY }}>{wEvo.name}</div>
+                <div style={{ fontSize: 9, color: T.textSec, marginTop: 2 }}>Tier {wEvo.tier} • +{wEvo.atkBonus} ATK</div>
+              </div>
+              {/* Evolution tree */}
+              {WEAPON_EVOLUTIONS.map((evo, i) => {
+                const unlocked = weaponEvo > i;
+                const current = weaponEvo === i + 1;
+                const isNext = weaponEvo === i;
+                return (
+                  <div key={evo.id} style={{ display: "flex", alignItems: "center", gap: 8, padding: "6px 8px", marginBottom: 4, borderRadius: 8, background: current ? `${evo.color}12` : "#ffffff04", border: current ? `1px solid ${evo.color}30` : "1px solid #ffffff06", opacity: unlocked || current || isNext ? 1 : 0.4 }}>
+                    <span style={{ fontSize: 22, filter: unlocked || current ? `drop-shadow(0 0 6px ${evo.color}40)` : "grayscale(1)" }}>{evo.emoji}</span>
+                    <div style={{ flex: 1 }}>
+                      <div style={{ fontSize: 10, fontWeight: 800, color: unlocked || current ? evo.color : T.textDim, fontFamily: FONT_DISPLAY }}>{evo.name}</div>
+                      <div style={{ fontSize: 8, color: T.textDim }}>+{evo.atkBonus} ATK{evo.cost > 0 ? ` • ${fmt(evo.cost)} gold` : " • Free"}</div>
+                    </div>
+                    {current && <span style={{ fontSize: 8, fontWeight: 800, color: T.success, fontFamily: FONT_DISPLAY }}>EQUIPPED</span>}
+                    {isNext && evo.cost > 0 && (
+                      <div onClick={evolveWeapon} style={{ padding: "4px 10px", borderRadius: 6, background: gold >= evo.cost ? T.accent : "#ffffff15", cursor: gold >= evo.cost ? "pointer" : "default", fontSize: 8, fontWeight: 800, color: T.white, fontFamily: FONT_DISPLAY, opacity: gold >= evo.cost ? 1 : 0.5 }}>EVOLVE</div>
+                    )}
+                    {unlocked && !current && <span style={{ fontSize: 10, color: T.success }}>✓</span>}
+                  </div>
+                );
+              })}
+            </div>
+          )}
+
+          {/* ═══ TRAINING DOJO ═══ */}
+          {page === "dojo" && (
+            <div>
+              <div style={{ fontSize: 13, fontWeight: 900, color: T.white, fontFamily: FONT_DISPLAY, marginBottom: 4 }}>🥋 TRAINING DOJO</div>
+              <div style={{ fontSize: 8, color: T.textDim, marginBottom: 12 }}>Train stats while idle. Collect after time passes.</div>
+              {/* Permanent bonuses */}
+              <div style={{ padding: "8px 10px", borderRadius: 8, background: "#ffffff04", border: "1px solid #ffffff08", marginBottom: 12 }}>
+                <div style={{ fontSize: 9, fontWeight: 800, color: T.accent, fontFamily: FONT_DISPLAY, marginBottom: 6 }}>PERMANENT BONUSES</div>
+                <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
+                  {Object.entries(dojoStats).filter(([, v]) => v > 0).map(([k, v]) => (
+                    <span key={k} style={{ fontSize: 9, color: T.textSec }}>+{v.toFixed(1)} {k.toUpperCase()}</span>
+                  ))}
+                  {Object.values(dojoStats).every(v => v === 0) && <span style={{ fontSize: 8, color: T.textDim }}>No bonuses yet — start training!</span>}
+                </div>
+              </div>
+              {/* Training slots */}
+              {DOJO_SLOTS.map(slot => {
+                const training = dojoTraining[slot.id];
+                const elapsed = training ? Math.floor((Date.now() - training.startTime) / 1000) : 0;
+                const hours = elapsed / 3600;
+                const pendingGain = training ? Math.floor(slot.baseRate * hours * 10) / 10 : 0;
+                return (
+                  <div key={slot.id} style={{ padding: "10px 10px", borderRadius: 8, background: `${slot.color}06`, border: `1px solid ${slot.color}15`, marginBottom: 6 }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 4 }}>
+                      <div>
+                        <span style={{ fontSize: 16, marginRight: 6 }}>{slot.emoji}</span>
+                        <span style={{ fontSize: 11, fontWeight: 800, color: slot.color, fontFamily: FONT_DISPLAY }}>{slot.name}</span>
+                      </div>
+                      <span style={{ fontSize: 8, color: T.textDim }}>+{slot.baseRate}/hr {slot.stat.toUpperCase()}</span>
+                    </div>
+                    {training ? (
+                      <div>
+                        <div style={{ fontSize: 8, color: T.textSec, marginBottom: 4 }}>Training for {hours >= 1 ? `${Math.floor(hours)}h ${Math.floor((hours % 1) * 60)}m` : `${Math.floor(hours * 60)}m ${elapsed % 60}s`} • Pending: +{pendingGain.toFixed(1)} {slot.stat.toUpperCase()}</div>
+                        <div onClick={() => collectDojoTraining(slot.id)} style={{ padding: "5px 12px", borderRadius: 6, background: pendingGain > 0 ? T.success : "#ffffff15", cursor: "pointer", fontSize: 9, fontWeight: 800, color: T.white, fontFamily: FONT_DISPLAY, textAlign: "center" }}>
+                          {pendingGain > 0 ? `COLLECT +${pendingGain.toFixed(1)}` : "COLLECTING..."}
+                        </div>
+                      </div>
+                    ) : (
+                      <div onClick={() => startDojoTraining(slot.id)} style={{ padding: "5px 12px", borderRadius: 6, background: T.accent, cursor: "pointer", fontSize: 9, fontWeight: 800, color: T.white, fontFamily: FONT_DISPLAY, textAlign: "center" }}>
+                        START TRAINING
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          )}
+
+          {/* ═══ CHALLENGES ═══ */}
+          {page === "challenge" && (
+            <div>
+              <div style={{ fontSize: 13, fontWeight: 900, color: T.white, fontFamily: FONT_DISPLAY, marginBottom: 4 }}>🎯 CHALLENGE STAGES</div>
+              <div style={{ fontSize: 8, color: T.textDim, marginBottom: 12 }}>Special conditions for bonus rewards</div>
+              {CHALLENGES.map(ch => {
+                const completed = challengesCompleted[ch.id];
+                const locked = highestStage < ch.minStage;
+                return (
+                  <div key={ch.id} style={{ padding: "10px 10px", borderRadius: 8, background: completed ? `${T.success}08` : locked ? "#ffffff02" : `${ch.color}06`, border: `1px solid ${completed ? T.success : ch.color}${locked ? "08" : "20"}`, marginBottom: 6, opacity: locked ? 0.4 : 1 }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 4 }}>
+                      <div>
+                        <span style={{ fontSize: 16, marginRight: 6 }}>{ch.emoji}</span>
+                        <span style={{ fontSize: 11, fontWeight: 800, color: completed ? T.success : ch.color, fontFamily: FONT_DISPLAY }}>{ch.name}</span>
+                      </div>
+                      {completed && <span style={{ fontSize: 10, color: T.success }}>✓ DONE</span>}
+                      {locked && <span style={{ fontSize: 8, color: T.textDim }}>Stage {ch.minStage}+</span>}
+                    </div>
+                    <div style={{ fontSize: 8, color: T.textSec, marginBottom: 6 }}>{ch.desc}</div>
+                    <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+                      {ch.reward.gold && <span style={{ fontSize: 7, color: T.gold, background: `${T.gold}10`, padding: "1px 5px", borderRadius: 4 }}>💰 {fmt(ch.reward.gold)}</span>}
+                      {ch.reward.diamonds && <span style={{ fontSize: 7, color: T.info, background: `${T.info}10`, padding: "1px 5px", borderRadius: 4 }}>💎 {ch.reward.diamonds}</span>}
+                      {ch.reward.souls && <span style={{ fontSize: 7, color: "#a855f7", background: "#a855f710", padding: "1px 5px", borderRadius: 4 }}>👻 {ch.reward.souls}</span>}
+                    </div>
+                    {!completed && !locked && (
+                      <div style={{ marginTop: 6, padding: "5px 12px", borderRadius: 6, background: `${ch.color}20`, cursor: "pointer", fontSize: 9, fontWeight: 800, color: ch.color, fontFamily: FONT_DISPLAY, textAlign: "center", border: `1px solid ${ch.color}30` }}>
+                        COMING SOON
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          )}
+
           {/* ═══ BESTIARY ═══ */}
           {page === "bestiary" && (
             <div>
@@ -4858,6 +5160,7 @@ function GameUI({ account, initialSave, onLogout }) {
         @keyframes bossNameEnter { 0% { opacity: 0; transform: translateY(15px); } 100% { opacity: 1; transform: translateY(0); } }
         @keyframes particleFloat { 0%, 100% { transform: translateY(0) translateX(0); opacity: 0.3; } 25% { transform: translateY(-20px) translateX(5px); opacity: 0.6; } 50% { transform: translateY(-40px) translateX(-3px); opacity: 0.4; } 75% { transform: translateY(-60px) translateX(4px); opacity: 0.2; } }
         @keyframes dustDrift { 0% { transform: translate(0, 0); opacity: 0; } 10% { opacity: 0.4; } 90% { opacity: 0.4; } 100% { transform: translate(30px, -60px); opacity: 0; } }
+        @keyframes fadeOut { 0% { opacity: 1; } 100% { opacity: 0; } }
         @keyframes goldFloat { 0% { opacity: 1; transform: translateX(-50%) translateY(0) scale(0.8); } 20% { opacity: 1; transform: translateX(-50%) translateY(-12px) scale(1.15); } 100% { opacity: 0; transform: translateX(-50%) translateY(-45px) scale(0.6); } }
         @keyframes flashFade { 0% { opacity: 1; } 100% { opacity: 0; } }
         @keyframes portalPulse { 0%, 100% { transform: translateX(-50%) scale(1); opacity: 0.6; } 50% { transform: translateX(-50%) scale(1.1); opacity: 1; } }

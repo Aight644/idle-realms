@@ -179,6 +179,63 @@ const COMBAT_SKILLS = [
   { id: "judgment", name: "Divine Judgment", emoji: "✨", dmgMult: 10.0, cooldown: 30000, desc: "1000% ATK damage", unlockStage: 200, color: T.gold },
 ];
 
+// ─── COSTUMES / SKINS ───
+// Each costume gives stat bonuses and changes the player's visual appearance
+const COSTUMES = [
+  { id: "default", name: "Adventurer", emoji: "🧑‍⚔️", desc: "A humble herb collector turned hero", cost: 0, currency: "free", bonus: {}, tier: "starter", color: T.textSec },
+  { id: "iron_knight", name: "Iron Knight", emoji: "🪖", desc: "Heavy iron armor fit for frontline battle", cost: 500, currency: "gold", bonus: { def: 5, hp: 30 }, tier: "common", color: T.rarCommon },
+  { id: "forest_ranger", name: "Forest Ranger", emoji: "🏹", desc: "Swift woodland garb with sharpened senses", cost: 800, currency: "gold", bonus: { atk: 5, critRate: 2 }, tier: "common", color: T.rarCommon },
+  { id: "shadow_assassin", name: "Shadow Assassin", emoji: "🗡️", desc: "Dark cloak that strikes from the shadows", cost: 2000, currency: "gold", bonus: { atk: 12, critRate: 5, critDmg: 15 }, tier: "uncommon", color: T.rarUncommon },
+  { id: "crimson_berserker", name: "Crimson Berserker", emoji: "🔴", desc: "Blood-red war paint that fuels rage", cost: 5000, currency: "gold", bonus: { atk: 25, hp: 50 }, tier: "uncommon", color: T.rarUncommon },
+  { id: "frost_warden", name: "Frost Warden", emoji: "❄️", desc: "Enchanted ice armor that chills attackers", cost: 12000, currency: "gold", bonus: { def: 20, hp: 80, atk: 10 }, tier: "rare", color: T.rarRare },
+  { id: "flame_lord", name: "Flame Lord", emoji: "🔥", desc: "Blazing armor forged in volcanic fire", cost: 200, currency: "diamonds", bonus: { atk: 35, critDmg: 25 }, tier: "rare", color: T.rarRare },
+  { id: "void_phantom", name: "Void Phantom", emoji: "👻", desc: "Phase through reality itself", cost: 500, currency: "diamonds", bonus: { atk: 20, def: 15, critRate: 8, critDmg: 20 }, tier: "epic", color: T.rarEpic },
+  { id: "celestial_guardian", name: "Celestial Guardian", emoji: "👼", desc: "Blessed by the heavens with divine light", cost: 1000, currency: "diamonds", bonus: { atk: 30, def: 25, hp: 150, critRate: 5 }, tier: "epic", color: T.rarEpic },
+  { id: "dragon_emperor", name: "Dragon Emperor", emoji: "🐲", desc: "Armor crafted from an ancient dragon's scales", cost: 2500, currency: "diamonds", bonus: { atk: 50, def: 35, hp: 200, critRate: 8, critDmg: 30 }, tier: "legendary", color: T.rarLegendary },
+  { id: "god_slayer", name: "God Slayer", emoji: "⚡", desc: "Worn by those who defy the divine", cost: 5000, currency: "diamonds", bonus: { atk: 80, def: 50, hp: 300, critRate: 10, critDmg: 50, goldPct: 10 }, tier: "mythic", color: T.rarMythic },
+  // Special costumes (unlocked by milestones, not purchased)
+  { id: "stage100", name: "Centurion", emoji: "💯", desc: "Awarded for clearing 100 stages", cost: 0, currency: "milestone", milestone: "stage100", bonus: { atk: 15, def: 10, hp: 60 }, tier: "rare", color: T.rarRare },
+  { id: "boss50", name: "Boss Hunter", emoji: "👑", desc: "Awarded for slaying 50 bosses", cost: 0, currency: "milestone", milestone: "boss50", bonus: { atk: 25, critRate: 5, critDmg: 20 }, tier: "epic", color: T.rarEpic },
+  { id: "kills10k", name: "Eternal Warrior", emoji: "⚔️", desc: "Awarded for 10,000 monster kills", cost: 0, currency: "milestone", milestone: "kills10k", bonus: { atk: 40, def: 20, hp: 100, goldPct: 5 }, tier: "legendary", color: T.rarLegendary },
+];
+
+const COSTUME_TIERS = ["starter", "common", "uncommon", "rare", "epic", "legendary", "mythic"];
+
+// Check if a milestone costume is unlocked
+function isMilestoneUnlocked(costumeId, combatStats, highestStage) {
+  const c = COSTUMES.find(x => x.id === costumeId);
+  if (!c || c.currency !== "milestone") return false;
+  if (c.milestone === "stage100") return highestStage >= 100;
+  if (c.milestone === "boss50") return (combatStats.bossesKilled || 0) >= 50;
+  if (c.milestone === "kills10k") return combatStats.kills >= 10000;
+  return false;
+}
+
+// ─── COSTUMES / SKINS ───
+// Costumes are cosmetic outfits with stat bonuses. Buy with diamonds, equip one at a time.
+// Each costume changes the hero's appearance emoji and gives permanent stat bonuses.
+const COSTUMES = [
+  { id: "default", name: "Adventurer", emoji: "🧑‍⚔️", desc: "The classic hero look", rarity: "common", cost: 0, bonuses: {}, owned: true },
+  { id: "knight", name: "Silver Knight", emoji: "🛡️", desc: "Gleaming armor of a royal guard", rarity: "uncommon", cost: 200, bonuses: { defFlat: 10, hpFlat: 50 } },
+  { id: "assassin", name: "Shadow Assassin", emoji: "🗡️", desc: "Darkness is your ally", rarity: "uncommon", cost: 200, bonuses: { atkFlat: 15, critRate: 3 } },
+  { id: "mage", name: "Arcane Mage", emoji: "🧙", desc: "Robes woven with pure mana", rarity: "rare", cost: 500, bonuses: { atkPct: 5, critDmg: 10 } },
+  { id: "berserker", name: "Blood Berserker", emoji: "🪓", desc: "Rage fuels your strikes", rarity: "rare", cost: 500, bonuses: { atkFlat: 25, atkPct: 3, hpFlat: -30 } },
+  { id: "paladin", name: "Holy Paladin", emoji: "⚜️", desc: "Blessed by the light itself", rarity: "epic", cost: 1200, bonuses: { defFlat: 20, hpFlat: 100, hpPct: 3 } },
+  { id: "samurai", name: "Crimson Samurai", emoji: "⛩️", desc: "The way of the blade", rarity: "epic", cost: 1200, bonuses: { atkFlat: 30, critRate: 5, critDmg: 15 } },
+  { id: "necromancer", name: "Necromancer", emoji: "💀", desc: "Command the armies of the dead", rarity: "legendary", cost: 3000, bonuses: { atkPct: 8, goldPct: 10, hpFlat: 80 } },
+  { id: "dragonlord", name: "Dragon Lord", emoji: "🐉", desc: "Bonded with an ancient wyrm", rarity: "legendary", cost: 3000, bonuses: { atkFlat: 50, atkPct: 5, defFlat: 20, critDmg: 20 } },
+  { id: "voidking", name: "Void Emperor", emoji: "🕳️", desc: "The abyss bows to your will", rarity: "mythic", cost: 8000, bonuses: { atkPct: 12, defPct: 8, hpPct: 10, critRate: 5 } },
+  { id: "celestial", name: "Celestial Avatar", emoji: "✨", desc: "Ascended beyond mortal form", rarity: "god", cost: 20000, bonuses: { atkPct: 18, defPct: 12, hpPct: 15, critRate: 8, critDmg: 30, goldPct: 15 } },
+];
+
+// Set bonuses: owning multiple costumes of same rarity gives extra bonuses
+const COSTUME_SET_BONUSES = [
+  { rarity: "uncommon", need: 2, label: "2× Uncommon", bonus: { atkFlat: 5, defFlat: 5 } },
+  { rarity: "rare", need: 2, label: "2× Rare", bonus: { atkPct: 2, hpPct: 2 } },
+  { rarity: "epic", need: 2, label: "2× Epic", bonus: { atkPct: 3, defPct: 3, critRate: 2 } },
+  { rarity: "legendary", need: 2, label: "2× Legendary", bonus: { atkPct: 5, goldPct: 5, critDmg: 10 } },
+];
+
 // ─── DAILY LOGIN REWARDS ───
 const LOGIN_REWARDS = [
   { day: 1, gold: 100, diamonds: 10, label: "100g + 10💎" },
@@ -370,6 +427,7 @@ const DEFAULT_SAVE = () => ({
   pets: [], activePets: [], petSlots: 1,
   gold: 100, diamonds: 50,
   unlockedSkills: ["slash"], equippedSkills: ["slash", null, null],
+  ownedCostumes: ["default"], activeCostume: "default",
   combatStats: { kills: 0, totalDamage: 0, deaths: 0, highestHit: 0, bossesKilled: 0, totalGoldEarned: 0 },
   stats: { timePlayed: 0, loginStreak: 0, lastLoginDay: null, summons: 0, merges: 0 },
   isPremium: false, storePurchases: {},
@@ -554,6 +612,8 @@ function GameUI({ account, initialSave, onLogout }) {
   const [petSlots] = useState(() => sv.petSlots || 1);
   const [unlockedSkills, setUnlockedSkills] = useState(() => sv.unlockedSkills || ["slash"]);
   const [equippedSkills, setEquippedSkills] = useState(() => sv.equippedSkills || ["slash", null, null]);
+  const [ownedCostumes, setOwnedCostumes] = useState(() => sv.ownedCostumes || ["default"]);
+  const [activeCostume, setActiveCostume] = useState(() => sv.activeCostume || "default");
 
   // Combat live
   const [battleState, setBattleState] = useState(null);
@@ -588,12 +648,26 @@ function GameUI({ account, initialSave, onLogout }) {
     return b;
   }, [activePets]);
 
-  const totalAtk = Math.floor((baseAtk + equipBonus.atk) * (1 + (petBonus.atkPct || 0) / 100));
-  const totalDef = Math.floor((baseDef + equipBonus.def) * (1 + (petBonus.defPct || 0) / 100));
-  const totalMaxHp = Math.floor((baseHp + equipBonus.hp) * (1 + (petBonus.hpPct || 0) / 100));
-  const critRate = Math.min(80, (equipBonus.critRate || 0) + (petBonus.critRate || 0));
-  const critDmg = 150 + (equipBonus.critDmg || 0) + (petBonus.critDmg || 0);
-  const goldMult = 1 + (petBonus.goldPct || 0) / 100;
+  // Costume bonuses (active costume + set bonuses)
+  const costumeBonus = useMemo(() => {
+    const b = { atkFlat: 0, defFlat: 0, hpFlat: 0, atkPct: 0, defPct: 0, hpPct: 0, critRate: 0, critDmg: 0, goldPct: 0 };
+    // Active costume bonus
+    const active = COSTUMES.find(c => c.id === activeCostume);
+    if (active) Object.entries(active.bonuses).forEach(([k, v]) => { b[k] = (b[k] || 0) + v; });
+    // Set bonuses from owned costumes
+    COSTUME_SET_BONUSES.forEach(sb => {
+      const count = ownedCostumes.filter(cid => { const c = COSTUMES.find(x => x.id === cid); return c && c.rarity === sb.rarity; }).length;
+      if (count >= sb.need) Object.entries(sb.bonus).forEach(([k, v]) => { b[k] = (b[k] || 0) + v; });
+    });
+    return b;
+  }, [activeCostume, ownedCostumes]);
+
+  const totalAtk = Math.floor((baseAtk + equipBonus.atk + (costumeBonus.atkFlat || 0)) * (1 + ((petBonus.atkPct || 0) + (costumeBonus.atkPct || 0)) / 100));
+  const totalDef = Math.floor((baseDef + equipBonus.def + (costumeBonus.defFlat || 0)) * (1 + ((petBonus.defPct || 0) + (costumeBonus.defPct || 0)) / 100));
+  const totalMaxHp = Math.floor((baseHp + equipBonus.hp + (costumeBonus.hpFlat || 0)) * (1 + ((petBonus.hpPct || 0) + (costumeBonus.hpPct || 0)) / 100));
+  const critRate = Math.min(80, (equipBonus.critRate || 0) + (petBonus.critRate || 0) + (costumeBonus.critRate || 0));
+  const critDmg = 150 + (equipBonus.critDmg || 0) + (petBonus.critDmg || 0) + (costumeBonus.critDmg || 0);
+  const goldMult = 1 + ((petBonus.goldPct || 0) + (costumeBonus.goldPct || 0)) / 100;
   const maxHpRef = useRef(totalMaxHp);
   useEffect(() => { maxHpRef.current = totalMaxHp; }, [totalMaxHp]);
 
@@ -644,10 +718,11 @@ function GameUI({ account, initialSave, onLogout }) {
   const buildSave = useCallback(() => ({
     currentStage, highestStage, growth, gold, diamonds, combatStats, stats, autoProgress,
     equipment, equipped, pets, activePets, petSlots, unlockedSkills, equippedSkills,
+    ownedCostumes, activeCostume,
     player: { hp: playerHp, maxHp: totalMaxHp },
     isPremium: false, storePurchases: {},
     lastActiveTime: Date.now(),
-  }), [currentStage, highestStage, growth, gold, diamonds, combatStats, stats, autoProgress, equipment, equipped, pets, activePets, petSlots, unlockedSkills, equippedSkills, playerHp, totalMaxHp]);
+  }), [currentStage, highestStage, growth, gold, diamonds, combatStats, stats, autoProgress, equipment, equipped, pets, activePets, petSlots, unlockedSkills, equippedSkills, ownedCostumes, activeCostume, playerHp, totalMaxHp]);
 
   useEffect(() => {
     const timer = setInterval(async () => {
@@ -817,6 +892,25 @@ function GameUI({ account, initialSave, onLogout }) {
     addLog(`🔨 Merged 5× ${RARITIES[ri].name} ${type} → ${nextR.name}!`);
   }, [equipment, equipped, addLog]);
 
+  // ─── COSTUMES ───
+  const buyCostume = useCallback((costumeId) => {
+    const c = COSTUMES.find(x => x.id === costumeId);
+    if (!c || ownedCostumes.includes(costumeId) || diamonds < c.cost) return;
+    setDiamonds(d => d - c.cost);
+    setOwnedCostumes(prev => [...prev, costumeId]);
+    addLog(`👗 Purchased costume: ${c.emoji} ${c.name}!`);
+  }, [ownedCostumes, diamonds, addLog]);
+
+  const equipCostume = useCallback((costumeId) => {
+    if (!ownedCostumes.includes(costumeId)) return;
+    setActiveCostume(costumeId);
+  }, [ownedCostumes]);
+
+  const heroEmoji = useMemo(() => {
+    const c = COSTUMES.find(x => x.id === activeCostume);
+    return c?.emoji || "🧑‍⚔️";
+  }, [activeCostume]);
+
   // ─── NAV ───
   const nav = (p) => { setPage(p); setMobileNav(false); };
   const chapter = getChapter(currentStage);
@@ -916,6 +1010,7 @@ function GameUI({ account, initialSave, onLogout }) {
             <div style={{ fontSize: 9, fontWeight: 700, color: T.textDim, padding: "12px 14px 4px", letterSpacing: 1.5, textTransform: "uppercase" }}>Gear</div>
             <SidebarItem icon="🎒" label="Equipment" active={page === "equipment"} onClick={() => nav("equipment")} color={T.warning} badge={`${equipment.length}`} />
             <SidebarItem icon="✨" label="Summon" active={page === "summon"} onClick={() => nav("summon")} color={T.purple} />
+            <SidebarItem icon="👗" label="Costumes" active={page === "costumes"} onClick={() => nav("costumes")} color={T.teal} badge={`${ownedCostumes.length}/${COSTUMES.length}`} />
             <SidebarItem icon="🐾" label="Pets" active={page === "pets"} onClick={() => nav("pets")} color={T.pink} badge={pets.length > 0 ? `${pets.length}` : undefined} />
 
             <div style={{ fontSize: 9, fontWeight: 700, color: T.textDim, padding: "12px 14px 4px", letterSpacing: 1.5, textTransform: "uppercase" }}>Info</div>
@@ -951,11 +1046,18 @@ function GameUI({ account, initialSave, onLogout }) {
             </div>
           </div>
           <div style={{ flex: 1 }} />
+          {/* Power rating */}
+          {!isMobile && (
+            <div style={{ padding: "4px 12px", borderRadius: 99, background: `${T.accent}10`, border: `1px solid ${T.accent}20`, marginRight: 8 }}>
+              <span style={{ fontSize: 10, fontWeight: 700, color: T.accent, fontFamily: FONT_DISPLAY }}>⚡ {fmt(totalAtk + totalDef + totalMaxHp)} CP</span>
+            </div>
+          )}
           <div style={{ display: "flex", gap: isMobile ? 10 : 18, fontSize: 11, fontWeight: 700 }}>
             <span style={{ color: T.danger }}>⚔️{fmt(totalAtk)}</span>
             <span style={{ color: T.info }}>🛡️{fmt(totalDef)}</span>
             <span style={{ color: T.success }}>❤️{fmt(totalMaxHp)}</span>
           </div>
+          <div style={{ width: 30, height: 30, borderRadius: "50%", background: `${T.accent}12`, border: `1px solid ${T.accent}25`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16, marginLeft: 8 }}>{heroEmoji}</div>
         </header>
 
         {/* HP Bar */}
@@ -995,17 +1097,41 @@ function GameUI({ account, initialSave, onLogout }) {
 
                 {/* Battle arena */}
                 <Card glow={monster.isBoss ? T.danger : chapter.color} style={{ marginBottom: 18, padding: isMobile ? 20 : 28 }}>
-                  <div style={{ textAlign: "center", marginBottom: 24 }}>
+                  {/* VS display */}
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: isMobile ? 16 : 40, marginBottom: 20, flexWrap: "wrap" }}>
+                    {/* Hero */}
+                    <div style={{ textAlign: "center" }}>
+                      <div style={{
+                        width: 70, height: 70, borderRadius: "50%", margin: "0 auto 8px",
+                        background: `radial-gradient(circle, ${T.accent}20 0%, transparent 70%)`,
+                        border: `2px solid ${T.accent}40`,
+                        display: "flex", alignItems: "center", justifyContent: "center", fontSize: 34,
+                        boxShadow: `0 0 20px ${T.accent}15`,
+                      }}>{heroEmoji}</div>
+                      <div style={{ fontSize: 12, fontWeight: 700, color: T.white, fontFamily: FONT_DISPLAY }}>{account.displayName}</div>
+                      <div style={{ fontSize: 9, color: T.textDim }}>ATK {fmt(totalAtk)} • DEF {fmt(totalDef)}</div>
+                    </div>
+
+                    {/* VS badge */}
                     <div style={{
-                      width: 90, height: 90, borderRadius: "50%", margin: "0 auto 14px",
-                      background: `radial-gradient(circle, ${chapter.color}20 0%, transparent 70%)`,
-                      border: `2px solid ${monster.isBoss ? T.danger + "50" : chapter.color + "30"}`,
-                      display: "flex", alignItems: "center", justifyContent: "center", fontSize: 44,
-                      boxShadow: `0 0 30px ${chapter.color}15`,
-                      animation: isBattling ? "pulse 2s infinite" : undefined,
-                    }}>{monster.emoji}</div>
-                    <div style={{ fontSize: 18, fontWeight: 800, color: monster.isBoss ? T.danger : T.white, fontFamily: FONT_DISPLAY }}>{monster.name}</div>
-                    <div style={{ fontSize: 11, color: T.textDim, marginTop: 3 }}>ATK {fmt(monster.atk)} • DEF {fmt(monster.def)} • HP {fmt(monster.hp)}</div>
+                      width: 40, height: 40, borderRadius: "50%", background: `${T.danger}18`, border: `1px solid ${T.danger}30`,
+                      display: "flex", alignItems: "center", justifyContent: "center",
+                      fontSize: 12, fontWeight: 900, color: T.danger, fontFamily: FONT_DISPLAY,
+                    }}>VS</div>
+
+                    {/* Monster */}
+                    <div style={{ textAlign: "center" }}>
+                      <div style={{
+                        width: 70, height: 70, borderRadius: "50%", margin: "0 auto 8px",
+                        background: `radial-gradient(circle, ${chapter.color}20 0%, transparent 70%)`,
+                        border: `2px solid ${monster.isBoss ? T.danger + "50" : chapter.color + "30"}`,
+                        display: "flex", alignItems: "center", justifyContent: "center", fontSize: 34,
+                        boxShadow: `0 0 20px ${chapter.color}15`,
+                        animation: isBattling ? "pulse 2s infinite" : undefined,
+                      }}>{monster.emoji}</div>
+                      <div style={{ fontSize: 12, fontWeight: 700, color: monster.isBoss ? T.danger : T.white, fontFamily: FONT_DISPLAY }}>{monster.name}</div>
+                      <div style={{ fontSize: 9, color: T.textDim }}>ATK {fmt(monster.atk)} • DEF {fmt(monster.def)}</div>
+                    </div>
                   </div>
 
                   {/* Monster HP */}
@@ -1316,6 +1442,134 @@ function GameUI({ account, initialSave, onLogout }) {
             </div>
           )}
 
+          {/* ═══ COSTUMES ═══ */}
+          {page === "costumes" && (
+            <div>
+              <PageTitle icon="👗" title="COSTUMES" subtitle={`${ownedCostumes.length}/${COSTUMES.length} collected — equip a look, gain stat bonuses`} />
+
+              {/* Current costume preview */}
+              <Card glow={T.teal} style={{ marginBottom: 18, padding: isMobile ? 24 : 32 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 20, flexWrap: "wrap" }}>
+                  <div style={{
+                    width: 80, height: 80, borderRadius: "50%",
+                    background: `radial-gradient(circle, ${T.teal}20 0%, transparent 70%)`,
+                    border: `2px solid ${T.teal}40`, boxShadow: `0 0 30px ${T.teal}15`,
+                    display: "flex", alignItems: "center", justifyContent: "center", fontSize: 40,
+                    flexShrink: 0,
+                  }}>{heroEmoji}</div>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontSize: 18, fontWeight: 900, color: T.white, fontFamily: FONT_DISPLAY }}>
+                      {COSTUMES.find(c => c.id === activeCostume)?.name || "Adventurer"}
+                    </div>
+                    <div style={{ fontSize: 11, color: T.textSec, marginTop: 2 }}>
+                      {COSTUMES.find(c => c.id === activeCostume)?.desc}
+                    </div>
+                    {(() => {
+                      const c = COSTUMES.find(x => x.id === activeCostume);
+                      const bonusEntries = c ? Object.entries(c.bonuses).filter(([, v]) => v !== 0) : [];
+                      return bonusEntries.length > 0 ? (
+                        <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginTop: 8 }}>
+                          {bonusEntries.map(([k, v]) => (
+                            <Badge key={k} color={v > 0 ? T.success : T.danger}>
+                              {v > 0 ? "+" : ""}{v}{k.includes("Pct") || k === "critRate" || k === "critDmg" || k === "goldPct" ? "%" : ""} {k.replace(/Flat|Pct/g, "").toUpperCase()}
+                            </Badge>
+                          ))}
+                        </div>
+                      ) : null;
+                    })()}
+                  </div>
+                </div>
+              </Card>
+
+              {/* Set bonuses */}
+              <Card style={{ marginBottom: 18 }}>
+                <div style={{ fontSize: 14, fontWeight: 900, color: T.white, marginBottom: 12, fontFamily: FONT_DISPLAY }}>🏅 SET BONUSES</div>
+                <div style={{ display: "grid", gridTemplateColumns: `repeat(auto-fill, minmax(${isMobile ? "100%" : "200px"}, 1fr))`, gap: 8 }}>
+                  {COSTUME_SET_BONUSES.map(sb => {
+                    const count = ownedCostumes.filter(cid => { const c = COSTUMES.find(x => x.id === cid); return c && c.rarity === sb.rarity; }).length;
+                    const active = count >= sb.need;
+                    return (
+                      <div key={sb.rarity} style={{
+                        padding: 12, borderRadius: T.rs,
+                        background: active ? `${T.success}08` : T.bgDeep,
+                        border: `1px solid ${active ? T.success + "30" : T.divider}`,
+                      }}>
+                        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 4 }}>
+                          <span style={{ fontSize: 11, fontWeight: 700, color: active ? T.success : T.textDim }}>{sb.label}</span>
+                          <Badge color={active ? T.success : T.textDim}>{count}/{sb.need}</Badge>
+                        </div>
+                        <div style={{ fontSize: 9, color: active ? T.textSec : T.textDim }}>
+                          {Object.entries(sb.bonus).map(([k, v]) => `+${v}${k.includes("Pct") || k === "critRate" || k === "critDmg" || k === "goldPct" ? "%" : ""} ${k.replace(/Flat|Pct/g, "").toUpperCase()}`).join(", ")}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </Card>
+
+              {/* All costumes grid */}
+              <div style={{ display: "grid", gridTemplateColumns: `repeat(auto-fill, minmax(${isMobile ? "100%" : "260px"}, 1fr))`, gap: 12 }}>
+                {COSTUMES.map(c => {
+                  const owned = ownedCostumes.includes(c.id);
+                  const isActive = activeCostume === c.id;
+                  const canAfford = diamonds >= c.cost;
+                  const rc = rarColor(c.rarity);
+                  const bonusEntries = Object.entries(c.bonuses).filter(([, v]) => v !== 0);
+
+                  return (
+                    <Card key={c.id} glow={isActive ? rc : undefined} hover style={{
+                      position: "relative", overflow: "hidden",
+                      opacity: !owned && !canAfford && c.cost > 0 ? 0.5 : 1,
+                    }}>
+                      {/* Rarity ribbon */}
+                      <div style={{ position: "absolute", top: 10, right: -28, background: rc, color: "#000", fontSize: 8, fontWeight: 800, padding: "2px 32px", transform: "rotate(45deg)", letterSpacing: 0.5 }}>
+                        {RARITIES.find(r => r.id === c.rarity)?.name?.toUpperCase()}
+                      </div>
+
+                      <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 12 }}>
+                        <div style={{
+                          width: 54, height: 54, borderRadius: 14,
+                          background: `${rc}12`, border: `2px solid ${isActive ? rc : rc + "30"}`,
+                          display: "flex", alignItems: "center", justifyContent: "center", fontSize: 28,
+                          boxShadow: isActive ? `0 0 16px ${rc}25` : undefined,
+                          transition: "all 0.2s",
+                        }}>{c.emoji}</div>
+                        <div style={{ flex: 1 }}>
+                          <div style={{ fontSize: 14, fontWeight: 800, color: isActive ? rc : T.white, fontFamily: FONT_DISPLAY }}>{c.name}</div>
+                          <div style={{ fontSize: 10, color: T.textSec }}>{c.desc}</div>
+                        </div>
+                      </div>
+
+                      {/* Stat bonuses */}
+                      {bonusEntries.length > 0 && (
+                        <div style={{ display: "flex", gap: 5, flexWrap: "wrap", marginBottom: 12 }}>
+                          {bonusEntries.map(([k, v]) => (
+                            <Badge key={k} color={v > 0 ? T.success : T.danger} style={{ fontSize: 9 }}>
+                              {v > 0 ? "+" : ""}{v}{k.includes("Pct") || k === "critRate" || k === "critDmg" || k === "goldPct" ? "%" : ""} {k.replace(/Flat|Pct/g, "")}
+                            </Badge>
+                          ))}
+                        </div>
+                      )}
+
+                      {/* Actions */}
+                      {isActive ? (
+                        <Badge color={rc} style={{ padding: "5px 14px", fontSize: 11 }}>✓ Equipped</Badge>
+                      ) : owned ? (
+                        <Btn small color={rc} onClick={() => equipCostume(c.id)}>Equip</Btn>
+                      ) : c.cost === 0 ? (
+                        <Badge color={T.success}>Free</Badge>
+                      ) : (
+                        <Btn small color={canAfford ? T.purple : T.textDim} disabled={!canAfford} onClick={() => buyCostume(c.id)}>
+                          Buy (💎{fmt(c.cost)})
+                        </Btn>
+                      )}
+                    </Card>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
           {/* ═══ STATS ═══ */}
           {page === "stats" && (
             <div>
@@ -1330,6 +1584,7 @@ function GameUI({ account, initialSave, onLogout }) {
                   { i: "⚔️", v: fmt(combatStats.kills), l: "KILLS", c: T.danger },
                   { i: "🔥", v: String(stats.loginStreak || 0), l: "LOGIN STREAK", c: T.orange },
                   { i: "🎒", v: String(equipment.length), l: "EQUIPMENT", c: T.warning },
+                  { i: "👗", v: `${ownedCostumes.length}/${COSTUMES.length}`, l: "COSTUMES", c: T.teal },
                 ].map((s, i) => (
                   <Card key={i} style={{ textAlign: "center", padding: 16 }}>
                     <div style={{ fontSize: 22, marginBottom: 4 }}>{s.i}</div>
@@ -1393,7 +1648,7 @@ function GameUI({ account, initialSave, onLogout }) {
 
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body { background: ${T.bg}; overflow: hidden; }
-        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar { width: 5px; }
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: ${T.divider}; border-radius: 99px; }
         ::-webkit-scrollbar-thumb:hover { background: ${T.textDim}; }
@@ -1402,6 +1657,12 @@ function GameUI({ account, initialSave, onLogout }) {
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
         @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
         @keyframes shimmer { 0% { transform: translateX(-100%); } 100% { transform: translateX(400%); } }
+        @keyframes glow { 0%, 100% { box-shadow: 0 0 8px var(--glow-color, #6366f140); } 50% { box-shadow: 0 0 20px var(--glow-color, #6366f160); } }
+        @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-4px); } }
+        @keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-2px); } 75% { transform: translateX(2px); } }
+
+        /* Smooth page transitions */
+        [data-page] { animation: fadeIn 0.2s ease; }
       `}</style>
     </div>
   );

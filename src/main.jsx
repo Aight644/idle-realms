@@ -1,10 +1,9 @@
-import React from 'react'
-import ReactDOM from 'react-dom/client'
-import './storage.js'
-import App from './App.jsx'
+import React from 'react';
+import ReactDOM from 'react-dom/client';
+import BladeRealmsApp from './App.jsx';
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
-    <App />
+    <BladeRealmsApp />
   </React.StrictMode>
-)
+);

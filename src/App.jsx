@@ -179,6 +179,40 @@ const COMBAT_SKILLS = [
   { id: "judgment", name: "Divine Judgment", emoji: "✨", dmgMult: 10.0, cooldown: 30000, desc: "1000% ATK damage", unlockStage: 200, color: T.gold },
 ];
 
+// ─── RELICS ───
+// Relics are permanent artifacts with stat bonuses. Upgrade with gold to increase their power.
+const RELICS = [
+  { id: "blade_of_dawn", name: "Blade of Dawn", emoji: "🗡️", desc: "A sword forged at first light", rarity: "rare", cost: 300, baseStat: "atk", baseVal: 10, perLvl: 5, maxLvl: 50, color: T.danger },
+  { id: "aegis_shield", name: "Aegis Shield", emoji: "🛡️", desc: "An indestructible barrier", rarity: "rare", cost: 300, baseStat: "def", baseVal: 8, perLvl: 3, maxLvl: 50, color: T.info },
+  { id: "heart_crystal", name: "Heart Crystal", emoji: "💎", desc: "Pulsing with vital energy", rarity: "rare", cost: 300, baseStat: "hp", baseVal: 50, perLvl: 25, maxLvl: 50, color: T.success },
+  { id: "lucky_coin", name: "Lucky Coin", emoji: "🪙", desc: "Fortune favors the bold", rarity: "epic", cost: 800, baseStat: "goldPct", baseVal: 5, perLvl: 2, maxLvl: 30, color: T.gold },
+  { id: "eye_of_storm", name: "Eye of Storm", emoji: "🌀", desc: "See weakness in all things", rarity: "epic", cost: 800, baseStat: "critRate", baseVal: 3, perLvl: 1, maxLvl: 25, color: T.orange },
+  { id: "blood_gem", name: "Blood Gem", emoji: "🔴", desc: "Amplifies critical strikes", rarity: "epic", cost: 800, baseStat: "critDmg", baseVal: 10, perLvl: 5, maxLvl: 30, color: T.warning },
+  { id: "shadow_orb", name: "Shadow Orb", emoji: "🟣", desc: "Darkness empowers all stats", rarity: "legendary", cost: 2000, baseStat: "atkPct", baseVal: 3, perLvl: 1, maxLvl: 20, color: T.purple },
+  { id: "titan_core", name: "Titan Core", emoji: "🔶", desc: "The heart of an ancient titan", rarity: "legendary", cost: 2000, baseStat: "hpPct", baseVal: 3, perLvl: 1, maxLvl: 20, color: T.teal },
+  { id: "void_shard", name: "Void Shard", emoji: "🕳️", desc: "A fragment of the void itself", rarity: "mythic", cost: 5000, baseStat: "allPct", baseVal: 2, perLvl: 1, maxLvl: 15, color: "#a855f7" },
+  { id: "god_seal", name: "God Seal", emoji: "⚜️", desc: "Seal of a forgotten deity", rarity: "god", cost: 12000, baseStat: "allFlat", baseVal: 20, perLvl: 10, maxLvl: 10, color: "#fbbf24" },
+];
+
+function relicUpgradeCost(level) { return Math.floor(200 * Math.pow(1.15, level)); }
+
+// ─── INSIGNIAS ───
+// Insignias are milestone badges that give permanent buffs. Earned automatically.
+const INSIGNIAS = [
+  { id: "ins_first_blood", name: "First Blood", emoji: "🩸", desc: "Kill your first monster", check: (s) => s.combatStats.kills >= 1, bonus: { atkFlat: 5 }, color: T.danger },
+  { id: "ins_centurion", name: "Centurion", emoji: "🏛️", desc: "Kill 100 monsters", check: (s) => s.combatStats.kills >= 100, bonus: { atkPct: 2 }, color: T.danger },
+  { id: "ins_warlord", name: "Warlord", emoji: "⚔️", desc: "Kill 1,000 monsters", check: (s) => s.combatStats.kills >= 1000, bonus: { atkPct: 5 }, color: T.danger },
+  { id: "ins_stage10", name: "Journeyman", emoji: "🥾", desc: "Reach stage 10", check: (s) => s.highestStage >= 10, bonus: { hpFlat: 50 }, color: T.info },
+  { id: "ins_stage50", name: "Veteran", emoji: "🎖️", desc: "Reach stage 50", check: (s) => s.highestStage >= 50, bonus: { atkFlat: 20, defFlat: 10 }, color: T.accent },
+  { id: "ins_stage100", name: "Champion", emoji: "👑", desc: "Reach stage 100", check: (s) => s.highestStage >= 100, bonus: { atkPct: 5, defPct: 3, hpPct: 3 }, color: T.gold },
+  { id: "ins_stage200", name: "Legend", emoji: "🌟", desc: "Reach stage 200", check: (s) => s.highestStage >= 200, bonus: { atkPct: 8, critRate: 3, critDmg: 15 }, color: T.purple },
+  { id: "ins_boss25", name: "Boss Slayer", emoji: "💀", desc: "Kill 25 bosses", check: (s) => (s.combatStats.bossesKilled || 0) >= 25, bonus: { critDmg: 10 }, color: T.orange },
+  { id: "ins_boss100", name: "Raid Master", emoji: "🏆", desc: "Kill 100 bosses", check: (s) => (s.combatStats.bossesKilled || 0) >= 100, bonus: { atkPct: 3, goldPct: 5 }, color: T.warning },
+  { id: "ins_rich", name: "Tycoon", emoji: "💰", desc: "Earn 100,000 total gold", check: (s) => (s.combatStats.totalGoldEarned || 0) >= 100000, bonus: { goldPct: 8 }, color: T.gold },
+  { id: "ins_collector", name: "Collector", emoji: "🎒", desc: "Own 20 equipment pieces", check: (s) => (s.equipCount || 0) >= 20, bonus: { defPct: 3 }, color: T.teal },
+  { id: "ins_summoner", name: "Summoner", emoji: "✨", desc: "Summon 50 items", check: (s) => (s.stats.summons || 0) >= 50, bonus: { critRate: 2, atkFlat: 15 }, color: T.purple },
+];
+
 // ─── COSTUMES / SKINS ───
 // Costumes are cosmetic outfits with stat bonuses. Buy with diamonds, equip one at a time.
 // Each costume changes the hero's appearance emoji and gives permanent stat bonuses.
@@ -542,6 +576,7 @@ const DEFAULT_SAVE = () => ({
   achievementsUnlocked: {},
   dungeonAttempts: {},
   questProgress: { day: "", week: "", daily: {}, weekly: {}, claimedDaily: {}, claimedWeekly: {} },
+  ownedRelics: {}, earnedInsignias: {},
   combatStats: { kills: 0, totalDamage: 0, deaths: 0, highestHit: 0, bossesKilled: 0, totalGoldEarned: 0 },
   stats: { timePlayed: 0, loginStreak: 0, lastLoginDay: null, summons: 0, merges: 0 },
   isPremium: false, storePurchases: {},
@@ -841,6 +876,42 @@ function GameUI({ account, initialSave, onLogout }) {
   const [dungeonAttempts, setDungeonAttempts] = useState(() => sv.dungeonAttempts || {});
   const [dungeonResult, setDungeonResult] = useState(null);
 
+  // ─── RELICS & INSIGNIAS ───
+  const [ownedRelics, setOwnedRelics] = useState(() => sv.ownedRelics || {}); // { relicId: level }
+  const [earnedInsignias, setEarnedInsignias] = useState(() => sv.earnedInsignias || {});
+
+  const buyRelic = useCallback((relicId) => {
+    const r = RELICS.find(x => x.id === relicId);
+    if (!r || ownedRelics[relicId] !== undefined || diamonds < r.cost) return;
+    setDiamonds(d => d - r.cost);
+    setOwnedRelics(prev => ({ ...prev, [relicId]: 1 }));
+  }, [diamonds, ownedRelics]);
+
+  const upgradeRelic = useCallback((relicId) => {
+    const r = RELICS.find(x => x.id === relicId);
+    if (!r) return;
+    const lvl = ownedRelics[relicId];
+    if (lvl === undefined || lvl >= r.maxLvl) return;
+    const cost = relicUpgradeCost(lvl);
+    if (gold < cost) return;
+    setGold(g => g - cost);
+    setOwnedRelics(prev => ({ ...prev, [relicId]: lvl + 1 }));
+  }, [gold, ownedRelics]);
+
+  const upgradeRelicMax = useCallback((relicId) => {
+    const r = RELICS.find(x => x.id === relicId);
+    if (!r) return;
+    let lvl = ownedRelics[relicId];
+    if (lvl === undefined || lvl >= r.maxLvl) return;
+    let rem = gold, spent = 0;
+    while (lvl < r.maxLvl) {
+      const cost = relicUpgradeCost(lvl);
+      if (rem < cost) break;
+      rem -= cost; spent += cost; lvl++;
+    }
+    if (spent > 0) { setGold(g => g - spent); setOwnedRelics(prev => ({ ...prev, [relicId]: lvl })); }
+  }, [gold, ownedRelics]);
+
   // ─── QUEST STATE ───
   const [questProgress, setQuestProgress] = useState(() => {
     const qp = sv.questProgress || {};
@@ -965,12 +1036,37 @@ function GameUI({ account, initialSave, onLogout }) {
     return b;
   }, [activeCostume, ownedCostumes]);
 
-  const totalAtk = Math.floor((baseAtk + equipBonus.atk + (costumeBonus.atkFlat || 0)) * (1 + ((petBonus.atkPct || 0) + (costumeBonus.atkPct || 0)) / 100));
-  const totalDef = Math.floor((baseDef + equipBonus.def + (costumeBonus.defFlat || 0)) * (1 + ((petBonus.defPct || 0) + (costumeBonus.defPct || 0)) / 100));
-  const totalMaxHp = Math.floor((baseHp + equipBonus.hp + (costumeBonus.hpFlat || 0)) * (1 + ((petBonus.hpPct || 0) + (costumeBonus.hpPct || 0)) / 100));
-  const critRate = Math.min(80, (equipBonus.critRate || 0) + (petBonus.critRate || 0) + (costumeBonus.critRate || 0));
-  const critDmg = 150 + (equipBonus.critDmg || 0) + (petBonus.critDmg || 0) + (costumeBonus.critDmg || 0);
-  const goldMult = 1 + ((petBonus.goldPct || 0) + (costumeBonus.goldPct || 0)) / 100;
+  // Relic bonuses
+  const relicBonus = useMemo(() => {
+    const b = { atk: 0, def: 0, hp: 0, critRate: 0, critDmg: 0, goldPct: 0, atkPct: 0, defPct: 0, hpPct: 0 };
+    Object.entries(ownedRelics).forEach(([rid, lvl]) => {
+      const r = RELICS.find(x => x.id === rid);
+      if (!r || lvl === undefined) return;
+      const val = r.baseVal + (lvl - 1) * r.perLvl;
+      if (r.baseStat === "allPct") { b.atkPct += val; b.defPct += val; b.hpPct += val; }
+      else if (r.baseStat === "allFlat") { b.atk += val; b.def += Math.floor(val * 0.7); b.hp += val * 5; }
+      else { b[r.baseStat] = (b[r.baseStat] || 0) + val; }
+    });
+    return b;
+  }, [ownedRelics]);
+
+  // Insignia bonuses
+  const insigniaBonus = useMemo(() => {
+    const b = { atkFlat: 0, defFlat: 0, hpFlat: 0, atkPct: 0, defPct: 0, hpPct: 0, critRate: 0, critDmg: 0, goldPct: 0 };
+    Object.keys(earnedInsignias).forEach(iid => {
+      const ins = INSIGNIAS.find(x => x.id === iid);
+      if (!ins) return;
+      Object.entries(ins.bonus).forEach(([k, v]) => { b[k] = (b[k] || 0) + v; });
+    });
+    return b;
+  }, [earnedInsignias]);
+
+  const totalAtk = Math.floor((baseAtk + equipBonus.atk + (costumeBonus.atkFlat || 0) + (relicBonus.atk || 0) + (insigniaBonus.atkFlat || 0)) * (1 + ((petBonus.atkPct || 0) + (costumeBonus.atkPct || 0) + (relicBonus.atkPct || 0) + (insigniaBonus.atkPct || 0)) / 100));
+  const totalDef = Math.floor((baseDef + equipBonus.def + (costumeBonus.defFlat || 0) + (relicBonus.def || 0) + (insigniaBonus.defFlat || 0)) * (1 + ((petBonus.defPct || 0) + (costumeBonus.defPct || 0) + (relicBonus.defPct || 0) + (insigniaBonus.defPct || 0)) / 100));
+  const totalMaxHp = Math.floor((baseHp + equipBonus.hp + (costumeBonus.hpFlat || 0) + (relicBonus.hp || 0) + (insigniaBonus.hpFlat || 0)) * (1 + ((petBonus.hpPct || 0) + (costumeBonus.hpPct || 0) + (relicBonus.hpPct || 0) + (insigniaBonus.hpPct || 0)) / 100));
+  const critRate = Math.min(80, (equipBonus.critRate || 0) + (petBonus.critRate || 0) + (costumeBonus.critRate || 0) + (relicBonus.critRate || 0) + (insigniaBonus.critRate || 0));
+  const critDmg = 150 + (equipBonus.critDmg || 0) + (petBonus.critDmg || 0) + (costumeBonus.critDmg || 0) + (relicBonus.critDmg || 0) + (insigniaBonus.critDmg || 0);
+  const goldMult = 1 + ((petBonus.goldPct || 0) + (costumeBonus.goldPct || 0) + (relicBonus.goldPct || 0) + (insigniaBonus.goldPct || 0)) / 100;
   const maxHpRef = useRef(totalMaxHp);
   useEffect(() => { maxHpRef.current = totalMaxHp; }, [totalMaxHp]);
 
@@ -1022,10 +1118,11 @@ function GameUI({ account, initialSave, onLogout }) {
     currentStage, highestStage, growth, gold, diamonds, combatStats, stats, autoProgress,
     equipment, equipped, pets, activePets, petSlots, unlockedSkills, equippedSkills,
     ownedCostumes, activeCostume, achievementsUnlocked, dungeonAttempts, questProgress,
+    ownedRelics, earnedInsignias,
     player: { hp: playerHp, maxHp: totalMaxHp },
     isPremium: false, storePurchases: {},
     lastActiveTime: Date.now(),
-  }), [currentStage, highestStage, growth, gold, diamonds, combatStats, stats, autoProgress, equipment, equipped, pets, activePets, petSlots, unlockedSkills, equippedSkills, ownedCostumes, activeCostume, achievementsUnlocked, playerHp, totalMaxHp, questProgress, dungeonAttempts]);
+  }), [currentStage, highestStage, growth, gold, diamonds, combatStats, stats, autoProgress, equipment, equipped, pets, activePets, petSlots, unlockedSkills, equippedSkills, ownedCostumes, activeCostume, achievementsUnlocked, playerHp, totalMaxHp, questProgress, dungeonAttempts, ownedRelics, earnedInsignias]);
 
   useEffect(() => {
     const timer = setInterval(async () => {
@@ -1072,9 +1169,36 @@ function GameUI({ account, initialSave, onLogout }) {
         }
         return updated ? next : prev;
       });
-    }, 2000); // check every 2 seconds
+    }, 2000);
     return () => { if (achCheckRef.current) clearInterval(achCheckRef.current); };
   }, [combatStats, highestStage, growth, stats, equipment.length, pets.length, ownedCostumes.length, addLog]);
+
+  // Insignia auto-checker
+  useEffect(() => {
+    const check = setInterval(() => {
+      const snapshot = {
+        combatStats, highestStage, growth, stats,
+        equipCount: equipment.length, petCount: pets.length,
+      };
+      setEarnedInsignias(prev => {
+        let updated = false;
+        const next = { ...prev };
+        for (const ins of INSIGNIAS) {
+          if (next[ins.id]) continue;
+          try {
+            if (ins.check(snapshot)) {
+              next[ins.id] = Date.now();
+              updated = true;
+              setAchToast({ name: ins.name, icon: ins.emoji, color: ins.color, ts: Date.now() });
+              addLog(`🎖️ Insignia: ${ins.emoji} ${ins.name} earned!`);
+            }
+          } catch {}
+        }
+        return updated ? next : prev;
+      });
+    }, 3000);
+    return () => clearInterval(check);
+  }, [combatStats, highestStage, growth, stats, equipment.length, pets.length, addLog]);
 
   // ─── GROWTH UPGRADES ───
   const upgradeGrowth = useCallback((stat) => { const cost = growthCost(growth[stat]); if (gold < cost) return; setGold(g => g - cost); setGrowth(g => ({ ...g, [stat]: g[stat] + 1 })); addQuestProgress("upgradesDone", 1); }, [growth, gold, addQuestProgress]);
@@ -1587,9 +1711,9 @@ function GameUI({ account, initialSave, onLogout }) {
               <div style={{ position: "absolute", left: 4, top: "20%", display: "flex", flexDirection: "column", gap: 4, zIndex: 20 }}>
                 {[
                   { icon: "💎", sub: fmt(diamonds), p: null, bg: "#101828" },
+                  { icon: "🏺", sub: null, p: "relics", bg: "#101828" },
                   { icon: "📊", sub: null, p: "growth", bg: "#101828" },
                   { icon: "👗", sub: null, p: "costumes", bg: "#101828" },
-                  { icon: "⭐", sub: null, p: "achievements", bg: "#101828" },
                 ].map((b, i) => (
                   <div key={i} onClick={b.p ? () => nav(b.p) : undefined} style={{ width: 34, height: b.sub ? 40 : 34, borderRadius: 7, cursor: b.p ? "pointer" : "default", background: b.bg, border: "1px solid #ffffff08", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 0, boxShadow: "0 2px 6px #00000040" }}>
                     <span style={{ fontSize: 15, lineHeight: 1 }}>{b.icon}</span>
@@ -1689,7 +1813,7 @@ function GameUI({ account, initialSave, onLogout }) {
             <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
               <div onClick={() => nav("battle")} style={{ width: 28, height: 28, borderRadius: 7, cursor: "pointer", background: "#1a1c28", border: "1px solid #ffffff0a", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 10, color: T.textSec, fontWeight: 900 }}>✕</div>
               <div style={{ flex: 1, fontSize: 13, fontWeight: 900, color: T.white, fontFamily: FONT_DISPLAY, textTransform: "uppercase" }}>
-                {page === "dungeons" && "🏰 Dungeons"}{page === "growth" && "📊 Growth"}{page === "equipment" && "🗡️ Equipment"}{page === "summon" && "✨ Summon"}{page === "pets" && "🐾 Pets"}{page === "costumes" && "👗 Costumes"}{page === "achievements" && "💀 Achievements"}{page === "stats" && "📈 Stats"}{page === "settings" && "⚙️ Settings"}{page === "quests" && "📜 Quests"}
+                {page === "dungeons" && "🏰 Dungeons"}{page === "growth" && "📊 Growth"}{page === "equipment" && "🗡️ Equipment"}{page === "summon" && "✨ Summon"}{page === "pets" && "🐾 Pets"}{page === "costumes" && "👗 Costumes"}{page === "achievements" && "💀 Achievements"}{page === "stats" && "📈 Stats"}{page === "settings" && "⚙️ Settings"}{page === "quests" && "📜 Quests"}{page === "relics" && "🏺 Relics & Insignias"}
               </div>
               <div style={{ display: "flex", gap: 5 }}>
                 <span style={{ fontSize: 9, fontWeight: 800, color: "#f5c542", fontFamily: FONT_DISPLAY }}>🪙{fmt(gold)}</span>
@@ -2313,6 +2437,113 @@ function GameUI({ account, initialSave, onLogout }) {
                         </Btn>
                       )}
                     </Card>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* ═══ RELICS & INSIGNIAS ═══ */}
+          {page === "relics" && (
+            <div>
+              {/* Relics section */}
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
+                <div style={{ fontSize: 13, fontWeight: 900, color: T.white, fontFamily: FONT_DISPLAY }}>🏺 RELICS</div>
+                <div style={{ fontSize: 8, color: T.textDim, fontWeight: 700 }}>Buy with 💎, upgrade with 🪙</div>
+              </div>
+              <div style={{ display: "flex", flexDirection: "column", gap: 6, marginBottom: 18 }}>
+                {RELICS.map(r => {
+                  const owned = ownedRelics[r.id] !== undefined;
+                  const lvl = ownedRelics[r.id] || 0;
+                  const maxed = lvl >= r.maxLvl;
+                  const val = owned ? r.baseVal + (lvl - 1) * r.perLvl : r.baseVal;
+                  const upgCost = owned ? relicUpgradeCost(lvl) : 0;
+                  const canUpg = owned && !maxed && gold >= upgCost;
+                  const canBuy = !owned && diamonds >= r.cost;
+                  const statLabel = { atk: "ATK", def: "DEF", hp: "HP", critRate: "Crit%", critDmg: "CritDMG", goldPct: "Gold%", atkPct: "ATK%", defPct: "DEF%", hpPct: "HP%", allPct: "ALL%", allFlat: "ALL" }[r.baseStat] || r.baseStat;
+                  return (
+                    <div key={r.id} style={{
+                      display: "flex", alignItems: "center", gap: 8, padding: "8px 10px",
+                      borderRadius: 8,
+                      background: owned ? `${r.color}06` : "#ffffff04",
+                      border: `1px solid ${owned ? r.color + "20" : "#ffffff08"}`,
+                      opacity: owned ? 1 : 0.7,
+                    }}>
+                      <div style={{ width: 36, height: 36, borderRadius: 10, background: `${r.color}12`, border: `1px solid ${r.color}25`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18, flexShrink: 0 }}>{r.emoji}</div>
+                      <div style={{ flex: 1 }}>
+                        <div style={{ display: "flex", alignItems: "baseline", gap: 4 }}>
+                          <span style={{ fontSize: 11, fontWeight: 700, color: T.white }}>{r.name}</span>
+                          {owned && <span style={{ fontSize: 9, fontWeight: 800, color: r.color, fontFamily: FONT_DISPLAY }}>Lv.{lvl}{maxed ? " MAX" : ""}</span>}
+                        </div>
+                        <div style={{ fontSize: 8, color: T.textDim }}>{r.desc}</div>
+                        <div style={{ fontSize: 9, fontWeight: 700, color: r.color, marginTop: 1 }}>+{val} {statLabel}</div>
+                      </div>
+                      <div style={{ flexShrink: 0, display: "flex", gap: 3 }}>
+                        {!owned ? (
+                          <div onClick={canBuy ? () => buyRelic(r.id) : undefined} style={{
+                            padding: "5px 10px", borderRadius: 6, cursor: canBuy ? "pointer" : "default",
+                            background: canBuy ? `${r.color}15` : "#ffffff06",
+                            border: `1px solid ${canBuy ? r.color + "30" : "#ffffff08"}`,
+                            fontSize: 9, fontWeight: 800, color: canBuy ? r.color : T.textDim, fontFamily: FONT_DISPLAY,
+                          }}>💎{r.cost}</div>
+                        ) : maxed ? (
+                          <div style={{ padding: "5px 8px", borderRadius: 6, background: `${T.gold}10`, border: `1px solid ${T.gold}20`, fontSize: 9, fontWeight: 800, color: T.gold, fontFamily: FONT_DISPLAY }}>MAX</div>
+                        ) : (
+                          <>
+                            <div onClick={canUpg ? () => upgradeRelic(r.id) : undefined} style={{
+                              padding: "5px 8px", borderRadius: 6, cursor: canUpg ? "pointer" : "default",
+                              background: canUpg ? `${r.color}15` : "#ffffff06",
+                              border: `1px solid ${canUpg ? r.color + "25" : "#ffffff08"}`,
+                              fontSize: 8, fontWeight: 800, color: canUpg ? r.color : T.textDim, fontFamily: FONT_DISPLAY,
+                            }}>+1 🪙{fmt(upgCost)}</div>
+                            <div onClick={canUpg ? () => upgradeRelicMax(r.id) : undefined} style={{
+                              padding: "5px 6px", borderRadius: 6, cursor: canUpg ? "pointer" : "default",
+                              background: canUpg ? `${r.color}10` : "#ffffff04",
+                              border: `1px solid ${canUpg ? r.color + "15" : "#ffffff06"}`,
+                              fontSize: 8, fontWeight: 800, color: canUpg ? r.color : T.textDim, fontFamily: FONT_DISPLAY,
+                            }}>MAX</div>
+                          </>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* Insignias section */}
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
+                <div style={{ fontSize: 13, fontWeight: 900, color: T.white, fontFamily: FONT_DISPLAY }}>🎖️ INSIGNIAS</div>
+                <div style={{ fontSize: 8, color: T.textDim, fontWeight: 700 }}>{Object.keys(earnedInsignias).length}/{INSIGNIAS.length} earned</div>
+              </div>
+              <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                {INSIGNIAS.map(ins => {
+                  const earned = !!earnedInsignias[ins.id];
+                  const bonusText = Object.entries(ins.bonus).map(([k, v]) => {
+                    const label = { atkFlat: "ATK", defFlat: "DEF", hpFlat: "HP", atkPct: "ATK%", defPct: "DEF%", hpPct: "HP%", critRate: "Crit%", critDmg: "CritDMG", goldPct: "Gold%" }[k] || k;
+                    return `+${v} ${label}`;
+                  }).join(", ");
+                  return (
+                    <div key={ins.id} style={{
+                      display: "flex", alignItems: "center", gap: 8, padding: "8px 10px",
+                      borderRadius: 8,
+                      background: earned ? `${ins.color}08` : "#ffffff03",
+                      border: `1px solid ${earned ? ins.color + "20" : "#ffffff06"}`,
+                      opacity: earned ? 1 : 0.4,
+                    }}>
+                      <div style={{
+                        width: 32, height: 32, borderRadius: "50%",
+                        background: earned ? `${ins.color}15` : "#ffffff06",
+                        border: `2px solid ${earned ? ins.color + "40" : "#ffffff08"}`,
+                        display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16, flexShrink: 0,
+                        boxShadow: earned ? `0 0 8px ${ins.color}15` : "none",
+                      }}>{ins.emoji}</div>
+                      <div style={{ flex: 1 }}>
+                        <div style={{ fontSize: 11, fontWeight: 700, color: earned ? T.white : T.textDim }}>{ins.name}</div>
+                        <div style={{ fontSize: 8, color: T.textDim }}>{ins.desc}</div>
+                        <div style={{ fontSize: 9, fontWeight: 700, color: earned ? ins.color : T.textDim, marginTop: 1 }}>{bonusText}</div>
+                      </div>
+                      {earned && <div style={{ fontSize: 8, fontWeight: 800, color: T.success, fontFamily: FONT_DISPLAY }}>✓</div>}
+                    </div>
                   );
                 })}
               </div>

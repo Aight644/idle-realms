@@ -849,7 +849,53 @@ function GameUI({ account, initialSave, onLogout }) {
   const [skillCooldowns, setSkillCooldowns] = useState({});
   const [log, setLog] = useState([]);
   const [showSummonResult, setShowSummonResult] = useState(null);
-  const [achToast, setAchToast] = useState(null); // achievement toast notification
+  const [achToast, setAchToast] = useState(null);
+
+  // ─── BATTLE EFFECTS STATE ───
+  const [floatingDmg, setFloatingDmg] = useState([]); // [{id, dmg, x, side, crit, skill, ts}]
+  const [heroAnim, setHeroAnim] = useState(""); // "attack", "hit", "idle"
+  const [monsterAnim, setMonsterAnim] = useState(""); // "hit", "die", "idle"
+  const [screenFlash, setScreenFlash] = useState(null); // {color, ts}
+  const [goldPopups, setGoldPopups] = useState([]); // [{id, amount, ts}]
+  const dmgIdRef = useRef(0);
+
+  const addDmgNumber = useCallback((dmg, side, crit = false, skill = null) => {
+    const id = ++dmgIdRef.current;
+    const x = 30 + Math.random() * 40; // random horizontal offset %
+    setFloatingDmg(prev => [...prev.slice(-8), { id, dmg, x, side, crit, skill, ts: Date.now() }]);
+    setTimeout(() => setFloatingDmg(prev => prev.filter(d => d.id !== id)), 1200);
+  }, []);
+
+  const addGoldPopup = useCallback((amount) => {
+    const id = ++dmgIdRef.current;
+    setGoldPopups(prev => [...prev.slice(-4), { id, amount, ts: Date.now() }]);
+    setTimeout(() => setGoldPopups(prev => prev.filter(g => g.id !== id)), 1000);
+  }, []);
+
+  const triggerHeroAttack = useCallback(() => {
+    setHeroAnim("attack");
+    setTimeout(() => setHeroAnim(""), 300);
+  }, []);
+
+  const triggerMonsterHit = useCallback(() => {
+    setMonsterAnim("hit");
+    setTimeout(() => setMonsterAnim(""), 200);
+  }, []);
+
+  const triggerHeroHit = useCallback(() => {
+    setHeroAnim("hit");
+    setTimeout(() => setHeroAnim(""), 200);
+  }, []);
+
+  const triggerMonsterDie = useCallback(() => {
+    setMonsterAnim("die");
+    setTimeout(() => setMonsterAnim(""), 400);
+  }, []);
+
+  const triggerFlash = useCallback((color) => {
+    setScreenFlash({ color, ts: Date.now() });
+    setTimeout(() => setScreenFlash(null), 150);
+  }, []);
 
   // Auto-dismiss toast
   useEffect(() => {
@@ -1048,9 +1094,14 @@ function GameUI({ account, initialSave, onLogout }) {
         if (pE >= atkSpd) {
           pE = 0;
           let dmg = Math.max(1, totalAtk - monster.def + Math.floor(Math.random() * 4));
-          if (Math.random() * 100 < critRate) dmg = Math.floor(dmg * critDmg / 100);
+          const wasCrit = Math.random() * 100 < critRate;
+          if (wasCrit) dmg = Math.floor(dmg * critDmg / 100);
           monsterHp -= dmg;
           setCombatStats(s => ({ ...s, totalDamage: s.totalDamage + dmg, highestHit: Math.max(s.highestHit || 0, dmg) }));
+          triggerHeroAttack();
+          triggerMonsterHit();
+          addDmgNumber(dmg, "right", wasCrit);
+          if (wasCrit) triggerFlash(T.warning);
 
           // Auto-cast equipped skills when off cooldown
           equippedSkills.filter(Boolean).forEach(sid => {
@@ -1064,6 +1115,8 @@ function GameUI({ account, initialSave, onLogout }) {
                 setSkillCooldowns(p => ({ ...p, [sid]: true }));
                 setTimeout(() => setSkillCooldowns(p => ({ ...p, [sid]: false })), sk.cooldown);
                 addLog(`${sk.emoji} ${sk.name}! ${fmt(sDmg)} damage!`);
+                addDmgNumber(sDmg, "right", false, sk.emoji);
+                triggerFlash(sk.color);
               }
             }
           });
@@ -1072,6 +1125,8 @@ function GameUI({ account, initialSave, onLogout }) {
         if (mE >= mSpd) {
           mE = 0;
           const mDmg = Math.max(1, monster.atk - totalDef + Math.floor(Math.random() * 3));
+          triggerHeroHit();
+          addDmgNumber(mDmg, "left", false);
           setPlayerHp(hp => {
             const newHp = hp - mDmg;
             if (newHp <= 0) {
@@ -1088,6 +1143,8 @@ function GameUI({ account, initialSave, onLogout }) {
           const effGold = Math.floor(monster.gold * goldMult);
           stageGold += effGold; killCount++;
           addGold(effGold);
+          triggerMonsterDie();
+          addGoldPopup(effGold);
           setCombatStats(s => ({ ...s, kills: s.kills + 1, bossesKilled: s.bossesKilled + (monster.isBoss ? 1 : 0) }));
 
           // Pet drop chance on boss kills
@@ -1129,7 +1186,7 @@ function GameUI({ account, initialSave, onLogout }) {
     }, step);
 
     return () => { if (battleRef.current) clearInterval(battleRef.current); };
-  }, [isBattling, battleState?.stageNum, totalAtk, totalDef, critRate, critDmg, goldMult, autoProgress, highestStage, unlockedSkills, pets, equippedSkills]);
+  }, [isBattling, battleState?.stageNum, totalAtk, totalDef, critRate, critDmg, goldMult, autoProgress, highestStage, unlockedSkills, pets, equippedSkills, triggerHeroAttack, triggerMonsterHit, triggerHeroHit, triggerMonsterDie, triggerFlash, addDmgNumber, addGoldPopup]);
 
   // Skills are now auto-cast in the battle loop — no manual activation needed
 
@@ -1368,6 +1425,10 @@ function GameUI({ account, initialSave, onLogout }) {
                   display: "flex", alignItems: "center", justifyContent: "center", fontSize: 17,
                   boxShadow: `0 0 10px ${T.accent}20`,
                 }}>{heroEmoji}</div>
+                <div style={{
+                  padding: "2px 8px", borderRadius: 99, background: "#00000050", border: `1px solid ${T.accent}20`,
+                  fontSize: 9, fontWeight: 800, color: T.accent, fontFamily: FONT_DISPLAY,
+                }}>⚡{fmt(totalAtk + totalDef + totalMaxHp)}</div>
                 <div style={{ flex: 1 }} />
                 {[
                   { icon: "💰", val: fmt(gold), c: T.gold },
@@ -1403,6 +1464,51 @@ function GameUI({ account, initialSave, onLogout }) {
 
             {/* ── BATTLE ARENA ── */}
             <div style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", position: "relative", padding: "0 50px" }}>
+
+              {/* Screen flash effect */}
+              {screenFlash && (
+                <div key={screenFlash.ts} style={{
+                  position: "absolute", inset: 0, zIndex: 30, pointerEvents: "none",
+                  background: `radial-gradient(circle at center, ${screenFlash.color}30 0%, transparent 70%)`,
+                  animation: "flashFade 0.15s ease-out forwards",
+                }} />
+              )}
+
+              {/* Floating damage numbers */}
+              {floatingDmg.map(d => (
+                <div key={d.id} style={{
+                  position: "absolute", zIndex: 25, pointerEvents: "none",
+                  left: d.side === "right" ? `${55 + Math.random() * 15}%` : `${15 + Math.random() * 15}%`,
+                  top: "35%",
+                  animation: "dmgFloat 1.1s ease-out forwards",
+                }}>
+                  {d.skill && <span style={{ fontSize: 16, marginRight: 2 }}>{d.skill}</span>}
+                  <span style={{
+                    fontSize: d.crit ? 22 : d.skill ? 18 : 15,
+                    fontWeight: 900, fontFamily: FONT_DISPLAY,
+                    color: d.crit ? T.warning : d.side === "right" ? T.white : T.danger,
+                    textShadow: `0 0 8px ${d.crit ? T.warning : d.side === "right" ? T.accent : T.danger}80, 0 2px 4px #00000080`,
+                    letterSpacing: -0.5,
+                  }}>
+                    {d.crit && "💥"}{fmt(d.dmg)}
+                  </span>
+                </div>
+              ))}
+
+              {/* Gold popups */}
+              {goldPopups.map(g => (
+                <div key={g.id} style={{
+                  position: "absolute", zIndex: 25, pointerEvents: "none",
+                  left: "50%", top: "60%", transform: "translateX(-50%)",
+                  animation: "goldFloat 1s ease-out forwards",
+                }}>
+                  <span style={{
+                    fontSize: 13, fontWeight: 800, color: T.gold, fontFamily: FONT_DISPLAY,
+                    textShadow: `0 0 6px ${T.gold}60, 0 2px 4px #00000080`,
+                  }}>+{fmt(g.amount)}💰</span>
+                </div>
+              ))}
+
               {/* HP Bars */}
               <div style={{ width: "100%", maxWidth: 360, marginBottom: 16 }}>
                 {[
@@ -1427,6 +1533,7 @@ function GameUI({ account, initialSave, onLogout }) {
 
               {/* Hero vs Monster */}
               <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 20 }}>
+                {/* Hero */}
                 <div style={{ textAlign: "center" }}>
                   <div style={{
                     width: 76, height: 76, borderRadius: "50%", margin: "0 auto 4px",
@@ -1434,14 +1541,20 @@ function GameUI({ account, initialSave, onLogout }) {
                     border: `2px solid ${T.accent}40`,
                     display: "flex", alignItems: "center", justifyContent: "center", fontSize: 38,
                     boxShadow: `0 0 20px ${T.accent}20`,
+                    animation: heroAnim === "attack" ? "heroAttack 0.3s ease" : heroAnim === "hit" ? "heroHit 0.2s ease" : "heroIdle 3s ease-in-out infinite",
+                    transition: "box-shadow 0.2s",
                   }}>{heroEmoji}</div>
                   <div style={{ fontSize: 10, fontWeight: 700, color: T.white, fontFamily: FONT_DISPLAY }}>{account.displayName}</div>
                 </div>
+
+                {/* VS badge */}
                 <div style={{
                   width: 28, height: 28, borderRadius: "50%", background: `${T.danger}20`, border: `1px solid ${T.danger}30`,
                   display: "flex", alignItems: "center", justifyContent: "center",
                   fontSize: 9, fontWeight: 900, color: T.danger, fontFamily: FONT_DISPLAY,
                 }}>VS</div>
+
+                {/* Monster */}
                 <div style={{ textAlign: "center" }}>
                   <div style={{
                     width: 76, height: 76, borderRadius: "50%", margin: "0 auto 4px",
@@ -1449,12 +1562,18 @@ function GameUI({ account, initialSave, onLogout }) {
                     border: `2px solid ${monster.isBoss ? T.danger + "50" : chapter.color + "30"}`,
                     display: "flex", alignItems: "center", justifyContent: "center", fontSize: 38,
                     boxShadow: `0 0 20px ${chapter.color}20`,
-                    animation: isBattling ? "pulse 2s infinite" : undefined,
+                    animation: monsterAnim === "hit" ? "monsterHit 0.2s ease" : monsterAnim === "die" ? "monsterDie 0.4s ease forwards" : "monsterIdle 2.5s ease-in-out infinite",
+                    transition: "box-shadow 0.2s",
                   }}>{monster.emoji}</div>
                   <div style={{ fontSize: 10, fontWeight: 700, color: monster.isBoss ? T.danger : T.white, fontFamily: FONT_DISPLAY }}>{monster.name}</div>
                 </div>
               </div>
-              <div style={{ fontSize: 11, fontWeight: 700, color: T.gold, marginTop: 8 }}>💰 +{fmt(battleState?.stageGold || 0)}</div>
+
+              {/* Stage gold + CP */}
+              <div style={{ display: "flex", gap: 16, marginTop: 10, fontSize: 11, fontWeight: 700 }}>
+                <span style={{ color: T.gold }}>💰 +{fmt(battleState?.stageGold || 0)}</span>
+                <span style={{ color: T.accent, fontSize: 9 }}>⚡{fmt(totalAtk + totalDef + totalMaxHp)} CP</span>
+              </div>
             </div>
 
             {/* ── SIDE BUTTONS (right) ── */}
@@ -1553,13 +1672,16 @@ function GameUI({ account, initialSave, onLogout }) {
           {/* Overlay header */}
           <div style={{
             flexShrink: 0, display: "flex", alignItems: "center", gap: 10,
-            padding: "10px 14px", borderBottom: `1px solid ${T.divider}`, background: T.sidebar,
+            padding: "10px 14px", borderBottom: `1px solid ${T.divider}`,
+            background: `linear-gradient(180deg, ${T.sidebar} 0%, ${T.bgDeep} 100%)`,
           }}>
             <div onClick={() => nav("battle")} style={{
               width: 32, height: 32, borderRadius: 10, cursor: "pointer",
-              background: `${T.textDim}15`, border: `1px solid ${T.divider}`,
-              display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, color: T.textSec,
-            }}>✕</div>
+              background: `${T.danger}12`, border: `1px solid ${T.danger}25`,
+              display: "flex", alignItems: "center", justifyContent: "center",
+              fontSize: 12, color: T.danger, fontWeight: 900, fontFamily: FONT_DISPLAY,
+              transition: "all 0.15s",
+            }}>←</div>
             <div style={{ flex: 1, fontSize: 15, fontWeight: 900, color: T.white, fontFamily: FONT_DISPLAY, textTransform: "uppercase" }}>
               {page === "dungeons" && "🏰 Dungeons"}
               {page === "growth" && "📊 Growth"}
@@ -2211,6 +2333,17 @@ function GameUI({ account, initialSave, onLogout }) {
         @keyframes fadeOut { from { opacity: 1; } to { opacity: 0; pointer-events: none; } }
         @keyframes slideRight { from { opacity: 0; transform: translateX(-30px); } to { opacity: 1; transform: translateX(0); } }
         @keyframes sparkle { 0%, 100% { opacity: 0.3; transform: scale(1); } 50% { opacity: 1; transform: scale(1.3); } }
+
+        /* Battle animations */
+        @keyframes heroIdle { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-3px); } }
+        @keyframes heroAttack { 0% { transform: translateX(0) scale(1); } 40% { transform: translateX(20px) scale(1.1); } 100% { transform: translateX(0) scale(1); } }
+        @keyframes heroHit { 0% { transform: translateX(0); filter: brightness(1); } 50% { transform: translateX(-6px); filter: brightness(2); } 100% { transform: translateX(0); filter: brightness(1); } }
+        @keyframes monsterIdle { 0%, 100% { transform: translateY(0) scale(1); } 50% { transform: translateY(-2px) scale(1.02); } }
+        @keyframes monsterHit { 0% { transform: translateX(0) scale(1); filter: brightness(1); } 30% { transform: translateX(8px) scale(0.95); filter: brightness(2.5); } 100% { transform: translateX(0) scale(1); filter: brightness(1); } }
+        @keyframes monsterDie { 0% { transform: scale(1) rotate(0deg); opacity: 1; } 50% { transform: scale(1.1) rotate(5deg); opacity: 0.8; } 100% { transform: scale(0) rotate(20deg); opacity: 0; } }
+        @keyframes dmgFloat { 0% { opacity: 1; transform: translateY(0) scale(0.5); } 15% { opacity: 1; transform: translateY(-10px) scale(1.2); } 30% { transform: translateY(-20px) scale(1); } 100% { opacity: 0; transform: translateY(-70px) scale(0.8); } }
+        @keyframes goldFloat { 0% { opacity: 1; transform: translateX(-50%) translateY(0) scale(0.8); } 20% { opacity: 1; transform: translateX(-50%) translateY(-10px) scale(1.1); } 100% { opacity: 0; transform: translateX(-50%) translateY(-40px) scale(0.7); } }
+        @keyframes flashFade { 0% { opacity: 1; } 100% { opacity: 0; } }
         ::selection { background: ${T.accent}40; color: ${T.white}; }
       `}</style>
     </div>

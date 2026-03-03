@@ -3255,6 +3255,8 @@ function GameUI({ account, initialSave, onLogout }) {
                 </div>
               </div>
             </div>
+            </div>
+            </div>
           )}
 
           {/* ═══ DUNGEONS ═══ */}
@@ -5337,7 +5339,6 @@ function GameUI({ account, initialSave, onLogout }) {
 
           </div>
         </div>
-      </div>
 
       {/* ═══ RIGHT PANEL — Equipment + Resources ═══ */}
       <div style={{ width: 260, flexShrink: 0, display: "flex", flexDirection: "column", background: MW.panel, borderLeft: `1px solid ${MW.border}`, overflow: "auto", padding: "8px" }}>

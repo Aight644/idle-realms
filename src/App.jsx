@@ -1459,12 +1459,13 @@ function GameUI({ account, initialSave, onLogout }) {
   const [screenFlash, setScreenFlash] = useState(null); // {color, ts}
   const [goldPopups, setGoldPopups] = useState([]); // [{id, amount, ts}]
   const [comboCount, setComboCount] = useState(0); // hit combo counter
-  const [comboTimer, setComboTimer] = useState(null);
   const [screenShake, setScreenShake] = useState(false);
   const [bossCinematic, setBossCinematic] = useState(null); // {name, emoji, sprite}
   const [announcer, setAnnouncer] = useState(null); // {text, color, ts}
   const dmgIdRef = useRef(0);
   const comboRef = useRef(0);
+  const comboTimerRef = useRef(null);
+  const battleStateRef = useRef(null);
 
   const addDmgNumber = useCallback((dmg, side, crit = false, skill = null) => {
     const id = ++dmgIdRef.current;
@@ -1502,10 +1503,9 @@ function GameUI({ account, initialSave, onLogout }) {
   const incrementCombo = useCallback(() => {
     comboRef.current += 1;
     setComboCount(comboRef.current);
-    if (comboTimer) clearTimeout(comboTimer);
-    const t = setTimeout(() => { comboRef.current = 0; setComboCount(0); }, 2000);
-    setComboTimer(t);
-  }, [comboTimer]);
+    if (comboTimerRef.current) clearTimeout(comboTimerRef.current);
+    comboTimerRef.current = setTimeout(() => { comboRef.current = 0; setComboCount(0); }, 2000);
+  }, []);
 
   const showAnnouncer = useCallback((text, color = "#fff") => {
     setAnnouncer({ text, color, ts: Date.now() });
@@ -1514,8 +1514,10 @@ function GameUI({ account, initialSave, onLogout }) {
 
   // Tap-to-attack handler
   const handleTapAttack = useCallback(() => {
-    if (!isBattling || !battleState) return;
-    const alive = battleState.enemies.filter(e => e.hp > 0 && e.anim !== "die");
+    if (!isBattling) return;
+    const bs = battleStateRef.current;
+    if (!bs) return;
+    const alive = bs.enemies.filter(e => e.hp > 0 && e.anim !== "die");
     if (alive.length === 0) return;
     const target = alive[0];
     const tapDmg = Math.max(1, Math.floor(totalAtk * 0.3) + Math.floor(Math.random() * 4));
@@ -1533,7 +1535,10 @@ function GameUI({ account, initialSave, onLogout }) {
     addDmgNumber(finalDmg, "right", wasCrit, "👊");
     incrementCombo();
     if (wasCrit) { triggerFlash(T.warning); triggerShake(); }
-  }, [isBattling, battleState, totalAtk, critRate, critDmg, triggerHeroAttack, addDmgNumber, incrementCombo, triggerFlash, triggerShake]);
+  }, [isBattling, totalAtk, critRate, critDmg, triggerHeroAttack, addDmgNumber, incrementCombo, triggerFlash, triggerShake]);
+
+  // Keep ref in sync for tap handler
+  useEffect(() => { battleStateRef.current = battleState; }, [battleState]);
 
   // Auto-dismiss toast
   useEffect(() => {

@@ -180,42 +180,10 @@ const COMBAT_SKILLS = [
 ];
 
 // ─── COSTUMES / SKINS ───
-// Each costume gives stat bonuses and changes the player's visual appearance
-const COSTUMES = [
-  { id: "default", name: "Adventurer", emoji: "🧑‍⚔️", desc: "A humble herb collector turned hero", cost: 0, currency: "free", bonus: {}, tier: "starter", color: T.textSec },
-  { id: "iron_knight", name: "Iron Knight", emoji: "🪖", desc: "Heavy iron armor fit for frontline battle", cost: 500, currency: "gold", bonus: { def: 5, hp: 30 }, tier: "common", color: T.rarCommon },
-  { id: "forest_ranger", name: "Forest Ranger", emoji: "🏹", desc: "Swift woodland garb with sharpened senses", cost: 800, currency: "gold", bonus: { atk: 5, critRate: 2 }, tier: "common", color: T.rarCommon },
-  { id: "shadow_assassin", name: "Shadow Assassin", emoji: "🗡️", desc: "Dark cloak that strikes from the shadows", cost: 2000, currency: "gold", bonus: { atk: 12, critRate: 5, critDmg: 15 }, tier: "uncommon", color: T.rarUncommon },
-  { id: "crimson_berserker", name: "Crimson Berserker", emoji: "🔴", desc: "Blood-red war paint that fuels rage", cost: 5000, currency: "gold", bonus: { atk: 25, hp: 50 }, tier: "uncommon", color: T.rarUncommon },
-  { id: "frost_warden", name: "Frost Warden", emoji: "❄️", desc: "Enchanted ice armor that chills attackers", cost: 12000, currency: "gold", bonus: { def: 20, hp: 80, atk: 10 }, tier: "rare", color: T.rarRare },
-  { id: "flame_lord", name: "Flame Lord", emoji: "🔥", desc: "Blazing armor forged in volcanic fire", cost: 200, currency: "diamonds", bonus: { atk: 35, critDmg: 25 }, tier: "rare", color: T.rarRare },
-  { id: "void_phantom", name: "Void Phantom", emoji: "👻", desc: "Phase through reality itself", cost: 500, currency: "diamonds", bonus: { atk: 20, def: 15, critRate: 8, critDmg: 20 }, tier: "epic", color: T.rarEpic },
-  { id: "celestial_guardian", name: "Celestial Guardian", emoji: "👼", desc: "Blessed by the heavens with divine light", cost: 1000, currency: "diamonds", bonus: { atk: 30, def: 25, hp: 150, critRate: 5 }, tier: "epic", color: T.rarEpic },
-  { id: "dragon_emperor", name: "Dragon Emperor", emoji: "🐲", desc: "Armor crafted from an ancient dragon's scales", cost: 2500, currency: "diamonds", bonus: { atk: 50, def: 35, hp: 200, critRate: 8, critDmg: 30 }, tier: "legendary", color: T.rarLegendary },
-  { id: "god_slayer", name: "God Slayer", emoji: "⚡", desc: "Worn by those who defy the divine", cost: 5000, currency: "diamonds", bonus: { atk: 80, def: 50, hp: 300, critRate: 10, critDmg: 50, goldPct: 10 }, tier: "mythic", color: T.rarMythic },
-  // Special costumes (unlocked by milestones, not purchased)
-  { id: "stage100", name: "Centurion", emoji: "💯", desc: "Awarded for clearing 100 stages", cost: 0, currency: "milestone", milestone: "stage100", bonus: { atk: 15, def: 10, hp: 60 }, tier: "rare", color: T.rarRare },
-  { id: "boss50", name: "Boss Hunter", emoji: "👑", desc: "Awarded for slaying 50 bosses", cost: 0, currency: "milestone", milestone: "boss50", bonus: { atk: 25, critRate: 5, critDmg: 20 }, tier: "epic", color: T.rarEpic },
-  { id: "kills10k", name: "Eternal Warrior", emoji: "⚔️", desc: "Awarded for 10,000 monster kills", cost: 0, currency: "milestone", milestone: "kills10k", bonus: { atk: 40, def: 20, hp: 100, goldPct: 5 }, tier: "legendary", color: T.rarLegendary },
-];
-
-const COSTUME_TIERS = ["starter", "common", "uncommon", "rare", "epic", "legendary", "mythic"];
-
-// Check if a milestone costume is unlocked
-function isMilestoneUnlocked(costumeId, combatStats, highestStage) {
-  const c = COSTUMES.find(x => x.id === costumeId);
-  if (!c || c.currency !== "milestone") return false;
-  if (c.milestone === "stage100") return highestStage >= 100;
-  if (c.milestone === "boss50") return (combatStats.bossesKilled || 0) >= 50;
-  if (c.milestone === "kills10k") return combatStats.kills >= 10000;
-  return false;
-}
-
-// ─── COSTUMES / SKINS ───
 // Costumes are cosmetic outfits with stat bonuses. Buy with diamonds, equip one at a time.
 // Each costume changes the hero's appearance emoji and gives permanent stat bonuses.
 const COSTUMES = [
-  { id: "default", name: "Adventurer", emoji: "🧑‍⚔️", desc: "The classic hero look", rarity: "common", cost: 0, bonuses: {}, owned: true },
+  { id: "default", name: "Adventurer", emoji: "⚔️", desc: "The classic hero look", rarity: "common", cost: 0, bonuses: {}, owned: true },
   { id: "knight", name: "Silver Knight", emoji: "🛡️", desc: "Gleaming armor of a royal guard", rarity: "uncommon", cost: 200, bonuses: { defFlat: 10, hpFlat: 50 } },
   { id: "assassin", name: "Shadow Assassin", emoji: "🗡️", desc: "Darkness is your ally", rarity: "uncommon", cost: 200, bonuses: { atkFlat: 15, critRate: 3 } },
   { id: "mage", name: "Arcane Mage", emoji: "🧙", desc: "Robes woven with pure mana", rarity: "rare", cost: 500, bonuses: { atkPct: 5, critDmg: 10 } },
@@ -908,7 +876,7 @@ function GameUI({ account, initialSave, onLogout }) {
 
   const heroEmoji = useMemo(() => {
     const c = COSTUMES.find(x => x.id === activeCostume);
-    return c?.emoji || "🧑‍⚔️";
+    return c?.emoji || "⚔️";
   }, [activeCostume]);
 
   // ─── NAV ───

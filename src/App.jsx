@@ -2958,617 +2958,128 @@ function GameUI({ account, initialSave, onLogout }) {
 
 
 
+  // MWI colors
+  const MW = { bg: "#1a1625", panel: "#231e30", card: "#2a2440", border: "#3d3555", text: "#e8e0f0", textSec: "#9a8fb5", accent: "#7c5cbf", accentLight: "#a88ce0", success: "#5cb85c", danger: "#d9534f", warning: "#f0ad4e", gold: "#e8c33a", info: "#5bc0de", white: "#f0ecf5" };
+
   return (
-    <div style={{ position: "relative", width: "100%", height: "100vh", maxWidth: isMobile ? 480 : "100%", margin: "0 auto", overflow: "hidden", fontFamily: FONT_BODY, background: "#0a0c14", color: T.text, display: isMobile ? "block" : "flex" }}>
+    <div style={{ width: "100%", height: "100vh", display: "flex", fontFamily: FONT_BODY, background: MW.bg, color: MW.text, overflow: "hidden" }}>
 
-      {/* ═══ DESKTOP SIDEBAR NAV ═══ */}
-      {!isMobile && (
-        <div style={{ width: 64, flexShrink: 0, display: "flex", flexDirection: "column", background: "linear-gradient(180deg, #12141e, #0a0c14)", borderRight: "1px solid #ffffff08", padding: "8px 0", overflowY: "auto" }}>
-          <div style={{ textAlign: "center", marginBottom: 8, padding: "4px 0" }}>
-            <div style={{ fontSize: 20 }}>⚔️</div>
-            <div style={{ fontSize: 6, fontWeight: 900, color: T.accent, fontFamily: FONT_DISPLAY, letterSpacing: 1 }}>BLADE</div>
+      {/* ═══ LEFT NAV SIDEBAR ═══ */}
+      <div style={{ width: 180, flexShrink: 0, display: "flex", flexDirection: "column", background: MW.panel, borderRight: `1px solid ${MW.border}`, overflowY: "auto" }}>
+        <div style={{ padding: "12px 10px", borderBottom: `1px solid ${MW.border}`, textAlign: "center" }}>
+          <div style={{ fontSize: 28, marginBottom: 2 }}>{heroEmoji}</div>
+          <div style={{ fontSize: 11, fontWeight: 800, color: MW.white, fontFamily: FONT_DISPLAY }}>{account.displayName}</div>
+          <div style={{ fontSize: 8, color: MW.textSec }}>{TITLES.find(t => t.id === activeTitle)?.name || "Newbie"}</div>
+          <div style={{ fontSize: 10, fontWeight: 800, color: MW.accent, fontFamily: FONT_DISPLAY, marginTop: 2 }}>⚡ {fmt(totalAtk + totalDef + totalMaxHp)}</div>
+        </div>
+        {[
+          { section: "Combat", items: [{ icon: "⚔️", label: "Combat", p: "battle" },{ icon: "🏰", label: "Dungeons", p: "dungeons" },{ icon: "⚔️", label: "Raids", p: "raids" },{ icon: "💥", label: "Boss Rush", p: "bossrush" },{ icon: "🗼", label: "Tower", p: "tower" },{ icon: "🏟️", label: "PvP", p: "pvp" }] },
+          { section: "Skills", items: IDLE_SKILLS.map(sk => ({ icon: sk.emoji, label: sk.name, p: "idle", level: (idleSkills[sk.id] || { level: 0 }).level, unlocked: highestStage >= sk.unlockStage, color: sk.color, xpPct: Math.min(100, ((idleSkills[sk.id] || { xp: 0 }).xp / idleSkillXp((idleSkills[sk.id] || { level: 0 }).level)) * 100) })) },
+          { section: "Production", items: [{ icon: "🔨", label: "Crafting", p: "crafting" },{ icon: "⚗️", label: "Potions", p: "potions" },{ icon: "✨", label: "Enchanting", p: "alchemy" }] },
+          { section: "Character", items: [{ icon: "🗡️", label: "Equipment", p: "equipment" },{ icon: "✨", label: "Summon", p: "summon" },{ icon: "📈", label: "Growth", p: "growth" },{ icon: "🐾", label: "Pets", p: "pets" },{ icon: "👗", label: "Costumes", p: "costumes" },{ icon: "💠", label: "Gems", p: "gems" },{ icon: "⚔️", label: "Evolve", p: "weaponevo" },{ icon: "🔄", label: "Rebirth", p: "prestige" },{ icon: "🌟", label: "Ascension", p: "ascend" }] },
+          { section: "Other", items: [{ icon: "📜", label: "Quests", p: "quests" },{ icon: "🏺", label: "Relics", p: "relics" },{ icon: "🏅", label: "Emblems", p: "emblems" },{ icon: "🎯", label: "Challenges", p: "challenge" },{ icon: "🥋", label: "Dojo", p: "dojo" },{ icon: "🎡", label: "Spin", p: "spin" },{ icon: "🎖️", label: "Pass", p: "battlepass" },{ icon: "🏷️", label: "Titles", p: "titles" },{ icon: "📖", label: "Bestiary", p: "bestiary" },{ icon: "🗿", label: "Figures", p: "figures" },{ icon: "✨", label: "Resonance", p: "resonance" },{ icon: "🛒", label: "Shop", p: "shop" },{ icon: "📊", label: "Stats", p: "stats" },{ icon: "⚙️", label: "Settings", p: "settings" }] },
+        ].map(sec => (
+          <div key={sec.section} style={{ padding: "4px 0", borderTop: `1px solid ${MW.border}` }}>
+            <div style={{ padding: "4px 10px", fontSize: 8, fontWeight: 800, color: MW.textSec, letterSpacing: 1, textTransform: "uppercase" }}>{sec.section}</div>
+            {sec.items.map(t => (
+              <div key={t.label + t.p} onClick={() => { if (t.unlocked !== false) nav(t.p); }} style={{ display: "flex", alignItems: "center", gap: 6, padding: "4px 10px", cursor: t.unlocked !== false ? "pointer" : "default", opacity: t.unlocked === false ? 0.3 : 1, background: page === t.p ? `${MW.accent}20` : "transparent", borderLeft: page === t.p ? `3px solid ${MW.accent}` : "3px solid transparent" }}>
+                <span style={{ fontSize: 13, width: 18, textAlign: "center" }}>{t.icon}</span>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontSize: 10, color: page === t.p ? MW.accentLight : MW.text, fontWeight: page === t.p ? 700 : 500 }}>{t.label}</div>
+                  {t.xpPct !== undefined && <div style={{ height: 2, borderRadius: 1, background: MW.bg, overflow: "hidden", marginTop: 1 }}><div style={{ width: `${t.xpPct}%`, height: "100%", background: t.color, borderRadius: 1 }} /></div>}
+                </div>
+                {t.level !== undefined && <span style={{ fontSize: 9, color: MW.textSec, fontWeight: 700, fontFamily: FONT_DISPLAY }}>{t.unlocked !== false ? t.level : "🔒"}</span>}
+              </div>
+            ))}
           </div>
-          {[
-            { icon: "🗡️", label: "Equip", p: "equipment" },
-            { icon: "📜", label: "Quests", p: "quests" },
-            { icon: "✨", label: "Summon", p: "summon" },
-            { icon: "⭐", label: "Growth", p: "growth" },
-            { icon: "🏰", label: "Dungeon", p: "dungeons" },
-            { icon: "⚔️", label: "Raids", p: "raids" },
-            { icon: "🐾", label: "Pets", p: "pets" },
-            { icon: "🔄", label: "Rebirth", p: "prestige" },
-            { icon: "🛒", label: "Shop", p: "shop" },
-            { icon: "⚔️", label: "Evolve", p: "weaponevo" },
-            { icon: "🥋", label: "Dojo", p: "dojo" },
-            { icon: "🎯", label: "Chall.", p: "challenge" },
-            { icon: "🔨", label: "Craft", p: "crafting" },
-            { icon: "🏟️", label: "PvP", p: "pvp" },
-            { icon: "📊", label: "Idle", p: "idle" },
-            { icon: "⚗️", label: "Potions", p: "potions" },
-            { icon: "🌟", label: "Ascend", p: "ascend" },
-            { icon: "⋯", label: "More", p: "_more" },
-          ].map(tab => {
-            const act = page === tab.p;
-            if (tab.p === "_more") return (
-              <div key={tab.p} onClick={() => setShowMoreMenu(p => !p)} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 1, padding: "6px 0", cursor: "pointer", position: "relative", background: showMoreMenu ? `${T.accent}10` : "transparent" }}>
-                <span style={{ fontSize: 16 }}>{tab.icon}</span>
-                <span style={{ fontSize: 6, fontWeight: 700, color: T.textDim, fontFamily: FONT_DISPLAY }}>{tab.label}</span>
-              </div>
-            );
-            return (
-              <div key={tab.p} onClick={() => { nav(tab.p); setShowMoreMenu(false); }} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 1, padding: "6px 0", cursor: "pointer", position: "relative", background: act ? `${T.accent}10` : "transparent", borderLeft: act ? `2px solid ${T.accent}` : "2px solid transparent" }}>
-                <span style={{ fontSize: 16 }}>{tab.icon}</span>
-                <span style={{ fontSize: 6, fontWeight: 700, color: act ? T.accent : T.textDim, fontFamily: FONT_DISPLAY }}>{tab.label}</span>
-              </div>
-            );
-          })}
+        ))}
+      </div>
+
+      {/* ═══ CENTER PANEL ═══ */}
+      <div style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden" }}>
+        {/* Top bar */}
+        <div style={{ flexShrink: 0, display: "flex", alignItems: "center", padding: "6px 14px", background: MW.panel, borderBottom: `1px solid ${MW.border}`, gap: 12 }}>
+          <span style={{ fontSize: 11, fontWeight: 800, color: MW.gold }}>🪙 {fmt(gold)}</span>
+          <span style={{ fontSize: 11, fontWeight: 800, color: "#60a5fa" }}>💎 {fmt(diamonds)}</span>
+          <span style={{ fontSize: 11, fontWeight: 800, color: "#a855f7" }}>👻 {fmt(prestigeSouls)}</span>
           <div style={{ flex: 1 }} />
-          <div onClick={() => nav("settings")} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 1, padding: "6px 0", cursor: "pointer" }}>
-            <span style={{ fontSize: 16 }}>⚙️</span>
-            <span style={{ fontSize: 6, fontWeight: 700, color: page === "settings" ? T.accent : T.textDim, fontFamily: FONT_DISPLAY }}>Settings</span>
-          </div>
+          <span style={{ fontSize: 10, color: MW.gold }}>⚡{fmt(goldPerSec)}/s</span>
+          <span style={{ fontSize: 10, color: MW.danger }}>💀{fmt(killsPerMin)}/min</span>
+          <span style={{ fontSize: 10, color: MW.textSec }}>Stage {stageLabel(currentStage)}</span>
+          {activeBuffs.map(b => { const pot = POTIONS.find(p => p.id === b.id); return pot ? <span key={b.id} style={{ fontSize: 9, padding: "2px 6px", borderRadius: 4, background: `${pot.color}15`, color: pot.color, fontWeight: 700 }}>{pot.emoji} {Math.max(0, Math.floor((b.expiresAt - Date.now()) / 1000))}s</span> : null; })}
         </div>
-      )}
 
-      {/* ═══ POPUPS (z:999) ═══ */}
-      {offlinePopup && (
-        <Popup title="Welcome Back!" icon="🌙" color={T.gold} onClose={() => setOfflinePopup(null)}>
-          <div style={{ textAlign: "center" }}>
-            <div style={{ fontSize: 12, color: T.textSec, marginBottom: 10 }}>Away for <span style={{ color: T.white, fontWeight: 700 }}>{offlinePopup.duration}</span>{offlinePopup.capped ? ` (max ${OFFLINE_MAX_HOURS}h)` : ""}</div>
-            <div style={{ display: "flex", gap: 10, justifyContent: "center" }}>
-              <div style={{ padding: "10px 18px", borderRadius: 10, background: `${T.gold}12`, border: `1px solid ${T.gold}25` }}>
-                <div style={{ fontSize: 20, fontWeight: 900, color: T.gold, fontFamily: FONT_DISPLAY }}>{fmt(offlinePopup.gold)}</div>
-                <div style={{ fontSize: 8, color: T.textDim, fontWeight: 700 }}>GOLD</div>
-              </div>
-              <div style={{ padding: "10px 18px", borderRadius: 10, background: `${T.danger}12`, border: `1px solid ${T.danger}25` }}>
-                <div style={{ fontSize: 20, fontWeight: 900, color: T.danger, fontFamily: FONT_DISPLAY }}>{fmt(offlinePopup.kills)}</div>
-                <div style={{ fontSize: 8, color: T.textDim, fontWeight: 700 }}>KILLS</div>
-              </div>
-            </div>
-          </div>
-        </Popup>
-      )}
-      {loginRewardPopup && !offlinePopup && (
-        <Popup title="Daily Reward!" icon="🎁" color={T.accent} onClose={() => setLoginRewardPopup(null)}>
-          <div style={{ textAlign: "center" }}>
-            <Badge color={T.orange} style={{ fontSize: 11, padding: "3px 10px", marginBottom: 10 }}>🔥 Day {loginRewardPopup.dayIdx}</Badge>
-            <div style={{ display: "flex", gap: 10, justifyContent: "center", marginTop: 8 }}>
-              <div style={{ padding: "10px 18px", borderRadius: 10, background: `${T.gold}12`, border: `1px solid ${T.gold}25` }}>
-                <div style={{ fontSize: 18, fontWeight: 900, color: T.gold, fontFamily: FONT_DISPLAY }}>+{fmt(loginRewardPopup.gold)}</div>
-                <div style={{ fontSize: 8, color: T.textDim }}>GOLD</div>
-              </div>
-              {loginRewardPopup.diamonds > 0 && <div style={{ padding: "10px 18px", borderRadius: 10, background: `${T.purple}12`, border: `1px solid ${T.purple}25` }}>
-                <div style={{ fontSize: 18, fontWeight: 900, color: T.purple, fontFamily: FONT_DISPLAY }}>+{loginRewardPopup.diamonds}</div>
-                <div style={{ fontSize: 8, color: T.textDim }}>GEMS</div>
-              </div>}
-            </div>
-          </div>
-        </Popup>
-      )}
-      {dungeonResult && (
-        <Popup title={dungeonResult.success ? "Cleared!" : "Failed"} icon={dungeonResult.success ? "🎉" : "💀"} color={dungeonResult.success ? T.success : T.danger} onClose={() => setDungeonResult(null)}>
-          <div style={{ textAlign: "center" }}>
-            <div style={{ fontSize: 11, color: T.textSec, marginBottom: 8 }}>{dungeonResult.dungeon.emoji} {dungeonResult.tier.name} — {dungeonResult.waves}/{dungeonResult.totalWaves} waves</div>
-            <div style={{ display: "flex", gap: 8, justifyContent: "center", flexWrap: "wrap" }}>
-              {dungeonResult.totalReward.gold > 0 && <div style={{ padding: "8px 14px", borderRadius: 8, background: `${T.gold}10`, border: `1px solid ${T.gold}20` }}><div style={{ fontSize: 16, fontWeight: 900, color: T.gold, fontFamily: FONT_DISPLAY }}>+{fmt(dungeonResult.totalReward.gold)}</div><div style={{ fontSize: 7, color: T.textDim }}>GOLD</div></div>}
-              {dungeonResult.totalReward.diamonds > 0 && <div style={{ padding: "8px 14px", borderRadius: 8, background: `${T.purple}10`, border: `1px solid ${T.purple}20` }}><div style={{ fontSize: 16, fontWeight: 900, color: T.purple, fontFamily: FONT_DISPLAY }}>+{dungeonResult.totalReward.diamonds}</div><div style={{ fontSize: 7, color: T.textDim }}>GEMS</div></div>}
-              {dungeonResult.totalReward.growthLevels > 0 && <div style={{ padding: "8px 14px", borderRadius: 8, background: `${T.success}10`, border: `1px solid ${T.success}20` }}><div style={{ fontSize: 16, fontWeight: 900, color: T.success, fontFamily: FONT_DISPLAY }}>+{dungeonResult.totalReward.growthLevels}</div><div style={{ fontSize: 7, color: T.textDim }}>GROWTH</div></div>}
-            </div>
-          </div>
-        </Popup>
-      )}
-      {achToast && (
-        <div key={achToast.ts} style={{ position: "absolute", top: 48, left: "50%", transform: "translateX(-50%)", zIndex: 1000, padding: "8px 14px", borderRadius: 10, minWidth: 220, maxWidth: "88%", background: `${T.card}f0`, backdropFilter: "blur(12px)", border: `1px solid ${achToast.color || T.gold}40`, boxShadow: `0 0 20px ${achToast.color || T.gold}15`, animation: "slideDown 0.4s ease, fadeOut 0.5s ease 3.5s forwards", display: "flex", alignItems: "center", gap: 8 }}>
-          <div style={{ width: 28, height: 28, borderRadius: 7, background: `${achToast.color || T.gold}15`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14 }}>{achToast.icon}</div>
-          <div style={{ flex: 1 }}><div style={{ fontSize: 7, fontWeight: 700, color: T.gold, letterSpacing: 1 }}>ACHIEVEMENT!</div><div style={{ fontSize: 10, fontWeight: 800, color: T.white, fontFamily: FONT_DISPLAY }}>{achToast.name}</div></div>
-        </div>
-      )}
+        {/* Content */}
+        <div style={{ flex: 1, overflow: "auto", padding: "14px 16px", paddingBottom: 40 }}>
 
-      {/* ═══ BATTLE SCREEN ═══ */}
-      {(() => {
-        const monster = battleState?.monster || getStageMonster(currentStage);
-        return (
-          <div style={{ position: isMobile ? "absolute" : "relative", inset: isMobile ? 0 : undefined, width: isMobile ? undefined : "45%", flexShrink: 0, display: "flex", flexDirection: "column", height: isMobile ? undefined : "100vh" }}>
-
-            {/* ── TOP: Avatar + currencies ── */}
-            <div style={{ display: "flex", alignItems: "center", padding: "6px 8px 0", gap: 6, zIndex: 10 }}>
-              <div style={{ position: "relative", flexShrink: 0 }}>
-                <div style={{ width: 40, height: 40, borderRadius: "50%", background: `linear-gradient(135deg, ${T.accent}30, ${T.purple}30)`, border: `2px solid ${T.accent}60`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 20, boxShadow: `0 0 12px ${T.accent}30` }}>{heroEmoji}</div>
-                <div style={{ position: "absolute", bottom: -2, right: -2, width: 14, height: 14, borderRadius: "50%", background: T.success, border: "2px solid #0a0c14", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 6 }}>▶</div>
-              </div>
-              <div style={{ flexShrink: 0 }}>
-                <div style={{ fontSize: 10, fontWeight: 800, color: T.white, fontFamily: FONT_DISPLAY, lineHeight: 1.1 }}>{account.displayName}</div>
-                <div style={{ fontSize: 7, fontWeight: 700, color: TITLES.find(t => t.id === activeTitle)?.color || T.textDim, fontFamily: FONT_DISPLAY }}>{TITLES.find(t => t.id === activeTitle)?.name || "Newbie"}</div>
-                <div style={{ fontSize: 8, fontWeight: 700, color: T.accent, fontFamily: FONT_DISPLAY }}>⚡{fmt(totalAtk + totalDef + totalMaxHp)}</div>
-              </div>
-              <div style={{ flex: 1 }} />
-              {[
-                { icon: "🪙", val: fmt(gold), c: "#f5c542" },
-                { icon: "💎", val: fmt(diamonds), c: "#60a5fa" },
-                { icon: "✨", val: `R${resonanceLevel}`, c: "#a855f7" },
-              ].map((cur, i) => (
-                <div key={i} style={{ display: "flex", alignItems: "center", gap: 3, padding: "2px 8px 2px 4px", borderRadius: 12, background: "linear-gradient(90deg, #1a1c28, #12141e)", border: "1px solid #ffffff0a" }}>
-                  <span style={{ fontSize: 11 }}>{cur.icon}</span>
-                  <span style={{ fontSize: 10, fontWeight: 800, color: cur.c, fontFamily: FONT_DISPLAY }}>{cur.val}</span>
-                </div>
-              ))}
-            </div>
-
-            {/* ── Stage progress bar ── */}
-            <div style={{ padding: "6px 10px 4px", zIndex: 10 }}>
-              <div style={{ position: "relative", height: 20, background: "#0e1020", borderRadius: 4, border: "1px solid #2a2e40", overflow: "hidden" }}>
-                <div style={{ position: "absolute", left: 0, top: 0, bottom: 0, width: `${Math.max(3, ((battleState?.killCount || 0) / monster.monstersToKill) * 100)}%`, background: "linear-gradient(90deg, #3b82f6, #60a5fa)", borderRadius: 3, transition: "width 0.3s", boxShadow: "0 0 8px #3b82f680" }} />
-                <div style={{ position: "absolute", inset: 0, background: "linear-gradient(90deg, transparent 0%, #ffffff10 50%, transparent 100%)", animation: "shimmer 3s infinite" }} />
-                <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11, fontWeight: 900, color: "#fff", fontFamily: FONT_DISPLAY, textShadow: "0 1px 3px #00000080" }}>
-                  {farmStage > 0 && <span style={{ color: T.gold, marginRight: 4, fontSize: 8 }}>⚔️FARM</span>}
-                  {stageLabel(currentStage)} ({battleState?.killCount || 0}/{monster.monstersToKill})
-                </div>
-              </div>
-            </div>
-
-            {/* ── PIXEL FIGHTER ARENA ── */}
-            <div onClick={handleTapAttack} style={{ flex: 1, position: "relative", overflow: "hidden", cursor: "pointer", animation: screenShake === "heavy" ? "shakeHeavy 0.4s ease" : screenShake ? "shakeLight 0.2s ease" : undefined }}>
-              {/* Sky/background gradient per chapter */}
-              <div style={{ position: "absolute", inset: 0, background: `linear-gradient(180deg, ${chapter.color}08 0%, ${chapter.color}18 40%, #0a0c14 100%)` }} />
-              {/* Parallax background elements */}
-              <div style={{ position: "absolute", top: "5%", left: "10%", width: 60, height: 40, borderRadius: "50% 50% 0 0", background: `${chapter.color}08`, filter: "blur(8px)" }} />
-              <div style={{ position: "absolute", top: "8%", right: "15%", width: 80, height: 30, borderRadius: "50% 50% 0 0", background: `${chapter.color}06`, filter: "blur(12px)" }} />
-              {/* Ground/floor */}
-              <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, height: "30%", background: `linear-gradient(180deg, ${chapter.color}12 0%, #080a10 100%)`, borderTop: `2px solid ${chapter.color}20` }} />
-              {/* Ground texture lines */}
-              {[15, 35, 55, 75].map((x, i) => (
-                <div key={i} style={{ position: "absolute", bottom: `${4 + i * 5}%`, left: `${x}%`, width: `${20 + i * 5}%`, height: 1, background: `${chapter.color}08`, transform: "perspective(200px) rotateX(20deg)" }} />
-              ))}
-              {/* Chapter name tag */}
-              <div style={{ position: "absolute", top: 6, left: "50%", transform: "translateX(-50%)", zIndex: 15, padding: "2px 12px", borderRadius: 6, background: "#00000060", border: `1px solid ${chapter.color}30`, backdropFilter: "blur(4px)" }}>
-                <span style={{ fontSize: 8, fontWeight: 800, color: chapter.color, fontFamily: FONT_DISPLAY, letterSpacing: 1, textTransform: "uppercase" }}>{chapter.emoji} {chapter.name}</span>
-              </div>
-
-              {/* Screen flash */}
-              {screenFlash && <div key={screenFlash.ts} style={{ position: "absolute", inset: 0, zIndex: 30, pointerEvents: "none", background: `radial-gradient(circle, ${screenFlash.color}30 0%, transparent 70%)`, animation: "flashFade 0.15s ease-out forwards" }} />}
-
-              {/* Floating dmg numbers */}
-              {floatingDmg.map(d => (
-                <div key={d.id} style={{ position: "absolute", zIndex: 25, pointerEvents: "none", left: d.side === "right" ? "65%" : "25%", top: "30%", animation: "dmgFloat 1.1s ease-out forwards" }}>
-                  {d.skill && <span style={{ fontSize: 14 }}>{d.skill}</span>}
-                  <span style={{ fontSize: d.crit ? 28 : d.skill ? 22 : 18, fontWeight: 900, fontFamily: FONT_DISPLAY, color: d.crit ? "#ffd700" : d.side === "right" ? "#fff" : "#ff4444", textShadow: `0 0 12px ${d.crit ? "#ffd700" : d.side === "right" ? "#6366f1" : "#ff4444"}80, 0 2px 8px #000c` }}>{d.crit ? "CRIT! " : ""}{fmt(d.dmg)}</span>
-                </div>
-              ))}
-
-              {/* Gold popups */}
-              {goldPopups.map(g => (
-                <div key={g.id} style={{ position: "absolute", zIndex: 25, pointerEvents: "none", left: "50%", top: "50%", animation: "goldFloat 1s ease-out forwards" }}>
-                  <span style={{ fontSize: 14, fontWeight: 900, color: T.gold, fontFamily: FONT_DISPLAY, textShadow: `0 0 8px ${T.gold}60, 0 2px 4px #000` }}>+{fmt(g.amount)}</span>
-                </div>
-              ))}
-
-              {/* ── COMBO COUNTER (disabled - re-enable with buffs) ── */}
-
-              {/* ── ANNOUNCER TEXT ── */}
-              {announcer && (
-                <div key={announcer.ts} style={{ position: "absolute", left: "50%", top: "20%", transform: "translateX(-50%)", zIndex: 35, pointerEvents: "none", animation: "announcerSlam 1.5s ease forwards" }}>
-                  <div style={{ fontSize: 26, fontWeight: 900, fontFamily: FONT_DISPLAY, color: announcer.color, textShadow: `0 0 20px ${announcer.color}80, 0 0 40px ${announcer.color}40, 0 3px 8px #000`, letterSpacing: 3, whiteSpace: "nowrap" }}>{announcer.text}</div>
-                </div>
-              )}
-
-              {/* ── BOSS CINEMATIC OVERLAY ── */}
-              {bossCinematic && (
-                <div style={{ position: "absolute", inset: 0, zIndex: 50, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", background: "linear-gradient(180deg, #000000e0 0%, #0a0000d0 50%, #000000e0 100%)", animation: "cinematicFade 2s ease" }}>
-                  <div style={{ animation: "warningFlash 0.5s ease-in-out infinite", fontSize: 10, fontWeight: 900, color: "#ff4444", fontFamily: FONT_DISPLAY, letterSpacing: 6, textTransform: "uppercase", marginBottom: 12 }}>⚠️ WARNING ⚠️</div>
-                  <div style={{ animation: "bossSpriteEnter 0.8s ease 0.3s both" }}>
-                    {bossCinematic.sprite ? (
-                      <img src={bossCinematic.sprite} alt={bossCinematic.name} style={{ width: 96, height: 96, imageRendering: "pixelated", filter: "drop-shadow(0 0 20px #ff000060) drop-shadow(0 0 40px #ff000030)" }} />
-                    ) : (
-                      <div style={{ fontSize: 72, filter: "drop-shadow(0 0 20px #ff000060)" }}>{bossCinematic.emoji}</div>
-                    )}
+          {/* ═══ COMBAT PAGE ═══ */}
+          {page === "battle" && (() => {
+            const monster = battleState?.monster || getStageMonster(currentStage);
+            const hpPct = Math.max(0, (playerHp / totalMaxHp) * 100);
+            const alive = battleState?.enemies?.filter(e => e.hp > 0 && e.anim !== "die") || [];
+            const target = alive[0];
+            const targetHpPct = target ? Math.max(0, (target.hp / target.maxHp) * 100) : 0;
+            const chIdx = Math.min(Math.floor((currentStage - 1) / 50), CHAPTERS.length - 1);
+            const hazard = STAGE_HAZARDS[chIdx];
+            return (
+              <div style={{ maxWidth: 900 }}>
+                <div style={{ marginBottom: 12 }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", fontSize: 10, color: MW.textSec, marginBottom: 3 }}>
+                    <span style={{ fontWeight: 700 }}>{CHAPTERS[chIdx]?.name || "Unknown"} — {stageLabel(currentStage)}</span>
+                    <span>{battleState?.killCount || 0} / {monster.monstersToKill} kills {farmStage > 0 ? `⚔️ FARMING` : ""}</span>
                   </div>
-                  <div style={{ animation: "bossNameEnter 0.6s ease 0.6s both", fontSize: 22, fontWeight: 900, fontFamily: FONT_DISPLAY, color: T.gold, textShadow: `0 0 20px ${T.gold}80, 0 2px 8px #000`, letterSpacing: 2, marginTop: 8 }}>{bossCinematic.name}</div>
-                  <div style={{ animation: "bossNameEnter 0.6s ease 0.9s both", fontSize: 10, fontWeight: 700, color: "#ff666680", fontFamily: FONT_DISPLAY, letterSpacing: 4, marginTop: 4, textTransform: "uppercase" }}>BOSS BATTLE</div>
-                  {/* Red scanlines */}
-                  <div style={{ position: "absolute", inset: 0, background: "repeating-linear-gradient(0deg, transparent, transparent 3px, #ff000008 3px, #ff000008 4px)", pointerEvents: "none" }} />
+                  <div style={{ height: 8, borderRadius: 4, background: MW.card, overflow: "hidden" }}>
+                    <div style={{ width: `${Math.max(2, ((battleState?.killCount || 0) / monster.monstersToKill) * 100)}%`, height: "100%", borderRadius: 4, background: `linear-gradient(90deg, ${MW.accent}, ${MW.accentLight})`, transition: "width 0.3s" }} />
+                  </div>
                 </div>
-              )}
-
-              {/* ── ANIMATED BACKGROUND PARTICLES ── */}
-              {[...Array(8)].map((_, i) => (
-                <div key={`p${i}`} style={{
-                  position: "absolute", pointerEvents: "none", zIndex: 1,
-                  left: `${10 + (i * 12)}%`, bottom: `${30 + (i % 3) * 8}%`,
-                  width: 3, height: 3, borderRadius: "50%",
-                  background: `${chapter.color}${i % 2 === 0 ? "30" : "18"}`,
-                  animation: `particleFloat ${4 + (i % 3) * 2}s ease-in-out infinite ${i * 0.5}s`,
-                  filter: "blur(1px)",
-                }} />
-              ))}
-              {/* Floating dust motes */}
-              {[...Array(5)].map((_, i) => (
-                <div key={`d${i}`} style={{
-                  position: "absolute", pointerEvents: "none", zIndex: 1,
-                  left: `${5 + i * 20}%`, top: `${15 + (i % 4) * 15}%`,
-                  width: 2, height: 2, borderRadius: "50%",
-                  background: "#ffffff10",
-                  animation: `dustDrift ${6 + i * 1.5}s linear infinite ${i * 1.2}s`,
-                }} />
-              ))}
-
-              {/* ── IDLE INCOME HUD ── */}
-              <div style={{ position: "absolute", top: isMobile ? 56 : 60, left: 8, zIndex: 15, pointerEvents: "none" }}>
-                <div style={{ fontSize: isMobile ? 8 : 10, fontWeight: 800, color: T.gold, fontFamily: FONT_DISPLAY, textShadow: "0 1px 3px #000", marginBottom: 2 }}>
-                  🪙 {fmt(goldPerSec)}/s
-                </div>
-                <div style={{ fontSize: isMobile ? 8 : 10, fontWeight: 800, color: T.danger, fontFamily: FONT_DISPLAY, textShadow: "0 1px 3px #000", marginBottom: 2 }}>
-                  💀 {fmt(killsPerMin)}/min
-                </div>
-                {activeBuffs.length > 0 && activeBuffs.map(b => {
-                  const pot = POTIONS.find(p => p.id === b.id);
-                  const secs = Math.max(0, Math.floor((b.expiresAt - Date.now()) / 1000));
-                  return pot ? (
-                    <div key={b.id} style={{ fontSize: isMobile ? 7 : 8, fontWeight: 700, color: pot.color, fontFamily: FONT_DISPLAY, textShadow: "0 1px 2px #000" }}>
-                      {pot.emoji} {pot.name} ({secs}s)
+                <div style={{ display: "grid", gridTemplateColumns: "1fr auto 1fr", gap: 12, marginBottom: 14 }}>
+                  <div style={{ padding: "12px 14px", borderRadius: 8, background: MW.card, border: `1px solid ${MW.border}` }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
+                      <span style={{ fontSize: 24 }}>{heroEmoji}</span>
+                      <div><div style={{ fontSize: 12, fontWeight: 800, color: MW.white, fontFamily: FONT_DISPLAY }}>{account.displayName}</div><div style={{ fontSize: 9, color: MW.textSec }}>{wEvo.emoji} {wEvo.name}{heroElement ? ` • ${ELEMENTS[heroElement].emoji}` : ""}</div></div>
                     </div>
-                  ) : null;
-                })}
-              </div>
-
-              {/* ── IDLE SKILLS MINI (desktop only) ── */}
-              {!isMobile && (
-                <div style={{ position: "absolute", bottom: "15%", left: 8, zIndex: 15, pointerEvents: "none" }}>
-                  {IDLE_SKILLS.filter(s => highestStage >= s.unlockStage).map(skill => {
-                    const sl = idleSkills[skill.id] || { level: 0, xp: 0 };
-                    const rate = idleSkillRate(skill, sl.level);
-                    return (
-                      <div key={skill.id} style={{ fontSize: 8, fontWeight: 700, color: skill.color, fontFamily: FONT_DISPLAY, textShadow: "0 1px 2px #000", marginBottom: 1 }}>
-                        {skill.emoji} Lv{sl.level} {Math.floor(idleResources[skill.resource] || 0)}
-                      </div>
-                    );
+                    <div style={{ marginBottom: 6 }}>
+                      <div style={{ display: "flex", justifyContent: "space-between", fontSize: 9, color: MW.textSec, marginBottom: 2 }}><span>HP</span><span style={{ color: MW.success }}>{fmt(playerHp)} / {fmt(totalMaxHp)}</span></div>
+                      <div style={{ height: 10, borderRadius: 5, background: MW.bg, overflow: "hidden" }}><div style={{ width: `${hpPct}%`, height: "100%", borderRadius: 5, background: hpPct > 50 ? MW.success : hpPct > 25 ? MW.warning : MW.danger, transition: "width 0.2s" }} /></div>
+                    </div>
+                    {rage > 0 && <div style={{ marginBottom: 6 }}><div style={{ display: "flex", justifyContent: "space-between", fontSize: 9, color: MW.textSec, marginBottom: 2 }}><span>Rage</span><span style={{ color: rage >= 80 ? MW.danger : MW.warning }}>{rage}%</span></div><div style={{ height: 6, borderRadius: 3, background: MW.bg, overflow: "hidden" }}><div style={{ width: `${rage}%`, height: "100%", borderRadius: 3, background: rage >= 80 ? MW.danger : MW.warning, transition: "width 0.2s" }} /></div></div>}
+                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 4 }}>
+                      {[{ l: "ATK", v: fmt(totalAtk), c: MW.danger }, { l: "DEF", v: fmt(totalDef), c: MW.info }, { l: "CRIT", v: `${critRate}%`, c: MW.warning }].map(s => (
+                        <div key={s.l} style={{ padding: "4px", borderRadius: 4, background: MW.bg, textAlign: "center" }}><div style={{ fontSize: 7, color: MW.textSec }}>{s.l}</div><div style={{ fontSize: 12, fontWeight: 800, color: s.c, fontFamily: FONT_DISPLAY }}>{s.v}</div></div>
+                      ))}
+                    </div>
+                  </div>
+                  <div style={{ display: "flex", alignItems: "center" }}><div style={{ fontSize: 16, fontWeight: 900, color: MW.textSec, fontFamily: FONT_DISPLAY }}>VS</div></div>
+                  <div style={{ padding: "12px 14px", borderRadius: 8, background: MW.card, border: `1px solid ${MW.border}` }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
+                      <span style={{ fontSize: 24 }}>{target?.emoji || "❓"}</span>
+                      <div><div style={{ fontSize: 12, fontWeight: 800, color: target?.isBoss ? MW.gold : MW.white, fontFamily: FONT_DISPLAY }}>{target?.name || "..."}</div><div style={{ fontSize: 9, color: MW.textSec }}>{hazard ? `${hazard.emoji} ${hazard.name}` : ""}</div></div>
+                    </div>
+                    <div style={{ marginBottom: 6 }}>
+                      <div style={{ display: "flex", justifyContent: "space-between", fontSize: 9, color: MW.textSec, marginBottom: 2 }}><span>HP</span><span style={{ color: MW.danger }}>{target ? `${fmt(target.hp)} / ${fmt(target.maxHp)}` : "—"}</span></div>
+                      <div style={{ height: 10, borderRadius: 5, background: MW.bg, overflow: "hidden" }}><div style={{ width: `${targetHpPct}%`, height: "100%", borderRadius: 5, background: target?.isBoss ? MW.gold : MW.danger, transition: "width 0.1s" }} /></div>
+                    </div>
+                    {target && <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 4 }}>{[{ l: "ATK", v: fmt(target.atk), c: MW.danger },{ l: "DEF", v: fmt(target.def), c: MW.info },{ l: "GOLD", v: fmt(target.gold), c: MW.gold }].map(s => (<div key={s.l} style={{ padding: "4px", borderRadius: 4, background: MW.bg, textAlign: "center" }}><div style={{ fontSize: 7, color: MW.textSec }}>{s.l}</div><div style={{ fontSize: 12, fontWeight: 800, color: s.c, fontFamily: FONT_DISPLAY }}>{s.v}</div></div>))}</div>}
+                  </div>
+                </div>
+                <div style={{ display: "flex", gap: 8, marginBottom: 12 }}>
+                  <div onClick={() => setAutoProgress(p => !p)} style={{ flex: 1, padding: "7px 12px", borderRadius: 6, background: autoProgress ? `${MW.accent}15` : MW.card, border: `1px solid ${autoProgress ? MW.accent + "40" : MW.border}`, cursor: "pointer", textAlign: "center", fontSize: 10, fontWeight: 700, color: autoProgress ? MW.accentLight : MW.textSec }}>➡️ Auto: {autoProgress ? "ON" : "OFF"}</div>
+                  <div onClick={() => setFarmStage(f => f > 0 ? 0 : currentStage)} style={{ flex: 1, padding: "7px 12px", borderRadius: 6, background: farmStage > 0 ? `${MW.warning}15` : MW.card, border: `1px solid ${farmStage > 0 ? MW.warning + "40" : MW.border}`, cursor: "pointer", textAlign: "center", fontSize: 10, fontWeight: 700, color: farmStage > 0 ? MW.warning : MW.textSec }}>⚔️ Farm: {farmStage > 0 ? stageLabel(farmStage) : "OFF"}</div>
+                </div>
+                <div style={{ display: "flex", gap: 4, flexWrap: "wrap", marginBottom: 12, padding: "8px 10px", borderRadius: 6, background: MW.card, border: `1px solid ${MW.border}` }}>
+                  <span style={{ fontSize: 9, fontWeight: 700, color: MW.textSec, alignSelf: "center", marginRight: 4 }}>Skills:</span>
+                  {COMBAT_SKILLS.filter(sk => unlockedSkills.includes(sk.id)).map(sk => {
+                    const isEq = equippedSkills.includes(sk.id);
+                    return (<div key={sk.id} onClick={() => { if (isEq) setEquippedSkills(p => p.map(s => s === sk.id ? null : s)); else { const idx = equippedSkills.indexOf(null); if (idx >= 0) setEquippedSkills(p => { const n = [...p]; n[idx] = sk.id; return n; }); } }} style={{ padding: "4px 8px", borderRadius: 4, background: isEq ? `${sk.color}20` : MW.bg, border: `1px solid ${isEq ? sk.color + "40" : MW.border}`, cursor: "pointer" }}><span style={{ fontSize: 12 }}>{sk.emoji}</span><span style={{ fontSize: 8, color: isEq ? sk.color : MW.textSec, fontWeight: 700, marginLeft: 3, fontFamily: FONT_DISPLAY }}>{sk.name}</span></div>);
                   })}
                 </div>
-              )}
-
-              {/* ── RAGE METER ── */}
-              {rage > 0 && (
-                <div style={{ position: "absolute", bottom: "8%", left: "10%", right: "10%", zIndex: 15, pointerEvents: "none" }}>
-                  <div style={{ fontSize: 7, fontWeight: 800, color: rage >= 80 ? "#ff4444" : "#ff8800", fontFamily: FONT_DISPLAY, textAlign: "center", marginBottom: 2, textShadow: "0 1px 3px #000" }}>
-                    {rage >= 100 ? "⚡ ULTIMATE READY!" : `🔥 RAGE ${rage}%`}
-                  </div>
-                  <div style={{ height: 5, borderRadius: 3, background: "#ffffff15", border: "1px solid #ffffff20", overflow: "hidden" }}>
-                    <div style={{ width: `${rage}%`, height: "100%", borderRadius: 3, background: rage >= 80 ? "linear-gradient(90deg, #ff4444, #ff0000)" : "linear-gradient(90deg, #ff8800, #ffcc00)", transition: "width 0.2s", boxShadow: rage >= 80 ? "0 0 8px #ff000080" : "none", animation: rage >= 90 ? "pulse 0.5s infinite" : "none" }} />
-                  </div>
-                </div>
-              )}
-
-              {/* ── HAZARD WARNING ── */}
-              {(() => { const h = STAGE_HAZARDS[Math.min(Math.floor((currentStage - 1) / 50), STAGE_HAZARDS.length - 1)]; return h ? (
-                <div style={{ position: "absolute", top: 18, right: 8, zIndex: 15, padding: "2px 6px", borderRadius: 4, background: `${h.color}20`, border: `1px solid ${h.color}40`, fontSize: 7, fontWeight: 700, color: h.color, fontFamily: FONT_DISPLAY }}>
-                  {h.emoji} {h.name}
-                </div>
-              ) : null; })()}
-
-              {/* ── HAZARD FLASH OVERLAY ── */}
-              {hazardFlash && <div style={{ position: "absolute", inset: 0, background: `${hazardFlash}15`, zIndex: 12, pointerEvents: "none", animation: "fadeOut 0.3s ease forwards" }} />}
-
-              {/* ── DODGE TEXT ── */}
-              {dodgeText && (
-                <div key={dodgeText.ts} style={{ position: "absolute", left: "25%", top: "40%", zIndex: 20, pointerEvents: "none", animation: "dmgFloat 0.6s ease-out forwards" }}>
-                  <div style={{ fontSize: isMobile ? 14 : 18, fontWeight: 900, color: "#60d5f7", fontFamily: FONT_DISPLAY, textShadow: "0 2px 6px #000" }}>DODGE!</div>
-                </div>
-              )}
-
-              {/* ── ELEMENT INDICATOR ── */}
-              {heroElement && (
-                <div style={{ position: "absolute", top: 18, left: 8, zIndex: 15, padding: "2px 6px", borderRadius: 4, background: `${ELEMENTS[heroElement].color}15`, border: `1px solid ${ELEMENTS[heroElement].color}30`, fontSize: isMobile ? 7 : 9, fontWeight: 700, color: ELEMENTS[heroElement].color, fontFamily: FONT_DISPLAY }}>
-                  {ELEMENTS[heroElement].emoji} {ELEMENTS[heroElement].name}
-                </div>
-              )}
-
-              {/* ── COMPANION PET ── */}
-              {activePets.length > 0 && (() => { const pd = PET_DEFS.find(p => p.name === activePets[0]); return pd ? (
-                <div style={{ position: "absolute", left: "12%", bottom: "35%", zIndex: 8, animation: "fighterIdle 3s ease-in-out infinite 1s" }}>
-                  <div style={{ fontSize: 24, filter: "drop-shadow(0 2px 4px #00000080)" }}>{pd.emoji}</div>
-                  <div style={{ fontSize: 6, fontWeight: 700, color: T.textSec, fontFamily: FONT_DISPLAY, textAlign: "center", textShadow: "0 1px 2px #000" }}>{pd.name}</div>
-                </div>
-              ) : null; })()}
-
-              {/* ── SET BONUS AURA ── */}
-              {(() => {
-                const equippedTypes = Object.entries(equipped).filter(([, v]) => v).map(([k]) => k);
-                const activeSet = EQUIP_SETS.find(set => set.pieces.filter(p => equippedTypes.includes(p)).length >= 3);
-                return activeSet ? (
-                  <div style={{ position: "absolute", left: "22%", bottom: "25%", width: 80, height: 80, borderRadius: "50%", background: `radial-gradient(circle, ${activeSet.aura}20 0%, transparent 70%)`, border: `1px solid ${activeSet.aura}15`, zIndex: 3, pointerEvents: "none", animation: "pulse 3s infinite", transform: "translateX(-50%)" }} />
-                ) : null;
-              })()}
-
-              {/* ── TAP INDICATOR ── */}
-              <div style={{ position: "absolute", bottom: "32%", left: "50%", transform: "translateX(-50%)", zIndex: 5, pointerEvents: "none", opacity: 0.25, animation: "pulse 2s infinite" }}>
-                <div style={{ fontSize: 8, fontWeight: 700, color: "#ffffff60", fontFamily: FONT_DISPLAY, textAlign: "center" }}>TAP TO ATTACK</div>
-              </div>
-
-              {/* ── HERO (left side fighter) ── */}
-              <div style={{ position: "absolute", left: "22%", bottom: "28%", transform: "translateX(-50%)", textAlign: "center", zIndex: 10 }}>
-                {/* Hero name */}
-                <div style={{ fontSize: 7, fontWeight: 800, color: T.accent, fontFamily: FONT_DISPLAY, marginBottom: 2, textShadow: "0 1px 3px #000" }}>{account.displayName}</div>
-                {/* Hero HP bar */}
-                <div style={{ width: 64, height: 6, background: "#00000080", borderRadius: 3, overflow: "hidden", margin: "0 auto 4px", border: "1px solid #ffffff15" }}>
-                  <div style={{ width: `${(playerHp / totalMaxHp) * 100}%`, height: "100%", background: "linear-gradient(90deg, #22c55e, #4ade80)", borderRadius: 3, transition: "width 0.15s", boxShadow: "0 0 6px #22c55e60" }} />
-                </div>
-                {/* Hero sprite */}
-                <div style={{ width: 64, height: 64, margin: "0 auto", position: "relative" }}>
-                  {/* Shadow on ground */}
-                  <div style={{ position: "absolute", bottom: -6, left: "50%", transform: "translateX(-50%)", width: 40, height: 10, borderRadius: "50%", background: "#00000050", filter: "blur(3px)" }} />
-                  {/* Hero body */}
-                  <div style={{
-                    width: 64, height: 64, display: "flex", alignItems: "center", justifyContent: "center",
-                    animation: heroAnim === "attack" ? "fighterAttack 0.3s ease" : heroAnim === "hit" ? "fighterHit 0.4s ease" : "fighterIdle 2s ease-in-out infinite",
-                    filter: heroAnim === "hit" ? "brightness(0.7) sepia(1) saturate(10) hue-rotate(-50deg) drop-shadow(0 0 12px #ff0000cc)" : "drop-shadow(0 2px 8px #00000080) drop-shadow(0 0 12px " + T.accent + "30)",
-                    transition: "filter 0.1s",
-                  }}>
-                    <img src={heroSprite} alt="Hero" onError={(e) => { e.target.style.display = "none"; e.target.nextSibling.style.display = "flex"; }} style={{ width: 64, height: 64, imageRendering: "pixelated", objectFit: "contain" }} />
-                    <span style={{ display: "none", width: 64, height: 64, alignItems: "center", justifyContent: "center", fontSize: 40 }}>{heroEmoji}</span>
-                  </div>
-                </div>
-                {/* HP text */}
-                <div style={{ fontSize: 7, fontWeight: 800, color: "#22c55e", fontFamily: FONT_DISPLAY, marginTop: 1, textShadow: "0 1px 2px #000" }}>{fmt(playerHp)}/{fmt(totalMaxHp)}</div>
-              </div>
-
-              {/* ── VS indicator ── */}
-              {(battleState?.enemies || []).some(e => e.anim !== "die") && (
-                <div style={{ position: "absolute", left: "50%", top: "35%", transform: "translate(-50%, -50%)", zIndex: 12, pointerEvents: "none" }}>
-                  <div style={{ fontSize: 14, fontWeight: 900, color: "#ffffff30", fontFamily: FONT_DISPLAY, textShadow: "0 0 20px #ffffff10", letterSpacing: 2 }}>VS</div>
-                </div>
-              )}
-
-              {/* ── ENEMY (right side fighter) ── */}
-              {(battleState?.enemies || []).map(enemy => (
-                <div key={enemy.id} style={{
-                  position: "absolute", right: "18%", bottom: "28%", transform: `translateX(50%) scale(${enemy.scale || 1})`,
-                  textAlign: "center", zIndex: 8,
-                  animation: enemy.anim === "spawn" ? "enemyEnter 0.4s ease" : enemy.anim === "die" ? "fighterDie 0.5s ease forwards" : undefined,
-                  pointerEvents: "none",
-                }}>
-                  {/* Enemy name */}
-                  {enemy.anim !== "die" && (
-                    <div style={{ fontSize: 7, fontWeight: 800, color: enemy.isBoss ? T.gold : T.danger, fontFamily: FONT_DISPLAY, marginBottom: 2, textShadow: "0 1px 3px #000" }}>
-                      {enemy.isBoss && "👑 "}{enemy.name}
-                    </div>
-                  )}
-                  {/* Enemy HP bar */}
-                  {enemy.anim !== "die" && (
-                    <div style={{ width: 64, height: 6, background: "#00000080", borderRadius: 3, overflow: "hidden", margin: "0 auto 4px", border: `1px solid ${enemy.isBoss ? T.gold + "30" : "#ffffff15"}` }}>
-                      <div style={{ width: `${Math.max(0, (enemy.hp / enemy.maxHp) * 100)}%`, height: "100%", background: enemy.isBoss ? `linear-gradient(90deg, ${T.gold}, ${T.orange})` : "linear-gradient(90deg, #ef4444, #f87171)", borderRadius: 3, transition: "width 0.1s", boxShadow: `0 0 6px ${enemy.isBoss ? T.gold : "#ef4444"}60` }} />
-                    </div>
-                  )}
-                  {/* Enemy sprite */}
-                  <div style={{ width: 64, height: 64, margin: "0 auto", position: "relative" }}>
-                    {/* Shadow on ground */}
-                    <div style={{ position: "absolute", bottom: -6, left: "50%", transform: "translateX(-50%)", width: 40, height: 10, borderRadius: "50%", background: "#00000050", filter: "blur(3px)", opacity: enemy.anim === "die" ? 0 : 1 }} />
-                    {/* Enemy body */}
-                    <div style={{
-                      width: 64, height: 64, display: "flex", alignItems: "center", justifyContent: "center",
-                      transform: "scaleX(-1)",
-                      animation: enemy.anim === "hit" ? "fighterHit 0.4s ease" : enemy.anim === "idle" ? "fighterIdle 2s ease-in-out infinite 0.5s" : undefined,
-                      filter: enemy.anim === "hit" ? "brightness(0.7) sepia(1) saturate(10) hue-rotate(-50deg) drop-shadow(0 0 12px #ff0000cc)" : enemy.isBoss ? `drop-shadow(0 0 12px ${T.gold}60)` : "drop-shadow(0 2px 8px #00000080)",
-                      opacity: enemy.anim === "die" ? 0 : 1,
-                      transition: "filter 0.1s, opacity 0.3s",
-                    }}>
-                      {enemy.sprite ? (
-                        <img src={enemy.sprite} alt={enemy.name} onError={(e) => { e.target.style.display = "none"; e.target.nextSibling.style.display = "flex"; }} style={{ width: 64, height: 64, imageRendering: "pixelated", objectFit: "contain" }} />
-                      ) : null}
-                      <span style={{ display: enemy.sprite ? "none" : "flex", width: 64, height: 64, alignItems: "center", justifyContent: "center", fontSize: enemy.isBoss ? 44 : 36 }}>{enemy.emoji}</span>
-                    </div>
-                  </div>
-                  {/* Enemy HP text */}
-                  {enemy.anim !== "die" && (
-                    <div style={{ fontSize: 7, fontWeight: 800, color: "#ef4444", fontFamily: FONT_DISPLAY, marginTop: 1, textShadow: "0 1px 2px #000" }}>{fmt(enemy.hp)}/{fmt(enemy.maxHp)}</div>
-                  )}
-                </div>
-              ))}
-
-              {/* Slash VFX between fighters on hero attack */}
-              {heroAnim === "attack" && (
-                <div style={{ position: "absolute", left: "42%", top: "42%", zIndex: 20, pointerEvents: "none", animation: "slashVfx 0.3s ease-out forwards" }}>
-                  <div style={{ fontSize: 32, transform: "rotate(-30deg) scaleX(1.5)", filter: `drop-shadow(0 0 8px ${T.accent}80)`, opacity: 0.9 }}>⚔️</div>
-                </div>
-              )}
-
-                                          {/* LEFT SIDE ICONS */}
-              <div style={{ position: "absolute", left: 4, top: "25%%", display: "flex", flexDirection: "column", gap: 5, zIndex: 20 }}>
-                {[{ icon: "💎", sub: fmt(diamonds), p: null }, { icon: "🛒", p: "shop" }, { icon: "👗", p: "costumes" }, { icon: "🏅", p: "battlepass" }].map((b, i) => (
-                  <div key={i} onClick={b.p ? () => nav(b.p) : undefined} style={{ width: 36, height: b.sub ? 42 : 36, borderRadius: 8, cursor: b.p ? "pointer" : "default", background: "linear-gradient(135deg, #161a2a, #101420)", border: "1px solid #ffffff0a", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 0, boxShadow: "0 2px 8px #00000050" }}>
-                    <span style={{ fontSize: 16, lineHeight: 1 }}>{b.icon}</span>
-                    {b.sub && <span style={{ fontSize: 7, fontWeight: 800, color: "#60a5fa", fontFamily: FONT_DISPLAY, lineHeight: 1 }}>{b.sub}</span>}
-                  </div>
-                ))}
-              </div>
-
-                            {/* RIGHT SIDE ICONS */}
-              <div style={{ position: "absolute", right: 4, top: "20%", display: "flex", flexDirection: "column", gap: 5, zIndex: 20 }}>
-              {[{ icon: "🐾", p: "pets" }, { icon: "🔄", p: "prestige" }, { icon: "🏰", p: "dungeons" }, { icon: "⚙️", p: "settings" }].map((b,i) => (<div key={i} onClick={() => nav(b.p)} style={{ width:36,height:36,borderRadius:8,cursor:"pointer",background:"linear-gradient(135deg,#1a1610,#12100a)",border:"1px solid #ffffff0a",display:"flex",alignItems:"center",justifyContent:"center",fontSize:16,boxShadow:"0 2px 8px #00000050"}}>{b.icon}</div>))}
-              <div onClick={() => setShowMoreMenu(p=>!p)} style={{ width:36,height:36,borderRadius:8,cursor:"pointer",background:showMoreMenu?"linear-gradient(135deg,#2a1a30,#1a1228)":"linear-gradient(135deg,#1a1610,#12100a)",border:showMoreMenu?`1px solid ${T.accent}30`:"1px solid #ffffff0a",display:"flex",alignItems:"center",justifyContent:"center",fontSize:16,boxShadow:"0 2px 8px #00000050",fontWeight:900,color:showMoreMenu?T.accent:T.textDim}}>{"⋯"}</div>
-              </div>
-              {showMoreMenu&&(<div onClick={()=>setShowMoreMenu(false)} style={{position:"absolute",inset:0,zIndex:28}}/>)}
-              {showMoreMenu&&(<div style={{position:"absolute",right:46,top:"18%",zIndex:30,background:"linear-gradient(145deg,#1c1f2e,#141620)",border:"1px solid #ffffff15",borderRadius:14,padding:12,boxShadow:"0 12px 40px #000000b0",minWidth:180}}>
-              <div style={{fontSize:10,fontWeight:800,color:T.textDim,fontFamily:FONT_DISPLAY,marginBottom:8,textAlign:"center",textTransform:"uppercase",letterSpacing:2}}>More</div>
-              <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:6}}>
-              {[{icon:"🏺",label:"Relics",p:"relics"},{icon:"🏅",label:"Emblems",p:"emblems"},{icon:"🗼",label:"Tower",p:"tower"},{icon:"⚗️",label:"Alchemy",p:"alchemy"},{icon:"💠",label:"Gems",p:"gems"},{icon:"✨",label:"Resonance",p:"resonance"},{icon:"🎡",label:"Spin",p:"spin"},{icon:"💥",label:"BossRush",p:"bossrush"},{icon:"📖",label:"Bestiary",p:"bestiary"},{icon:"🏷️",label:"Titles",p:"titles"},{icon:"🗿",label:"Figures",p:"figures"},{icon:"💀",label:"Achieve",p:"achievements"},{icon:"📊",label:"Power",p:"power"},{icon:"⚔️",label:"Evolve",p:"weaponevo"},{icon:"🥋",label:"Dojo",p:"dojo"},{icon:"🎯",label:"Challenge",p:"challenge"},{icon:"🔨",label:"Craft",p:"crafting"},{icon:"🏟️",label:"PvP",p:"pvp"},{icon:"📊",label:"Idle",p:"idle"},{icon:"⚗️",label:"Potions",p:"potions"},{icon:"🌟",label:"Ascend",p:"ascend"}].map(b=>(<div key={b.p} onClick={()=>{nav(b.p);setShowMoreMenu(false)}} style={{display:"flex",flexDirection:"column",alignItems:"center",gap:3,padding:"8px 2px",borderRadius:8,cursor:"pointer",background:"#ffffff04",border:"1px solid #ffffff08"}}><span style={{fontSize:18}}>{b.icon}</span><span style={{fontSize:7,fontWeight:700,color:T.textSec,fontFamily:FONT_DISPLAY,lineHeight:1}}>{b.label}</span></div>))}
-              </div></div>)}
-            </div>
-
-
-            {/* ── SKILL SLOTS ── */}
-            <div style={{ flexShrink: 0, padding: "3px 10px", background: "linear-gradient(180deg, #10121a, #0c0e16)", borderTop: "1px solid #ffffff06" }}>
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 4 }}>
-                {[0, 1, 2].map(idx => {
-                  const sid = equippedSkills[idx];
-                  const sk = sid ? COMBAT_SKILLS.find(s => s.id === sid) : null;
-                  const cd = sk ? skillCooldowns[sk.id] : false;
-                  return (
-                    <div key={idx} style={{ width: 42, height: 42, borderRadius: 8, position: "relative", background: sk ? (cd ? "#0e1020" : `${sk.color}15`) : "#0a0c14", border: `2px solid ${sk ? (cd ? "#ffffff08" : sk.color + "40") : "#ffffff06"}`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: sk ? 19 : 11, color: sk ? undefined : T.textDim, opacity: cd ? 0.35 : 1, transition: "all 0.3s", boxShadow: sk && !cd ? `0 0 8px ${sk.color}15, inset 0 0 10px ${sk.color}08` : "none" }}>
-                      {sk ? sk.emoji : idx + 1}
-                      {sk && !cd && <div style={{ position: "absolute", inset: 0, borderRadius: 6, background: `${sk.color}06`, animation: "pulse 2s infinite" }} />}
-                      <div style={{ position: "absolute", top: 0, left: 2, fontSize: 7, fontWeight: 900, color: cd ? T.textDim : sk ? sk.color : T.textDim, fontFamily: FONT_DISPLAY }}>{idx + 1}</div>
-                    </div>
-                  );
-                })}
-                <div style={{ width: 1, height: 28, background: "#ffffff08", margin: "0 2px" }} />
-                <div onClick={() => setAutoProgress(!autoProgress)} style={{ width: 42, height: 42, borderRadius: "50%", cursor: "pointer", background: autoProgress ? "linear-gradient(135deg, #16a34a20, #22c55e10)" : "#0e1020", border: `2px solid ${autoProgress ? "#22c55e50" : "#ffffff08"}`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 8, fontWeight: 900, fontFamily: FONT_DISPLAY, color: autoProgress ? "#22c55e" : T.textDim, boxShadow: autoProgress ? "0 0 10px #22c55e20" : "none" }}>AUTO</div>
-                {/* Farm stage selector */}
-                <div onClick={() => {
-                  if (farmStage > 0) { setFarmStage(0); } // Turn off farming
-                  else { setFarmStage(Math.max(1, highestStage - 5)); } // Farm 5 stages back
-                }} style={{ width: 42, height: 42, borderRadius: "50%", cursor: "pointer", background: farmStage > 0 ? "linear-gradient(135deg, #f59e0b20, #fbbf2410)" : "#0e1020", border: `2px solid ${farmStage > 0 ? "#fbbf2450" : "#ffffff08"}`, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", fontSize: farmStage > 0 ? 7 : 8, fontWeight: 900, fontFamily: FONT_DISPLAY, color: farmStage > 0 ? T.gold : T.textDim, boxShadow: farmStage > 0 ? "0 0 10px #fbbf2420" : "none", lineHeight: 1.2 }}>
-                  {farmStage > 0 ? (<>{`⚔️`}<span style={{ fontSize: 6 }}>{farmStage}</span></>) : "FARM"}
+                <div style={{ padding: "8px 10px", borderRadius: 6, background: MW.card, border: `1px solid ${MW.border}`, maxHeight: 100, overflow: "auto" }}>
+                  <div style={{ fontSize: 9, fontWeight: 700, color: MW.textSec, marginBottom: 4 }}>Combat Log</div>
+                  {battleLog.slice(-6).reverse().map((log, i) => (<div key={i} style={{ fontSize: 9, color: MW.textSec, padding: "1px 0", borderBottom: `1px solid ${MW.bg}`, opacity: 1 - i * 0.12 }}>{log}</div>))}
                 </div>
               </div>
-            </div>
-
-            {/* ── SKILL BAR SWAP ── */}
-            <div style={{ flexShrink: 0, padding: "2px 10px 0", background: "#0c0e16", display: "flex", alignItems: "center", justifyContent: "center", gap: 4 }}>
-              {[0, 1].map(idx => (
-                <div key={idx} onClick={() => swapSkillBar(idx)} style={{
-                  padding: "2px 14px", borderRadius: 4, cursor: "pointer",
-                  background: activeSkillBar === idx ? `${T.accent}15` : "transparent",
-                  border: `1px solid ${activeSkillBar === idx ? T.accent + "40" : "#ffffff08"}`,
-                  fontSize: 7, fontWeight: 800, color: activeSkillBar === idx ? T.accent : T.textDim,
-                  fontFamily: FONT_DISPLAY,
-                }}>Bar {idx + 1}</div>
-              ))}
-            </div>
-            {/* ── SKILL ICONS (equip/unequip) ── */}
-            <div style={{ flexShrink: 0, padding: "3px 10px", background: "#0c0e16", display: "flex", alignItems: "center", justifyContent: "center", gap: 6 }}>
-              {COMBAT_SKILLS.filter(sk => unlockedSkills.includes(sk.id)).map(sk => {
-                const isEq = equippedSkills.includes(sk.id);
-                return (
-                  <div key={sk.id} onClick={() => { if (isEq) { setEquippedSkills(p => p.map(s => s === sk.id ? null : s)); } else { setEquippedSkills(p => { const c = [...p]; const e = c.indexOf(null); if (e !== -1) c[e] = sk.id; return c; }); } }} style={{ width: 34, height: 34, borderRadius: "50%", cursor: "pointer", background: isEq ? `${sk.color}20` : "#14161e", border: `2px solid ${isEq ? sk.color + "60" : "#ffffff0a"}`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 15, boxShadow: isEq ? `0 0 8px ${sk.color}20` : "none", transition: "all 0.2s" }}>
-                    {sk.emoji}
-                  </div>
-                );
-              })}
-              {COMBAT_SKILLS.filter(sk => !unlockedSkills.includes(sk.id)).slice(0, 3).map((_, i) => (
-                <div key={i} style={{ width: 34, height: 34, borderRadius: "50%", background: "#0e1020", border: "2px solid #ffffff06", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11, color: T.textDim }}>🔒</div>
-              ))}
-            </div>
-
-            {/* ── BOTTOM TABS (mobile only) ── */}
-            {isMobile && <div style={{ flexShrink: 0, display: "flex", alignItems: "stretch", background: "linear-gradient(180deg, #12141e, #0a0c14)", borderTop: "1px solid #ffffff08", paddingBottom: "max(4px, env(safe-area-inset-bottom))" }}>
-              {[
-                { icon: "🗡️", label: "Equip", p: "equipment" },
-                { icon: "📜", label: "Quests", p: "quests" },
-                { icon: "✨", label: "Summon", p: "summon" },
-                { icon: "⭐", label: "Growth", p: "growth" },
-                { icon: "🏰", label: "Dungeon", p: "dungeons" },
-                { icon: "⚔️", label: "Raids", p: "raids" },
-              ].map(tab => {
-                const act = page === tab.p;
-                const hasNotif = tab.p === "quests" && (() => {
-                  const dp = questProgress.daily || {};
-                  const wp = questProgress.weekly || {};
-                  const dc = questProgress.claimedDaily || {};
-                  const wc = questProgress.claimedWeekly || {};
-                  return DAILY_QUESTS.some(q => (dp[q.stat] || 0) >= q.target && !dc[q.id]) || WEEKLY_QUESTS.some(q => (wp[q.stat] || 0) >= q.target && !wc[q.id]);
-                })();
-                return (
-                  <div key={tab.p} onClick={() => nav(tab.p)} style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "5px 0 3px", cursor: "pointer", position: "relative" }}>
-                    {act && <div style={{ position: "absolute", top: 0, left: "20%", right: "20%", height: 2, background: T.accent, borderRadius: "0 0 2px 2px" }} />}
-                    {hasNotif && <div style={{ position: "absolute", top: 2, right: "18%", width: 7, height: 7, borderRadius: "50%", background: T.danger, border: "1px solid #0a0c14", zIndex: 2 }} />}
-                    <div style={{ width: 36, height: 36, borderRadius: 9, background: act ? "linear-gradient(180deg, #1e2040, #14162a)" : "transparent", border: act ? `1px solid ${T.accent}30` : "1px solid transparent", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 19, boxShadow: act ? `0 0 10px ${T.accent}15` : "none" }}>{tab.icon}</div>
-                    <span style={{ fontSize: 7, fontWeight: 700, color: act ? T.accent : T.textDim, marginTop: 1, fontFamily: FONT_DISPLAY }}>{tab.label}</span>
-                  </div>
-                );
-              })}
-            </div>}
-          </div>
-        );
-      })()}
-
-      {/* ═══ PAGE PANEL ═══ */}
-      {(isMobile ? page !== "battle" : true) && (
-        <div style={{
-          ...(isMobile ? { position: "absolute", left: 0, right: 0, bottom: 0, top: "18%", zIndex: 50, animation: "panelSlideUp 0.25s ease" } : { position: "relative", flex: 1, height: "100vh", borderLeft: "1px solid #ffffff08" }),
-          display: "flex", flexDirection: "column",
-        }}>
-          {/* Panel header */}
-          <div style={{ flexShrink: 0, borderRadius: isMobile ? "16px 16px 0 0" : 0, background: "linear-gradient(180deg, #181a24, #10121a)", borderTop: isMobile ? "1px solid #ffffff10" : "none", borderBottom: isMobile ? "none" : "1px solid #ffffff08", padding: isMobile ? "6px 12px 8px" : "10px 16px" }}>
-            {/* Drag handle (mobile only) */}
-            {isMobile && <div style={{ width: 36, height: 4, borderRadius: 99, background: "#ffffff15", margin: "0 auto 6px" }} />}
-            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-              {isMobile && <div onClick={() => nav("battle")} style={{ width: 28, height: 28, borderRadius: 7, cursor: "pointer", background: "#1a1c28", border: "1px solid #ffffff0a", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 10, color: T.textSec, fontWeight: 900 }}>✕</div>}
-              <div style={{ flex: 1, fontSize: isMobile ? 13 : 15, fontWeight: 900, color: T.white, fontFamily: FONT_DISPLAY, textTransform: "uppercase" }}>
-                {page === "dungeons" && "🏰 Dungeons"}{page === "growth" && "📊 Growth"}{page === "equipment" && "🗡️ Equipment"}{page === "summon" && "✨ Summon"}{page === "pets" && "🐾 Pets"}{page === "costumes" && "👗 Costumes"}{page === "achievements" && "💀 Achievements"}{page === "stats" && "📈 Stats"}{page === "settings" && "⚙️ Settings"}{page === "quests" && "📜 Quests"}{page === "relics" && "🏺 Relics & Insignias"}{page === "prestige" && "🔄 Rebirth & Skills"}{page === "raids" && "⚔️ Raid Bosses"}{page === "shop" && "🛒 Shop"}{page === "titles" && "🏷️ Titles"}{page === "emblems" && "🏅 Emblems"}{page === "alchemy" && "⚗️ Alchemy"}{page === "resonance" && "✨ Resonance"}{page === "figures" && "🗿 Figures"}{page === "tower" && "🗼 Tower"}{page === "spin" && "🎡 Daily Spin"}{page === "bossrush" && "💥 Boss Rush"}{page === "battlepass" && "🎖️ Battle Pass"}{page === "gems" && "💎 Gems"}{page === "bestiary" && "📖 Bestiary"}{page === "power" && "📊 Power"}{page === "weaponevo" && "⚔️ Weapon Evolution"}{page === "dojo" && "🥋 Training Dojo"}{page === "challenge" && "🎯 Challenges"}{page === "crafting" && "🔨 Crafting"}{page === "pvp" && "🏟️ PvP Arena"}{page === "idle" && "📊 Idle Skills"}{page === "potions" && "⚗️ Potions"}{page === "ascend" && "🌟 Ascension"}{page === "battle" && !isMobile && "⚔️ Quick Stats"}
-              </div>
-              <div style={{ display: "flex", gap: 5 }}>
-                <span style={{ fontSize: 9, fontWeight: 800, color: "#f5c542", fontFamily: FONT_DISPLAY }}>🪙{fmt(gold)}</span>
-                <span style={{ fontSize: 9, fontWeight: 800, color: "#60a5fa", fontFamily: FONT_DISPLAY }}>💎{fmt(diamonds)}</span>
-              </div>
-            </div>
-          </div>
-          {/* Scrollable content */}
-          <div style={{ flex: 1, overflow: "auto", padding: isMobile ? "10px 12px" : "16px 20px", paddingBottom: 60, background: "#10121aee", backdropFilter: "blur(6px)" }}>
-
-          {/* ═══ DESKTOP BATTLE QUICK STATS ═══ */}
-          {page === "battle" && !isMobile && (
-            <div>
-              <div style={{ fontSize: 15, fontWeight: 900, color: T.white, fontFamily: FONT_DISPLAY, marginBottom: 12 }}>⚔️ BATTLE OVERVIEW</div>
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginBottom: 16 }}>
-                {[
-                  { label: "ATK", val: fmt(totalAtk), color: T.danger, icon: "⚔️" },
-                  { label: "DEF", val: fmt(totalDef), color: T.info, icon: "🛡️" },
-                  { label: "HP", val: fmt(totalMaxHp), color: T.success, icon: "❤️" },
-                  { label: "CRIT", val: `${critRate}%`, color: T.warning, icon: "🎯" },
-                  { label: "STAGE", val: stageLabel(currentStage), color: T.accent, icon: "📍" },
-                  { label: "HIGHEST", val: stageLabel(highestStage), color: T.purple, icon: "🏆" },
-                  { label: "GOLD/S", val: fmt(goldPerSec), color: T.gold, icon: "📈" },
-                  { label: "KILLS/M", val: fmt(killsPerMin), color: T.orange, icon: "💀" },
-                  { label: "GOLD", val: fmt(gold), color: T.gold, icon: "🪙" },
-                  { label: "ASCEND", val: ascensionTier > 0 ? ASCENSION_TIERS[ascensionTier - 1].name : "None", color: ascensionTier > 0 ? ASCENSION_TIERS[ascensionTier - 1].color : T.textDim, icon: "🌟" },
-                ].map(s => (
-                  <div key={s.label} style={{ padding: "10px 12px", borderRadius: 10, background: `${s.color}06`, border: `1px solid ${s.color}15` }}>
-                    <div style={{ fontSize: 8, fontWeight: 700, color: s.color, fontFamily: FONT_DISPLAY, marginBottom: 4 }}>{s.icon} {s.label}</div>
-                    <div style={{ fontSize: 16, fontWeight: 900, color: T.white, fontFamily: FONT_DISPLAY }}>{s.val}</div>
-                  </div>
-                ))}
-              </div>
-              {/* Weapon evolution mini */}
-              <div style={{ padding: "10px 12px", borderRadius: 10, background: `${wEvo.color}06`, border: `1px solid ${wEvo.color}15`, marginBottom: 8 }}>
-                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                  <span style={{ fontSize: 24 }}>{wEvo.emoji}</span>
-                  <div>
-                    <div style={{ fontSize: 11, fontWeight: 800, color: wEvo.color, fontFamily: FONT_DISPLAY }}>{wEvo.name}</div>
-                    <div style={{ fontSize: 8, color: T.textDim }}>Tier {wEvo.tier} • +{wEvo.atkBonus} ATK</div>
-                  </div>
-                </div>
-              </div>
-              {/* Active set bonus */}
-              {(() => {
-                const equippedTypes = Object.entries(equipped).filter(([, v]) => v).map(([k]) => k);
-                const activeSet = EQUIP_SETS.find(set => set.pieces.filter(p => equippedTypes.includes(p)).length >= 2);
-                return activeSet ? (
-                  <div style={{ padding: "10px 12px", borderRadius: 10, background: `${activeSet.aura}06`, border: `1px solid ${activeSet.aura}15`, marginBottom: 8 }}>
-                    <div style={{ fontSize: 11, fontWeight: 800, color: activeSet.aura, fontFamily: FONT_DISPLAY }}>{activeSet.name}</div>
-                    <div style={{ fontSize: 8, color: T.textDim }}>{activeSet.desc}</div>
-                  </div>
-                ) : null;
-              })()}
-              {/* Quick nav buttons */}
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 6, marginTop: 12 }}>
-                {[
-                  { icon: "📊", label: "Idle Skills", p: "idle" },
-                  { icon: "⚗️", label: "Potions", p: "potions" },
-                  { icon: "🌟", label: "Ascend", p: "ascend" },
-                  { icon: "🔨", label: "Craft", p: "crafting" },
-                  { icon: "🏟️", label: "PvP", p: "pvp" },
-                  { icon: "⚔️", label: "Evolve", p: "weaponevo" },
-                  { icon: "🥋", label: "Dojo", p: "dojo" },
-                  { icon: "🎯", label: "Challenge", p: "challenge" },
-                  { icon: "⭐", label: "Growth", p: "growth" },
-                ].map(q => (
-                  <div key={q.p} onClick={() => nav(q.p)} style={{ padding: "8px 6px", borderRadius: 8, background: "#ffffff04", border: "1px solid #ffffff08", cursor: "pointer", textAlign: "center" }}>
-                    <div style={{ fontSize: 18 }}>{q.icon}</div>
-                    <div style={{ fontSize: 8, fontWeight: 700, color: T.textSec, fontFamily: FONT_DISPLAY }}>{q.label}</div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
+            );
+          })()}
 
           {/* ═══ RAIDS ═══ */}
           {page === "raids" && (
@@ -5825,192 +5336,135 @@ function GameUI({ account, initialSave, onLogout }) {
           )}
 
           </div>
-          {/* Bottom tabs in panel */}
-          <div style={{ flexShrink: 0, display: "flex", alignItems: "stretch", background: "#0e1018", borderTop: "1px solid #ffffff08", paddingBottom: "max(4px, env(safe-area-inset-bottom))" }}>
-            {[
-              { icon: "⚔️", label: "Battle", p: "battle" },
-              { icon: "🗡️", label: "Equip", p: "equipment" },
-              { icon: "📜", label: "Quests", p: "quests" },
-              { icon: "✨", label: "Summon", p: "summon" },
-              { icon: "⭐", label: "Growth", p: "growth" },
-              { icon: "🏰", label: "Dungeon", p: "dungeons" },
-              { icon: "⚔️", label: "Raids", p: "raids" },
-            ].map(tab => {
-              const act = page === tab.p;
+        </div>
+      </div>
+
+      {/* ═══ RIGHT PANEL — Equipment + Resources ═══ */}
+      <div style={{ width: 260, flexShrink: 0, display: "flex", flexDirection: "column", background: MW.panel, borderLeft: `1px solid ${MW.border}`, overflow: "auto", padding: "8px" }}>
+        {/* Equipped gear */}
+        <div style={{ padding: "8px", borderRadius: 6, background: MW.card, border: `1px solid ${MW.border}`, marginBottom: 8 }}>
+          <div style={{ fontSize: 9, fontWeight: 700, color: MW.accentLight, fontFamily: FONT_DISPLAY, marginBottom: 6 }}>EQUIPPED</div>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 3 }}>
+            {[...EQUIP_TYPES, ...ACCESSORY_TYPES].map(slot => {
+              const eqId = equipped[slot.id];
+              const eq = eqId ? (equipment.find(e => e.id === eqId) || accessories.find(e => e.id === eqId)) : null;
               return (
-                <div key={tab.p} onClick={() => nav(tab.p)} style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "5px 0 3px", cursor: "pointer", position: "relative" }}>
-                  {act && <div style={{ position: "absolute", top: 0, left: "20%", right: "20%", height: 2, background: T.accent, borderRadius: "0 0 2px 2px" }} />}
-                  <div style={{ width: 36, height: 36, borderRadius: 9, background: act ? "linear-gradient(180deg, #1e2040, #14162a)" : "transparent", border: act ? `1px solid ${T.accent}30` : "1px solid transparent", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 19, boxShadow: act ? `0 0 10px ${T.accent}15` : "none" }}>{tab.icon}</div>
-                  <span style={{ fontSize: 7, fontWeight: 700, color: act ? T.accent : T.textDim, marginTop: 1, fontFamily: FONT_DISPLAY }}>{tab.label}</span>
+                <div key={slot.id} style={{ padding: "4px 6px", borderRadius: 4, background: MW.bg, border: `1px solid ${eq ? rarColor(eq.rarity) + "30" : MW.border}`, fontSize: 8 }}>
+                  <span>{slot.emoji}</span>
+                  <span style={{ color: eq ? rarColor(eq.rarity) : MW.textSec, marginLeft: 3, fontWeight: 600 }}>{eq ? eq.name.slice(0, 12) : "Empty"}</span>
                 </div>
               );
             })}
           </div>
         </div>
-      )}
 
-      {/* ═══ GLOBAL STYLES ═══ */}
-      {/* ── TUTORIAL OVERLAY ── */}
+        {/* Resources */}
+        <div style={{ padding: "8px", borderRadius: 6, background: MW.card, border: `1px solid ${MW.border}`, marginBottom: 8 }}>
+          <div style={{ fontSize: 9, fontWeight: 700, color: MW.accentLight, fontFamily: FONT_DISPLAY, marginBottom: 6 }}>RESOURCES</div>
+          {IDLE_SKILLS.filter(s => highestStage >= s.unlockStage).map(sk => (
+            <div key={sk.id} style={{ display: "flex", justifyContent: "space-between", padding: "2px 0", fontSize: 9 }}>
+              <span style={{ color: sk.color }}>{sk.emoji} {sk.resource}</span>
+              <span style={{ color: MW.text, fontWeight: 700, fontFamily: FONT_DISPLAY }}>{Math.floor(idleResources[sk.resource] || 0)}</span>
+            </div>
+          ))}
+          {CRAFT_MATERIALS.map(mat => (
+            <div key={mat.id} style={{ display: "flex", justifyContent: "space-between", padding: "2px 0", fontSize: 9 }}>
+              <span style={{ color: mat.color }}>{mat.emoji} {mat.name}</span>
+              <span style={{ color: MW.text, fontWeight: 700, fontFamily: FONT_DISPLAY }}>{craftMaterials[mat.id] || 0}</span>
+            </div>
+          ))}
+        </div>
+
+        {/* Potions inventory */}
+        {Object.values(potionInventory).some(v => v > 0) && (
+          <div style={{ padding: "8px", borderRadius: 6, background: MW.card, border: `1px solid ${MW.border}`, marginBottom: 8 }}>
+            <div style={{ fontSize: 9, fontWeight: 700, color: MW.accentLight, fontFamily: FONT_DISPLAY, marginBottom: 6 }}>POTIONS</div>
+            {POTIONS.filter(p => (potionInventory[p.id] || 0) > 0).map(pot => (
+              <div key={pot.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "2px 0", fontSize: 9 }}>
+                <span style={{ color: pot.color }}>{pot.emoji} {pot.name}</span>
+                <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
+                  <span style={{ color: MW.text, fontWeight: 700 }}>×{potionInventory[pot.id]}</span>
+                  <span onClick={() => usePotion(pot.id)} style={{ padding: "1px 6px", borderRadius: 3, background: MW.accent, color: MW.white, cursor: "pointer", fontWeight: 700, fontSize: 8 }}>Use</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Crafted runes */}
+        {Object.values(craftedRunes).some(v => v > 0) && (
+          <div style={{ padding: "8px", borderRadius: 6, background: MW.card, border: `1px solid ${MW.border}`, marginBottom: 8 }}>
+            <div style={{ fontSize: 9, fontWeight: 700, color: MW.accentLight, fontFamily: FONT_DISPLAY, marginBottom: 6 }}>RUNES</div>
+            {CRAFT_RECIPES.filter(r => (craftedRunes[r.id] || 0) > 0).map(r => (
+              <div key={r.id} style={{ display: "flex", justifyContent: "space-between", padding: "2px 0", fontSize: 9 }}>
+                <span style={{ color: r.color }}>{r.emoji} {r.name}</span>
+                <span style={{ color: MW.text, fontWeight: 700 }}>×{craftedRunes[r.id]}</span>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Quick stats */}
+        <div style={{ padding: "8px", borderRadius: 6, background: MW.card, border: `1px solid ${MW.border}` }}>
+          <div style={{ fontSize: 9, fontWeight: 700, color: MW.accentLight, fontFamily: FONT_DISPLAY, marginBottom: 6 }}>STATS</div>
+          {[
+            { l: "Total Kills", v: fmt(combatStats.kills) },
+            { l: "Total Deaths", v: fmt(combatStats.deaths) },
+            { l: "Total Damage", v: fmt(combatStats.totalDamage) },
+            { l: "Highest Hit", v: fmt(combatStats.highestHit || 0) },
+            { l: "PvP ELO", v: pvpElo },
+            { l: "PvP W/L", v: `${pvpWins}/${pvpLosses}` },
+            { l: "Ascension", v: ascensionTier > 0 ? ASCENSION_TIERS[ascensionTier - 1].name : "None" },
+            { l: "Rebirth", v: `×${prestigeCount}` },
+          ].map(s => (
+            <div key={s.l} style={{ display: "flex", justifyContent: "space-between", padding: "2px 0", fontSize: 9, borderBottom: `1px solid ${MW.bg}` }}>
+              <span style={{ color: MW.textSec }}>{s.l}</span>
+              <span style={{ color: MW.text, fontWeight: 700, fontFamily: FONT_DISPLAY }}>{s.v}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* ═══ TUTORIAL ═══ */}
       {tutorialStep >= 0 && (
-        <div style={{ position: "fixed", inset: 0, zIndex: 9999, display: "flex", alignItems: "center", justifyContent: "center", background: "#000000cc", backdropFilter: "blur(4px)" }}>
-          <div style={{ width: "90%", maxWidth: 380, background: "linear-gradient(145deg, #1a1d2e, #12141e)", border: "1px solid #ffffff15", borderRadius: 16, padding: 24, boxShadow: "0 20px 60px #000000d0" }}>
+        <div style={{ position: "fixed", inset: 0, zIndex: 9999, display: "flex", alignItems: "center", justifyContent: "center", background: "#000000cc" }}>
+          <div style={{ width: "90%", maxWidth: 380, background: MW.panel, border: `1px solid ${MW.border}`, borderRadius: 12, padding: 24 }}>
             {tutorialStep === 0 && (<>
               <div style={{ textAlign: "center", marginBottom: 16 }}>
                 <div style={{ fontSize: 48, marginBottom: 8 }}>⚔️</div>
-                <div style={{ fontSize: 20, fontWeight: 900, color: T.white, fontFamily: FONT_DISPLAY, marginBottom: 4 }}>Welcome to Blade Realms!</div>
-                <div style={{ fontSize: 11, color: T.textSec, lineHeight: 1.6 }}>Your hero fights enemies automatically. Your job is to grow stronger, collect gear, and push deeper into the world.</div>
+                <div style={{ fontSize: 20, fontWeight: 900, color: MW.white, fontFamily: FONT_DISPLAY, marginBottom: 4 }}>Welcome to Blade Realms!</div>
+                <div style={{ fontSize: 11, color: MW.textSec, lineHeight: 1.6 }}>Your hero fights automatically. Grow stronger, collect gear, level skills, and push deeper.</div>
               </div>
-              <div style={{ background: "#ffffff06", borderRadius: 10, padding: 12, marginBottom: 16 }}>
-                <div style={{ fontSize: 10, fontWeight: 800, color: T.accent, fontFamily: FONT_DISPLAY, marginBottom: 8, textTransform: "uppercase", letterSpacing: 1 }}>Quick Start Guide</div>
-                {[
-                  { icon: "⭐", text: "Tap Growth to level up ATK, HP & DEF" },
-                  { icon: "✨", text: "Tap Summon to pull new equipment" },
-                  { icon: "🗡️", text: "Equip your best gear for more power" },
-                  { icon: "📜", text: "Complete Quests for gold & diamonds" },
-                  { icon: "🏰", text: "Try Dungeons for big rewards" },
-                ].map((tip, i) => (
-                  <div key={i} style={{ display: "flex", alignItems: "center", gap: 8, padding: "6px 0", borderTop: i > 0 ? "1px solid #ffffff06" : "none" }}>
-                    <span style={{ fontSize: 16, width: 24, textAlign: "center" }}>{tip.icon}</span>
-                    <span style={{ fontSize: 11, color: T.textSec }}>{tip.text}</span>
-                  </div>
-                ))}
-              </div>
+              <div onClick={() => setTutorialStep(-1)} style={{ padding: "10px 24px", borderRadius: 8, background: MW.accent, cursor: "pointer", fontSize: 13, fontWeight: 800, color: MW.white, fontFamily: FONT_DISPLAY, textAlign: "center" }}>BEGIN</div>
             </>)}
-            {tutorialStep === 1 && (<>
-              <div style={{ textAlign: "center", marginBottom: 16 }}>
-                <div style={{ fontSize: 48, marginBottom: 8 }}>⭐</div>
-                <div style={{ fontSize: 18, fontWeight: 900, color: T.white, fontFamily: FONT_DISPLAY, marginBottom: 4 }}>Growth</div>
-                <div style={{ fontSize: 11, color: T.textSec, lineHeight: 1.6 }}>Spend gold to level up your base stats. ATK increases damage, HP keeps you alive, DEF reduces damage taken. Growth is your most reliable path to power!</div>
-              </div>
-              <div style={{ background: "#ffffff06", borderRadius: 10, padding: 12, marginBottom: 16 }}>
-                {["ATK — Your damage per hit. Prioritize this early!", "HP — Your health pool. Level when you keep dying.", "DEF — Damage reduction. Helps on tough bosses."].map((t, i) => (
-                  <div key={i} style={{ fontSize: 11, color: T.textSec, padding: "5px 0", borderTop: i > 0 ? "1px solid #ffffff06" : "none" }}>{["🗡️", "❤️", "🛡️"][i]} {t}</div>
-                ))}
-              </div>
-            </>)}
-            {tutorialStep === 2 && (<>
-              <div style={{ textAlign: "center", marginBottom: 16 }}>
-                <div style={{ fontSize: 48, marginBottom: 8 }}>✨</div>
-                <div style={{ fontSize: 18, fontWeight: 900, color: T.white, fontFamily: FONT_DISPLAY, marginBottom: 4 }}>Summoning & Equipment</div>
-                <div style={{ fontSize: 11, color: T.textSec, lineHeight: 1.6 }}>Spend diamonds to summon equipment. Each piece has random stats and a rarity tier. Merge 5 of the same rarity to get a higher tier!</div>
-              </div>
-              <div style={{ background: "#ffffff06", borderRadius: 10, padding: 12, marginBottom: 16 }}>
-                {["Equip your best gear in each slot", "Merge 5 same-rarity items → next tier", "Lock items you want to keep (🔒)", "Use Auto-Dismantle to sell low-tier drops"].map((t, i) => (
-                  <div key={i} style={{ fontSize: 11, color: T.textSec, padding: "5px 0", borderTop: i > 0 ? "1px solid #ffffff06" : "none" }}>💡 {t}</div>
-                ))}
-              </div>
-            </>)}
-            {tutorialStep === 3 && (<>
-              <div style={{ textAlign: "center", marginBottom: 16 }}>
-                <div style={{ fontSize: 48, marginBottom: 8 }}>🔄</div>
-                <div style={{ fontSize: 18, fontWeight: 900, color: T.white, fontFamily: FONT_DISPLAY, marginBottom: 4 }}>Prestige & Progression</div>
-                <div style={{ fontSize: 11, color: T.textSec, lineHeight: 1.6 }}>When you hit stage 50+, you can Prestige (Rebirth). This resets your stage but grants permanent Prestige Souls for powerful upgrades.</div>
-              </div>
-              <div style={{ background: "#ffffff06", borderRadius: 10, padding: 12, marginBottom: 16 }}>
-                {["Rebirth unlocks at Stage 50", "Prestige Souls boost ALL your stats permanently", "Spend souls on Prestige Skills for huge bonuses", "Each rebirth goes faster than the last!"].map((t, i) => (
-                  <div key={i} style={{ fontSize: 11, color: T.textSec, padding: "5px 0", borderTop: i > 0 ? "1px solid #ffffff06" : "none" }}>🔮 {t}</div>
-                ))}
-              </div>
-            </>)}
-            {tutorialStep === 4 && (<>
-              <div style={{ textAlign: "center", marginBottom: 16 }}>
-                <div style={{ fontSize: 48, marginBottom: 8 }}>🎮</div>
-                <div style={{ fontSize: 18, fontWeight: 900, color: T.white, fontFamily: FONT_DISPLAY, marginBottom: 4 }}>You're Ready!</div>
-                <div style={{ fontSize: 11, color: T.textSec, lineHeight: 1.6 }}>There's tons more to discover — pets, dungeons, raids, costumes, gems, tower climbing, boss rush, and more. Explore the ⋯ More menu on the right side!</div>
-              </div>
-              <div style={{ background: "#ffffff06", borderRadius: 10, padding: 12, marginBottom: 16 }}>
-                {[
-                  { icon: "🐾", text: "Collect Pets for passive stat boosts" },
-                  { icon: "🏰", text: "Clear Dungeons for growth & diamonds" },
-                  { icon: "⚔️", text: "Raid bosses for exclusive accessories" },
-                  { icon: "📜", text: "Daily & Weekly quests refresh regularly" },
-                  { icon: "💎", text: "Earn offline diamonds every minute!" },
-                ].map((tip, i) => (
-                  <div key={i} style={{ display: "flex", alignItems: "center", gap: 8, padding: "5px 0", borderTop: i > 0 ? "1px solid #ffffff06" : "none" }}>
-                    <span style={{ fontSize: 14, width: 22, textAlign: "center" }}>{tip.icon}</span>
-                    <span style={{ fontSize: 11, color: T.textSec }}>{tip.text}</span>
-                  </div>
-                ))}
-              </div>
-            </>)}
-            <div style={{ display: "flex", gap: 8, justifyContent: "center" }}>
-              {tutorialStep > 0 && <div onClick={() => setTutorialStep(s => s - 1)} style={{ padding: "10px 20px", borderRadius: 8, cursor: "pointer", background: "#ffffff08", border: "1px solid #ffffff10", fontSize: 12, fontWeight: 700, color: T.textSec, fontFamily: FONT_DISPLAY }}>Back</div>}
-              {tutorialStep < 4 ? (
-                <div onClick={() => setTutorialStep(s => s + 1)} style={{ padding: "10px 24px", borderRadius: 8, cursor: "pointer", background: `linear-gradient(135deg, ${T.accent}, ${T.purple})`, fontSize: 12, fontWeight: 900, color: T.white, fontFamily: FONT_DISPLAY, boxShadow: `0 4px 15px ${T.accent}40` }}>{tutorialStep === 0 ? "Let's Go!" : "Next"}</div>
-              ) : (
-                <div onClick={() => setTutorialStep(-1)} style={{ padding: "10px 24px", borderRadius: 8, cursor: "pointer", background: `linear-gradient(135deg, ${T.success}, ${T.teal})`, fontSize: 12, fontWeight: 900, color: T.white, fontFamily: FONT_DISPLAY, boxShadow: `0 4px 15px ${T.success}40` }}>Start Playing!</div>
-              )}
-            </div>
-            <div style={{ display: "flex", justifyContent: "center", gap: 6, marginTop: 12 }}>
-              {[0,1,2,3,4].map(i => (<div key={i} style={{ width: i === tutorialStep ? 16 : 6, height: 6, borderRadius: 3, background: i === tutorialStep ? T.accent : "#ffffff15", transition: "all 0.3s" }} />))}
-            </div>
-            {tutorialStep === 0 && <div onClick={() => setTutorialStep(-1)} style={{ textAlign: "center", marginTop: 10, fontSize: 10, color: T.textDim, cursor: "pointer" }}>Skip tutorial</div>}
           </div>
         </div>
       )}
 
+      {/* ═══ STYLES ═══ */}
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&family=DM+Sans:wght@400;500;600;700&display=swap');
         * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { background: #0a0c14; overflow: hidden; }
-        ::-webkit-scrollbar { width: 4px; }
+        body { background: #1a1625; overflow: hidden; }
+        ::-webkit-scrollbar { width: 5px; }
         ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background: ${T.divider}; border-radius: 99px; }
+        ::-webkit-scrollbar-thumb { background: #3d3555; border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: #4d4570; }
 
         @keyframes pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.06); } }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
         @keyframes slideUp { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
         @keyframes shimmer { 0% { transform: translateX(-100%); } 100% { transform: translateX(400%); } }
-        @keyframes glow { 0%, 100% { box-shadow: 0 0 8px var(--glow-color, #6366f140); } 50% { box-shadow: 0 0 20px var(--glow-color, #6366f160); } }
         @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-4px); } }
-        @keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-2px); } 75% { transform: translateX(2px); } }
         @keyframes slideDown { from { opacity: 0; transform: translateY(-30px); } to { opacity: 1; transform: translateY(0); } }
         @keyframes fadeOut { from { opacity: 1; } to { opacity: 0; pointer-events: none; } }
-        @keyframes slideRight { from { opacity: 0; transform: translateX(-30px); } to { opacity: 1; transform: translateX(0); } }
-        @keyframes sparkle { 0%, 100% { opacity: 0.3; transform: scale(1); } 50% { opacity: 1; transform: scale(1.3); } }
+        @keyframes dmgFloat { 0% { opacity: 1; transform: translateY(0) scale(1); } 100% { opacity: 0; transform: translateY(-40px) scale(0.7); } }
+        @keyframes goldFloat { 0% { opacity: 1; transform: translateX(-50%) translateY(0); } 100% { opacity: 0; transform: translateX(-50%) translateY(-45px); } }
         @keyframes wheelSpin { 0% { transform: rotate(0deg); } 100% { transform: rotate(1080deg); } }
 
-        /* Battle animations */
-        @keyframes heroIdle { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-3px); } }
-        @keyframes heroAttack { 0% { transform: translateX(0) scale(1); } 40% { transform: translateX(24px) scale(1.15); } 100% { transform: translateX(0) scale(1); } }
-        @keyframes heroHit { 0% { transform: translateX(0); filter: brightness(1); } 50% { transform: translateX(-8px); filter: brightness(2.5); } 100% { transform: translateX(0); filter: brightness(1); } }
-        @keyframes monsterIdle { 0%, 100% { transform: translateY(0) scale(1); } 50% { transform: translateY(-2px) scale(1.02); } }
-        @keyframes monsterHit { 0% { transform: translateX(0) scale(1); filter: brightness(1); } 30% { transform: translateX(10px) scale(0.92); filter: brightness(3); } 100% { transform: translateX(0) scale(1); filter: brightness(1); } }
-        @keyframes monsterDie { 0% { transform: scale(1) rotate(0deg); opacity: 1; } 50% { transform: scale(1.15) rotate(8deg); opacity: 0.7; } 100% { transform: scale(0) rotate(25deg); opacity: 0; } }
-        @keyframes enemySpawn { 0% { opacity: 0; transform: translate(-50%, -50%) scale(0); } 50% { transform: translate(-50%, -50%) scale(1.2); } 100% { opacity: 1; transform: translate(-50%, -50%) scale(1); } }
-        @keyframes dmgFloat { 0% { opacity: 1; transform: translateY(0) scale(0.5); } 15% { opacity: 1; transform: translateY(-12px) scale(1.3); } 30% { transform: translateY(-24px) scale(1); } 100% { opacity: 0; transform: translateY(-80px) scale(0.7); } }
-        @keyframes fighterIdle { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-4px); } }
-        @keyframes fighterAttack { 0% { transform: translateX(0) scale(1); } 30% { transform: translateX(40px) scale(1.2); } 60% { transform: translateX(30px) scale(1.1); } 100% { transform: translateX(0) scale(1); } }
-        @keyframes fighterHit { 0% { transform: translateX(0) scale(1); } 20% { transform: translateX(-12px) scale(0.9); } 60% { transform: translateX(-6px) scale(0.95); } 100% { transform: translateX(0) scale(1); } }
-        @keyframes fighterDie { 0% { transform: scale(1) translateY(0); opacity: 1; } 40% { transform: scale(1.1) translateY(-10px); opacity: 0.8; } 100% { transform: scale(0.3) translateY(20px); opacity: 0; } }
-        @keyframes enemyEnter { 0% { opacity: 0; transform: translateX(80px) scale(0.5); } 60% { transform: translateX(-5px) scale(1.05); } 100% { opacity: 1; transform: translateX(0) scale(1); } }
-        @keyframes slashVfx { 0% { opacity: 1; transform: scale(0.5) rotate(-45deg); } 50% { opacity: 1; transform: scale(1.3) rotate(-30deg); } 100% { opacity: 0; transform: scale(1.8) rotate(-20deg); } }
-        @keyframes shakeLight { 0%, 100% { transform: translate(0); } 25% { transform: translate(-3px, 2px); } 50% { transform: translate(3px, -2px); } 75% { transform: translate(-2px, -1px); } }
-        @keyframes shakeHeavy { 0%, 100% { transform: translate(0); } 10% { transform: translate(-6px, 4px); } 20% { transform: translate(6px, -4px); } 30% { transform: translate(-5px, -3px); } 40% { transform: translate(5px, 3px); } 50% { transform: translate(-4px, 2px); } 60% { transform: translate(4px, -2px); } 70% { transform: translate(-3px, 1px); } 80% { transform: translate(2px, -1px); } }
-        @keyframes comboPopIn { 0% { opacity: 0; transform: scale(2) rotate(-10deg); } 50% { opacity: 1; transform: scale(0.9) rotate(2deg); } 100% { opacity: 1; transform: scale(1) rotate(0deg); } }
-        @keyframes announcerSlam { 0% { opacity: 0; transform: translateX(-50%) scale(3); } 10% { opacity: 1; transform: translateX(-50%) scale(1); } 70% { opacity: 1; transform: translateX(-50%) scale(1); } 100% { opacity: 0; transform: translateX(-50%) scale(0.8) translateY(-20px); } }
-        @keyframes cinematicFade { 0% { opacity: 0; } 15% { opacity: 1; } 85% { opacity: 1; } 100% { opacity: 0; } }
-        @keyframes warningFlash { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
-        @keyframes bossSpriteEnter { 0% { opacity: 0; transform: scale(3) translateY(20px); filter: blur(10px); } 100% { opacity: 1; transform: scale(1) translateY(0); filter: blur(0); } }
-        @keyframes bossNameEnter { 0% { opacity: 0; transform: translateY(15px); } 100% { opacity: 1; transform: translateY(0); } }
-        @keyframes particleFloat { 0%, 100% { transform: translateY(0) translateX(0); opacity: 0.3; } 25% { transform: translateY(-20px) translateX(5px); opacity: 0.6; } 50% { transform: translateY(-40px) translateX(-3px); opacity: 0.4; } 75% { transform: translateY(-60px) translateX(4px); opacity: 0.2; } }
-        @keyframes dustDrift { 0% { transform: translate(0, 0); opacity: 0; } 10% { opacity: 0.4; } 90% { opacity: 0.4; } 100% { transform: translate(30px, -60px); opacity: 0; } }
-        @keyframes fadeOut { 0% { opacity: 1; } 100% { opacity: 0; } }
-        @keyframes goldFloat { 0% { opacity: 1; transform: translateX(-50%) translateY(0) scale(0.8); } 20% { opacity: 1; transform: translateX(-50%) translateY(-12px) scale(1.15); } 100% { opacity: 0; transform: translateX(-50%) translateY(-45px) scale(0.6); } }
-        @keyframes flashFade { 0% { opacity: 1; } 100% { opacity: 0; } }
-        @keyframes portalPulse { 0%, 100% { transform: translateX(-50%) scale(1); opacity: 0.6; } 50% { transform: translateX(-50%) scale(1.1); opacity: 1; } }
-        @keyframes panelSlideUp { from { transform: translateY(40%); opacity: 0.5; } to { transform: translateY(0); opacity: 1; } }
-
-        ::selection { background: ${T.accent}40; color: ${T.white}; }
-
-        /* Desktop scrollbar */
-        @media (min-width: 769px) {
-          ::-webkit-scrollbar { width: 6px; }
-          ::-webkit-scrollbar-track { background: #0a0c14; }
-          ::-webkit-scrollbar-thumb { background: #2a2e40; border-radius: 3px; }
-          ::-webkit-scrollbar-thumb:hover { background: #3a3e50; }
-        }
+        ::selection { background: #7c5cbf40; color: #f0ecf5; }
       `}</style>
     </div>
   );
 }
+

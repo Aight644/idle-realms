@@ -1958,22 +1958,14 @@ function GameUI({ account, initialSave, onLogout }) {
   const enemyIdRef = useRef(0);
 
   const spawnEnemy = useCallback((monster, posIdx) => {
-    // Predefined positions scattered around the field
-    const positions = [
-      { x: 62, y: 25 }, { x: 75, y: 42 }, { x: 55, y: 55 },
-      { x: 70, y: 65 }, { x: 80, y: 30 }, { x: 60, y: 72 },
-      { x: 85, y: 55 }, { x: 50, y: 40 },
-    ];
-    const pos = positions[posIdx % positions.length];
     return {
       id: ++enemyIdRef.current,
       hp: monster.hp, maxHp: monster.hp,
       atk: monster.atk, def: monster.def, gold: monster.gold,
       emoji: monster.emoji, name: monster.name, isBoss: monster.isBoss,
-      x: pos.x + (Math.random() * 8 - 4),
-      y: pos.y + (Math.random() * 6 - 3),
-      anim: "spawn", // spawn, idle, hit, die
-      scale: monster.isBoss ? 1.4 : 0.9 + Math.random() * 0.2,
+      x: 72, y: 55,
+      anim: "spawn",
+      scale: monster.isBoss ? 1.3 : 1,
     };
   }, []);
 
@@ -1981,7 +1973,7 @@ function GameUI({ account, initialSave, onLogout }) {
     const monster = getStageMonster(stage);
     setPlayerHp(totalMaxHp);
     // Spawn initial enemies
-    const count = monster.isBoss ? 1 : Math.min(monster.monstersToKill, 5);
+    const count = 1;
     const enemies = [];
     for (let i = 0; i < count; i++) {
       enemies.push(spawnEnemy(monster, i));
@@ -2174,8 +2166,8 @@ function GameUI({ account, initialSave, onLogout }) {
                     id: ++enemyIdRef.current,
                     hp: m.hp, maxHp: m.hp, atk: m.atk, def: m.def, gold: m.gold,
                     emoji: m.emoji, name: m.name, isBoss: false,
-                    x: 55 + Math.random() * 30, y: 20 + Math.random() * 50,
-                    anim: "spawn", scale: 0.9 + Math.random() * 0.2,
+                    x: 72, y: 55,
+                    anim: "spawn", scale: 1,
                   };
                   setTimeout(() => setBattleState(pp => {
                     if (!pp) return pp;
@@ -2500,84 +2492,120 @@ function GameUI({ account, initialSave, onLogout }) {
               </div>
             </div>
 
-            {/* ── BATTLEFIELD ── */}
+            {/* ── PIXEL FIGHTER ARENA ── */}
             <div style={{ flex: 1, position: "relative", overflow: "hidden" }}>
-              {/* BG */}
-              <div style={{ position: "absolute", inset: 0, background: `radial-gradient(ellipse at 50% 30%, ${chapter.color}15 0%, transparent 50%), ${chapter.bgGrad}` }} />
-              {/* Floor grid */}
-              <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, height: "55%", background: "repeating-conic-gradient(#ffffff04 0% 25%, transparent 0% 50%) 0 0 / 40px 40px", transform: "perspective(300px) rotateX(45deg)", transformOrigin: "bottom center", opacity: 0.5 }} />
-              {/* Portal */}
-              <div style={{ position: "absolute", top: "2%", left: "50%", transform: "translateX(-50%)", width: 140, height: 90, borderRadius: "50%", background: `radial-gradient(ellipse, ${chapter.color}30 0%, ${chapter.color}10 40%, transparent 70%)`, animation: "portalPulse 3s ease-in-out infinite", filter: "blur(2px)" }} />
+              {/* Sky/background gradient per chapter */}
+              <div style={{ position: "absolute", inset: 0, background: `linear-gradient(180deg, ${chapter.color}08 0%, ${chapter.color}18 40%, #0a0c14 100%)` }} />
+              {/* Parallax background elements */}
+              <div style={{ position: "absolute", top: "5%", left: "10%", width: 60, height: 40, borderRadius: "50% 50% 0 0", background: `${chapter.color}08`, filter: "blur(8px)" }} />
+              <div style={{ position: "absolute", top: "8%", right: "15%", width: 80, height: 30, borderRadius: "50% 50% 0 0", background: `${chapter.color}06`, filter: "blur(12px)" }} />
+              {/* Ground/floor */}
+              <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, height: "30%", background: `linear-gradient(180deg, ${chapter.color}12 0%, #080a10 100%)`, borderTop: `2px solid ${chapter.color}20` }} />
+              {/* Ground texture lines */}
+              {[15, 35, 55, 75].map((x, i) => (
+                <div key={i} style={{ position: "absolute", bottom: `${4 + i * 5}%`, left: `${x}%`, width: `${20 + i * 5}%`, height: 1, background: `${chapter.color}08`, transform: "perspective(200px) rotateX(20deg)" }} />
+              ))}
+              {/* Chapter name tag */}
+              <div style={{ position: "absolute", top: 6, left: "50%", transform: "translateX(-50%)", zIndex: 15, padding: "2px 12px", borderRadius: 6, background: "#00000060", border: `1px solid ${chapter.color}30`, backdropFilter: "blur(4px)" }}>
+                <span style={{ fontSize: 8, fontWeight: 800, color: chapter.color, fontFamily: FONT_DISPLAY, letterSpacing: 1, textTransform: "uppercase" }}>{chapter.emoji} {chapter.name}</span>
+              </div>
 
               {/* Screen flash */}
               {screenFlash && <div key={screenFlash.ts} style={{ position: "absolute", inset: 0, zIndex: 30, pointerEvents: "none", background: `radial-gradient(circle, ${screenFlash.color}30 0%, transparent 70%)`, animation: "flashFade 0.15s ease-out forwards" }} />}
 
               {/* Floating dmg numbers */}
               {floatingDmg.map(d => (
-                <div key={d.id} style={{ position: "absolute", zIndex: 25, pointerEvents: "none", left: d.side === "right" ? `${52 + Math.random() * 18}%` : `${12 + Math.random() * 18}%`, top: "35%", animation: "dmgFloat 1.1s ease-out forwards" }}>
+                <div key={d.id} style={{ position: "absolute", zIndex: 25, pointerEvents: "none", left: d.side === "right" ? "65%" : "25%", top: "30%", animation: "dmgFloat 1.1s ease-out forwards" }}>
                   {d.skill && <span style={{ fontSize: 14 }}>{d.skill}</span>}
-                  <span style={{ fontSize: d.crit ? 24 : d.skill ? 20 : 16, fontWeight: 900, fontFamily: FONT_DISPLAY, color: d.crit ? "#ffd700" : d.side === "right" ? "#fff" : "#ff4444", textShadow: `0 0 10px ${d.crit ? "#ffd700" : d.side === "right" ? "#6366f1" : "#ff4444"}80, 0 2px 6px #000c` }}>{d.crit ? "CRIT! " : ""}{fmt(d.dmg)}</span>
+                  <span style={{ fontSize: d.crit ? 28 : d.skill ? 22 : 18, fontWeight: 900, fontFamily: FONT_DISPLAY, color: d.crit ? "#ffd700" : d.side === "right" ? "#fff" : "#ff4444", textShadow: `0 0 12px ${d.crit ? "#ffd700" : d.side === "right" ? "#6366f1" : "#ff4444"}80, 0 2px 8px #000c` }}>{d.crit ? "CRIT! " : ""}{fmt(d.dmg)}</span>
                 </div>
               ))}
 
               {/* Gold popups */}
               {goldPopups.map(g => (
-                <div key={g.id} style={{ position: "absolute", zIndex: 25, pointerEvents: "none", left: "50%", top: "55%", animation: "goldFloat 1s ease-out forwards" }}>
+                <div key={g.id} style={{ position: "absolute", zIndex: 25, pointerEvents: "none", left: "50%", top: "50%", animation: "goldFloat 1s ease-out forwards" }}>
                   <span style={{ fontSize: 14, fontWeight: 900, color: T.gold, fontFamily: FONT_DISPLAY, textShadow: `0 0 8px ${T.gold}60, 0 2px 4px #000` }}>+{fmt(g.amount)}</span>
                 </div>
               ))}
 
-              {/* ── HERO (left-center of field) ── */}
-              <div style={{ position: "absolute", left: "20%", top: "45%", transform: "translate(-50%, -50%)", textAlign: "center", zIndex: 10 }}>
+              {/* ── HERO (left side fighter) ── */}
+              <div style={{ position: "absolute", left: "22%", bottom: "28%", transform: "translateX(-50%)", textAlign: "center", zIndex: 10 }}>
+                {/* Hero name */}
+                <div style={{ fontSize: 7, fontWeight: 800, color: T.accent, fontFamily: FONT_DISPLAY, marginBottom: 2, textShadow: "0 1px 3px #000" }}>{account.displayName}</div>
                 {/* Hero HP bar */}
-                <div style={{ width: 52, height: 5, background: "#00000060", borderRadius: 3, overflow: "hidden", margin: "0 auto 2px", border: "1px solid #ffffff10" }}>
-                  <div style={{ width: `${(playerHp / totalMaxHp) * 100}%`, height: "100%", background: "linear-gradient(90deg, #22c55e, #4ade80)", borderRadius: 3, transition: "width 0.15s" }} />
+                <div style={{ width: 64, height: 6, background: "#00000080", borderRadius: 3, overflow: "hidden", margin: "0 auto 4px", border: "1px solid #ffffff15" }}>
+                  <div style={{ width: `${(playerHp / totalMaxHp) * 100}%`, height: "100%", background: "linear-gradient(90deg, #22c55e, #4ade80)", borderRadius: 3, transition: "width 0.15s", boxShadow: "0 0 6px #22c55e60" }} />
                 </div>
-                <div style={{ width: 56, height: 56, margin: "0 auto", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 32, animation: heroAnim === "attack" ? "heroAttack 0.3s ease" : heroAnim === "hit" ? "heroHit 0.2s ease" : "heroIdle 3s ease-in-out infinite", filter: heroAnim === "hit" ? "brightness(2)" : "drop-shadow(0 4px 8px #00000060)" }}>{heroEmoji}</div>
+                {/* Hero sprite placeholder - swap with <img src="/sprites/hero/idle.png"> later */}
+                <div style={{ width: 64, height: 64, margin: "0 auto", position: "relative" }}>
+                  {/* Shadow on ground */}
+                  <div style={{ position: "absolute", bottom: -6, left: "50%", transform: "translateX(-50%)", width: 40, height: 10, borderRadius: "50%", background: "#00000050", filter: "blur(3px)" }} />
+                  {/* Hero body */}
+                  <div style={{
+                    width: 64, height: 64, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 40,
+                    animation: heroAnim === "attack" ? "fighterAttack 0.3s ease" : heroAnim === "hit" ? "fighterHit 0.2s ease" : "fighterIdle 2s ease-in-out infinite",
+                    filter: heroAnim === "hit" ? "brightness(2.5) saturate(0)" : "drop-shadow(0 2px 8px #00000080) drop-shadow(0 0 12px " + T.accent + "30)",
+                    transition: "filter 0.1s",
+                  }}>{heroEmoji}</div>
+                </div>
+                {/* HP text */}
+                <div style={{ fontSize: 7, fontWeight: 800, color: "#22c55e", fontFamily: FONT_DISPLAY, marginTop: 1, textShadow: "0 1px 2px #000" }}>{fmt(playerHp)}/{fmt(totalMaxHp)}</div>
               </div>
 
-              {/* ── ENEMIES (multiple, scattered across field) ── */}
+              {/* ── VS indicator ── */}
+              {(battleState?.enemies || []).some(e => e.anim !== "die") && (
+                <div style={{ position: "absolute", left: "50%", top: "35%", transform: "translate(-50%, -50%)", zIndex: 12, pointerEvents: "none" }}>
+                  <div style={{ fontSize: 14, fontWeight: 900, color: "#ffffff30", fontFamily: FONT_DISPLAY, textShadow: "0 0 20px #ffffff10", letterSpacing: 2 }}>VS</div>
+                </div>
+              )}
+
+              {/* ── ENEMY (right side fighter) ── */}
               {(battleState?.enemies || []).map(enemy => (
                 <div key={enemy.id} style={{
-                  position: "absolute",
-                  left: `${enemy.x}%`, top: `${enemy.y}%`,
-                  transform: `translate(-50%, -50%) scale(${enemy.scale || 1})`,
+                  position: "absolute", right: "18%", bottom: "28%", transform: `translateX(50%) scale(${enemy.scale || 1})`,
                   textAlign: "center", zIndex: 8,
-                  transition: "left 0.3s, top 0.3s",
-                  animation: enemy.anim === "spawn" ? "enemySpawn 0.3s ease" : enemy.anim === "die" ? "monsterDie 0.4s ease forwards" : undefined,
+                  animation: enemy.anim === "spawn" ? "enemyEnter 0.4s ease" : enemy.anim === "die" ? "fighterDie 0.5s ease forwards" : undefined,
                   pointerEvents: "none",
                 }}>
-                  {/* Enemy HP bar */}
+                  {/* Enemy name */}
                   {enemy.anim !== "die" && (
-                    <div style={{ width: 44, height: 4, background: "#00000060", borderRadius: 3, overflow: "hidden", margin: "0 auto 2px", border: "1px solid #ffffff10" }}>
-                      <div style={{ width: `${Math.max(0, (enemy.hp / enemy.maxHp) * 100)}%`, height: "100%", background: "linear-gradient(90deg, #ef4444, #f87171)", borderRadius: 3, transition: "width 0.1s" }} />
+                    <div style={{ fontSize: 7, fontWeight: 800, color: enemy.isBoss ? T.gold : T.danger, fontFamily: FONT_DISPLAY, marginBottom: 2, textShadow: "0 1px 3px #000" }}>
+                      {enemy.isBoss && "👑 "}{enemy.name}
                     </div>
                   )}
-                  {/* Enemy sprite */}
-                  <div style={{
-                    width: enemy.isBoss ? 58 : 46, height: enemy.isBoss ? 58 : 46,
-                    margin: "0 auto",
-                    display: "flex", alignItems: "center", justifyContent: "center",
-                    fontSize: enemy.isBoss ? 32 : 24,
-                    animation: enemy.anim === "hit" ? "monsterHit 0.2s ease" : enemy.anim === "idle" ? `monsterIdle ${2 + (enemy.id % 3) * 0.5}s ease-in-out infinite` : undefined,
-                    filter: enemy.anim === "hit" ? "brightness(2.5)" : "drop-shadow(0 3px 6px #00000060)",
-                    opacity: enemy.anim === "die" ? 0 : 1,
-                  }}>{enemy.emoji}</div>
-                  {/* Boss crown */}
-                  {enemy.isBoss && enemy.anim !== "die" && (
-                    <div style={{ fontSize: 10, marginTop: -2 }}>👑</div>
+                  {/* Enemy HP bar */}
+                  {enemy.anim !== "die" && (
+                    <div style={{ width: 64, height: 6, background: "#00000080", borderRadius: 3, overflow: "hidden", margin: "0 auto 4px", border: `1px solid ${enemy.isBoss ? T.gold + "30" : "#ffffff15"}` }}>
+                      <div style={{ width: `${Math.max(0, (enemy.hp / enemy.maxHp) * 100)}%`, height: "100%", background: enemy.isBoss ? `linear-gradient(90deg, ${T.gold}, ${T.orange})` : "linear-gradient(90deg, #ef4444, #f87171)", borderRadius: 3, transition: "width 0.1s", boxShadow: `0 0 6px ${enemy.isBoss ? T.gold : "#ef4444"}60` }} />
+                    </div>
+                  )}
+                  {/* Enemy sprite placeholder - swap with <img> later */}
+                  <div style={{ width: 64, height: 64, margin: "0 auto", position: "relative" }}>
+                    {/* Shadow on ground */}
+                    <div style={{ position: "absolute", bottom: -6, left: "50%", transform: "translateX(-50%)", width: 40, height: 10, borderRadius: "50%", background: "#00000050", filter: "blur(3px)", opacity: enemy.anim === "die" ? 0 : 1 }} />
+                    {/* Enemy body */}
+                    <div style={{
+                      width: 64, height: 64, display: "flex", alignItems: "center", justifyContent: "center",
+                      fontSize: enemy.isBoss ? 44 : 36, transform: "scaleX(-1)",
+                      animation: enemy.anim === "hit" ? "fighterHit 0.2s ease" : enemy.anim === "idle" ? "fighterIdle 2s ease-in-out infinite 0.5s" : undefined,
+                      filter: enemy.anim === "hit" ? "brightness(3) saturate(0)" : enemy.isBoss ? `drop-shadow(0 0 12px ${T.gold}60)` : "drop-shadow(0 2px 8px #00000080)",
+                      opacity: enemy.anim === "die" ? 0 : 1,
+                      transition: "filter 0.1s, opacity 0.3s",
+                    }}>{enemy.emoji}</div>
+                  </div>
+                  {/* Enemy HP text */}
+                  {enemy.anim !== "die" && (
+                    <div style={{ fontSize: 7, fontWeight: 800, color: "#ef4444", fontFamily: FONT_DISPLAY, marginTop: 1, textShadow: "0 1px 2px #000" }}>{fmt(enemy.hp)}/{fmt(enemy.maxHp)}</div>
                   )}
                 </div>
               ))}
 
-              {/* Scattered coins on ground */}
-              {[{ x: "30%", y: "70%" }, { x: "50%", y: "75%" }, { x: "68%", y: "62%" }, { x: "42%", y: "80%" }, { x: "78%", y: "72%" }].map((c, i) => (
-                <div key={i} style={{ position: "absolute", left: c.x, top: c.y, fontSize: 9, opacity: 0.3, pointerEvents: "none", animation: `sparkle ${2 + i * 0.5}s ease-in-out infinite ${i * 0.3}s` }}>🪙</div>
-              ))}
-              {/* Scattered gems */}
-              {[{ x: "35%", y: "66%" }, { x: "65%", y: "78%" }].map((c, i) => (
-                <div key={i} style={{ position: "absolute", left: c.x, top: c.y, fontSize: 8, opacity: 0.25, pointerEvents: "none", animation: `sparkle ${3 + i}s ease-in-out infinite ${i * 0.7}s` }}>💎</div>
-              ))}
+              {/* Slash VFX between fighters on hero attack */}
+              {heroAnim === "attack" && (
+                <div style={{ position: "absolute", left: "42%", top: "42%", zIndex: 20, pointerEvents: "none", animation: "slashVfx 0.3s ease-out forwards" }}>
+                  <div style={{ fontSize: 32, transform: "rotate(-30deg) scaleX(1.5)", filter: `drop-shadow(0 0 8px ${T.accent}80)`, opacity: 0.9 }}>⚔️</div>
+                </div>
+              )}
 
                                           {/* LEFT SIDE ICONS */}
               <div style={{ position: "absolute", left: 4, top: "25%%", display: "flex", flexDirection: "column", gap: 5, zIndex: 20 }}>
@@ -4677,6 +4705,12 @@ function GameUI({ account, initialSave, onLogout }) {
         @keyframes monsterDie { 0% { transform: scale(1) rotate(0deg); opacity: 1; } 50% { transform: scale(1.15) rotate(8deg); opacity: 0.7; } 100% { transform: scale(0) rotate(25deg); opacity: 0; } }
         @keyframes enemySpawn { 0% { opacity: 0; transform: translate(-50%, -50%) scale(0); } 50% { transform: translate(-50%, -50%) scale(1.2); } 100% { opacity: 1; transform: translate(-50%, -50%) scale(1); } }
         @keyframes dmgFloat { 0% { opacity: 1; transform: translateY(0) scale(0.5); } 15% { opacity: 1; transform: translateY(-12px) scale(1.3); } 30% { transform: translateY(-24px) scale(1); } 100% { opacity: 0; transform: translateY(-80px) scale(0.7); } }
+        @keyframes fighterIdle { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-4px); } }
+        @keyframes fighterAttack { 0% { transform: translateX(0) scale(1); } 30% { transform: translateX(40px) scale(1.2); } 60% { transform: translateX(30px) scale(1.1); } 100% { transform: translateX(0) scale(1); } }
+        @keyframes fighterHit { 0% { transform: translateX(0) scale(1); } 30% { transform: translateX(-12px) scale(0.9); } 100% { transform: translateX(0) scale(1); } }
+        @keyframes fighterDie { 0% { transform: scale(1) translateY(0); opacity: 1; } 40% { transform: scale(1.1) translateY(-10px); opacity: 0.8; } 100% { transform: scale(0.3) translateY(20px); opacity: 0; } }
+        @keyframes enemyEnter { 0% { opacity: 0; transform: translateX(80px) scale(0.5); } 60% { transform: translateX(-5px) scale(1.05); } 100% { opacity: 1; transform: translateX(0) scale(1); } }
+        @keyframes slashVfx { 0% { opacity: 1; transform: scale(0.5) rotate(-45deg); } 50% { opacity: 1; transform: scale(1.3) rotate(-30deg); } 100% { opacity: 0; transform: scale(1.8) rotate(-20deg); } }
         @keyframes goldFloat { 0% { opacity: 1; transform: translateX(-50%) translateY(0) scale(0.8); } 20% { opacity: 1; transform: translateX(-50%) translateY(-12px) scale(1.15); } 100% { opacity: 0; transform: translateX(-50%) translateY(-45px) scale(0.6); } }
         @keyframes flashFade { 0% { opacity: 1; } 100% { opacity: 0; } }
         @keyframes portalPulse { 0%, 100% { transform: translateX(-50%) scale(1); opacity: 0.6; } 50% { transform: translateX(-50%) scale(1.1); opacity: 1; } }

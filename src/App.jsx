@@ -2548,7 +2548,7 @@ function GameUI({ account, initialSave, onLogout }) {
                   <div style={{
                     width: 64, height: 64, display: "flex", alignItems: "center", justifyContent: "center",
                     animation: heroAnim === "attack" ? "fighterAttack 0.3s ease" : heroAnim === "hit" ? "fighterHit 0.4s ease" : "fighterIdle 2s ease-in-out infinite",
-                    filter: heroAnim === "hit" ? "brightness(1.5) sepia(1) saturate(6) hue-rotate(-10deg) drop-shadow(0 0 8px #ff000080)" : "drop-shadow(0 2px 8px #00000080) drop-shadow(0 0 12px " + T.accent + "30)",
+                    filter: heroAnim === "hit" ? "brightness(0.7) sepia(1) saturate(10) hue-rotate(-50deg) drop-shadow(0 0 12px #ff0000cc)" : "drop-shadow(0 2px 8px #00000080) drop-shadow(0 0 12px " + T.accent + "30)",
                     transition: "filter 0.1s",
                   }}>
                     <img src={heroSprite} alt="Hero" onError={(e) => { e.target.style.display = "none"; e.target.nextSibling.style.display = "flex"; }} style={{ width: 64, height: 64, imageRendering: "pixelated", objectFit: "contain" }} />
@@ -2595,7 +2595,7 @@ function GameUI({ account, initialSave, onLogout }) {
                       width: 64, height: 64, display: "flex", alignItems: "center", justifyContent: "center",
                       transform: "scaleX(-1)",
                       animation: enemy.anim === "hit" ? "fighterHit 0.4s ease" : enemy.anim === "idle" ? "fighterIdle 2s ease-in-out infinite 0.5s" : undefined,
-                      filter: enemy.anim === "hit" ? "brightness(1.5) sepia(1) saturate(6) hue-rotate(-10deg) drop-shadow(0 0 8px #ff000080)" : enemy.isBoss ? `drop-shadow(0 0 12px ${T.gold}60)` : "drop-shadow(0 2px 8px #00000080)",
+                      filter: enemy.anim === "hit" ? "brightness(0.7) sepia(1) saturate(10) hue-rotate(-50deg) drop-shadow(0 0 12px #ff0000cc)" : enemy.isBoss ? `drop-shadow(0 0 12px ${T.gold}60)` : "drop-shadow(0 2px 8px #00000080)",
                       opacity: enemy.anim === "die" ? 0 : 1,
                       transition: "filter 0.1s, opacity 0.3s",
                     }}>

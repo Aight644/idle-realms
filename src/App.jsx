@@ -2576,14 +2576,9 @@ function GameUI({ account, initialSave, onLogout }) {
                 <div key={i} style={{ position: "absolute", left: c.x, top: c.y, fontSize: 8, opacity: 0.25, pointerEvents: "none", animation: `sparkle ${3 + i}s ease-in-out infinite ${i * 0.7}s` }}>💎</div>
               ))}
 
-                            {/* LEFT SIDE ICONS */}
-              <div style={{ position: "absolute", left: 4, top: "25%", display: "flex", flexDirection: "column", gap: 5, zIndex: 20 }}>
-                {[
-                  { icon: "💎", sub: fmt(diamonds), p: null },
-                  { icon: "🛒", p: "shop" },
-                  { icon: "👗", p: "costumes" },
-                  { icon: "🎖️", p: "battlepass" },
-                ].map((b, i) => (
+                                          {/* LEFT SIDE ICONS */}
+              <div style={{ position: "absolute", left: 4, top: "25%%", display: "flex", flexDirection: "column", gap: 5, zIndex: 20 }}>
+                {[{ icon: "💎", sub: fmt(diamonds), p: null }, { icon: "🛒", p: "shop" }, { icon: "👗", p: "costumes" }, { icon: "🏅", p: "battlepass" }].map((b, i) => (
                   <div key={i} onClick={b.p ? () => nav(b.p) : undefined} style={{ width: 36, height: b.sub ? 42 : 36, borderRadius: 8, cursor: b.p ? "pointer" : "default", background: "linear-gradient(135deg, #161a2a, #101420)", border: "1px solid #ffffff0a", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 0, boxShadow: "0 2px 8px #00000050" }}>
                     <span style={{ fontSize: 16, lineHeight: 1 }}>{b.icon}</span>
                     {b.sub && <span style={{ fontSize: 7, fontWeight: 800, color: "#60a5fa", fontFamily: FONT_DISPLAY, lineHeight: 1 }}>{b.sub}</span>}
@@ -2591,17 +2586,18 @@ function GameUI({ account, initialSave, onLogout }) {
                 ))}
               </div>
 
-              {/* RIGHT SIDE */}
+                            {/* RIGHT SIDE ICONS */}
               <div style={{ position: "absolute", right: 4, top: "20%", display: "flex", flexDirection: "column", gap: 5, zIndex: 20 }}>
-                {[{ icon: "\uD83D\uDC3E", p: "pets" }, { icon: "\uD83D\uDD04", p: "prestige" }, { icon: "\uD83C\uDFF0", p: "dungeons" }, { icon: "\u2699\uFE0F", p: "settings" }].map((b, i) => (<div key={i} onClick={() => nav(b.p)} style={{ width: 36, height: 36, borderRadius: 8, cursor: "pointer", background: "linear-gradient(135deg, #1a1610, #12100a)", border: "1px solid #ffffff0a", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16, boxShadow: "0 2px 8px #00000050" }}>{b.icon}</div>))}
-                <div onClick={() => setShowMoreMenu(p => !p)} style={{ width: 36, height: 36, borderRadius: 8, cursor: "pointer", background: showMoreMenu ? "linear-gradient(135deg, #2a1a30, #1a1228)" : "linear-gradient(135deg, #1a1610, #12100a)", border: showMoreMenu ? `1px solid ${T.accent}30` : "1px solid #ffffff0a", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16, boxShadow: "0 2px 8px #00000050", fontWeight: 900, color: showMoreMenu ? T.accent : T.textDim }}>{"\u22EF"}</div>
+              {[{ icon: "🐾", p: "pets" }, { icon: "🔄", p: "prestige" }, { icon: "🏰", p: "dungeons" }, { icon: "⚙️", p: "settings" }].map((b,i) => (<div key={i} onClick={() => nav(b.p)} style={{ width:36,height:36,borderRadius:8,cursor:"pointer",background:"linear-gradient(135deg,#1a1610,#12100a)",border:"1px solid #ffffff0a",display:"flex",alignItems:"center",justifyContent:"center",fontSize:16,boxShadow:"0 2px 8px #00000050"}}>{b.icon}</div>))}
+              <div onClick={() => setShowMoreMenu(p=>!p)} style={{ width:36,height:36,borderRadius:8,cursor:"pointer",background:showMoreMenu?"linear-gradient(135deg,#2a1a30,#1a1228)":"linear-gradient(135deg,#1a1610,#12100a)",border:showMoreMenu?`1px solid ${T.accent}30`:"1px solid #ffffff0a",display:"flex",alignItems:"center",justifyContent:"center",fontSize:16,boxShadow:"0 2px 8px #00000050",fontWeight:900,color:showMoreMenu?T.accent:T.textDim}}>{"⋯"}</div>
               </div>
-              {showMoreMenu && (<div onClick={() => setShowMoreMenu(false)} style={{ position: "absolute", inset: 0, zIndex: 28 }} />)}
-              {showMoreMenu && (<div style={{ position: "absolute", right: 46, top: "18%", zIndex: 30, background: "linear-gradient(145deg, #1c1f2e, #141620)", border: "1px solid #ffffff15", borderRadius: 14, padding: 12, boxShadow: "0 12px 40px #000000b0", minWidth: 180 }}>
-                <div style={{ fontSize: 10, fontWeight: 800, color: T.textDim, fontFamily: FONT_DISPLAY, marginBottom: 8, textAlign: "center", textTransform: "uppercase", letterSpacing: 2 }}>More</div>
-                <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 6 }}>
-                  {[{icon:"\uD83C\uDFFA",label:"Relics",p:"relics"},{icon:"\uD83C\uDFC5",label:"Emblems",p:"emblems"},{icon:"\uD83D\uDDFC",label:"Tower",p:"tower"},{icon:"\u2697\uFE0F",label:"Alchemy",p:"alchemy"},{icon:"\uD83D\uDCA0",label:"Gems",p:"gems"},{icon:"\u2728",label:"Resonance",p:"resonance"},{icon:"\uD83C\uDFA1",label:"Spin",p:"spin"},{icon:"\uD83D\uDCA5",label:"BossRush",p:"bossrush"},{icon:"\uD83D\uDCD6",label:"Bestiary",p:"bestiary"},{icon:"\uD83C\uDFF7\uFE0F",label:"Titles",p:"titles"},{icon:"\uD83D\uDDFF",label:"Figures",p:"figures"},{icon:"\uD83D\uDC80",label:"Achieve",p:"achievements"},{icon:"\uD83D\uDCCA",label:"Power",p:"power"}].map(b => (<div key={b.p} onClick={() => { nav(b.p); setShowMoreMenu(false); }} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 3, padding: "8px 2px", borderRadius: 8, cursor: "pointer", background: "#ffffff04", border: "1px solid #ffffff08" }}><span style={{ fontSize: 18 }}>{b.icon}</span><span style={{ fontSize: 7, fontWeight: 700, color: T.textSec, fontFamily: FONT_DISPLAY, lineHeight: 1 }}>{b.label}</span></div>))}
-                </div></div>)}
+              {showMoreMenu&&(<div onClick={()=>setShowMoreMenu(false)} style={{position:"absolute",inset:0,zIndex:28}}/>)}
+              {showMoreMenu&&(<div style={{position:"absolute",right:46,top:"18%",zIndex:30,background:"linear-gradient(145deg,#1c1f2e,#141620)",border:"1px solid #ffffff15",borderRadius:14,padding:12,boxShadow:"0 12px 40px #000000b0",minWidth:180}}>
+              <div style={{fontSize:10,fontWeight:800,color:T.textDim,fontFamily:FONT_DISPLAY,marginBottom:8,textAlign:"center",textTransform:"uppercase",letterSpacing:2}}>More</div>
+              <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:6}}>
+              {[{icon:"🏺",label:"Relics",p:"relics"},{icon:"🏅",label:"Emblems",p:"emblems"},{icon:"🗼",label:"Tower",p:"tower"},{icon:"⚗️",label:"Alchemy",p:"alchemy"},{icon:"💠",label:"Gems",p:"gems"},{icon:"✨",label:"Resonance",p:"resonance"},{icon:"🎡",label:"Spin",p:"spin"},{icon:"💥",label:"BossRush",p:"bossrush"},{icon:"📖",label:"Bestiary",p:"bestiary"},{icon:"🏷️",label:"Titles",p:"titles"},{icon:"🗿",label:"Figures",p:"figures"},{icon:"💀",label:"Achieve",p:"achievements"},{icon:"📊",label:"Power",p:"power"}].map(b=>(<div key={b.p} onClick={()=>{nav(b.p);setShowMoreMenu(false)}} style={{display:"flex",flexDirection:"column",alignItems:"center",gap:3,padding:"8px 2px",borderRadius:8,cursor:"pointer",background:"#ffffff04",border:"1px solid #ffffff08"}}><span style={{fontSize:18}}>{b.icon}</span><span style={{fontSize:7,fontWeight:700,color:T.textSec,fontFamily:FONT_DISPLAY,lineHeight:1}}>{b.label}</span></div>))}
+              </div></div>)}
+            </div>
 
 
             {/* ── SKILL SLOTS ── */}

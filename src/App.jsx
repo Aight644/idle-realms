@@ -220,6 +220,72 @@ const CHALLENGES = [
 ];
 
 // ─── TRAINING DOJO ───
+
+// ─── ELEMENTS & STATUS EFFECTS ───
+const ELEMENTS = {
+  fire: { name: "Fire", emoji: "🔥", color: "#ff6b35", strong: "ice", weak: "water", dot: "burn" },
+  ice: { name: "Ice", emoji: "❄️", color: "#60d5f7", strong: "nature", weak: "fire", dot: "freeze" },
+  water: { name: "Water", emoji: "💧", color: "#4488ff", strong: "fire", weak: "lightning", dot: "soak" },
+  lightning: { name: "Lightning", emoji: "⚡", color: "#ffd700", strong: "water", weak: "nature", dot: "shock" },
+  nature: { name: "Nature", emoji: "🌿", color: "#66bb6a", strong: "lightning", weak: "ice", dot: "poison" },
+  dark: { name: "Dark", emoji: "🌑", color: "#9c27b0", strong: "light", weak: "light", dot: "curse" },
+  light: { name: "Light", emoji: "✨", color: "#fff59d", strong: "dark", weak: "dark", dot: "smite" },
+};
+
+const STATUS_EFFECTS = {
+  burn: { name: "Burn", emoji: "🔥", dmgPct: 2, duration: 3, color: "#ff6b35" },
+  freeze: { name: "Freeze", emoji: "❄️", dmgPct: 0, duration: 2, color: "#60d5f7", stunChance: 30 },
+  soak: { name: "Soak", emoji: "💧", dmgPct: 0, duration: 3, color: "#4488ff", defReduce: 20 },
+  shock: { name: "Shock", emoji: "⚡", dmgPct: 3, duration: 2, color: "#ffd700" },
+  poison: { name: "Poison", emoji: "☠️", dmgPct: 1.5, duration: 5, color: "#66bb6a" },
+  curse: { name: "Curse", emoji: "💀", dmgPct: 1, duration: 4, color: "#9c27b0", atkReduce: 15 },
+  smite: { name: "Smite", emoji: "✨", dmgPct: 0, duration: 2, color: "#fff59d", extraDmg: 25 },
+};
+
+// Chapter elements for monsters
+const CHAPTER_ELEMENTS = [null, null, "nature", "dark", "fire", "dark", "lightning", "dark"];
+
+// ─── CRAFTING SYSTEM ───
+const CRAFT_MATERIALS = [
+  { id: "mat_bone", name: "Monster Bone", emoji: "🦴", dropChance: 30, color: T.textSec },
+  { id: "mat_hide", name: "Tough Hide", emoji: "🧶", dropChance: 25, color: "#8d6e63" },
+  { id: "mat_crystal", name: "Mana Crystal", emoji: "💎", dropChance: 15, color: "#7c4dff" },
+  { id: "mat_essence", name: "Soul Essence", emoji: "👻", dropChance: 10, color: "#ce93d8" },
+  { id: "mat_core", name: "Boss Core", emoji: "💠", dropChance: 100, bossOnly: true, color: T.gold },
+];
+
+const CRAFT_RECIPES = [
+  { id: "cr_atkRune", name: "ATK Rune", emoji: "⚔️", materials: { mat_bone: 5, mat_crystal: 2 }, bonus: { atkFlat: 20 }, color: T.danger },
+  { id: "cr_defRune", name: "DEF Rune", emoji: "🛡️", materials: { mat_hide: 5, mat_crystal: 2 }, bonus: { defFlat: 15 }, color: T.info },
+  { id: "cr_hpRune", name: "HP Rune", emoji: "❤️", materials: { mat_bone: 3, mat_hide: 3, mat_crystal: 1 }, bonus: { hpFlat: 80 }, color: T.success },
+  { id: "cr_critRune", name: "Crit Rune", emoji: "🎯", materials: { mat_essence: 3, mat_crystal: 3 }, bonus: { critRate: 2 }, color: T.warning },
+  { id: "cr_eleRune", name: "Elemental Rune", emoji: "🌀", materials: { mat_essence: 5, mat_core: 1 }, bonus: { atkPct: 5 }, color: T.purple },
+  { id: "cr_godRune", name: "God Rune", emoji: "⚡", materials: { mat_core: 3, mat_essence: 10, mat_crystal: 8 }, bonus: { atkPct: 10, critDmg: 15, hpPct: 5 }, color: T.gold },
+];
+
+// ─── PVP ARENA ───
+const PVP_RANKS = [
+  { id: "bronze", name: "Bronze", minElo: 0, color: "#cd7f32", reward: { gold: 500 } },
+  { id: "silver", name: "Silver", minElo: 1000, color: "#c0c0c0", reward: { gold: 1000, diamonds: 5 } },
+  { id: "gold", name: "Gold", minElo: 1200, color: "#ffd700", reward: { gold: 2000, diamonds: 10 } },
+  { id: "platinum", name: "Platinum", minElo: 1400, color: "#e5e4e2", reward: { gold: 3000, diamonds: 20 } },
+  { id: "diamond", name: "Diamond", minElo: 1600, color: "#b9f2ff", reward: { gold: 5000, diamonds: 30 } },
+  { id: "master", name: "Master", minElo: 2000, color: "#ff6b6b", reward: { gold: 10000, diamonds: 50 } },
+];
+
+function generatePvpOpponent(playerAtk, playerDef, playerHp, elo) {
+  const variance = 0.15 + Math.random() * 0.3;
+  const names = ["ShadowBlade", "DragonSlyr", "VoidKnight", "StormMage", "IronWolf", "CrystalFox", "NightHawk", "StarFire", "DarkPulse", "GhostReaper", "PixelKing", "RuneMaster", "BlazeFury", "IceWarden", "ThunderGod"];
+  return {
+    name: names[Math.floor(Math.random() * names.length)] + Math.floor(Math.random() * 999),
+    atk: Math.floor(playerAtk * (0.8 + variance)),
+    def: Math.floor(playerDef * (0.8 + variance)),
+    hp: Math.floor(playerHp * (0.8 + variance)),
+    elo: Math.floor(elo + (Math.random() - 0.5) * 200),
+  };
+}
+
+
 const DOJO_SLOTS = [
   { id: "dojo_atk", name: "Attack Training", emoji: "⚔️", stat: "atk", baseRate: 0.5, color: T.danger },
   { id: "dojo_def", name: "Defense Training", emoji: "🛡️", stat: "def", baseRate: 0.4, color: T.info },
@@ -917,6 +983,11 @@ const DEFAULT_SAVE = () => ({
   dojoTraining: {}, // { slotId: { startTime, stat, rate } }
   dojoStats: { atk: 0, def: 0, hp: 0, critRate: 0 }, // permanent dojo bonuses
   challengesCompleted: {}, // { challengeId: true }
+  craftMaterials: {}, // { materialId: count }
+  craftedRunes: {}, // { recipeId: count }
+  pvpElo: 800, pvpWins: 0, pvpLosses: 0, pvpDailyFights: 0, pvpLastDay: "",
+  heroElement: null, // selected element
+  dodgeChance: 0, blockChance: 0,
 });
 
 // ═══════════════════════════════════════════════
@@ -1298,6 +1369,16 @@ function GameUI({ account, initialSave, onLogout }) {
   const [dojoStats, setDojoStats] = useState(() => sv.dojoStats || { atk: 0, def: 0, hp: 0, critRate: 0 });
   const [challengesCompleted, setChallengesCompleted] = useState(() => sv.challengesCompleted || {});
   const [hazardFlash, setHazardFlash] = useState(null);
+  const [craftMaterials, setCraftMaterials] = useState(() => sv.craftMaterials || {});
+  const [craftedRunes, setCraftedRunes] = useState(() => sv.craftedRunes || {});
+  const [pvpElo, setPvpElo] = useState(() => sv.pvpElo || 800);
+  const [pvpWins, setPvpWins] = useState(() => sv.pvpWins || 0);
+  const [pvpLosses, setPvpLosses] = useState(() => sv.pvpLosses || 0);
+  const [pvpDailyFights, setPvpDailyFights] = useState(() => { const today = new Date().toISOString().slice(0, 10); return sv.pvpLastDay === today ? (sv.pvpDailyFights || 0) : 0; });
+  const [pvpLastDay, setPvpLastDay] = useState(() => sv.pvpLastDay || "");
+  const [pvpResult, setPvpResult] = useState(null);
+  const [heroElement, setHeroElement] = useState(() => sv.heroElement || null);
+  const [dodgeText, setDodgeText] = useState(null);
 
   const buyRelic = useCallback((relicId) => {
     const r = RELICS.find(x => x.id === relicId);
@@ -1746,6 +1827,17 @@ function GameUI({ account, initialSave, onLogout }) {
   }, [socketedGems, gems]);
 
 
+  // Crafted rune bonus calculation
+  const runeBonus = useMemo(() => {
+    const b = { atkFlat: 0, defFlat: 0, hpFlat: 0, critRate: 0, critDmg: 0, atkPct: 0, hpPct: 0 };
+    Object.entries(craftedRunes).forEach(([rid, count]) => {
+      const recipe = CRAFT_RECIPES.find(r => r.id === rid);
+      if (!recipe) return;
+      Object.entries(recipe.bonus).forEach(([k, v]) => { b[k] = (b[k] || 0) + v * count; });
+    });
+    return b;
+  }, [craftedRunes]);
+
   // Equipment set bonus calculation
   const setBonus = useMemo(() => {
     const b = { atkPct: 0, defPct: 0, hpPct: 0, critRate: 0, critDmg: 0 };
@@ -1763,11 +1855,11 @@ function GameUI({ account, initialSave, onLogout }) {
   // Weapon evolution bonus
   const wEvo = WEAPON_EVOLUTIONS[weaponEvo - 1] || WEAPON_EVOLUTIONS[0];
 
-  const totalAtk = Math.floor((baseAtk + equipBonus.atk + enhanceBonus.atk + (costumeBonus.atkFlat || 0) + (relicBonus.atk || 0) + (insigniaBonus.atkFlat || 0) + (titleBonus.atkFlat || 0) + (emblemBonus.atkFlat || 0) + (figureBonus.atkFlat || 0) + (gemBonus.atkFlat || 0) + wEvo.atkBonus + (dojoStats.atk || 0)) * (1 + ((petBonus.atkPct || 0) + (costumeBonus.atkPct || 0) + (relicBonus.atkPct || 0) + (insigniaBonus.atkPct || 0) + (passiveBonus.atkPct || 0) + (titleBonus.atkPct || 0) + (emblemBonus.atkPct || 0) + (resonanceBonus.atkPct || 0) + (figureBonus.atkPct || 0) + (gemBonus.atkPct || 0) + (setBonus.atkPct || 0)) / 100) * prestigeMult);
-  const totalDef = Math.floor((baseDef + equipBonus.def + enhanceBonus.def + (costumeBonus.defFlat || 0) + (relicBonus.def || 0) + (insigniaBonus.defFlat || 0) + (titleBonus.defFlat || 0) + (emblemBonus.defFlat || 0) + (figureBonus.defFlat || 0) + (gemBonus.defFlat || 0) + (dojoStats.def || 0)) * (1 + ((petBonus.defPct || 0) + (costumeBonus.defPct || 0) + (relicBonus.defPct || 0) + (insigniaBonus.defPct || 0) + (passiveBonus.defPct || 0) + (titleBonus.defPct || 0) + (emblemBonus.defPct || 0) + (resonanceBonus.defPct || 0) + (figureBonus.defPct || 0) + (setBonus.defPct || 0)) / 100) * prestigeMult);
-  const totalMaxHp = Math.floor((baseHp + equipBonus.hp + enhanceBonus.hp + (costumeBonus.hpFlat || 0) + (relicBonus.hp || 0) + (insigniaBonus.hpFlat || 0) + (titleBonus.hpFlat || 0) + (emblemBonus.hpFlat || 0) + (figureBonus.hpFlat || 0) + (gemBonus.hpFlat || 0) + (dojoStats.hp || 0)) * (1 + ((petBonus.hpPct || 0) + (costumeBonus.hpPct || 0) + (relicBonus.hpPct || 0) + (insigniaBonus.hpPct || 0) + (passiveBonus.hpPct || 0) + (titleBonus.hpPct || 0) + (emblemBonus.hpPct || 0) + (resonanceBonus.hpPct || 0) + (figureBonus.hpPct || 0) + (setBonus.hpPct || 0)) / 100) * prestigeMult);
-  const critRate = Math.min(80, (equipBonus.critRate || 0) + enhanceBonus.critRate + (petBonus.critRate || 0) + (costumeBonus.critRate || 0) + (relicBonus.critRate || 0) + (insigniaBonus.critRate || 0) + (passiveBonus.critRate || 0) + (titleBonus.critRate || 0) + (emblemBonus.critRate || 0) + (resonanceBonus.critRate || 0) + (figureBonus.critRate || 0) + (gemBonus.critRate || 0) + (setBonus.critRate || 0) + (dojoStats.critRate || 0));
-  const critDmg = 150 + (equipBonus.critDmg || 0) + enhanceBonus.critDmg + (petBonus.critDmg || 0) + (costumeBonus.critDmg || 0) + (relicBonus.critDmg || 0) + (insigniaBonus.critDmg || 0) + (passiveBonus.critDmg || 0) + (titleBonus.critDmg || 0) + (emblemBonus.critDmg || 0) + (resonanceBonus.critDmg || 0) + (figureBonus.critDmg || 0) + (gemBonus.critDmg || 0) + (setBonus.critDmg || 0);
+  const totalAtk = Math.floor((baseAtk + equipBonus.atk + enhanceBonus.atk + (costumeBonus.atkFlat || 0) + (relicBonus.atk || 0) + (insigniaBonus.atkFlat || 0) + (titleBonus.atkFlat || 0) + (emblemBonus.atkFlat || 0) + (figureBonus.atkFlat || 0) + (gemBonus.atkFlat || 0) + wEvo.atkBonus + (dojoStats.atk || 0) + (runeBonus.atkFlat || 0)) * (1 + ((petBonus.atkPct || 0) + (costumeBonus.atkPct || 0) + (relicBonus.atkPct || 0) + (insigniaBonus.atkPct || 0) + (passiveBonus.atkPct || 0) + (titleBonus.atkPct || 0) + (emblemBonus.atkPct || 0) + (resonanceBonus.atkPct || 0) + (figureBonus.atkPct || 0) + (gemBonus.atkPct || 0) + (setBonus.atkPct || 0) + (runeBonus.atkPct || 0)) / 100) * prestigeMult);
+  const totalDef = Math.floor((baseDef + equipBonus.def + enhanceBonus.def + (costumeBonus.defFlat || 0) + (relicBonus.def || 0) + (insigniaBonus.defFlat || 0) + (titleBonus.defFlat || 0) + (emblemBonus.defFlat || 0) + (figureBonus.defFlat || 0) + (gemBonus.defFlat || 0) + (dojoStats.def || 0) + (runeBonus.defFlat || 0)) * (1 + ((petBonus.defPct || 0) + (costumeBonus.defPct || 0) + (relicBonus.defPct || 0) + (insigniaBonus.defPct || 0) + (passiveBonus.defPct || 0) + (titleBonus.defPct || 0) + (emblemBonus.defPct || 0) + (resonanceBonus.defPct || 0) + (figureBonus.defPct || 0) + (setBonus.defPct || 0)) / 100) * prestigeMult);
+  const totalMaxHp = Math.floor((baseHp + equipBonus.hp + enhanceBonus.hp + (costumeBonus.hpFlat || 0) + (relicBonus.hp || 0) + (insigniaBonus.hpFlat || 0) + (titleBonus.hpFlat || 0) + (emblemBonus.hpFlat || 0) + (figureBonus.hpFlat || 0) + (gemBonus.hpFlat || 0) + (dojoStats.hp || 0) + (runeBonus.hpFlat || 0)) * (1 + ((petBonus.hpPct || 0) + (costumeBonus.hpPct || 0) + (relicBonus.hpPct || 0) + (insigniaBonus.hpPct || 0) + (passiveBonus.hpPct || 0) + (titleBonus.hpPct || 0) + (emblemBonus.hpPct || 0) + (resonanceBonus.hpPct || 0) + (figureBonus.hpPct || 0) + (setBonus.hpPct || 0) + (runeBonus.hpPct || 0)) / 100) * prestigeMult);
+  const critRate = Math.min(80, (equipBonus.critRate || 0) + enhanceBonus.critRate + (petBonus.critRate || 0) + (costumeBonus.critRate || 0) + (relicBonus.critRate || 0) + (insigniaBonus.critRate || 0) + (passiveBonus.critRate || 0) + (titleBonus.critRate || 0) + (emblemBonus.critRate || 0) + (resonanceBonus.critRate || 0) + (figureBonus.critRate || 0) + (gemBonus.critRate || 0) + (setBonus.critRate || 0) + (dojoStats.critRate || 0) + (runeBonus.critRate || 0));
+  const critDmg = 150 + (equipBonus.critDmg || 0) + enhanceBonus.critDmg + (petBonus.critDmg || 0) + (costumeBonus.critDmg || 0) + (relicBonus.critDmg || 0) + (insigniaBonus.critDmg || 0) + (passiveBonus.critDmg || 0) + (titleBonus.critDmg || 0) + (emblemBonus.critDmg || 0) + (resonanceBonus.critDmg || 0) + (figureBonus.critDmg || 0) + (gemBonus.critDmg || 0) + (setBonus.critDmg || 0) + (runeBonus.critDmg || 0);
   const goldMult = 1 + ((petBonus.goldPct || 0) + (costumeBonus.goldPct || 0) + (relicBonus.goldPct || 0) + (insigniaBonus.goldPct || 0) + (passiveBonus.goldPct || 0) + (titleBonus.goldPct || 0) + (emblemBonus.goldPct || 0) + (resonanceBonus.goldPct || 0) + (figureBonus.goldPct || 0)) / 100;
 
   // Tap-to-attack handler
@@ -1823,6 +1915,71 @@ function GameUI({ account, initialSave, onLogout }) {
     }
     setDojoTraining(prev => { const n = { ...prev }; delete n[slotId]; return n; });
   }, [dojoTraining]);
+
+  // ─── CRAFTING ───
+  const craftRune = useCallback((recipeId) => {
+    const recipe = CRAFT_RECIPES.find(r => r.id === recipeId);
+    if (!recipe) return;
+    // Check materials
+    for (const [matId, count] of Object.entries(recipe.materials)) {
+      if ((craftMaterials[matId] || 0) < count) return;
+    }
+    // Consume materials
+    setCraftMaterials(prev => {
+      const n = { ...prev };
+      for (const [matId, count] of Object.entries(recipe.materials)) { n[matId] = (n[matId] || 0) - count; }
+      return n;
+    });
+    setCraftedRunes(prev => ({ ...prev, [recipeId]: (prev[recipeId] || 0) + 1 }));
+  }, [craftMaterials]);
+
+  // ─── PVP ARENA ───
+  const doPvpFight = useCallback(() => {
+    const today = new Date().toISOString().slice(0, 10);
+    if (pvpLastDay === today && pvpDailyFights >= 10) return;
+    if (pvpLastDay !== today) { setPvpDailyFights(0); setPvpLastDay(today); }
+
+    const opp = generatePvpOpponent(totalAtk, totalDef, totalMaxHp, pvpElo);
+    // Simulate fight
+    let pHp = totalMaxHp, oHp = opp.hp;
+    let pAtk = totalAtk, oAtk = opp.atk;
+    let pDef = totalDef, oDef = opp.def;
+
+    // Element advantage
+    if (heroElement) {
+      const el = ELEMENTS[heroElement];
+      // Assume opponent has random element
+      const oppElements = Object.keys(ELEMENTS);
+      const oppEl = oppElements[Math.floor(Math.random() * oppElements.length)];
+      if (el.strong === oppEl) { pAtk = Math.floor(pAtk * 1.25); }
+      if (el.weak === oppEl) { pAtk = Math.floor(pAtk * 0.8); }
+    }
+
+    let rounds = 0;
+    while (pHp > 0 && oHp > 0 && rounds < 50) {
+      // Player attacks
+      let pDmg = Math.max(1, pAtk - oDef * 0.4 + Math.floor(Math.random() * pAtk * 0.1));
+      if (Math.random() * 100 < critRate) pDmg = Math.floor(pDmg * critDmg / 100);
+      oHp -= pDmg;
+      // Opponent attacks
+      if (oHp > 0) {
+        let oDmg = Math.max(1, oAtk - pDef * 0.4 + Math.floor(Math.random() * oAtk * 0.1));
+        // Dodge
+        const dodge = Math.min(25, 5 + (equipBonus.spd || 0) * 0.5);
+        if (Math.random() * 100 >= dodge) pHp -= oDmg;
+      }
+      rounds++;
+    }
+
+    const won = oHp <= 0;
+    const eloChange = won ? Math.floor(20 + Math.max(0, opp.elo - pvpElo) * 0.1) : -Math.floor(15 + Math.max(0, pvpElo - opp.elo) * 0.05);
+    setPvpElo(e => Math.max(0, e + eloChange));
+    if (won) { setPvpWins(w => w + 1); setGold(g => g + Math.floor(500 + pvpElo * 0.5)); setDiamonds(d => d + 3); }
+    else { setPvpLosses(l => l + 1); }
+    setPvpDailyFights(f => f + 1);
+    setPvpLastDay(today);
+    setPvpResult({ won, opponent: opp, eloChange, rounds, playerHpLeft: Math.max(0, pHp), oppHpLeft: Math.max(0, oHp) });
+  }, [totalAtk, totalDef, totalMaxHp, critRate, critDmg, pvpElo, pvpDailyFights, pvpLastDay, heroElement, equipBonus.spd]);
 
 // Tower of Trials - fight one floor
   const attemptTowerFloor = useCallback(() => {
@@ -1956,6 +2113,7 @@ function GameUI({ account, initialSave, onLogout }) {
     tutorialDone: tutorialStep === -1,
     bestiary, gems, socketedGems,
     weaponEvo, dojoTraining, dojoStats, challengesCompleted,
+    craftMaterials, craftedRunes, pvpElo, pvpWins, pvpLosses, pvpDailyFights, pvpLastDay, heroElement,
     player: { hp: playerHp, maxHp: totalMaxHp },
     isPremium: false, storePurchases: {},
     lastActiveTime: Date.now(),
@@ -2214,6 +2372,13 @@ function GameUI({ account, initialSave, onLogout }) {
           pE = 0;
           const penReduction = Math.min(0.8, (equipBonus.pen || 0) * 0.01); // PEN: each point ignores 1% DEF, max 80%
           let dmg = Math.max(1, totalAtk - Math.floor(target.def * (1 - penReduction)) + Math.floor(Math.random() * 4));
+          // Element advantage
+          if (heroElement) {
+            const el = ELEMENTS[heroElement];
+            const monsterEl = CHAPTER_ELEMENTS[Math.min(Math.floor((stageNum - 1) / 50), CHAPTER_ELEMENTS.length - 1)];
+            if (monsterEl && el.strong === monsterEl) dmg = Math.floor(dmg * 1.3);
+            else if (monsterEl && el.weak === monsterEl) dmg = Math.floor(dmg * 0.75);
+          }
           const wasCrit = Math.random() * 100 < critRate;
           if (wasCrit) dmg = Math.floor(dmg * critDmg / 100);
           target.hp -= dmg;
@@ -2278,7 +2443,17 @@ function GameUI({ account, initialSave, onLogout }) {
         if (mE >= mSpd && alive.length > 0) {
           mE = 0;
           const attacker = alive[Math.floor(Math.random() * alive.length)];
-          const mDmg = Math.max(1, attacker.atk - totalDef + Math.floor(Math.random() * 3));
+          // Dodge chance (base 5% + equipment speed bonus)
+          const dodgeChance = Math.min(25, 5 + (equipBonus.spd || 0) * 0.5);
+          if (Math.random() * 100 < dodgeChance) {
+            setDodgeText({ text: "DODGE!", ts: Date.now() });
+            setTimeout(() => setDodgeText(null), 600);
+            // skip damage
+          } else {
+          // Block chance (base 3% + DEF ratio)
+          const blockChance = Math.min(20, 3 + totalDef * 0.005);
+          const isBlock = Math.random() * 100 < blockChance;
+          const mDmg = Math.max(1, Math.floor((attacker.atk - totalDef + Math.floor(Math.random() * 3)) * (isBlock ? 0.3 : 1)));
           triggerHeroHit();
           addDmgNumber(mDmg, "left", false);
           setPlayerHp(hp => {
@@ -2291,6 +2466,8 @@ function GameUI({ account, initialSave, onLogout }) {
             }
             return newHp;
           });
+          if (isBlock) { addDmgNumber(mDmg, "left", false, "🛡️"); }
+          } // end dodge else
         }
 
         // Check for dead enemies
@@ -2302,6 +2479,13 @@ function GameUI({ account, initialSave, onLogout }) {
             killCount++;
             addGold(effGold);
             addGoldPopup(effGold);
+            // Material drops
+            CRAFT_MATERIALS.forEach(mat => {
+              if (mat.bossOnly && !e.isBoss) return;
+              if (Math.random() * 100 < mat.dropChance) {
+                setCraftMaterials(prev => ({ ...prev, [mat.id]: (prev[mat.id] || 0) + 1 }));
+              }
+            });
             addQuestProgress("kills", 1);
             addQuestProgress("goldEarned", effGold);
             setCombatStats(s => ({ ...s, kills: s.kills + 1, bossesKilled: s.bossesKilled + (e.isBoss ? 1 : 0) }));
@@ -2637,6 +2821,8 @@ function GameUI({ account, initialSave, onLogout }) {
             { icon: "⚔️", label: "Evolve", p: "weaponevo" },
             { icon: "🥋", label: "Dojo", p: "dojo" },
             { icon: "🎯", label: "Chall.", p: "challenge" },
+            { icon: "🔨", label: "Craft", p: "crafting" },
+            { icon: "🏟️", label: "PvP", p: "pvp" },
             { icon: "⋯", label: "More", p: "_more" },
           ].map(tab => {
             const act = page === tab.p;
@@ -2864,6 +3050,20 @@ function GameUI({ account, initialSave, onLogout }) {
               {/* ── HAZARD FLASH OVERLAY ── */}
               {hazardFlash && <div style={{ position: "absolute", inset: 0, background: `${hazardFlash}15`, zIndex: 12, pointerEvents: "none", animation: "fadeOut 0.3s ease forwards" }} />}
 
+              {/* ── DODGE TEXT ── */}
+              {dodgeText && (
+                <div key={dodgeText.ts} style={{ position: "absolute", left: "25%", top: "40%", zIndex: 20, pointerEvents: "none", animation: "dmgFloat 0.6s ease-out forwards" }}>
+                  <div style={{ fontSize: isMobile ? 14 : 18, fontWeight: 900, color: "#60d5f7", fontFamily: FONT_DISPLAY, textShadow: "0 2px 6px #000" }}>DODGE!</div>
+                </div>
+              )}
+
+              {/* ── ELEMENT INDICATOR ── */}
+              {heroElement && (
+                <div style={{ position: "absolute", top: 18, left: 8, zIndex: 15, padding: "2px 6px", borderRadius: 4, background: `${ELEMENTS[heroElement].color}15`, border: `1px solid ${ELEMENTS[heroElement].color}30`, fontSize: isMobile ? 7 : 9, fontWeight: 700, color: ELEMENTS[heroElement].color, fontFamily: FONT_DISPLAY }}>
+                  {ELEMENTS[heroElement].emoji} {ELEMENTS[heroElement].name}
+                </div>
+              )}
+
               {/* ── COMPANION PET ── */}
               {activePets.length > 0 && (() => { const pd = PET_DEFS.find(p => p.name === activePets[0]); return pd ? (
                 <div style={{ position: "absolute", left: "12%", bottom: "35%", zIndex: 8, animation: "fighterIdle 3s ease-in-out infinite 1s" }}>
@@ -2992,7 +3192,7 @@ function GameUI({ account, initialSave, onLogout }) {
               {showMoreMenu&&(<div style={{position:"absolute",right:46,top:"18%",zIndex:30,background:"linear-gradient(145deg,#1c1f2e,#141620)",border:"1px solid #ffffff15",borderRadius:14,padding:12,boxShadow:"0 12px 40px #000000b0",minWidth:180}}>
               <div style={{fontSize:10,fontWeight:800,color:T.textDim,fontFamily:FONT_DISPLAY,marginBottom:8,textAlign:"center",textTransform:"uppercase",letterSpacing:2}}>More</div>
               <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:6}}>
-              {[{icon:"🏺",label:"Relics",p:"relics"},{icon:"🏅",label:"Emblems",p:"emblems"},{icon:"🗼",label:"Tower",p:"tower"},{icon:"⚗️",label:"Alchemy",p:"alchemy"},{icon:"💠",label:"Gems",p:"gems"},{icon:"✨",label:"Resonance",p:"resonance"},{icon:"🎡",label:"Spin",p:"spin"},{icon:"💥",label:"BossRush",p:"bossrush"},{icon:"📖",label:"Bestiary",p:"bestiary"},{icon:"🏷️",label:"Titles",p:"titles"},{icon:"🗿",label:"Figures",p:"figures"},{icon:"💀",label:"Achieve",p:"achievements"},{icon:"📊",label:"Power",p:"power"},{icon:"⚔️",label:"Evolve",p:"weaponevo"},{icon:"🥋",label:"Dojo",p:"dojo"},{icon:"🎯",label:"Challenge",p:"challenge"}].map(b=>(<div key={b.p} onClick={()=>{nav(b.p);setShowMoreMenu(false)}} style={{display:"flex",flexDirection:"column",alignItems:"center",gap:3,padding:"8px 2px",borderRadius:8,cursor:"pointer",background:"#ffffff04",border:"1px solid #ffffff08"}}><span style={{fontSize:18}}>{b.icon}</span><span style={{fontSize:7,fontWeight:700,color:T.textSec,fontFamily:FONT_DISPLAY,lineHeight:1}}>{b.label}</span></div>))}
+              {[{icon:"🏺",label:"Relics",p:"relics"},{icon:"🏅",label:"Emblems",p:"emblems"},{icon:"🗼",label:"Tower",p:"tower"},{icon:"⚗️",label:"Alchemy",p:"alchemy"},{icon:"💠",label:"Gems",p:"gems"},{icon:"✨",label:"Resonance",p:"resonance"},{icon:"🎡",label:"Spin",p:"spin"},{icon:"💥",label:"BossRush",p:"bossrush"},{icon:"📖",label:"Bestiary",p:"bestiary"},{icon:"🏷️",label:"Titles",p:"titles"},{icon:"🗿",label:"Figures",p:"figures"},{icon:"💀",label:"Achieve",p:"achievements"},{icon:"📊",label:"Power",p:"power"},{icon:"⚔️",label:"Evolve",p:"weaponevo"},{icon:"🥋",label:"Dojo",p:"dojo"},{icon:"🎯",label:"Challenge",p:"challenge"},{icon:"🔨",label:"Craft",p:"crafting"},{icon:"🏟️",label:"PvP",p:"pvp"}].map(b=>(<div key={b.p} onClick={()=>{nav(b.p);setShowMoreMenu(false)}} style={{display:"flex",flexDirection:"column",alignItems:"center",gap:3,padding:"8px 2px",borderRadius:8,cursor:"pointer",background:"#ffffff04",border:"1px solid #ffffff08"}}><span style={{fontSize:18}}>{b.icon}</span><span style={{fontSize:7,fontWeight:700,color:T.textSec,fontFamily:FONT_DISPLAY,lineHeight:1}}>{b.label}</span></div>))}
               </div></div>)}
             </div>
 
@@ -3096,7 +3296,7 @@ function GameUI({ account, initialSave, onLogout }) {
             <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
               {isMobile && <div onClick={() => nav("battle")} style={{ width: 28, height: 28, borderRadius: 7, cursor: "pointer", background: "#1a1c28", border: "1px solid #ffffff0a", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 10, color: T.textSec, fontWeight: 900 }}>✕</div>}
               <div style={{ flex: 1, fontSize: isMobile ? 13 : 15, fontWeight: 900, color: T.white, fontFamily: FONT_DISPLAY, textTransform: "uppercase" }}>
-                {page === "dungeons" && "🏰 Dungeons"}{page === "growth" && "📊 Growth"}{page === "equipment" && "🗡️ Equipment"}{page === "summon" && "✨ Summon"}{page === "pets" && "🐾 Pets"}{page === "costumes" && "👗 Costumes"}{page === "achievements" && "💀 Achievements"}{page === "stats" && "📈 Stats"}{page === "settings" && "⚙️ Settings"}{page === "quests" && "📜 Quests"}{page === "relics" && "🏺 Relics & Insignias"}{page === "prestige" && "🔄 Rebirth & Skills"}{page === "raids" && "⚔️ Raid Bosses"}{page === "shop" && "🛒 Shop"}{page === "titles" && "🏷️ Titles"}{page === "emblems" && "🏅 Emblems"}{page === "alchemy" && "⚗️ Alchemy"}{page === "resonance" && "✨ Resonance"}{page === "figures" && "🗿 Figures"}{page === "tower" && "🗼 Tower"}{page === "spin" && "🎡 Daily Spin"}{page === "bossrush" && "💥 Boss Rush"}{page === "battlepass" && "🎖️ Battle Pass"}{page === "gems" && "💎 Gems"}{page === "bestiary" && "📖 Bestiary"}{page === "power" && "📊 Power"}{page === "weaponevo" && "⚔️ Weapon Evolution"}{page === "dojo" && "🥋 Training Dojo"}{page === "challenge" && "🎯 Challenges"}{page === "battle" && !isMobile && "⚔️ Quick Stats"}
+                {page === "dungeons" && "🏰 Dungeons"}{page === "growth" && "📊 Growth"}{page === "equipment" && "🗡️ Equipment"}{page === "summon" && "✨ Summon"}{page === "pets" && "🐾 Pets"}{page === "costumes" && "👗 Costumes"}{page === "achievements" && "💀 Achievements"}{page === "stats" && "📈 Stats"}{page === "settings" && "⚙️ Settings"}{page === "quests" && "📜 Quests"}{page === "relics" && "🏺 Relics & Insignias"}{page === "prestige" && "🔄 Rebirth & Skills"}{page === "raids" && "⚔️ Raid Bosses"}{page === "shop" && "🛒 Shop"}{page === "titles" && "🏷️ Titles"}{page === "emblems" && "🏅 Emblems"}{page === "alchemy" && "⚗️ Alchemy"}{page === "resonance" && "✨ Resonance"}{page === "figures" && "🗿 Figures"}{page === "tower" && "🗼 Tower"}{page === "spin" && "🎡 Daily Spin"}{page === "bossrush" && "💥 Boss Rush"}{page === "battlepass" && "🎖️ Battle Pass"}{page === "gems" && "💎 Gems"}{page === "bestiary" && "📖 Bestiary"}{page === "power" && "📊 Power"}{page === "weaponevo" && "⚔️ Weapon Evolution"}{page === "dojo" && "🥋 Training Dojo"}{page === "challenge" && "🎯 Challenges"}{page === "crafting" && "🔨 Crafting"}{page === "pvp" && "🏟️ PvP Arena"}{page === "battle" && !isMobile && "⚔️ Quick Stats"}
               </div>
               <div style={{ display: "flex", gap: 5 }}>
                 <span style={{ fontSize: 9, fontWeight: 800, color: "#f5c542", fontFamily: FONT_DISPLAY }}>🪙{fmt(gold)}</span>
@@ -4485,6 +4685,149 @@ function GameUI({ account, initialSave, onLogout }) {
             </div>
           )}
 
+          {/* ═══ CRAFTING ═══ */}
+          {page === "crafting" && (
+            <div>
+              <div style={{ fontSize: isMobile ? 13 : 15, fontWeight: 900, color: T.white, fontFamily: FONT_DISPLAY, marginBottom: 4 }}>🔨 CRAFTING</div>
+              <div style={{ fontSize: isMobile ? 8 : 10, color: T.textDim, marginBottom: 12 }}>Combine materials from monsters into permanent runes</div>
+
+              {/* Materials inventory */}
+              <div style={{ padding: "10px 12px", borderRadius: 10, background: "#ffffff04", border: "1px solid #ffffff08", marginBottom: 14 }}>
+                <div style={{ fontSize: isMobile ? 9 : 11, fontWeight: 800, color: T.accent, fontFamily: FONT_DISPLAY, marginBottom: 8 }}>MATERIALS</div>
+                <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                  {CRAFT_MATERIALS.map(mat => (
+                    <div key={mat.id} style={{ display: "flex", alignItems: "center", gap: 4, padding: "4px 8px", borderRadius: 6, background: `${mat.color}08`, border: `1px solid ${mat.color}15` }}>
+                      <span style={{ fontSize: 14 }}>{mat.emoji}</span>
+                      <div>
+                        <div style={{ fontSize: isMobile ? 8 : 9, fontWeight: 700, color: mat.color }}>{mat.name}</div>
+                        <div style={{ fontSize: isMobile ? 10 : 12, fontWeight: 900, color: T.white, fontFamily: FONT_DISPLAY }}>{craftMaterials[mat.id] || 0}</div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Element selection */}
+              <div style={{ padding: "10px 12px", borderRadius: 10, background: "#ffffff04", border: "1px solid #ffffff08", marginBottom: 14 }}>
+                <div style={{ fontSize: isMobile ? 9 : 11, fontWeight: 800, color: T.accent, fontFamily: FONT_DISPLAY, marginBottom: 8 }}>HERO ELEMENT</div>
+                <div style={{ fontSize: isMobile ? 7 : 9, color: T.textDim, marginBottom: 6 }}>Choose your element for bonus damage against weak enemies</div>
+                <div style={{ display: "flex", gap: 4, flexWrap: "wrap" }}>
+                  {Object.entries(ELEMENTS).map(([key, el]) => (
+                    <div key={key} onClick={() => setHeroElement(key)} style={{ padding: "6px 10px", borderRadius: 8, background: heroElement === key ? `${el.color}20` : "#ffffff04", border: `1px solid ${heroElement === key ? el.color : "#ffffff08"}`, cursor: "pointer", textAlign: "center", minWidth: 56 }}>
+                      <div style={{ fontSize: 18 }}>{el.emoji}</div>
+                      <div style={{ fontSize: isMobile ? 7 : 8, fontWeight: 700, color: heroElement === key ? el.color : T.textDim, fontFamily: FONT_DISPLAY }}>{el.name}</div>
+                      <div style={{ fontSize: 6, color: T.textDim }}>Strong: {ELEMENTS[el.strong]?.emoji}</div>
+                    </div>
+                  ))}
+                </div>
+                {heroElement && <div style={{ marginTop: 6, fontSize: isMobile ? 8 : 9, color: ELEMENTS[heroElement].color }}>
+                  Active: {ELEMENTS[heroElement].emoji} {ELEMENTS[heroElement].name} — +30% vs {ELEMENTS[ELEMENTS[heroElement].strong]?.emoji} {ELEMENTS[ELEMENTS[heroElement].strong]?.name}
+                </div>}
+              </div>
+
+              {/* Recipes */}
+              <div style={{ fontSize: isMobile ? 9 : 11, fontWeight: 800, color: T.accent, fontFamily: FONT_DISPLAY, marginBottom: 8 }}>RECIPES</div>
+              {CRAFT_RECIPES.map(recipe => {
+                const canCraft = Object.entries(recipe.materials).every(([matId, count]) => (craftMaterials[matId] || 0) >= count);
+                const owned = craftedRunes[recipe.id] || 0;
+                return (
+                  <div key={recipe.id} style={{ padding: "10px 12px", borderRadius: 10, background: `${recipe.color}04`, border: `1px solid ${recipe.color}12`, marginBottom: 6 }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 4 }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                        <span style={{ fontSize: 20 }}>{recipe.emoji}</span>
+                        <div>
+                          <div style={{ fontSize: isMobile ? 11 : 12, fontWeight: 800, color: recipe.color, fontFamily: FONT_DISPLAY }}>{recipe.name}</div>
+                          <div style={{ fontSize: isMobile ? 7 : 8, color: T.textDim }}>Owned: {owned} • {Object.entries(recipe.bonus).map(([k, v]) => `+${v} ${k}`).join(", ")}</div>
+                        </div>
+                      </div>
+                    </div>
+                    <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 6 }}>
+                      {Object.entries(recipe.materials).map(([matId, count]) => {
+                        const mat = CRAFT_MATERIALS.find(m => m.id === matId);
+                        const has = craftMaterials[matId] || 0;
+                        return (
+                          <span key={matId} style={{ fontSize: isMobile ? 8 : 9, color: has >= count ? T.success : T.danger, padding: "2px 6px", borderRadius: 4, background: "#ffffff06" }}>
+                            {mat?.emoji} {has}/{count}
+                          </span>
+                        );
+                      })}
+                    </div>
+                    <div onClick={canCraft ? () => craftRune(recipe.id) : undefined} style={{ padding: "6px 14px", borderRadius: 8, background: canCraft ? recipe.color : "#ffffff08", cursor: canCraft ? "pointer" : "default", fontSize: isMobile ? 9 : 10, fontWeight: 800, color: T.white, fontFamily: FONT_DISPLAY, textAlign: "center", opacity: canCraft ? 1 : 0.4 }}>
+                      {canCraft ? "CRAFT" : "NEED MATERIALS"}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+
+          {/* ═══ PVP ARENA ═══ */}
+          {page === "pvp" && (
+            <div>
+              <div style={{ fontSize: isMobile ? 13 : 15, fontWeight: 900, color: T.white, fontFamily: FONT_DISPLAY, marginBottom: 4 }}>🏟️ PVP ARENA</div>
+              <div style={{ fontSize: isMobile ? 8 : 10, color: T.textDim, marginBottom: 12 }}>Battle other players for ELO and rewards (10 fights/day)</div>
+
+              {/* Rank & stats */}
+              {(() => {
+                const rank = [...PVP_RANKS].reverse().find(r => pvpElo >= r.minElo) || PVP_RANKS[0];
+                const nextRank = PVP_RANKS.find(r => r.minElo > pvpElo);
+                return (
+                  <div style={{ textAlign: "center", padding: "14px 12px", borderRadius: 12, background: `${rank.color}08`, border: `1px solid ${rank.color}25`, marginBottom: 14 }}>
+                    <div style={{ fontSize: 36, marginBottom: 4 }}>🏆</div>
+                    <div style={{ fontSize: isMobile ? 16 : 20, fontWeight: 900, color: rank.color, fontFamily: FONT_DISPLAY }}>{rank.name}</div>
+                    <div style={{ fontSize: isMobile ? 20 : 24, fontWeight: 900, color: T.white, fontFamily: FONT_DISPLAY }}>{pvpElo} ELO</div>
+                    {nextRank && <div style={{ fontSize: isMobile ? 8 : 9, color: T.textDim, marginTop: 4 }}>{nextRank.minElo - pvpElo} ELO to {nextRank.name}</div>}
+                    <div style={{ display: "flex", justifyContent: "center", gap: 16, marginTop: 8 }}>
+                      <div><div style={{ fontSize: isMobile ? 14 : 16, fontWeight: 900, color: T.success, fontFamily: FONT_DISPLAY }}>{pvpWins}</div><div style={{ fontSize: 7, color: T.textDim }}>WINS</div></div>
+                      <div><div style={{ fontSize: isMobile ? 14 : 16, fontWeight: 900, color: T.danger, fontFamily: FONT_DISPLAY }}>{pvpLosses}</div><div style={{ fontSize: 7, color: T.textDim }}>LOSSES</div></div>
+                      <div><div style={{ fontSize: isMobile ? 14 : 16, fontWeight: 900, color: T.warning, fontFamily: FONT_DISPLAY }}>{pvpWins + pvpLosses > 0 ? Math.round(pvpWins / (pvpWins + pvpLosses) * 100) : 0}%</div><div style={{ fontSize: 7, color: T.textDim }}>WIN RATE</div></div>
+                    </div>
+                  </div>
+                );
+              })()}
+
+              {/* Fight result */}
+              {pvpResult && (
+                <div style={{ padding: "12px 14px", borderRadius: 10, marginBottom: 14, background: pvpResult.won ? `${T.success}08` : `${T.danger}08`, border: `1px solid ${pvpResult.won ? T.success : T.danger}25`, animation: "slideDown 0.3s ease" }}>
+                  <div style={{ fontSize: isMobile ? 14 : 16, fontWeight: 900, color: pvpResult.won ? T.success : T.danger, fontFamily: FONT_DISPLAY, textAlign: "center", marginBottom: 6 }}>
+                    {pvpResult.won ? "⚔️ VICTORY!" : "💀 DEFEAT"}
+                  </div>
+                  <div style={{ display: "flex", justifyContent: "space-between", fontSize: isMobile ? 9 : 10, color: T.textSec }}>
+                    <span>vs {pvpResult.opponent.name}</span>
+                    <span>Rounds: {pvpResult.rounds}</span>
+                  </div>
+                  <div style={{ fontSize: isMobile ? 10 : 11, fontWeight: 800, color: pvpResult.eloChange > 0 ? T.success : T.danger, fontFamily: FONT_DISPLAY, textAlign: "center", marginTop: 4 }}>
+                    {pvpResult.eloChange > 0 ? "+" : ""}{pvpResult.eloChange} ELO
+                  </div>
+                  {pvpResult.won && <div style={{ fontSize: isMobile ? 8 : 9, color: T.gold, textAlign: "center", marginTop: 2 }}>+{fmt(Math.floor(500 + pvpElo * 0.5))} gold, +3 💎</div>}
+                  <div onClick={() => setPvpResult(null)} style={{ marginTop: 6, padding: "4px 12px", borderRadius: 6, background: "#ffffff08", cursor: "pointer", fontSize: isMobile ? 8 : 9, fontWeight: 700, color: T.textSec, textAlign: "center" }}>Dismiss</div>
+                </div>
+              )}
+
+              {/* Fight button */}
+              <div style={{ textAlign: "center", marginBottom: 14 }}>
+                <div style={{ fontSize: isMobile ? 8 : 9, color: T.textDim, marginBottom: 6 }}>Fights today: {pvpDailyFights}/10</div>
+                <div onClick={pvpDailyFights < 10 ? doPvpFight : undefined} style={{ display: "inline-block", padding: "12px 32px", borderRadius: 10, background: pvpDailyFights < 10 ? "linear-gradient(135deg, #ef4444, #dc2626)" : "#ffffff15", cursor: pvpDailyFights < 10 ? "pointer" : "default", fontSize: isMobile ? 13 : 15, fontWeight: 900, color: T.white, fontFamily: FONT_DISPLAY, boxShadow: pvpDailyFights < 10 ? "0 4px 20px #ef444440" : "none", opacity: pvpDailyFights < 10 ? 1 : 0.4 }}>
+                  ⚔️ FIND OPPONENT
+                </div>
+              </div>
+
+              {/* Rank tiers */}
+              <div style={{ fontSize: isMobile ? 9 : 11, fontWeight: 800, color: T.accent, fontFamily: FONT_DISPLAY, marginBottom: 6 }}>RANK TIERS</div>
+              {PVP_RANKS.map(rank => {
+                const active = pvpElo >= rank.minElo && (!PVP_RANKS.find(r => r.minElo > rank.minElo && pvpElo >= r.minElo));
+                return (
+                  <div key={rank.id} style={{ display: "flex", alignItems: "center", gap: 8, padding: "6px 10px", borderRadius: 8, marginBottom: 3, background: active ? `${rank.color}10` : "#ffffff02", border: active ? `1px solid ${rank.color}25` : "1px solid #ffffff04" }}>
+                    <div style={{ width: 8, height: 8, borderRadius: "50%", background: pvpElo >= rank.minElo ? rank.color : "#ffffff15" }} />
+                    <span style={{ fontSize: isMobile ? 10 : 11, fontWeight: 800, color: pvpElo >= rank.minElo ? rank.color : T.textDim, fontFamily: FONT_DISPLAY, flex: 1 }}>{rank.name}</span>
+                    <span style={{ fontSize: isMobile ? 8 : 9, color: T.textDim }}>{rank.minElo}+ ELO</span>
+                    <span style={{ fontSize: isMobile ? 7 : 8, color: T.gold }}>+{fmt(rank.reward.gold)}🪙 {rank.reward.diamonds ? `+${rank.reward.diamonds}💎` : ""}</span>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+
           {/* ═══ BESTIARY ═══ */}
           {page === "bestiary" && (
             <div>
@@ -5276,6 +5619,14 @@ function GameUI({ account, initialSave, onLogout }) {
         @keyframes panelSlideUp { from { transform: translateY(40%); opacity: 0.5; } to { transform: translateY(0); opacity: 1; } }
 
         ::selection { background: ${T.accent}40; color: ${T.white}; }
+
+        /* Desktop scrollbar */
+        @media (min-width: 769px) {
+          ::-webkit-scrollbar { width: 6px; }
+          ::-webkit-scrollbar-track { background: #0a0c14; }
+          ::-webkit-scrollbar-thumb { background: #2a2e40; border-radius: 3px; }
+          ::-webkit-scrollbar-thumb:hover { background: #3a3e50; }
+        }
       `}</style>
     </div>
   );

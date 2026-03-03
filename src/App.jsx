@@ -1480,7 +1480,7 @@ function GameUI({ account, initialSave, onLogout }) {
 
   const triggerHeroHit = useCallback(() => {
     setHeroAnim("hit");
-    setTimeout(() => setHeroAnim(""), 200);
+    setTimeout(() => setHeroAnim(""), 400);
   }, []);
 
   const triggerFlash = useCallback((color) => {
@@ -2029,7 +2029,7 @@ function GameUI({ account, initialSave, onLogout }) {
           setTimeout(() => setBattleState(p => {
             if (!p) return p;
             return { ...p, enemies: p.enemies.map(e => e.id === target.id && e.anim === "hit" ? { ...e, anim: "idle" } : e) };
-          }), 200);
+          }), 400);
           setCombatStats(s => ({ ...s, totalDamage: s.totalDamage + dmg, highestHit: Math.max(s.highestHit || 0, dmg) }));
           triggerHeroAttack();
           addDmgNumber(dmg, "right", wasCrit);
@@ -2547,8 +2547,8 @@ function GameUI({ account, initialSave, onLogout }) {
                   {/* Hero body */}
                   <div style={{
                     width: 64, height: 64, display: "flex", alignItems: "center", justifyContent: "center",
-                    animation: heroAnim === "attack" ? "fighterAttack 0.3s ease" : heroAnim === "hit" ? "fighterHit 0.2s ease" : "fighterIdle 2s ease-in-out infinite",
-                    filter: heroAnim === "hit" ? "brightness(2.5) saturate(0)" : "drop-shadow(0 2px 8px #00000080) drop-shadow(0 0 12px " + T.accent + "30)",
+                    animation: heroAnim === "attack" ? "fighterAttack 0.3s ease" : heroAnim === "hit" ? "fighterHit 0.4s ease" : "fighterIdle 2s ease-in-out infinite",
+                    filter: heroAnim === "hit" ? "brightness(1.5) sepia(1) saturate(6) hue-rotate(-10deg) drop-shadow(0 0 8px #ff000080)" : "drop-shadow(0 2px 8px #00000080) drop-shadow(0 0 12px " + T.accent + "30)",
                     transition: "filter 0.1s",
                   }}>
                     <img src={heroSprite} alt="Hero" onError={(e) => { e.target.style.display = "none"; e.target.nextSibling.style.display = "flex"; }} style={{ width: 64, height: 64, imageRendering: "pixelated", objectFit: "contain" }} />
@@ -2594,8 +2594,8 @@ function GameUI({ account, initialSave, onLogout }) {
                     <div style={{
                       width: 64, height: 64, display: "flex", alignItems: "center", justifyContent: "center",
                       transform: "scaleX(-1)",
-                      animation: enemy.anim === "hit" ? "fighterHit 0.2s ease" : enemy.anim === "idle" ? "fighterIdle 2s ease-in-out infinite 0.5s" : undefined,
-                      filter: enemy.anim === "hit" ? "brightness(3) saturate(0)" : enemy.isBoss ? `drop-shadow(0 0 12px ${T.gold}60)` : "drop-shadow(0 2px 8px #00000080)",
+                      animation: enemy.anim === "hit" ? "fighterHit 0.4s ease" : enemy.anim === "idle" ? "fighterIdle 2s ease-in-out infinite 0.5s" : undefined,
+                      filter: enemy.anim === "hit" ? "brightness(1.5) sepia(1) saturate(6) hue-rotate(-10deg) drop-shadow(0 0 8px #ff000080)" : enemy.isBoss ? `drop-shadow(0 0 12px ${T.gold}60)` : "drop-shadow(0 2px 8px #00000080)",
                       opacity: enemy.anim === "die" ? 0 : 1,
                       transition: "filter 0.1s, opacity 0.3s",
                     }}>
@@ -4719,7 +4719,7 @@ function GameUI({ account, initialSave, onLogout }) {
         @keyframes dmgFloat { 0% { opacity: 1; transform: translateY(0) scale(0.5); } 15% { opacity: 1; transform: translateY(-12px) scale(1.3); } 30% { transform: translateY(-24px) scale(1); } 100% { opacity: 0; transform: translateY(-80px) scale(0.7); } }
         @keyframes fighterIdle { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-4px); } }
         @keyframes fighterAttack { 0% { transform: translateX(0) scale(1); } 30% { transform: translateX(40px) scale(1.2); } 60% { transform: translateX(30px) scale(1.1); } 100% { transform: translateX(0) scale(1); } }
-        @keyframes fighterHit { 0% { transform: translateX(0) scale(1); } 30% { transform: translateX(-12px) scale(0.9); } 100% { transform: translateX(0) scale(1); } }
+        @keyframes fighterHit { 0% { transform: translateX(0) scale(1); } 20% { transform: translateX(-12px) scale(0.9); } 60% { transform: translateX(-6px) scale(0.95); } 100% { transform: translateX(0) scale(1); } }
         @keyframes fighterDie { 0% { transform: scale(1) translateY(0); opacity: 1; } 40% { transform: scale(1.1) translateY(-10px); opacity: 0.8; } 100% { transform: scale(0.3) translateY(20px); opacity: 0; } }
         @keyframes enemyEnter { 0% { opacity: 0; transform: translateX(80px) scale(0.5); } 60% { transform: translateX(-5px) scale(1.05); } 100% { opacity: 1; transform: translateX(0) scale(1); } }
         @keyframes slashVfx { 0% { opacity: 1; transform: scale(0.5) rotate(-45deg); } 50% { opacity: 1; transform: scale(1.3) rotate(-30deg); } 100% { opacity: 0; transform: scale(1.8) rotate(-20deg); } }

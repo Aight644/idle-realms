@@ -13,9 +13,9 @@ import { doc, setDoc, onSnapshot, serverTimestamp } from 'firebase/firestore';
 // ─── THEME ───
 const T = {
   bg: "#0c0e14", bgDeep: "#080a0f", bgCard: "#111420",
-  sidebar: "#0e1018", sidebarBorder: "#1a1d2d",
+  sidebar: "#0d0f18", sidebarBorder: "#1a1d2d",
   sidebarActive: "#161a2c", sidebarHover: "#131628",
-  card: "#131620", cardBorder: "#1c2035", cardHover: "#181c2e",
+  card: "#12151f", cardBorder: "#1c2035", cardHover: "#181c2e",
   header: "#0e1018", headerBorder: "#1a1d2d",
   accent: "#6366f1", accentSoft: "#818cf8", accentMuted: "#6366f115",
   success: "#34d399", successMuted: "#34d39915",
@@ -27,8 +27,8 @@ const T = {
   teal: "#2dd4bf", tealMuted: "#2dd4bf15",
   pink: "#f472b6", pinkMuted: "#f472b615",
   text: "#dde1ed", textSec: "#7d85a0", textDim: "#454b64", textSoft: "#9096a8",
-  white: "#eef0f8", gold: "#fbbf24", bar: "#1a1d2d", divider: "#1a1d2d",
-  r: 12, rs: 8,
+  white: "#eef0f8", gold: "#fbbf24", bar: "#181b28", divider: "#1c1f30",
+  r: 14, rs: 10,
   // Rarity
   rarCommon: "#94a3b8", rarUncommon: "#34d399", rarRare: "#60a5fa",
   rarEpic: "#c084fc", rarLegendary: "#fbbf24", rarMythic: "#f87171", rarGod: "#ff375f",
@@ -204,6 +204,66 @@ const COSTUME_SET_BONUSES = [
   { rarity: "legendary", need: 2, label: "2× Legendary", bonus: { atkPct: 5, goldPct: 5, critDmg: 10 } },
 ];
 
+// ─── ACHIEVEMENTS ───
+const ACHIEVEMENTS = [
+  // Combat milestones
+  { id: "kill_100", name: "Monster Slayer", desc: "Kill 100 monsters", icon: "⚔️", category: "combat", check: (s) => s.combatStats.kills >= 100, reward: { gold: 500 }, color: T.danger },
+  { id: "kill_1k", name: "Centurion", desc: "Kill 1,000 monsters", icon: "🗡️", category: "combat", check: (s) => s.combatStats.kills >= 1000, reward: { gold: 2000, diamonds: 20 }, color: T.danger },
+  { id: "kill_10k", name: "Warlord", desc: "Kill 10,000 monsters", icon: "💀", category: "combat", check: (s) => s.combatStats.kills >= 10000, reward: { gold: 10000, diamonds: 100 }, color: T.danger },
+  { id: "kill_100k", name: "Extinction Event", desc: "Kill 100,000 monsters", icon: "☠️", category: "combat", check: (s) => s.combatStats.kills >= 100000, reward: { gold: 50000, diamonds: 500 }, color: T.danger },
+  { id: "boss_10", name: "Boss Hunter", desc: "Kill 10 bosses", icon: "👑", category: "combat", check: (s) => (s.combatStats.bossesKilled || 0) >= 10, reward: { gold: 1000, diamonds: 15 }, color: T.orange },
+  { id: "boss_50", name: "Boss Slayer", desc: "Kill 50 bosses", icon: "🏆", category: "combat", check: (s) => (s.combatStats.bossesKilled || 0) >= 50, reward: { gold: 5000, diamonds: 75 }, color: T.orange },
+  { id: "boss_200", name: "Raid Master", desc: "Kill 200 bosses", icon: "⚡", category: "combat", check: (s) => (s.combatStats.bossesKilled || 0) >= 200, reward: { gold: 25000, diamonds: 250 }, color: T.orange },
+  { id: "dmg_10k", name: "Hard Hitter", desc: "Deal 10,000 total damage", icon: "💥", category: "combat", check: (s) => s.combatStats.totalDamage >= 10000, reward: { gold: 300 }, color: T.warning },
+  { id: "dmg_1m", name: "Devastator", desc: "Deal 1,000,000 total damage", icon: "🔥", category: "combat", check: (s) => s.combatStats.totalDamage >= 1000000, reward: { gold: 5000, diamonds: 50 }, color: T.warning },
+  { id: "crit_500", name: "Critical Strike", desc: "Land a single hit of 500+", icon: "💢", category: "combat", check: (s) => (s.combatStats.highestHit || 0) >= 500, reward: { gold: 1000 }, color: T.danger },
+  { id: "crit_5k", name: "Massive Blow", desc: "Land a single hit of 5,000+", icon: "💫", category: "combat", check: (s) => (s.combatStats.highestHit || 0) >= 5000, reward: { gold: 5000, diamonds: 30 }, color: T.danger },
+  { id: "death_0", name: "Immortal", desc: "Reach stage 50 with 0 deaths", icon: "🛡️", category: "combat", check: (s) => s.highestStage >= 50 && s.combatStats.deaths === 0, reward: { diamonds: 100 }, color: T.info },
+
+  // Stage milestones
+  { id: "stage_10", name: "Getting Started", desc: "Reach stage 10", icon: "🌱", category: "progress", check: (s) => s.highestStage >= 10, reward: { gold: 200 }, color: T.success },
+  { id: "stage_50", name: "Adventurer", desc: "Reach stage 50", icon: "🗺️", category: "progress", check: (s) => s.highestStage >= 50, reward: { gold: 1000, diamonds: 20 }, color: T.success },
+  { id: "stage_100", name: "Centurion", desc: "Reach stage 100", icon: "💯", category: "progress", check: (s) => s.highestStage >= 100, reward: { gold: 5000, diamonds: 50 }, color: T.success },
+  { id: "stage_200", name: "Veteran", desc: "Reach stage 200", icon: "⭐", category: "progress", check: (s) => s.highestStage >= 200, reward: { gold: 15000, diamonds: 150 }, color: T.success },
+  { id: "stage_400", name: "Legend", desc: "Reach stage 400", icon: "🌟", category: "progress", check: (s) => s.highestStage >= 400, reward: { gold: 50000, diamonds: 500 }, color: T.gold },
+  { id: "ch2", name: "Into the Dark", desc: "Enter Darkstone Caves (Ch.2)", icon: "🕳️", category: "progress", check: (s) => s.highestStage >= 51, reward: { gold: 500 }, color: T.textSec },
+  { id: "ch3", name: "Swamp Crawler", desc: "Enter Rotwood Swamp (Ch.3)", icon: "🌿", category: "progress", check: (s) => s.highestStage >= 101, reward: { gold: 1500 }, color: T.success },
+  { id: "ch5", name: "Fire Walker", desc: "Enter Emberpeak Volcano (Ch.5)", icon: "🌋", category: "progress", check: (s) => s.highestStage >= 201, reward: { gold: 5000, diamonds: 30 }, color: T.orange },
+  { id: "ch8", name: "Rift Breaker", desc: "Enter Celestial Rift (Ch.8)", icon: "✨", category: "progress", check: (s) => s.highestStage >= 351, reward: { gold: 20000, diamonds: 200 }, color: T.pink },
+
+  // Growth milestones
+  { id: "growth_10", name: "Powered Up", desc: "Any growth stat reaches Lv.10", icon: "📊", category: "growth", check: (s) => Math.max(s.growth.atk, s.growth.hp, s.growth.def) >= 10, reward: { gold: 300 }, color: T.accent },
+  { id: "growth_50", name: "Ascendant", desc: "Any growth stat reaches Lv.50", icon: "📈", category: "growth", check: (s) => Math.max(s.growth.atk, s.growth.hp, s.growth.def) >= 50, reward: { gold: 3000, diamonds: 30 }, color: T.accent },
+  { id: "growth_100", name: "Transcendent", desc: "Any growth stat reaches Lv.100", icon: "🚀", category: "growth", check: (s) => Math.max(s.growth.atk, s.growth.hp, s.growth.def) >= 100, reward: { gold: 15000, diamonds: 100 }, color: T.accent },
+  { id: "balanced_25", name: "Balanced Build", desc: "All growth stats at Lv.25+", icon: "⚖️", category: "growth", check: (s) => Math.min(s.growth.atk, s.growth.hp, s.growth.def) >= 25, reward: { gold: 5000, diamonds: 50 }, color: T.teal },
+
+  // Collection milestones
+  { id: "equip_10", name: "Collector", desc: "Own 10 equipment pieces", icon: "🎒", category: "collection", check: (s) => s.equipCount >= 10, reward: { gold: 500 }, color: T.warning },
+  { id: "equip_50", name: "Hoarder", desc: "Own 50 equipment pieces", icon: "🏪", category: "collection", check: (s) => s.equipCount >= 50, reward: { gold: 3000, diamonds: 25 }, color: T.warning },
+  { id: "summon_50", name: "Summoner", desc: "Perform 50 summons", icon: "✨", category: "collection", check: (s) => (s.stats.summons || 0) >= 50, reward: { gold: 2000, diamonds: 20 }, color: T.purple },
+  { id: "summon_200", name: "Grand Summoner", desc: "Perform 200 summons", icon: "🌀", category: "collection", check: (s) => (s.stats.summons || 0) >= 200, reward: { gold: 10000, diamonds: 100 }, color: T.purple },
+  { id: "merge_10", name: "Blacksmith", desc: "Perform 10 merges", icon: "🔨", category: "collection", check: (s) => (s.stats.merges || 0) >= 10, reward: { gold: 2000, diamonds: 15 }, color: T.orange },
+  { id: "pet_1", name: "Pet Owner", desc: "Obtain your first pet", icon: "🐾", category: "collection", check: (s) => s.petCount >= 1, reward: { gold: 500 }, color: T.pink },
+  { id: "pet_5", name: "Menagerie", desc: "Own 5 pets", icon: "🐲", category: "collection", check: (s) => s.petCount >= 5, reward: { gold: 5000, diamonds: 50 }, color: T.pink },
+  { id: "costume_3", name: "Fashionista", desc: "Own 3 costumes", icon: "👗", category: "collection", check: (s) => s.costumeCount >= 3, reward: { gold: 1000, diamonds: 15 }, color: T.teal },
+  { id: "costume_8", name: "Wardrobe Master", desc: "Own 8 costumes", icon: "👔", category: "collection", check: (s) => s.costumeCount >= 8, reward: { gold: 10000, diamonds: 150 }, color: T.teal },
+
+  // Economy milestones
+  { id: "gold_10k", name: "Wealthy", desc: "Earn 10,000 total gold", icon: "💰", category: "economy", check: (s) => (s.combatStats.totalGoldEarned || 0) >= 10000, reward: { diamonds: 10 }, color: T.gold },
+  { id: "gold_100k", name: "Tycoon", desc: "Earn 100,000 total gold", icon: "💎", category: "economy", check: (s) => (s.combatStats.totalGoldEarned || 0) >= 100000, reward: { diamonds: 50 }, color: T.gold },
+  { id: "gold_1m", name: "Mogul", desc: "Earn 1,000,000 total gold", icon: "🏦", category: "economy", check: (s) => (s.combatStats.totalGoldEarned || 0) >= 1000000, reward: { diamonds: 200 }, color: T.gold },
+  { id: "streak_7", name: "Dedicated", desc: "7-day login streak", icon: "🔥", category: "economy", check: (s) => (s.stats.loginStreak || 0) >= 7, reward: { gold: 2000, diamonds: 30 }, color: T.orange },
+  { id: "streak_30", name: "Loyal Warrior", desc: "30-day login streak", icon: "🔥", category: "economy", check: (s) => (s.stats.loginStreak || 0) >= 30, reward: { gold: 10000, diamonds: 200 }, color: T.orange },
+];
+
+const ACH_CATEGORIES = [
+  { id: "combat", name: "Combat", icon: "⚔️", color: T.danger },
+  { id: "progress", name: "Progress", icon: "🗺️", color: T.success },
+  { id: "growth", name: "Growth", icon: "📊", color: T.accent },
+  { id: "collection", name: "Collection", icon: "🎒", color: T.warning },
+  { id: "economy", name: "Economy", icon: "💰", color: T.gold },
+];
+
 // ─── DAILY LOGIN REWARDS ───
 const LOGIN_REWARDS = [
   { day: 1, gold: 100, diamonds: 10, label: "100g + 10💎" },
@@ -246,36 +306,43 @@ function formatDuration(seconds) {
 // UI COMPONENTS (polished)
 // ═══════════════════════════════════════════════
 
-function Card({ children, style, glow, onClick, hover }) {
+function Card({ children, style, glow, onClick, hover, accent: accentLine }) {
   const [hovered, setHovered] = useState(false);
   return (
     <div onClick={onClick}
       onMouseEnter={() => setHovered(true)} onMouseLeave={() => setHovered(false)}
       style={{
-        background: hovered && hover ? T.cardHover : T.card,
-        borderRadius: T.r, padding: 18,
-        border: `1px solid ${glow ? glow + "35" : T.cardBorder}`,
-        boxShadow: glow ? `0 0 24px ${glow}12, 0 4px 20px #00000040` : "0 2px 12px #00000025",
+        background: hovered && hover ? `linear-gradient(180deg, ${T.cardHover} 0%, ${T.card} 100%)` : T.card,
+        borderRadius: T.r, padding: 18, position: "relative", overflow: "hidden",
+        border: `1px solid ${glow ? glow + "30" : T.cardBorder}`,
+        boxShadow: glow ? `0 0 24px ${glow}10, 0 4px 24px #00000035` : "0 2px 16px #00000020",
         cursor: onClick ? "pointer" : undefined,
         transition: "all 0.2s ease", ...style,
-      }}>{children}</div>
+      }}>
+      {accentLine && <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 2, background: `linear-gradient(90deg, ${accentLine}, transparent)` }} />}
+      {children}
+    </div>
   );
 }
 
 function Btn({ children, onClick, color = T.accent, small, disabled, style: sx, block }) {
   const [hover, setHover] = useState(false);
+  const [pressed, setPressed] = useState(false);
   return (
     <div onClick={disabled ? undefined : onClick}
-      onMouseEnter={() => setHover(true)} onMouseLeave={() => setHover(false)}
+      onMouseEnter={() => setHover(true)} onMouseLeave={() => { setHover(false); setPressed(false); }}
+      onMouseDown={() => setPressed(true)} onMouseUp={() => setPressed(false)}
       style={{
         display: block ? "flex" : "inline-flex", alignItems: "center", justifyContent: "center", gap: 6,
         padding: small ? "7px 14px" : "10px 22px",
         borderRadius: T.rs, fontWeight: 700, fontSize: small ? 11 : 13, fontFamily: FONT_BODY,
-        background: disabled ? T.bar : hover ? `${color}30` : `${color}18`,
+        background: disabled ? T.bar : hover ? `${color}28` : `${color}14`,
         color: disabled ? T.textDim : color,
-        border: `1px solid ${disabled ? T.divider : hover ? color + "50" : color + "30"}`,
+        border: `1px solid ${disabled ? T.divider : hover ? color + "50" : color + "25"}`,
         cursor: disabled ? "not-allowed" : "pointer",
         transition: "all 0.15s ease", userSelect: "none",
+        transform: pressed && !disabled ? "scale(0.97)" : hover && !disabled ? "translateY(-1px)" : undefined,
+        boxShadow: hover && !disabled ? `0 4px 12px ${color}15` : undefined,
         width: block ? "100%" : undefined,
         ...sx,
       }}>{children}</div>
@@ -396,6 +463,7 @@ const DEFAULT_SAVE = () => ({
   gold: 100, diamonds: 50,
   unlockedSkills: ["slash"], equippedSkills: ["slash", null, null],
   ownedCostumes: ["default"], activeCostume: "default",
+  achievementsUnlocked: {},
   combatStats: { kills: 0, totalDamage: 0, deaths: 0, highestHit: 0, bossesKilled: 0, totalGoldEarned: 0 },
   stats: { timePlayed: 0, loginStreak: 0, lastLoginDay: null, summons: 0, merges: 0 },
   isPremium: false, storePurchases: {},
@@ -449,12 +517,23 @@ function AuthScreen({ onLogin }) {
   const inp = { padding: "11px 14px", borderRadius: T.rs, background: T.bgDeep, border: `1px solid ${T.divider}`, color: T.white, fontSize: 13, outline: "none", fontFamily: FONT_BODY, width: "100%", boxSizing: "border-box" };
 
   return (
-    <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", background: `radial-gradient(ellipse at 50% 30%, #1a1040 0%, ${T.bg} 70%)`, fontFamily: FONT_BODY }}>
-      <div style={{ width: "100%", maxWidth: 400, padding: 24 }}>
+    <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", background: `radial-gradient(ellipse at 50% 30%, #1a1040 0%, ${T.bg} 70%)`, fontFamily: FONT_BODY, position: "relative", overflow: "hidden" }}>
+      {/* Floating background particles */}
+      {[...Array(6)].map((_, i) => (
+        <div key={i} style={{
+          position: "absolute", borderRadius: "50%",
+          width: 4 + i * 2, height: 4 + i * 2,
+          background: `${[T.accent, T.purple, T.teal, T.danger, T.success, T.gold][i]}30`,
+          left: `${10 + i * 15}%`, top: `${15 + (i % 3) * 25}%`,
+          animation: `float ${3 + i * 0.5}s ease-in-out infinite ${i * 0.3}s`,
+          filter: "blur(1px)",
+        }} />
+      ))}
+      <div style={{ width: "100%", maxWidth: 400, padding: 24, position: "relative", zIndex: 1 }}>
         <div style={{ textAlign: "center", marginBottom: 32 }}>
-          <div style={{ fontSize: 56, marginBottom: 8, filter: "drop-shadow(0 0 20px rgba(99,102,241,0.4))" }}>⚔️</div>
-          <div style={{ fontSize: 32, fontWeight: 900, color: T.white, fontFamily: FONT_DISPLAY, letterSpacing: 1 }}>BLADE REALMS</div>
-          <div style={{ fontSize: 12, color: T.textSec, marginTop: 4, letterSpacing: 2, textTransform: "uppercase" }}>Idle Adventure RPG</div>
+          <div style={{ fontSize: 60, marginBottom: 10, filter: "drop-shadow(0 0 24px rgba(99,102,241,0.5))", animation: "float 3s ease-in-out infinite" }}>⚔️</div>
+          <div style={{ fontSize: 36, fontWeight: 900, color: T.white, fontFamily: FONT_DISPLAY, letterSpacing: 2 }}>BLADE REALMS</div>
+          <div style={{ fontSize: 11, color: T.textSec, marginTop: 6, letterSpacing: 3, textTransform: "uppercase" }}>Idle Adventure RPG</div>
         </div>
         <Card style={{ background: `${T.card}e0`, backdropFilter: "blur(12px)" }}>
           <div style={{ display: "flex", marginBottom: 20, borderBottom: `1px solid ${T.divider}` }}>
@@ -553,6 +632,105 @@ export default function BladeRealmsApp() {
 }
 
 // ═══════════════════════════════════════════════
+// ACHIEVEMENTS PAGE COMPONENT
+// ═══════════════════════════════════════════════
+
+function AchievementsPage({ achievementsUnlocked, isMobile }) {
+  const [filter, setFilter] = useState("all");
+  const achCount = Object.keys(achievementsUnlocked).length;
+  const totalCount = ACHIEVEMENTS.length;
+
+  return (
+    <div>
+      <PageTitle icon="🏆" title="ACHIEVEMENTS" subtitle={`${achCount}/${totalCount} unlocked — complete milestones for rewards`} />
+
+      {/* Progress overview */}
+      <Card glow={T.gold} style={{ marginBottom: 18 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 20, flexWrap: "wrap", marginBottom: 14 }}>
+          <div style={{
+            width: 64, height: 64, borderRadius: "50%",
+            background: `conic-gradient(${T.gold} ${(achCount / totalCount) * 360}deg, ${T.bar} 0deg)`,
+            display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
+          }}>
+            <div style={{
+              width: 52, height: 52, borderRadius: "50%", background: T.card,
+              display: "flex", alignItems: "center", justifyContent: "center",
+              fontSize: 16, fontWeight: 900, color: T.gold, fontFamily: FONT_DISPLAY,
+            }}>{Math.floor((achCount / totalCount) * 100)}%</div>
+          </div>
+          <div style={{ flex: 1 }}>
+            <div style={{ fontSize: 18, fontWeight: 900, color: T.white, fontFamily: FONT_DISPLAY }}>
+              {achCount} / {totalCount} Achievements
+            </div>
+            <ProgressBar value={achCount} max={totalCount} color={T.gold} height={8} animated />
+          </div>
+        </div>
+        {/* Category filters */}
+        <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+          <div onClick={() => setFilter("all")} style={{
+            padding: "6px 12px", borderRadius: 99, cursor: "pointer", fontSize: 10, fontWeight: 700,
+            background: filter === "all" ? `${T.accent}20` : T.bgDeep,
+            border: `1px solid ${filter === "all" ? T.accent + "40" : T.divider}`,
+            color: filter === "all" ? T.accent : T.textSec,
+            transition: "all 0.15s",
+          }}>All {achCount}/{totalCount}</div>
+          {ACH_CATEGORIES.map(cat => {
+            const total = ACHIEVEMENTS.filter(a => a.category === cat.id).length;
+            const done = ACHIEVEMENTS.filter(a => a.category === cat.id && achievementsUnlocked[a.id]).length;
+            return (
+              <div key={cat.id} onClick={() => setFilter(filter === cat.id ? "all" : cat.id)} style={{
+                padding: "6px 12px", borderRadius: 99, cursor: "pointer", fontSize: 10, fontWeight: 700,
+                background: filter === cat.id ? `${cat.color}20` : T.bgDeep,
+                border: `1px solid ${filter === cat.id ? cat.color + "40" : T.divider}`,
+                color: filter === cat.id ? cat.color : T.textSec,
+                transition: "all 0.15s",
+              }}>{cat.icon} {cat.name} {done}/{total}</div>
+            );
+          })}
+        </div>
+      </Card>
+
+      {/* Achievement list */}
+      <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+        {ACHIEVEMENTS
+          .filter(a => filter === "all" || a.category === filter)
+          .sort((a, b) => (achievementsUnlocked[a.id] ? 1 : 0) - (achievementsUnlocked[b.id] ? 1 : 0))
+          .map(ach => {
+            const unlocked = !!achievementsUnlocked[ach.id];
+            return (
+              <Card key={ach.id} style={{
+                padding: 14, opacity: unlocked ? 0.65 : 1,
+                background: unlocked ? `${ach.color}06` : T.card,
+                borderLeft: `3px solid ${unlocked ? ach.color : T.divider}`,
+              }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                  <div style={{
+                    width: 42, height: 42, borderRadius: 10, flexShrink: 0,
+                    background: unlocked ? `${ach.color}15` : T.bgDeep,
+                    border: `1px solid ${unlocked ? ach.color + "30" : T.divider}`,
+                    display: "flex", alignItems: "center", justifyContent: "center", fontSize: 20,
+                  }}>{unlocked ? ach.icon : "🔒"}</div>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                      <span style={{ fontSize: 13, fontWeight: 800, color: unlocked ? ach.color : T.white, fontFamily: FONT_DISPLAY }}>{ach.name}</span>
+                      {unlocked && <Badge color={T.success} style={{ fontSize: 8 }}>DONE</Badge>}
+                    </div>
+                    <div style={{ fontSize: 10, color: T.textSec, marginTop: 1 }}>{ach.desc}</div>
+                  </div>
+                  <div style={{ textAlign: "right", fontSize: 10, fontWeight: 700, flexShrink: 0 }}>
+                    {ach.reward.gold && <div style={{ color: T.gold }}>+{fmt(ach.reward.gold)}g</div>}
+                    {ach.reward.diamonds && <div style={{ color: T.purple }}>+{ach.reward.diamonds}💎</div>}
+                  </div>
+                </div>
+              </Card>
+            );
+          })}
+      </div>
+    </div>
+  );
+}
+
+// ═══════════════════════════════════════════════
 // GAME UI
 // ═══════════════════════════════════════════════
 
@@ -582,6 +760,7 @@ function GameUI({ account, initialSave, onLogout }) {
   const [equippedSkills, setEquippedSkills] = useState(() => sv.equippedSkills || ["slash", null, null]);
   const [ownedCostumes, setOwnedCostumes] = useState(() => sv.ownedCostumes || ["default"]);
   const [activeCostume, setActiveCostume] = useState(() => sv.activeCostume || "default");
+  const [achievementsUnlocked, setAchievementsUnlocked] = useState(() => sv.achievementsUnlocked || {});
 
   // Combat live
   const [battleState, setBattleState] = useState(null);
@@ -590,6 +769,14 @@ function GameUI({ account, initialSave, onLogout }) {
   const [skillCooldowns, setSkillCooldowns] = useState({});
   const [log, setLog] = useState([]);
   const [showSummonResult, setShowSummonResult] = useState(null);
+  const [achToast, setAchToast] = useState(null); // achievement toast notification
+
+  // Auto-dismiss toast
+  useEffect(() => {
+    if (!achToast) return;
+    const t = setTimeout(() => setAchToast(null), 4000);
+    return () => clearTimeout(t);
+  }, [achToast]);
 
   // Popups
   const [offlinePopup, setOfflinePopup] = useState(null);
@@ -686,11 +873,11 @@ function GameUI({ account, initialSave, onLogout }) {
   const buildSave = useCallback(() => ({
     currentStage, highestStage, growth, gold, diamonds, combatStats, stats, autoProgress,
     equipment, equipped, pets, activePets, petSlots, unlockedSkills, equippedSkills,
-    ownedCostumes, activeCostume,
+    ownedCostumes, activeCostume, achievementsUnlocked,
     player: { hp: playerHp, maxHp: totalMaxHp },
     isPremium: false, storePurchases: {},
     lastActiveTime: Date.now(),
-  }), [currentStage, highestStage, growth, gold, diamonds, combatStats, stats, autoProgress, equipment, equipped, pets, activePets, petSlots, unlockedSkills, equippedSkills, ownedCostumes, activeCostume, playerHp, totalMaxHp]);
+  }), [currentStage, highestStage, growth, gold, diamonds, combatStats, stats, autoProgress, equipment, equipped, pets, activePets, petSlots, unlockedSkills, equippedSkills, ownedCostumes, activeCostume, achievementsUnlocked, playerHp, totalMaxHp]);
 
   useEffect(() => {
     const timer = setInterval(async () => {
@@ -703,6 +890,40 @@ function GameUI({ account, initialSave, onLogout }) {
 
   // Time tracker
   useEffect(() => { const t = setInterval(() => setStats(s => ({ ...s, timePlayed: (s.timePlayed || 0) + 1 })), 1000); return () => clearInterval(t); }, []);
+
+  // ─── ACHIEVEMENT CHECKER ───
+  const achCheckRef = useRef(null);
+  useEffect(() => {
+    if (achCheckRef.current) clearInterval(achCheckRef.current);
+    achCheckRef.current = setInterval(() => {
+      const snapshot = {
+        combatStats, highestStage, growth, stats, 
+        equipCount: equipment.length, petCount: pets.length,
+        costumeCount: ownedCostumes.length,
+      };
+      setAchievementsUnlocked(prev => {
+        let updated = false;
+        const next = { ...prev };
+        for (const ach of ACHIEVEMENTS) {
+          if (next[ach.id]) continue;
+          try {
+            if (ach.check(snapshot)) {
+              next[ach.id] = Date.now();
+              updated = true;
+              // Award rewards
+              if (ach.reward.gold) setGold(g => g + ach.reward.gold);
+              if (ach.reward.diamonds) setDiamonds(d => d + ach.reward.diamonds);
+              // Show toast
+              setAchToast({ ...ach, ts: Date.now() });
+              addLog(`🏆 Achievement: ${ach.icon} ${ach.name}! ${ach.reward.gold ? `+${fmt(ach.reward.gold)}g` : ""} ${ach.reward.diamonds ? `+${ach.reward.diamonds}💎` : ""}`);
+            }
+          } catch {}
+        }
+        return updated ? next : prev;
+      });
+    }, 2000); // check every 2 seconds
+    return () => { if (achCheckRef.current) clearInterval(achCheckRef.current); };
+  }, [combatStats, highestStage, growth, stats, equipment.length, pets.length, ownedCostumes.length, addLog]);
 
   // ─── GROWTH UPGRADES ───
   const upgradeGrowth = useCallback((stat) => { const cost = growthCost(growth[stat]); if (gold < cost) return; setGold(g => g - cost); setGrowth(g => ({ ...g, [stat]: g[stat] + 1 })); }, [growth, gold]);
@@ -952,21 +1173,64 @@ function GameUI({ account, initialSave, onLogout }) {
         </Popup>
       )}
 
-      {/* ═══ SIDEBAR ═══ */}
-      {(!isMobile || mobileNav) && (
-        <div style={{
-          width: isMobile ? "100%" : 230, flexShrink: 0, background: T.sidebar,
-          borderRight: `1px solid ${T.sidebarBorder}`, display: "flex", flexDirection: "column",
-          position: isMobile ? "fixed" : "relative", zIndex: 100, height: "100%", overflowY: "auto",
+      {/* Achievement Toast */}
+      {achToast && (
+        <div key={achToast.ts} style={{
+          position: "fixed", top: 20, right: 20, zIndex: 1000,
+          padding: "14px 20px", borderRadius: T.r, minWidth: 280,
+          background: `${T.card}f0`, backdropFilter: "blur(12px)",
+          border: `1px solid ${achToast.color || T.gold}40`,
+          boxShadow: `0 0 30px ${achToast.color || T.gold}15, 0 8px 32px #00000050`,
+          animation: "slideDown 0.4s ease, fadeOut 0.5s ease 3.5s forwards",
+          display: "flex", alignItems: "center", gap: 12,
         }}>
-          <div style={{ padding: "20px 18px 16px", borderBottom: `1px solid ${T.sidebarBorder}` }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-              <div style={{ width: 38, height: 38, borderRadius: 10, background: `${T.accent}18`, border: `1px solid ${T.accent}25`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18 }}>⚔️</div>
+          <div style={{
+            width: 40, height: 40, borderRadius: 10,
+            background: `${achToast.color || T.gold}15`, border: `1px solid ${achToast.color || T.gold}30`,
+            display: "flex", alignItems: "center", justifyContent: "center", fontSize: 20,
+          }}>{achToast.icon}</div>
+          <div style={{ flex: 1 }}>
+            <div style={{ fontSize: 9, fontWeight: 700, color: T.gold, letterSpacing: 1, textTransform: "uppercase" }}>Achievement Unlocked!</div>
+            <div style={{ fontSize: 13, fontWeight: 800, color: T.white, fontFamily: FONT_DISPLAY }}>{achToast.name}</div>
+            <div style={{ fontSize: 10, color: T.textSec }}>{achToast.desc}</div>
+          </div>
+          <div style={{ fontSize: 10, fontWeight: 700, color: T.gold, textAlign: "right" }}>
+            {achToast.reward.gold && <div>+{fmt(achToast.reward.gold)}g</div>}
+            {achToast.reward.diamonds && <div>+{achToast.reward.diamonds}💎</div>}
+          </div>
+        </div>
+      )}
+
+      {/* ═══ SIDEBAR (desktop) ═══ */}
+      {!isMobile && (
+        <div style={{
+          width: 240, flexShrink: 0, background: `linear-gradient(180deg, ${T.sidebar} 0%, #080a10 100%)`,
+          borderRight: `1px solid ${T.sidebarBorder}`, display: "flex", flexDirection: "column",
+          height: "100%", overflowY: "auto",
+        }}>
+          {/* Logo */}
+          <div style={{ padding: "20px 18px 12px", borderBottom: `1px solid ${T.sidebarBorder}` }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 12 }}>
+              <div style={{ width: 38, height: 38, borderRadius: 10, background: `linear-gradient(135deg, ${T.accent}25, ${T.purple}20)`, border: `1px solid ${T.accent}30`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18 }}>{heroEmoji}</div>
               <div>
-                <div style={{ fontSize: 16, fontWeight: 900, color: T.white, fontFamily: FONT_DISPLAY, letterSpacing: 0.5 }}>BLADE REALMS</div>
+                <div style={{ fontSize: 15, fontWeight: 900, color: T.white, fontFamily: FONT_DISPLAY, letterSpacing: 0.5 }}>BLADE REALMS</div>
                 <div style={{ fontSize: 10, color: T.textDim }}>{account.displayName}</div>
               </div>
-              {isMobile && <div onClick={() => setMobileNav(false)} style={{ marginLeft: "auto", fontSize: 18, cursor: "pointer", color: T.textDim, padding: 4 }}>✕</div>}
+            </div>
+            {/* Mini hero stats */}
+            <div style={{ display: "flex", gap: 6 }}>
+              <div style={{ flex: 1, padding: "5px 0", textAlign: "center", borderRadius: 6, background: `${T.danger}08`, border: `1px solid ${T.danger}10` }}>
+                <div style={{ fontSize: 11, fontWeight: 800, color: T.danger, fontFamily: FONT_DISPLAY }}>{fmt(totalAtk)}</div>
+                <div style={{ fontSize: 7, color: T.textDim, fontWeight: 700 }}>ATK</div>
+              </div>
+              <div style={{ flex: 1, padding: "5px 0", textAlign: "center", borderRadius: 6, background: `${T.info}08`, border: `1px solid ${T.info}10` }}>
+                <div style={{ fontSize: 11, fontWeight: 800, color: T.info, fontFamily: FONT_DISPLAY }}>{fmt(totalDef)}</div>
+                <div style={{ fontSize: 7, color: T.textDim, fontWeight: 700 }}>DEF</div>
+              </div>
+              <div style={{ flex: 1, padding: "5px 0", textAlign: "center", borderRadius: 6, background: `${T.success}08`, border: `1px solid ${T.success}10` }}>
+                <div style={{ fontSize: 11, fontWeight: 800, color: T.success, fontFamily: FONT_DISPLAY }}>{fmt(totalMaxHp)}</div>
+                <div style={{ fontSize: 7, color: T.textDim, fontWeight: 700 }}>HP</div>
+              </div>
             </div>
           </div>
 
@@ -982,16 +1246,70 @@ function GameUI({ account, initialSave, onLogout }) {
             <SidebarItem icon="🐾" label="Pets" active={page === "pets"} onClick={() => nav("pets")} color={T.pink} badge={pets.length > 0 ? `${pets.length}` : undefined} />
 
             <div style={{ fontSize: 9, fontWeight: 700, color: T.textDim, padding: "12px 14px 4px", letterSpacing: 1.5, textTransform: "uppercase" }}>Info</div>
-            <SidebarItem icon="🏆" label="Stats" active={page === "stats"} onClick={() => nav("stats")} color={T.info} />
+            <SidebarItem icon="🏆" label="Achievements" active={page === "achievements"} onClick={() => nav("achievements")} color={T.gold} badge={`${Object.keys(achievementsUnlocked).length}/${ACHIEVEMENTS.length}`} />
+            <SidebarItem icon="📈" label="Stats" active={page === "stats"} onClick={() => nav("stats")} color={T.info} />
             <SidebarItem icon="⚙️" label="Settings" active={page === "settings"} onClick={() => nav("settings")} color={T.textSec} />
           </div>
 
           <div style={{ padding: "14px 18px", borderTop: `1px solid ${T.sidebarBorder}` }}>
-            <div style={{ display: "flex", gap: 14, fontSize: 12, fontWeight: 700, marginBottom: 10 }}>
-              <span style={{ color: T.gold }}>💰 {fmt(gold)}</span>
-              <span style={{ color: T.purple }}>💎 {fmt(diamonds)}</span>
+            {/* Achievement mini progress */}
+            <div style={{ marginBottom: 10 }}>
+              <div style={{ display: "flex", justifyContent: "space-between", fontSize: 9, fontWeight: 700, color: T.textDim, marginBottom: 4 }}>
+                <span>🏆 Achievements</span>
+                <span style={{ color: T.gold }}>{Object.keys(achievementsUnlocked).length}/{ACHIEVEMENTS.length}</span>
+              </div>
+              <ProgressBar value={Object.keys(achievementsUnlocked).length} max={ACHIEVEMENTS.length} color={T.gold} height={3} />
             </div>
-            <div onClick={onLogout} style={{ fontSize: 11, color: T.textDim, cursor: "pointer", padding: "6px 0" }}>🚪 Logout</div>
+            {/* Currency */}
+            <div style={{ display: "flex", gap: 8, marginBottom: 10 }}>
+              <div style={{ flex: 1, padding: "6px 10px", borderRadius: T.rs, background: `${T.gold}08`, border: `1px solid ${T.gold}12`, textAlign: "center" }}>
+                <div style={{ fontSize: 12, fontWeight: 800, color: T.gold, fontFamily: FONT_DISPLAY }}>{fmt(gold)}</div>
+                <div style={{ fontSize: 8, color: T.textDim, fontWeight: 600 }}>💰 GOLD</div>
+              </div>
+              <div style={{ flex: 1, padding: "6px 10px", borderRadius: T.rs, background: `${T.purple}08`, border: `1px solid ${T.purple}12`, textAlign: "center" }}>
+                <div style={{ fontSize: 12, fontWeight: 800, color: T.purple, fontFamily: FONT_DISPLAY }}>{fmt(diamonds)}</div>
+                <div style={{ fontSize: 8, color: T.textDim, fontWeight: 600 }}>💎 GEMS</div>
+              </div>
+            </div>
+            <div onClick={onLogout} style={{ fontSize: 11, color: T.textDim, cursor: "pointer", padding: "6px 0", transition: "color 0.15s" }}>🚪 Logout</div>
+          </div>
+        </div>
+      )}
+
+      {/* ═══ MOBILE SLIDE-OUT MENU ═══ */}
+      {isMobile && mobileNav && (
+        <div style={{ position: "fixed", inset: 0, zIndex: 200, display: "flex" }} onClick={() => setMobileNav(false)}>
+          <div style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.6)", backdropFilter: "blur(4px)" }} />
+          <div onClick={e => e.stopPropagation()} style={{
+            width: 260, background: T.sidebar, height: "100%", overflowY: "auto", position: "relative",
+            boxShadow: "4px 0 24px #00000050", animation: "slideRight 0.2s ease",
+          }}>
+            <div style={{ padding: "18px 16px", borderBottom: `1px solid ${T.sidebarBorder}`, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+              <div style={{ fontSize: 15, fontWeight: 900, color: T.white, fontFamily: FONT_DISPLAY }}>⚔️ BLADE REALMS</div>
+              <div onClick={() => setMobileNav(false)} style={{ fontSize: 18, cursor: "pointer", color: T.textDim, padding: 4 }}>✕</div>
+            </div>
+            <div style={{ padding: "8px" }}>
+              {[
+                { icon: "⚔️", label: "Battle", p: "battle", c: T.danger },
+                { icon: "📊", label: "Growth", p: "growth", c: T.success },
+                { icon: "🎒", label: "Equipment", p: "equipment", c: T.warning },
+                { icon: "✨", label: "Summon", p: "summon", c: T.purple },
+                { icon: "👗", label: "Costumes", p: "costumes", c: T.teal },
+                { icon: "🐾", label: "Pets", p: "pets", c: T.pink },
+                { icon: "🏆", label: "Achievements", p: "achievements", c: T.gold },
+                { icon: "📈", label: "Stats", p: "stats", c: T.info },
+                { icon: "⚙️", label: "Settings", p: "settings", c: T.textSec },
+              ].map(item => (
+                <SidebarItem key={item.p} icon={item.icon} label={item.label} active={page === item.p} onClick={() => nav(item.p)} color={item.c} />
+              ))}
+            </div>
+            <div style={{ padding: "14px 16px", borderTop: `1px solid ${T.sidebarBorder}` }}>
+              <div style={{ display: "flex", gap: 12, fontSize: 12, fontWeight: 700, marginBottom: 8 }}>
+                <span style={{ color: T.gold }}>💰 {fmt(gold)}</span>
+                <span style={{ color: T.purple }}>💎 {fmt(diamonds)}</span>
+              </div>
+              <div onClick={onLogout} style={{ fontSize: 11, color: T.textDim, cursor: "pointer" }}>🚪 Logout</div>
+            </div>
           </div>
         </div>
       )}
@@ -1035,7 +1353,7 @@ function GameUI({ account, initialSave, onLogout }) {
         </div>
 
         {/* CONTENT */}
-        <div style={{ flex: 1, overflow: "auto", padding: isMobile ? 14 : 28 }}>
+        <div style={{ flex: 1, overflow: "auto", padding: isMobile ? "14px 14px 80px" : 28 }}>
 
           {/* ═══ BATTLE ═══ */}
           {page === "battle" && (() => {
@@ -1170,18 +1488,29 @@ function GameUI({ account, initialSave, onLogout }) {
                 ].map(g => {
                   const cost = growthCost(growth[g.stat]);
                   const ok = gold >= cost;
+                  const lvlProg = (growth[g.stat] % 10) / 10; // progress to next 10-level milestone
                   return (
-                    <Card key={g.stat} hover>
+                    <Card key={g.stat} hover accent={g.color}>
                       <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 16 }}>
-                        <div style={{ width: 52, height: 52, borderRadius: 14, background: `${g.color}12`, border: `1px solid ${g.color}25`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 26 }}>{g.icon}</div>
+                        {/* Circular progress ring */}
+                        <div style={{ position: "relative", width: 56, height: 56, flexShrink: 0 }}>
+                          <svg width="56" height="56" style={{ transform: "rotate(-90deg)" }}>
+                            <circle cx="28" cy="28" r="24" fill="none" stroke={`${g.color}15`} strokeWidth="3" />
+                            <circle cx="28" cy="28" r="24" fill="none" stroke={g.color} strokeWidth="3"
+                              strokeDasharray={`${lvlProg * 150.8} 150.8`}
+                              strokeLinecap="round" style={{ transition: "stroke-dasharray 0.5s ease" }} />
+                          </svg>
+                          <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 22 }}>{g.icon}</div>
+                        </div>
                         <div>
                           <div style={{ fontSize: 16, fontWeight: 900, color: T.white, fontFamily: FONT_DISPLAY }}>{g.label}</div>
-                          <div style={{ fontSize: 11, color: T.textSec }}>Lv.{growth[g.stat]} — {g.val}</div>
+                          <div style={{ fontSize: 13, fontWeight: 800, color: g.color, fontFamily: FONT_DISPLAY }}>Lv.{growth[g.stat]}</div>
+                          <div style={{ fontSize: 10, color: T.textSec }}>{g.val}</div>
                         </div>
                       </div>
                       <div style={{ fontSize: 11, color: T.textDim, marginBottom: 12 }}>{g.desc}</div>
                       <div style={{ display: "flex", gap: 8 }}>
-                        <Btn small color={ok ? g.color : T.textDim} disabled={!ok} onClick={() => upgradeGrowth(g.stat)}>+1 (💰{fmt(cost)})</Btn>
+                        <Btn small color={ok ? g.color : T.textDim} disabled={!ok} onClick={() => upgradeGrowth(g.stat)} style={{ flex: 1 }}>+1 (💰{fmt(cost)})</Btn>
                         <Btn small color={ok ? g.color : T.textDim} disabled={!ok} onClick={() => upgradeGrowthMax(g.stat)}>MAX</Btn>
                       </div>
                     </Card>
@@ -1190,8 +1519,14 @@ function GameUI({ account, initialSave, onLogout }) {
               </div>
 
               {/* Power overview */}
-              <Card style={{ marginBottom: 18 }}>
-                <div style={{ fontSize: 15, fontWeight: 900, color: T.white, marginBottom: 14, fontFamily: FONT_DISPLAY }}>⚡ TOTAL POWER</div>
+              <Card glow={T.accent} style={{ marginBottom: 18, background: `linear-gradient(135deg, ${T.card} 0%, #161030 100%)` }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 14 }}>
+                  <span style={{ fontSize: 20 }}>⚡</span>
+                  <div>
+                    <div style={{ fontSize: 15, fontWeight: 900, color: T.white, fontFamily: FONT_DISPLAY }}>TOTAL POWER</div>
+                    <div style={{ fontSize: 11, color: T.textSec }}>Combined combat rating: <span style={{ color: T.accent, fontWeight: 700 }}>{fmt(totalAtk + totalDef + totalMaxHp)} CP</span></div>
+                  </div>
+                </div>
                 <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(130px, 1fr))", gap: 10 }}>
                   {[
                     { l: "ATK", v: fmt(totalAtk), c: T.danger }, { l: "DEF", v: fmt(totalDef), c: T.info },
@@ -1538,6 +1873,9 @@ function GameUI({ account, initialSave, onLogout }) {
             </div>
           )}
 
+          {/* ═══ ACHIEVEMENTS ═══ */}
+          {page === "achievements" && <AchievementsPage achievementsUnlocked={achievementsUnlocked} isMobile={isMobile} />}
+
           {/* ═══ STATS ═══ */}
           {page === "stats" && (
             <div>
@@ -1553,6 +1891,7 @@ function GameUI({ account, initialSave, onLogout }) {
                   { i: "🔥", v: String(stats.loginStreak || 0), l: "LOGIN STREAK", c: T.orange },
                   { i: "🎒", v: String(equipment.length), l: "EQUIPMENT", c: T.warning },
                   { i: "👗", v: `${ownedCostumes.length}/${COSTUMES.length}`, l: "COSTUMES", c: T.teal },
+                  { i: "🏆", v: `${Object.keys(achievementsUnlocked).length}/${ACHIEVEMENTS.length}`, l: "ACHIEVEMENTS", c: T.gold },
                 ].map((s, i) => (
                   <Card key={i} style={{ textAlign: "center", padding: 16 }}>
                     <div style={{ fontSize: 22, marginBottom: 4 }}>{s.i}</div>
@@ -1610,6 +1949,39 @@ function GameUI({ account, initialSave, onLogout }) {
         </div>
       </div>
 
+      {/* ═══ MOBILE BOTTOM TAB BAR ═══ */}
+      {isMobile && (
+        <div style={{
+          position: "fixed", bottom: 0, left: 0, right: 0, zIndex: 150,
+          background: `${T.sidebar}f5`, backdropFilter: "blur(12px)",
+          borderTop: `1px solid ${T.sidebarBorder}`,
+          display: "flex", alignItems: "center", justifyContent: "space-around",
+          padding: "6px 4px 10px", paddingBottom: "max(10px, env(safe-area-inset-bottom))",
+        }}>
+          {[
+            { icon: "⚔️", label: "Battle", p: "battle", c: T.danger },
+            { icon: "📊", label: "Growth", p: "growth", c: T.success },
+            { icon: "🎒", label: "Gear", p: "equipment", c: T.warning },
+            { icon: "✨", label: "Summon", p: "summon", c: T.purple },
+            { icon: "🏆", label: "Achieve", p: "achievements", c: T.gold },
+            { icon: "☰", label: "More", p: "_menu", c: T.textSec },
+          ].map(tab => {
+            const isActive = tab.p === "_menu" ? false : page === tab.p;
+            return (
+              <div key={tab.p} onClick={() => tab.p === "_menu" ? setMobileNav(true) : nav(tab.p)} style={{
+                display: "flex", flexDirection: "column", alignItems: "center", gap: 2,
+                padding: "4px 8px", borderRadius: 8, cursor: "pointer",
+                background: isActive ? `${tab.c}12` : "transparent",
+                transition: "all 0.15s",
+              }}>
+                <span style={{ fontSize: 18, lineHeight: 1 }}>{tab.icon}</span>
+                <span style={{ fontSize: 8, fontWeight: 700, color: isActive ? tab.c : T.textDim, fontFamily: FONT_BODY }}>{tab.label}</span>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
       {/* ═══ GLOBAL STYLES ═══ */}
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&family=DM+Sans:wght@400;500;600;700&display=swap');
@@ -1628,9 +2000,16 @@ function GameUI({ account, initialSave, onLogout }) {
         @keyframes glow { 0%, 100% { box-shadow: 0 0 8px var(--glow-color, #6366f140); } 50% { box-shadow: 0 0 20px var(--glow-color, #6366f160); } }
         @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-4px); } }
         @keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-2px); } 75% { transform: translateX(2px); } }
+        @keyframes slideDown { from { opacity: 0; transform: translateY(-30px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes fadeOut { from { opacity: 1; } to { opacity: 0; pointer-events: none; } }
+        @keyframes slideRight { from { opacity: 0; transform: translateX(-30px); } to { opacity: 1; transform: translateX(0); } }
+        @keyframes sparkle { 0%, 100% { opacity: 0.3; transform: scale(1); } 50% { opacity: 1; transform: scale(1.3); } }
 
         /* Smooth page transitions */
         [data-page] { animation: fadeIn 0.2s ease; }
+
+        /* Selection color */
+        ::selection { background: ${T.accent}40; color: ${T.white}; }
       `}</style>
     </div>
   );

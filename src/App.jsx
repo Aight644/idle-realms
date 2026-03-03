@@ -179,7 +179,38 @@ const COMBAT_SKILLS = [
   { id: "judgment", name: "Divine Judgment", emoji: "✨", dmgMult: 10.0, cooldown: 30000, desc: "1000% ATK damage", unlockStage: 200, color: T.gold },
 ];
 
-// ─── RELICS ───
+// ─── PASSIVE SKILLS ───
+const PASSIVE_SKILLS = [
+  { id: "ps_might", name: "Might", emoji: "💪", desc: "+{v}% ATK", stat: "atkPct", baseVal: 1, perLvl: 0.5, maxLvl: 50, color: T.danger },
+  { id: "ps_fortress", name: "Fortress", emoji: "🏰", desc: "+{v}% DEF", stat: "defPct", baseVal: 1, perLvl: 0.5, maxLvl: 50, color: T.info },
+  { id: "ps_vitality", name: "Vitality", emoji: "💚", desc: "+{v}% HP", stat: "hpPct", baseVal: 1, perLvl: 0.5, maxLvl: 50, color: T.success },
+  { id: "ps_precision", name: "Precision", emoji: "🎯", desc: "+{v}% Crit Rate", stat: "critRate", baseVal: 0.5, perLvl: 0.3, maxLvl: 30, color: T.orange },
+  { id: "ps_brutality", name: "Brutality", emoji: "💥", desc: "+{v}% Crit DMG", stat: "critDmg", baseVal: 2, perLvl: 1.5, maxLvl: 40, color: T.warning },
+  { id: "ps_greed", name: "Greed", emoji: "🤑", desc: "+{v}% Gold", stat: "goldPct", baseVal: 1, perLvl: 0.5, maxLvl: 40, color: T.gold },
+];
+
+function skillUpgradeCost(level) { return Math.floor(100 * Math.pow(1.12, level)); }
+function passiveSkillCost(level) { return Math.floor(50 * Math.pow(1.1, level)); }
+function enhanceCost(eqLevel, rarityIdx) { return Math.floor((50 + rarityIdx * 30) * Math.pow(1.18, eqLevel)); }
+
+// ─── PRESTIGE / REBIRTH ───
+const PRESTIGE_MILESTONES = [
+  { stage: 50, souls: 5, bonus: "ATK +5%" },
+  { stage: 100, souls: 15, bonus: "ATK +10%" },
+  { stage: 150, souls: 30, bonus: "All +5%" },
+  { stage: 200, souls: 60, bonus: "All +10%" },
+  { stage: 300, souls: 120, bonus: "All +15%" },
+  { stage: 400, souls: 250, bonus: "All +20%" },
+];
+function calcPrestigeSouls(highestStage) {
+  let souls = 0;
+  for (const m of PRESTIGE_MILESTONES) {
+    if (highestStage >= m.stage) souls = m.souls;
+  }
+  // Bonus souls for every 10 stages past 50
+  if (highestStage >= 50) souls += Math.floor((highestStage - 50) / 10) * 2;
+  return souls;
+}
 // Relics are permanent artifacts with stat bonuses. Upgrade with gold to increase their power.
 const RELICS = [
   { id: "blade_of_dawn", name: "Blade of Dawn", emoji: "🗡️", desc: "A sword forged at first light", rarity: "rare", cost: 300, baseStat: "atk", baseVal: 10, perLvl: 5, maxLvl: 50, color: T.danger },
@@ -577,6 +608,9 @@ const DEFAULT_SAVE = () => ({
   dungeonAttempts: {},
   questProgress: { day: "", week: "", daily: {}, weekly: {}, claimedDaily: {}, claimedWeekly: {} },
   ownedRelics: {}, earnedInsignias: {},
+  prestigeCount: 0, prestigeSouls: 0, // souls = permanent currency from rebirth
+  skillLevels: {}, // { skillId: level }
+  passiveSkillLevels: {}, // { passiveId: level }
   combatStats: { kills: 0, totalDamage: 0, deaths: 0, highestHit: 0, bossesKilled: 0, totalGoldEarned: 0 },
   stats: { timePlayed: 0, loginStreak: 0, lastLoginDay: null, summons: 0, merges: 0 },
   isPremium: false, storePurchases: {},
@@ -880,6 +914,14 @@ function GameUI({ account, initialSave, onLogout }) {
   const [ownedRelics, setOwnedRelics] = useState(() => sv.ownedRelics || {}); // { relicId: level }
   const [earnedInsignias, setEarnedInsignias] = useState(() => sv.earnedInsignias || {});
 
+  // Prestige
+  const [prestigeCount, setPrestigeCount] = useState(() => sv.prestigeCount || 0);
+  const [prestigeSouls, setPrestigeSouls] = useState(() => sv.prestigeSouls || 0);
+
+  // Skill & passive levels
+  const [skillLevels, setSkillLevels] = useState(() => sv.skillLevels || {});
+  const [passiveSkillLevels, setPassiveSkillLevels] = useState(() => sv.passiveSkillLevels || {});
+
   const buyRelic = useCallback((relicId) => {
     const r = RELICS.find(x => x.id === relicId);
     if (!r || ownedRelics[relicId] !== undefined || diamonds < r.cost) return;
@@ -911,6 +953,79 @@ function GameUI({ account, initialSave, onLogout }) {
     }
     if (spent > 0) { setGold(g => g - spent); setOwnedRelics(prev => ({ ...prev, [relicId]: lvl })); }
   }, [gold, ownedRelics]);
+
+  // ─── EQUIPMENT ENHANCEMENT ───
+  const enhanceEquipment = useCallback((eqId) => {
+    const idx = equipment.findIndex(e => e.id === eqId);
+    if (idx < 0) return;
+    const eq = equipment[idx];
+    const cost = enhanceCost(eq.level || 0, eq.rarityIdx || 0);
+    if (gold < cost) return;
+    setGold(g => g - cost);
+    setEquipment(prev => prev.map(e => e.id === eqId ? { ...e, level: (e.level || 0) + 1 } : e));
+  }, [equipment, gold]);
+
+  const enhanceEquipmentMax = useCallback((eqId) => {
+    const eq = equipment.find(e => e.id === eqId);
+    if (!eq) return;
+    let lvl = eq.level || 0, rem = gold, spent = 0;
+    const maxLvl = 50 + (eq.rarityIdx || 0) * 10;
+    while (lvl < maxLvl) {
+      const c = enhanceCost(lvl, eq.rarityIdx || 0);
+      if (rem < c) break;
+      rem -= c; spent += c; lvl++;
+    }
+    if (spent > 0) { setGold(g => g - spent); setEquipment(prev => prev.map(e => e.id === eqId ? { ...e, level: lvl } : e)); }
+  }, [equipment, gold]);
+
+  // ─── SKILL UPGRADES ───
+  const upgradeSkill = useCallback((skillId) => {
+    const lvl = skillLevels[skillId] || 0;
+    const cost = skillUpgradeCost(lvl);
+    if (gold < cost) return;
+    setGold(g => g - cost);
+    setSkillLevels(prev => ({ ...prev, [skillId]: lvl + 1 }));
+  }, [gold, skillLevels]);
+
+  const upgradePassiveSkill = useCallback((passiveId) => {
+    const ps = PASSIVE_SKILLS.find(p => p.id === passiveId);
+    if (!ps) return;
+    const lvl = passiveSkillLevels[passiveId] || 0;
+    if (lvl >= ps.maxLvl) return;
+    const cost = passiveSkillCost(lvl);
+    if (gold < cost) return;
+    setGold(g => g - cost);
+    setPassiveSkillLevels(prev => ({ ...prev, [passiveId]: lvl + 1 }));
+  }, [gold, passiveSkillLevels]);
+
+  // ─── PRESTIGE / REBIRTH ───
+  const canPrestige = highestStage >= 50;
+  const prestigeSoulsToEarn = calcPrestigeSouls(highestStage);
+
+  const doPrestige = useCallback(() => {
+    if (!canPrestige) return;
+    const souls = prestigeSoulsToEarn;
+    // Reset progress
+    setCurrentStage(1);
+    setHighestStage(1);
+    setGrowth({ atk: 1, hp: 1, def: 1 });
+    setGold(100);
+    setEquipment([]);
+    setEquipped({ weapon: null, armor: null, helm: null, gloves: null, boots: null, ring: null, amulet: null });
+    setSkillLevels({});
+    setPassiveSkillLevels({});
+    // Keep: diamonds, pets, costumes, relics, insignias, achievements
+    // Award souls
+    setPrestigeSouls(s => s + souls);
+    setPrestigeCount(c => c + 1);
+    setCombatStats(s => ({ ...s, kills: 0, totalDamage: 0, deaths: 0, highestHit: 0, bossesKilled: 0 }));
+    // Restart battle
+    setIsBattling(false);
+    setBattleState(null);
+    addLog(`🔄 REBIRTH #${prestigeCount + 1}! +${souls} Prestige Souls`);
+    nav("battle");
+    setTimeout(() => startBattle(1), 300);
+  }, [canPrestige, prestigeSoulsToEarn, prestigeCount, startBattle]);
 
   // ─── QUEST STATE ───
   const [questProgress, setQuestProgress] = useState(() => {
@@ -1061,12 +1176,40 @@ function GameUI({ account, initialSave, onLogout }) {
     return b;
   }, [earnedInsignias]);
 
-  const totalAtk = Math.floor((baseAtk + equipBonus.atk + (costumeBonus.atkFlat || 0) + (relicBonus.atk || 0) + (insigniaBonus.atkFlat || 0)) * (1 + ((petBonus.atkPct || 0) + (costumeBonus.atkPct || 0) + (relicBonus.atkPct || 0) + (insigniaBonus.atkPct || 0)) / 100));
-  const totalDef = Math.floor((baseDef + equipBonus.def + (costumeBonus.defFlat || 0) + (relicBonus.def || 0) + (insigniaBonus.defFlat || 0)) * (1 + ((petBonus.defPct || 0) + (costumeBonus.defPct || 0) + (relicBonus.defPct || 0) + (insigniaBonus.defPct || 0)) / 100));
-  const totalMaxHp = Math.floor((baseHp + equipBonus.hp + (costumeBonus.hpFlat || 0) + (relicBonus.hp || 0) + (insigniaBonus.hpFlat || 0)) * (1 + ((petBonus.hpPct || 0) + (costumeBonus.hpPct || 0) + (relicBonus.hpPct || 0) + (insigniaBonus.hpPct || 0)) / 100));
-  const critRate = Math.min(80, (equipBonus.critRate || 0) + (petBonus.critRate || 0) + (costumeBonus.critRate || 0) + (relicBonus.critRate || 0) + (insigniaBonus.critRate || 0));
-  const critDmg = 150 + (equipBonus.critDmg || 0) + (petBonus.critDmg || 0) + (costumeBonus.critDmg || 0) + (relicBonus.critDmg || 0) + (insigniaBonus.critDmg || 0);
-  const goldMult = 1 + ((petBonus.goldPct || 0) + (costumeBonus.goldPct || 0) + (relicBonus.goldPct || 0) + (insigniaBonus.goldPct || 0)) / 100;
+  // Passive skill bonuses
+  const passiveBonus = useMemo(() => {
+    const b = { atkPct: 0, defPct: 0, hpPct: 0, critRate: 0, critDmg: 0, goldPct: 0 };
+    Object.entries(passiveSkillLevels).forEach(([pid, lvl]) => {
+      const ps = PASSIVE_SKILLS.find(p => p.id === pid);
+      if (!ps || lvl <= 0) return;
+      b[ps.stat] = (b[ps.stat] || 0) + ps.baseVal + (lvl - 1) * ps.perLvl;
+    });
+    return b;
+  }, [passiveSkillLevels]);
+
+  // Equipment enhance bonus (adds % to each stat per level)
+  const enhanceBonus = useMemo(() => {
+    const b = { atk: 0, def: 0, hp: 0, critRate: 0, critDmg: 0 };
+    Object.values(equipped).forEach(id => {
+      if (!id) return;
+      const eq = equipment.find(e => e.id === id);
+      if (!eq || !eq.level) return;
+      // Each enhance level adds 8% to base stats
+      const mult = eq.level * 0.08;
+      Object.entries(eq.stats).forEach(([k, v]) => { b[k] = (b[k] || 0) + Math.floor(v * mult); });
+    });
+    return b;
+  }, [equipped, equipment]);
+
+  // Prestige multiplier: each soul gives +1% to all stats
+  const prestigeMult = 1 + prestigeSouls * 0.01;
+
+  const totalAtk = Math.floor((baseAtk + equipBonus.atk + enhanceBonus.atk + (costumeBonus.atkFlat || 0) + (relicBonus.atk || 0) + (insigniaBonus.atkFlat || 0)) * (1 + ((petBonus.atkPct || 0) + (costumeBonus.atkPct || 0) + (relicBonus.atkPct || 0) + (insigniaBonus.atkPct || 0) + (passiveBonus.atkPct || 0)) / 100) * prestigeMult);
+  const totalDef = Math.floor((baseDef + equipBonus.def + enhanceBonus.def + (costumeBonus.defFlat || 0) + (relicBonus.def || 0) + (insigniaBonus.defFlat || 0)) * (1 + ((petBonus.defPct || 0) + (costumeBonus.defPct || 0) + (relicBonus.defPct || 0) + (insigniaBonus.defPct || 0) + (passiveBonus.defPct || 0)) / 100) * prestigeMult);
+  const totalMaxHp = Math.floor((baseHp + equipBonus.hp + enhanceBonus.hp + (costumeBonus.hpFlat || 0) + (relicBonus.hp || 0) + (insigniaBonus.hpFlat || 0)) * (1 + ((petBonus.hpPct || 0) + (costumeBonus.hpPct || 0) + (relicBonus.hpPct || 0) + (insigniaBonus.hpPct || 0) + (passiveBonus.hpPct || 0)) / 100) * prestigeMult);
+  const critRate = Math.min(80, (equipBonus.critRate || 0) + enhanceBonus.critRate + (petBonus.critRate || 0) + (costumeBonus.critRate || 0) + (relicBonus.critRate || 0) + (insigniaBonus.critRate || 0) + (passiveBonus.critRate || 0));
+  const critDmg = 150 + (equipBonus.critDmg || 0) + enhanceBonus.critDmg + (petBonus.critDmg || 0) + (costumeBonus.critDmg || 0) + (relicBonus.critDmg || 0) + (insigniaBonus.critDmg || 0) + (passiveBonus.critDmg || 0);
+  const goldMult = 1 + ((petBonus.goldPct || 0) + (costumeBonus.goldPct || 0) + (relicBonus.goldPct || 0) + (insigniaBonus.goldPct || 0) + (passiveBonus.goldPct || 0)) / 100;
   const maxHpRef = useRef(totalMaxHp);
   useEffect(() => { maxHpRef.current = totalMaxHp; }, [totalMaxHp]);
 
@@ -1119,10 +1262,11 @@ function GameUI({ account, initialSave, onLogout }) {
     equipment, equipped, pets, activePets, petSlots, unlockedSkills, equippedSkills,
     ownedCostumes, activeCostume, achievementsUnlocked, dungeonAttempts, questProgress,
     ownedRelics, earnedInsignias,
+    prestigeCount, prestigeSouls, skillLevels, passiveSkillLevels,
     player: { hp: playerHp, maxHp: totalMaxHp },
     isPremium: false, storePurchases: {},
     lastActiveTime: Date.now(),
-  }), [currentStage, highestStage, growth, gold, diamonds, combatStats, stats, autoProgress, equipment, equipped, pets, activePets, petSlots, unlockedSkills, equippedSkills, ownedCostumes, activeCostume, achievementsUnlocked, playerHp, totalMaxHp, questProgress, dungeonAttempts, ownedRelics, earnedInsignias]);
+  }), [currentStage, highestStage, growth, gold, diamonds, combatStats, stats, autoProgress, equipment, equipped, pets, activePets, petSlots, unlockedSkills, equippedSkills, ownedCostumes, activeCostume, achievementsUnlocked, playerHp, totalMaxHp, questProgress, dungeonAttempts, ownedRelics, earnedInsignias, prestigeCount, prestigeSouls, skillLevels, passiveSkillLevels]);
 
   useEffect(() => {
     const timer = setInterval(async () => {
@@ -1299,7 +1443,8 @@ function GameUI({ account, initialSave, onLogout }) {
                 // Skills can hit all alive enemies (AoE feel)
                 const aoeTargets = alive.slice(0, sk.dmgMult > 2 ? 3 : 1);
                 aoeTargets.forEach(t => {
-                  const sDmg = Math.floor(totalAtk * sk.dmgMult / aoeTargets.length);
+                  const skLvl = skillLevels[sid] || 0;
+                  const sDmg = Math.floor(totalAtk * (sk.dmgMult + skLvl * 0.15) / aoeTargets.length);
                   t.hp -= sDmg;
                   addDmgNumber(sDmg, "right", false, sk.emoji);
                 });
@@ -1411,7 +1556,7 @@ function GameUI({ account, initialSave, onLogout }) {
     }, step);
 
     return () => { if (battleRef.current) clearInterval(battleRef.current); };
-  }, [isBattling, battleState?.stageNum, totalAtk, totalDef, critRate, critDmg, goldMult, autoProgress, highestStage, unlockedSkills, pets, equippedSkills, triggerHeroAttack, triggerHeroHit, triggerFlash, addDmgNumber, addGoldPopup, addQuestProgress]);
+  }, [isBattling, battleState?.stageNum, totalAtk, totalDef, critRate, critDmg, goldMult, autoProgress, highestStage, unlockedSkills, pets, equippedSkills, triggerHeroAttack, triggerHeroHit, triggerFlash, addDmgNumber, addGoldPopup, addQuestProgress, skillLevels]);
 
   // Skills are now auto-cast in the battle loop — no manual activation needed
 
@@ -1727,7 +1872,7 @@ function GameUI({ account, initialSave, onLogout }) {
                 {[
                   { icon: "🏰", p: "dungeons" },
                   { icon: "🐾", p: "pets" },
-                  { icon: "🎁", p: null },
+                  { icon: "🔄", p: "prestige" },
                   { icon: "⚙️", p: "settings" },
                   { icon: "📈", p: "stats" },
                 ].map((b, i) => (
@@ -1813,7 +1958,7 @@ function GameUI({ account, initialSave, onLogout }) {
             <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
               <div onClick={() => nav("battle")} style={{ width: 28, height: 28, borderRadius: 7, cursor: "pointer", background: "#1a1c28", border: "1px solid #ffffff0a", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 10, color: T.textSec, fontWeight: 900 }}>✕</div>
               <div style={{ flex: 1, fontSize: 13, fontWeight: 900, color: T.white, fontFamily: FONT_DISPLAY, textTransform: "uppercase" }}>
-                {page === "dungeons" && "🏰 Dungeons"}{page === "growth" && "📊 Growth"}{page === "equipment" && "🗡️ Equipment"}{page === "summon" && "✨ Summon"}{page === "pets" && "🐾 Pets"}{page === "costumes" && "👗 Costumes"}{page === "achievements" && "💀 Achievements"}{page === "stats" && "📈 Stats"}{page === "settings" && "⚙️ Settings"}{page === "quests" && "📜 Quests"}{page === "relics" && "🏺 Relics & Insignias"}
+                {page === "dungeons" && "🏰 Dungeons"}{page === "growth" && "📊 Growth"}{page === "equipment" && "🗡️ Equipment"}{page === "summon" && "✨ Summon"}{page === "pets" && "🐾 Pets"}{page === "costumes" && "👗 Costumes"}{page === "achievements" && "💀 Achievements"}{page === "stats" && "📈 Stats"}{page === "settings" && "⚙️ Settings"}{page === "quests" && "📜 Quests"}{page === "relics" && "🏺 Relics & Insignias"}{page === "prestige" && "🔄 Rebirth & Skills"}
               </div>
               <div style={{ display: "flex", gap: 5 }}>
                 <span style={{ fontSize: 9, fontWeight: 800, color: "#f5c542", fontFamily: FONT_DISPLAY }}>🪙{fmt(gold)}</span>
@@ -2160,8 +2305,24 @@ function GameUI({ account, initialSave, onLogout }) {
                       }}>
                         <div style={{ fontSize: 9, fontWeight: 700, color: T.textDim, marginBottom: 5, textTransform: "uppercase", letterSpacing: 0.5 }}>{slot.name}</div>
                         {eq ? (<>
-                          <div style={{ fontSize: 12, fontWeight: 700, color: rarColor(eq.rarity) }}>{eq.emoji} {eq.name}</div>
-                          <div style={{ fontSize: 9, color: T.textSec, marginTop: 2 }}>{Object.entries(eq.stats).map(([k, v]) => `+${v} ${k}`).join(" • ")}</div>
+                          <div style={{ fontSize: 12, fontWeight: 700, color: rarColor(eq.rarity) }}>{eq.emoji} {eq.name} {eq.level > 0 ? <span style={{ color: T.gold, fontSize: 10 }}>+{eq.level}</span> : ""}</div>
+                          <div style={{ fontSize: 9, color: T.textSec, marginTop: 2 }}>
+                            {Object.entries(eq.stats).map(([k, v]) => {
+                              const bonus = eq.level ? Math.floor(v * eq.level * 0.08) : 0;
+                              return `+${v + bonus} ${k}`;
+                            }).join(" • ")}
+                          </div>
+                          <div style={{ display: "flex", gap: 4, marginTop: 5 }}>
+                            {(() => {
+                              const maxLvl = 50 + (eq.rarityIdx || 0) * 10;
+                              const cost = enhanceCost(eq.level || 0, eq.rarityIdx || 0);
+                              const canE = gold >= cost && (eq.level || 0) < maxLvl;
+                              return (eq.level || 0) < maxLvl ? (<>
+                                <div onClick={(e) => { e.stopPropagation(); canE && enhanceEquipment(eq.id); }} style={{ padding: "3px 7px", borderRadius: 5, cursor: canE ? "pointer" : "default", background: canE ? `${T.gold}15` : "#ffffff06", border: `1px solid ${canE ? T.gold + "25" : "#ffffff08"}`, fontSize: 8, fontWeight: 800, color: canE ? T.gold : T.textDim, fontFamily: FONT_DISPLAY }}>+1 🪙{fmt(cost)}</div>
+                                <div onClick={(e) => { e.stopPropagation(); canE && enhanceEquipmentMax(eq.id); }} style={{ padding: "3px 5px", borderRadius: 5, cursor: canE ? "pointer" : "default", background: canE ? `${T.gold}10` : "#ffffff04", border: `1px solid ${canE ? T.gold + "15" : "#ffffff06"}`, fontSize: 8, fontWeight: 800, color: canE ? T.gold : T.textDim, fontFamily: FONT_DISPLAY }}>MAX</div>
+                              </>) : <div style={{ fontSize: 8, color: T.gold, fontWeight: 800 }}>MAX ENHANCED</div>;
+                            })()}
+                          </div>
                         </>) : <div style={{ fontSize: 11, color: T.textDim }}>{slot.emoji} Empty</div>}
                       </div>
                     );
@@ -2595,6 +2756,125 @@ function GameUI({ account, initialSave, onLogout }) {
                 <StatRow label="Merges" value={String(stats.merges || 0)} color={T.purple} />
                 <StatRow label="Pets Owned" value={String(pets.length)} color={T.pink} />
               </Card>
+            </div>
+          )}
+
+          {/* ═══ PRESTIGE / REBIRTH ═══ */}
+          {page === "prestige" && (
+            <div>
+              {/* Rebirth card */}
+              <div style={{ padding: "16px 14px", borderRadius: 12, background: "linear-gradient(135deg, #1a1030, #0e0820)", border: `1px solid ${T.purple}20`, marginBottom: 16 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 12 }}>
+                  <div style={{ width: 44, height: 44, borderRadius: "50%", background: `${T.purple}15`, border: `2px solid ${T.purple}30`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 22 }}>🔄</div>
+                  <div>
+                    <div style={{ fontSize: 14, fontWeight: 900, color: T.white, fontFamily: FONT_DISPLAY }}>REBIRTH</div>
+                    <div style={{ fontSize: 9, color: T.textDim }}>Reset progress for permanent power</div>
+                  </div>
+                </div>
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8, marginBottom: 12 }}>
+                  <div style={{ textAlign: "center", padding: 8, borderRadius: 8, background: "#ffffff04" }}>
+                    <div style={{ fontSize: 16, fontWeight: 900, color: T.purple, fontFamily: FONT_DISPLAY }}>{prestigeCount}</div>
+                    <div style={{ fontSize: 7, color: T.textDim }}>Rebirths</div>
+                  </div>
+                  <div style={{ textAlign: "center", padding: 8, borderRadius: 8, background: "#ffffff04" }}>
+                    <div style={{ fontSize: 16, fontWeight: 900, color: T.gold, fontFamily: FONT_DISPLAY }}>{prestigeSouls}</div>
+                    <div style={{ fontSize: 7, color: T.textDim }}>Souls</div>
+                  </div>
+                  <div style={{ textAlign: "center", padding: 8, borderRadius: 8, background: "#ffffff04" }}>
+                    <div style={{ fontSize: 16, fontWeight: 900, color: T.accent, fontFamily: FONT_DISPLAY }}>{Math.floor(prestigeSouls)}%</div>
+                    <div style={{ fontSize: 7, color: T.textDim }}>All Stats+</div>
+                  </div>
+                </div>
+                {canPrestige ? (
+                  <div style={{ padding: "10px 14px", borderRadius: 8, background: `${T.purple}10`, border: `1px solid ${T.purple}25`, marginBottom: 10 }}>
+                    <div style={{ fontSize: 11, fontWeight: 700, color: T.white, marginBottom: 4 }}>Rebirth now for <span style={{ color: T.gold, fontWeight: 900 }}>+{prestigeSoulsToEarn} Souls</span></div>
+                    <div style={{ fontSize: 8, color: T.textDim }}>This will reset: stages, growth, gold, equipment, skill levels</div>
+                    <div style={{ fontSize: 8, color: T.success, marginTop: 2 }}>Keeps: 💎diamonds, 🐾pets, 👗costumes, 🏺relics, 🎖️insignias</div>
+                  </div>
+                ) : (
+                  <div style={{ padding: 10, borderRadius: 8, background: "#ffffff04", textAlign: "center" }}>
+                    <div style={{ fontSize: 10, color: T.textDim }}>Reach <span style={{ color: T.warning, fontWeight: 700 }}>Stage 50</span> to unlock Rebirth</div>
+                    <div style={{ fontSize: 8, color: T.textDim, marginTop: 2 }}>Current: Stage {highestStage}</div>
+                  </div>
+                )}
+                <div onClick={canPrestige ? doPrestige : undefined} style={{
+                  padding: "10px 0", borderRadius: 8, textAlign: "center", cursor: canPrestige ? "pointer" : "default",
+                  background: canPrestige ? `linear-gradient(135deg, ${T.purple}25, ${T.gold}15)` : "#ffffff06",
+                  border: `1px solid ${canPrestige ? T.purple + "40" : "#ffffff08"}`,
+                  fontSize: 13, fontWeight: 900, color: canPrestige ? T.white : T.textDim, fontFamily: FONT_DISPLAY,
+                  boxShadow: canPrestige ? `0 0 20px ${T.purple}15` : "none",
+                }}>🔄 {canPrestige ? "REBIRTH NOW" : "LOCKED"}</div>
+              </div>
+
+              {/* Soul milestones */}
+              <div style={{ fontSize: 11, fontWeight: 900, color: T.white, fontFamily: FONT_DISPLAY, marginBottom: 8 }}>📊 SOUL MILESTONES</div>
+              <div style={{ display: "flex", flexDirection: "column", gap: 4, marginBottom: 16 }}>
+                {PRESTIGE_MILESTONES.map((m, i) => {
+                  const reached = highestStage >= m.stage;
+                  return (
+                    <div key={i} style={{ display: "flex", alignItems: "center", gap: 8, padding: "6px 10px", borderRadius: 6, background: reached ? `${T.purple}06` : "#ffffff03", border: `1px solid ${reached ? T.purple + "15" : "#ffffff06"}`, opacity: reached ? 1 : 0.5 }}>
+                      <span style={{ fontSize: 13 }}>{reached ? "✅" : "🔒"}</span>
+                      <div style={{ flex: 1, fontSize: 10, color: reached ? T.white : T.textDim }}>Stage {m.stage}</div>
+                      <div style={{ fontSize: 9, fontWeight: 800, color: T.gold, fontFamily: FONT_DISPLAY }}>{m.souls} souls</div>
+                      <div style={{ fontSize: 8, color: T.purple }}>{m.bonus}</div>
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* Passive skills */}
+              <div style={{ fontSize: 11, fontWeight: 900, color: T.white, fontFamily: FONT_DISPLAY, marginBottom: 8 }}>🧿 PASSIVE SKILLS</div>
+              <div style={{ display: "flex", flexDirection: "column", gap: 6, marginBottom: 16 }}>
+                {PASSIVE_SKILLS.map(ps => {
+                  const lvl = passiveSkillLevels[ps.id] || 0;
+                  const maxed = lvl >= ps.maxLvl;
+                  const val = lvl > 0 ? (ps.baseVal + (lvl - 1) * ps.perLvl).toFixed(1) : ps.baseVal.toFixed(1);
+                  const cost = passiveSkillCost(lvl);
+                  const canUp = gold >= cost && !maxed;
+                  return (
+                    <div key={ps.id} style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 10px", borderRadius: 8, background: lvl > 0 ? `${ps.color}06` : "#ffffff04", border: `1px solid ${lvl > 0 ? ps.color + "15" : "#ffffff08"}` }}>
+                      <div style={{ width: 30, height: 30, borderRadius: 8, background: `${ps.color}12`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 15, flexShrink: 0 }}>{ps.emoji}</div>
+                      <div style={{ flex: 1 }}>
+                        <div style={{ display: "flex", gap: 4, alignItems: "baseline" }}>
+                          <span style={{ fontSize: 10, fontWeight: 700, color: T.white }}>{ps.name}</span>
+                          <span style={{ fontSize: 9, fontWeight: 800, color: ps.color, fontFamily: FONT_DISPLAY }}>Lv.{lvl}{maxed ? " MAX" : ""}</span>
+                        </div>
+                        <div style={{ fontSize: 8, color: ps.color }}>{ps.desc.replace("{v}", val)}</div>
+                      </div>
+                      {!maxed && (
+                        <div onClick={canUp ? () => upgradePassiveSkill(ps.id) : undefined} style={{ padding: "4px 8px", borderRadius: 6, cursor: canUp ? "pointer" : "default", background: canUp ? `${ps.color}15` : "#ffffff06", border: `1px solid ${canUp ? ps.color + "25" : "#ffffff08"}`, fontSize: 8, fontWeight: 800, color: canUp ? ps.color : T.textDim, fontFamily: FONT_DISPLAY }}>🪙{fmt(cost)}</div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* Active skill upgrades */}
+              <div style={{ fontSize: 11, fontWeight: 900, color: T.white, fontFamily: FONT_DISPLAY, marginBottom: 8 }}>⚡ SKILL UPGRADES</div>
+              <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                {COMBAT_SKILLS.map(sk => {
+                  const unlocked = unlockedSkills.includes(sk.id);
+                  const lvl = skillLevels[sk.id] || 0;
+                  const cost = skillUpgradeCost(lvl);
+                  const canUp = gold >= cost && unlocked;
+                  const dmg = (sk.dmgMult + lvl * 0.15).toFixed(1);
+                  return (
+                    <div key={sk.id} style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 10px", borderRadius: 8, background: unlocked ? `${sk.color}06` : "#ffffff03", border: `1px solid ${unlocked ? sk.color + "15" : "#ffffff06"}`, opacity: unlocked ? 1 : 0.35 }}>
+                      <span style={{ fontSize: 16 }}>{sk.emoji}</span>
+                      <div style={{ flex: 1 }}>
+                        <div style={{ display: "flex", gap: 4, alignItems: "baseline" }}>
+                          <span style={{ fontSize: 10, fontWeight: 700, color: unlocked ? sk.color : T.textDim }}>{sk.name}</span>
+                          {unlocked && <span style={{ fontSize: 9, fontWeight: 800, color: sk.color, fontFamily: FONT_DISPLAY }}>Lv.{lvl}</span>}
+                        </div>
+                        <div style={{ fontSize: 8, color: T.textDim }}>{dmg}x ATK • {sk.cooldown / 1000}s cd</div>
+                      </div>
+                      {unlocked ? (
+                        <div onClick={canUp ? () => upgradeSkill(sk.id) : undefined} style={{ padding: "4px 8px", borderRadius: 6, cursor: canUp ? "pointer" : "default", background: canUp ? `${sk.color}15` : "#ffffff06", border: `1px solid ${canUp ? sk.color + "25" : "#ffffff08"}`, fontSize: 8, fontWeight: 800, color: canUp ? sk.color : T.textDim, fontFamily: FONT_DISPLAY }}>🪙{fmt(cost)}</div>
+                      ) : <span style={{ fontSize: 8, color: T.textDim }}>Stage {sk.unlockStage}</span>}
+                    </div>
+                  );
+                })}
+              </div>
             </div>
           )}
 

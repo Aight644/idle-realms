@@ -1212,6 +1212,7 @@ function GameUI({ account, initialSave, onLogout }) {
   const [lockedEquipment, setLockedEquipment] = useState(() => sv.lockedEquipment || {});
   const [petLevels, setPetLevels] = useState(() => sv.petLevels || {});
   const [showPowerBreakdown, setShowPowerBreakdown] = useState(false);
+  const [showMoreMenu, setShowMoreMenu] = useState(false);
 
   // Derived values (must be before useCallbacks that reference them)
   const canPrestige = highestStage >= 50;
@@ -2575,46 +2576,33 @@ function GameUI({ account, initialSave, onLogout }) {
                 <div key={i} style={{ position: "absolute", left: c.x, top: c.y, fontSize: 8, opacity: 0.25, pointerEvents: "none", animation: `sparkle ${3 + i}s ease-in-out infinite ${i * 0.7}s` }}>💎</div>
               ))}
 
-              {/* LEFT SIDE ICONS */}
-              <div style={{ position: "absolute", left: 4, top: "20%", display: "flex", flexDirection: "column", gap: 4, zIndex: 20 }}>
+                            {/* LEFT SIDE ICONS */}
+              <div style={{ position: "absolute", left: 4, top: "25%", display: "flex", flexDirection: "column", gap: 5, zIndex: 20 }}>
                 {[
-                  { icon: "💎", sub: fmt(diamonds), p: null, bg: "#101828" },
-                  { icon: "🏺", sub: null, p: "relics", bg: "#101828" },
-                  { icon: "🏅", sub: null, p: "emblems", bg: "#101828" },
-                  { icon: "🗼", sub: null, p: "tower", bg: "#101828" },
-                  { icon: "🛒", sub: null, p: "shop", bg: "#101828" },
-                  { icon: "⚗️", sub: null, p: "alchemy", bg: "#101828" },
-                  { icon: "💠", sub: null, p: "gems", bg: "#101828" },
-                  { icon: "👗", sub: null, p: "costumes", bg: "#101828" },
+                  { icon: "💎", sub: fmt(diamonds), p: null },
+                  { icon: "🛒", p: "shop" },
+                  { icon: "👗", p: "costumes" },
+                  { icon: "🎖️", p: "battlepass" },
                 ].map((b, i) => (
-                  <div key={i} onClick={b.p ? () => nav(b.p) : undefined} style={{ width: 34, height: b.sub ? 40 : 34, borderRadius: 7, cursor: b.p ? "pointer" : "default", background: b.bg, border: "1px solid #ffffff08", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 0, boxShadow: "0 2px 6px #00000040" }}>
-                    <span style={{ fontSize: 15, lineHeight: 1 }}>{b.icon}</span>
+                  <div key={i} onClick={b.p ? () => nav(b.p) : undefined} style={{ width: 36, height: b.sub ? 42 : 36, borderRadius: 8, cursor: b.p ? "pointer" : "default", background: "linear-gradient(135deg, #161a2a, #101420)", border: "1px solid #ffffff0a", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 0, boxShadow: "0 2px 8px #00000050" }}>
+                    <span style={{ fontSize: 16, lineHeight: 1 }}>{b.icon}</span>
                     {b.sub && <span style={{ fontSize: 7, fontWeight: 800, color: "#60a5fa", fontFamily: FONT_DISPLAY, lineHeight: 1 }}>{b.sub}</span>}
                   </div>
                 ))}
               </div>
 
-              {/* RIGHT SIDE ICONS */}
-              <div style={{ position: "absolute", right: 4, top: "12%", display: "flex", flexDirection: "column", gap: 4, zIndex: 20 }}>
-                {[
-                  { icon: "🏰", p: "dungeons" },
-                  { icon: "📊", p: "power" },
-                  { icon: "🐾", p: "pets" },
-                  { icon: "🔄", p: "prestige" },
-                  { icon: "✨", p: "resonance" },
-                  { icon: "🎡", p: "spin" },
-                  { icon: "💥", p: "bossrush" },
-                  { icon: "🎖️", p: "battlepass" },
-                  { icon: "📖", p: "bestiary" },
-                  { icon: "🏷️", p: "titles" },
-                  { icon: "🗿", p: "figures" },
-                  { icon: "💀", p: "achievements" },
-                  { icon: "⚙️", p: "settings" },
-                ].map((b, i) => (
-                  <div key={i} onClick={b.p ? () => nav(b.p) : undefined} style={{ width: 34, height: 34, borderRadius: 7, cursor: b.p ? "pointer" : "default", background: "#1a1610", border: "1px solid #ffffff08", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 15, boxShadow: "0 2px 6px #00000040" }}>{b.icon}</div>
-                ))}
+              {/* RIGHT SIDE */}
+              <div style={{ position: "absolute", right: 4, top: "20%", display: "flex", flexDirection: "column", gap: 5, zIndex: 20 }}>
+                {[{ icon: "\uD83D\uDC3E", p: "pets" }, { icon: "\uD83D\uDD04", p: "prestige" }, { icon: "\uD83C\uDFF0", p: "dungeons" }, { icon: "\u2699\uFE0F", p: "settings" }].map((b, i) => (<div key={i} onClick={() => nav(b.p)} style={{ width: 36, height: 36, borderRadius: 8, cursor: "pointer", background: "linear-gradient(135deg, #1a1610, #12100a)", border: "1px solid #ffffff0a", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16, boxShadow: "0 2px 8px #00000050" }}>{b.icon}</div>))}
+                <div onClick={() => setShowMoreMenu(p => !p)} style={{ width: 36, height: 36, borderRadius: 8, cursor: "pointer", background: showMoreMenu ? "linear-gradient(135deg, #2a1a30, #1a1228)" : "linear-gradient(135deg, #1a1610, #12100a)", border: showMoreMenu ? `1px solid ${T.accent}30` : "1px solid #ffffff0a", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16, boxShadow: "0 2px 8px #00000050", fontWeight: 900, color: showMoreMenu ? T.accent : T.textDim }}>{"\u22EF"}</div>
               </div>
-            </div>
+              {showMoreMenu && (<div onClick={() => setShowMoreMenu(false)} style={{ position: "absolute", inset: 0, zIndex: 28 }} />)}
+              {showMoreMenu && (<div style={{ position: "absolute", right: 46, top: "18%", zIndex: 30, background: "linear-gradient(145deg, #1c1f2e, #141620)", border: "1px solid #ffffff15", borderRadius: 14, padding: 12, boxShadow: "0 12px 40px #000000b0", minWidth: 180 }}>
+                <div style={{ fontSize: 10, fontWeight: 800, color: T.textDim, fontFamily: FONT_DISPLAY, marginBottom: 8, textAlign: "center", textTransform: "uppercase", letterSpacing: 2 }}>More</div>
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 6 }}>
+                  {[{icon:"\uD83C\uDFFA",label:"Relics",p:"relics"},{icon:"\uD83C\uDFC5",label:"Emblems",p:"emblems"},{icon:"\uD83D\uDDFC",label:"Tower",p:"tower"},{icon:"\u2697\uFE0F",label:"Alchemy",p:"alchemy"},{icon:"\uD83D\uDCA0",label:"Gems",p:"gems"},{icon:"\u2728",label:"Resonance",p:"resonance"},{icon:"\uD83C\uDFA1",label:"Spin",p:"spin"},{icon:"\uD83D\uDCA5",label:"BossRush",p:"bossrush"},{icon:"\uD83D\uDCD6",label:"Bestiary",p:"bestiary"},{icon:"\uD83C\uDFF7\uFE0F",label:"Titles",p:"titles"},{icon:"\uD83D\uDDFF",label:"Figures",p:"figures"},{icon:"\uD83D\uDC80",label:"Achieve",p:"achievements"},{icon:"\uD83D\uDCCA",label:"Power",p:"power"}].map(b => (<div key={b.p} onClick={() => { nav(b.p); setShowMoreMenu(false); }} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 3, padding: "8px 2px", borderRadius: 8, cursor: "pointer", background: "#ffffff04", border: "1px solid #ffffff08" }}><span style={{ fontSize: 18 }}>{b.icon}</span><span style={{ fontSize: 7, fontWeight: 700, color: T.textSec, fontFamily: FONT_DISPLAY, lineHeight: 1 }}>{b.label}</span></div>))}
+                </div></div>)}
+
 
             {/* ── SKILL SLOTS ── */}
             <div style={{ flexShrink: 0, padding: "3px 10px", background: "linear-gradient(180deg, #10121a, #0c0e16)", borderTop: "1px solid #ffffff06" }}>

@@ -1512,30 +1512,7 @@ function GameUI({ account, initialSave, onLogout }) {
     setTimeout(() => setAnnouncer(null), 1500);
   }, []);
 
-  // Tap-to-attack handler
-  const handleTapAttack = useCallback(() => {
-    if (!isBattling) return;
-    const bs = battleStateRef.current;
-    if (!bs) return;
-    const alive = bs.enemies.filter(e => e.hp > 0 && e.anim !== "die");
-    if (alive.length === 0) return;
-    const target = alive[0];
-    const tapDmg = Math.max(1, Math.floor(totalAtk * 0.3) + Math.floor(Math.random() * 4));
-    const wasCrit = Math.random() * 100 < critRate;
-    const finalDmg = wasCrit ? Math.floor(tapDmg * critDmg / 100) : tapDmg;
-    setBattleState(prev => {
-      if (!prev) return prev;
-      return { ...prev, enemies: prev.enemies.map(e => e.id === target.id ? { ...e, hp: e.hp - finalDmg, anim: "hit" } : e) };
-    });
-    setTimeout(() => setBattleState(p => {
-      if (!p) return p;
-      return { ...p, enemies: p.enemies.map(e => e.id === target.id && e.anim === "hit" ? { ...e, anim: "idle" } : e) };
-    }), 200);
-    triggerHeroAttack();
-    addDmgNumber(finalDmg, "right", wasCrit, "👊");
-    incrementCombo();
-    if (wasCrit) { triggerFlash(T.warning); triggerShake(); }
-  }, [isBattling, totalAtk, critRate, critDmg, triggerHeroAttack, addDmgNumber, incrementCombo, triggerFlash, triggerShake]);
+  // Tap-to-attack handler — defined after totalAtk/critRate/critDmg below
 
   // Keep ref in sync for tap handler
   useEffect(() => { battleStateRef.current = battleState; }, [battleState]);
@@ -1713,6 +1690,31 @@ function GameUI({ account, initialSave, onLogout }) {
   const critRate = Math.min(80, (equipBonus.critRate || 0) + enhanceBonus.critRate + (petBonus.critRate || 0) + (costumeBonus.critRate || 0) + (relicBonus.critRate || 0) + (insigniaBonus.critRate || 0) + (passiveBonus.critRate || 0) + (titleBonus.critRate || 0) + (emblemBonus.critRate || 0) + (resonanceBonus.critRate || 0) + (figureBonus.critRate || 0) + (gemBonus.critRate || 0));
   const critDmg = 150 + (equipBonus.critDmg || 0) + enhanceBonus.critDmg + (petBonus.critDmg || 0) + (costumeBonus.critDmg || 0) + (relicBonus.critDmg || 0) + (insigniaBonus.critDmg || 0) + (passiveBonus.critDmg || 0) + (titleBonus.critDmg || 0) + (emblemBonus.critDmg || 0) + (resonanceBonus.critDmg || 0) + (figureBonus.critDmg || 0) + (gemBonus.critDmg || 0);
   const goldMult = 1 + ((petBonus.goldPct || 0) + (costumeBonus.goldPct || 0) + (relicBonus.goldPct || 0) + (insigniaBonus.goldPct || 0) + (passiveBonus.goldPct || 0) + (titleBonus.goldPct || 0) + (emblemBonus.goldPct || 0) + (resonanceBonus.goldPct || 0) + (figureBonus.goldPct || 0)) / 100;
+
+  // Tap-to-attack handler
+  const handleTapAttack = useCallback(() => {
+    if (!isBattling) return;
+    const bs = battleStateRef.current;
+    if (!bs) return;
+    const alive = bs.enemies.filter(e => e.hp > 0 && e.anim !== "die");
+    if (alive.length === 0) return;
+    const target = alive[0];
+    const tapDmg = Math.max(1, Math.floor(totalAtk * 0.3) + Math.floor(Math.random() * 4));
+    const wasCrit = Math.random() * 100 < critRate;
+    const finalDmg = wasCrit ? Math.floor(tapDmg * critDmg / 100) : tapDmg;
+    setBattleState(prev => {
+      if (!prev) return prev;
+      return { ...prev, enemies: prev.enemies.map(e => e.id === target.id ? { ...e, hp: e.hp - finalDmg, anim: "hit" } : e) };
+    });
+    setTimeout(() => setBattleState(p => {
+      if (!p) return p;
+      return { ...p, enemies: p.enemies.map(e => e.id === target.id && e.anim === "hit" ? { ...e, anim: "idle" } : e) };
+    }), 200);
+    triggerHeroAttack();
+    addDmgNumber(finalDmg, "right", wasCrit, "👊");
+    incrementCombo();
+    if (wasCrit) { triggerFlash(T.warning); triggerShake(); }
+  }, [isBattling, totalAtk, critRate, critDmg, triggerHeroAttack, addDmgNumber, incrementCombo, triggerFlash, triggerShake]);
 
 // Tower of Trials - fight one floor
   const attemptTowerFloor = useCallback(() => {

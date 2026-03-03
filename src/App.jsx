@@ -1584,9 +1584,9 @@ function GameUI({ account, initialSave, onLogout }) {
   const petBonus = useMemo(() => {
     const b = { atkPct: 0, defPct: 0, hpPct: 0, goldPct: 0, xpPct: 0, critRate: 0, critDmg: 0 };
     activePets.forEach(pn => { const pd = PET_DEFS.find(p => p.name === pn); if (!pd) return;
-      const pLvl = petLevels[name] || 1; Object.entries(pd.bonus).forEach(([k, v]) => { b[k] = (b[k] || 0) + Math.floor(v * (1 + (pLvl - 1) * 0.5)); }); });
+      const pLvl = petLevels[pn] || 1; Object.entries(pd.bonus).forEach(([k, v]) => { b[k] = (b[k] || 0) + Math.floor(v * (1 + (pLvl - 1) * 0.5)); }); });
     return b;
-  }, [activePets]);
+  }, [activePets, petLevels]);
 
   // Costume bonuses (active costume + set bonuses)
   const costumeBonus = useMemo(() => {

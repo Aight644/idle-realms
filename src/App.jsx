@@ -2298,7 +2298,7 @@ function GameUI({ account, initialSave, onLogout }) {
   }, [highestStage, totalAtk, raidAttempts, gold]);
 
   const mergeEquipment = useCallback((type, rarityId) => {
-    const candidates = equipment.filter(e => e.type === type && e.rarity === rarityId && !Object.values(equipped).includes(e.id));
+    const candidates = equipment.filter(e => e.type === type && e.rarity === rarityId && !Object.values(equipped).includes(e.id) && !lockedEquipment[e.id]);
     if (candidates.length < 5) return;
     const toRemove = candidates.slice(0, 5).map(e => e.id);
     const ri = RARITIES.findIndex(r => r.id === rarityId);
@@ -2320,7 +2320,7 @@ function GameUI({ account, initialSave, onLogout }) {
     setEquipment(prev => [...prev.filter(e => !toRemove.includes(e.id)), newItem]);
     setStats(s => ({ ...s, merges: (s.merges || 0) + 1 }));
     addLog(`🔨 Merged 5× ${RARITIES[ri].name} ${type} → ${nextR.name}!`);
-  }, [equipment, equipped, addLog]);
+  }, [equipment, equipped, lockedEquipment, addLog]);
 
   // ─── COSTUMES ───
   const buyCostume = useCallback((costumeId) => {
@@ -3217,6 +3217,7 @@ function GameUI({ account, initialSave, onLogout }) {
                               <div style={{ fontSize: 9, color: T.textSec }}>{Object.entries(eq.stats).map(([k, v]) => `+${v} ${k}`).join(" • ")}</div>
                             </div>
                             <Badge color={rarColor(eq.rarity)}>{RARITIES.find(r => r.id === eq.rarity)?.name?.[0]}</Badge>
+                            <span onClick={(e) => { e.stopPropagation(); toggleLock(eq.id); }} style={{ cursor: "pointer", fontSize: 11, opacity: lockedEquipment[eq.id] ? 1 : 0.2 }}>{lockedEquipment[eq.id] ? "\uD83D\uDD12" : "\uD83D\uDD13"}</span>
                           </div>
                         </div>
                       ))}

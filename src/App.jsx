@@ -1216,6 +1216,7 @@ function GameUI({ account, initialSave, onLogout }) {
   // Derived values (must be before useCallbacks that reference them)
   const canPrestige = highestStage >= 50;
   const prestigeSoulsToEarn = calcPrestigeSouls(highestStage);
+  const addLog = useCallback((msg) => { setLog(prev => [...prev.slice(-60), { msg, t: Date.now() }]); }, []);
 
   // Battle Pass
   const [battlePassXp, setBattlePassXp] = useState(() => sv.battlePassXp || 0);
@@ -1493,7 +1494,6 @@ function GameUI({ account, initialSave, onLogout }) {
   const [loginRewardPopup, setLoginRewardPopup] = useState(null);
 
   const battleRef = useRef(null);
-  const addLog = useCallback((msg) => { setLog(prev => [...prev.slice(-60), { msg, t: Date.now() }]); }, []);
   const addGold = useCallback((n) => { setGold(g => g + n); if (n > 0) setCombatStats(s => ({ ...s, totalGoldEarned: (s.totalGoldEarned || 0) + n })); }, []);
 
   // ─── DERIVED STATS ───

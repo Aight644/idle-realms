@@ -204,6 +204,84 @@ const COSTUME_SET_BONUSES = [
   { rarity: "legendary", need: 2, label: "2× Legendary", bonus: { atkPct: 5, goldPct: 5, critDmg: 10 } },
 ];
 
+// ─── DUNGEONS ───
+// Daily resource dungeons with limited attempts. Auto-battle simulated instantly based on power.
+const DUNGEONS = [
+  {
+    id: "gold_vault", name: "Gold Vault", emoji: "💰", desc: "Plunder ancient treasure vaults",
+    color: "#fbbf24", bgGrad: "linear-gradient(135deg, #1a1400 0%, #0c0e14 60%)",
+    resource: "gold", maxAttempts: 3,
+    tiers: [
+      { name: "Bronze Vault", minStage: 1, powerReq: 50, reward: { gold: 500 }, enemies: 5, bossHpMult: 2 },
+      { name: "Silver Vault", minStage: 20, powerReq: 200, reward: { gold: 2000 }, enemies: 8, bossHpMult: 3 },
+      { name: "Gold Vault", minStage: 50, powerReq: 600, reward: { gold: 8000 }, enemies: 10, bossHpMult: 4 },
+      { name: "Platinum Vault", minStage: 100, powerReq: 2000, reward: { gold: 25000 }, enemies: 12, bossHpMult: 5 },
+      { name: "Diamond Vault", minStage: 200, powerReq: 8000, reward: { gold: 100000 }, enemies: 15, bossHpMult: 7 },
+    ],
+  },
+  {
+    id: "gem_mine", name: "Gem Mine", emoji: "💎", desc: "Delve into crystalline caverns",
+    color: "#c084fc", bgGrad: "linear-gradient(135deg, #140820 0%, #0c0e14 60%)",
+    resource: "diamonds", maxAttempts: 2,
+    tiers: [
+      { name: "Quartz Deposit", minStage: 10, powerReq: 100, reward: { diamonds: 15 }, enemies: 5, bossHpMult: 3 },
+      { name: "Amethyst Vein", minStage: 40, powerReq: 400, reward: { diamonds: 40 }, enemies: 8, bossHpMult: 4 },
+      { name: "Sapphire Core", minStage: 80, powerReq: 1200, reward: { diamonds: 100 }, enemies: 10, bossHpMult: 5 },
+      { name: "Ruby Heart", minStage: 150, powerReq: 5000, reward: { diamonds: 250 }, enemies: 12, bossHpMult: 6 },
+      { name: "Star Crystal", minStage: 300, powerReq: 20000, reward: { diamonds: 600 }, enemies: 15, bossHpMult: 8 },
+    ],
+  },
+  {
+    id: "xp_dojo", name: "Training Dojo", emoji: "🥋", desc: "Hone your skills against masters",
+    color: "#34d399", bgGrad: "linear-gradient(135deg, #041a10 0%, #0c0e14 60%)",
+    resource: "growth", maxAttempts: 2,
+    tiers: [
+      { name: "Novice Ring", minStage: 5, powerReq: 80, reward: { growthLevels: 2 }, enemies: 5, bossHpMult: 2 },
+      { name: "Warrior Ring", minStage: 30, powerReq: 300, reward: { growthLevels: 5 }, enemies: 8, bossHpMult: 3 },
+      { name: "Master Ring", minStage: 70, powerReq: 1000, reward: { growthLevels: 10 }, enemies: 10, bossHpMult: 4 },
+      { name: "Grandmaster Ring", minStage: 140, powerReq: 4000, reward: { growthLevels: 20 }, enemies: 12, bossHpMult: 5 },
+      { name: "Legendary Arena", minStage: 250, powerReq: 15000, reward: { growthLevels: 50 }, enemies: 15, bossHpMult: 7 },
+    ],
+  },
+];
+
+// Simulate dungeon run — returns { success, waves, totalReward }
+function simulateDungeon(dungeon, tierIdx, totalAtk, totalDef, totalMaxHp) {
+  const tier = dungeon.tiers[tierIdx];
+  if (!tier) return { success: false, waves: 0, totalReward: {} };
+  const power = totalAtk + totalDef + totalMaxHp;
+  const enemyPower = tier.powerReq;
+
+  // Simulate wave-by-wave combat
+  let playerHp = totalMaxHp;
+  let wavesCleared = 0;
+  const totalWaves = tier.enemies;
+
+  for (let w = 0; w < totalWaves; w++) {
+    const isBoss = w === totalWaves - 1;
+    const waveHp = Math.floor(enemyPower * (0.3 + w * 0.1) * (isBoss ? tier.bossHpMult : 1));
+    const waveAtk = Math.floor(enemyPower * (0.05 + w * 0.01) * (isBoss ? 1.5 : 1));
+
+    // Rounds to kill monster (simplified)
+    const dmgPerHit = Math.max(1, totalAtk - Math.floor(waveAtk * 0.3));
+    const roundsToKill = Math.ceil(waveHp / dmgPerHit);
+    const dmgTaken = Math.floor(Math.max(1, waveAtk - totalDef * 0.5) * roundsToKill * 0.6);
+
+    playerHp -= dmgTaken;
+    if (playerHp <= 0) break;
+    wavesCleared++;
+  }
+
+  const success = wavesCleared >= totalWaves;
+  const rewardMult = success ? 1 : wavesCleared / totalWaves;
+  const totalReward = {};
+  Object.entries(tier.reward).forEach(([k, v]) => {
+    totalReward[k] = Math.floor(v * rewardMult);
+  });
+
+  return { success, waves: wavesCleared, totalWaves, totalReward, tier };
+}
+
 // ─── ACHIEVEMENTS ───
 const ACHIEVEMENTS = [
   // Combat milestones
@@ -464,6 +542,7 @@ const DEFAULT_SAVE = () => ({
   unlockedSkills: ["slash"], equippedSkills: ["slash", null, null],
   ownedCostumes: ["default"], activeCostume: "default",
   achievementsUnlocked: {},
+  dungeonAttempts: {}, // { dungeonId: { date: "datestring", used: 0 } }
   combatStats: { kills: 0, totalDamage: 0, deaths: 0, highestHit: 0, bossesKilled: 0, totalGoldEarned: 0 },
   stats: { timePlayed: 0, loginStreak: 0, lastLoginDay: null, summons: 0, merges: 0 },
   isPremium: false, storePurchases: {},
@@ -736,7 +815,6 @@ function AchievementsPage({ achievementsUnlocked, isMobile }) {
 
 function GameUI({ account, initialSave, onLogout }) {
   const [page, setPage] = useState("battle");
-  const [mobileNav, setMobileNav] = useState(false);
   const [isMobile, setIsMobile] = useState(() => window.innerWidth < 768);
   useEffect(() => { const fn = () => setIsMobile(window.innerWidth < 768); window.addEventListener("resize", fn); return () => window.removeEventListener("resize", fn); }, []);
 
@@ -761,6 +839,8 @@ function GameUI({ account, initialSave, onLogout }) {
   const [ownedCostumes, setOwnedCostumes] = useState(() => sv.ownedCostumes || ["default"]);
   const [activeCostume, setActiveCostume] = useState(() => sv.activeCostume || "default");
   const [achievementsUnlocked, setAchievementsUnlocked] = useState(() => sv.achievementsUnlocked || {});
+  const [dungeonAttempts, setDungeonAttempts] = useState(() => sv.dungeonAttempts || {});
+  const [dungeonResult, setDungeonResult] = useState(null); // popup for dungeon result
 
   // Combat live
   const [battleState, setBattleState] = useState(null);
@@ -873,7 +953,7 @@ function GameUI({ account, initialSave, onLogout }) {
   const buildSave = useCallback(() => ({
     currentStage, highestStage, growth, gold, diamonds, combatStats, stats, autoProgress,
     equipment, equipped, pets, activePets, petSlots, unlockedSkills, equippedSkills,
-    ownedCostumes, activeCostume, achievementsUnlocked,
+    ownedCostumes, activeCostume, achievementsUnlocked, dungeonAttempts,
     player: { hp: playerHp, maxHp: totalMaxHp },
     isPremium: false, storePurchases: {},
     lastActiveTime: Date.now(),
@@ -951,6 +1031,8 @@ function GameUI({ account, initialSave, onLogout }) {
     if (!isBattling || !battleState) return;
     const step = 100, atkSpd = 1500, mSpd = 2000;
     let pE = 0, mE = 0;
+    // Auto-skill cooldown tracking (ms remaining)
+    const skillCDs = {};
 
     battleRef.current = setInterval(() => {
       setBattleState(prev => {
@@ -958,12 +1040,33 @@ function GameUI({ account, initialSave, onLogout }) {
         let { monsterHp, monsterMaxHp, killCount, targetKills, stageGold, monster, stageNum } = prev;
         pE += step; mE += step;
 
+        // Tick down skill cooldowns
+        equippedSkills.filter(Boolean).forEach(sid => {
+          if (skillCDs[sid] > 0) skillCDs[sid] -= step;
+        });
+
         if (pE >= atkSpd) {
           pE = 0;
           let dmg = Math.max(1, totalAtk - monster.def + Math.floor(Math.random() * 4));
           if (Math.random() * 100 < critRate) dmg = Math.floor(dmg * critDmg / 100);
           monsterHp -= dmg;
           setCombatStats(s => ({ ...s, totalDamage: s.totalDamage + dmg, highestHit: Math.max(s.highestHit || 0, dmg) }));
+
+          // Auto-cast equipped skills when off cooldown
+          equippedSkills.filter(Boolean).forEach(sid => {
+            if ((skillCDs[sid] || 0) <= 0) {
+              const sk = COMBAT_SKILLS.find(s => s.id === sid);
+              if (sk) {
+                const sDmg = Math.floor(totalAtk * sk.dmgMult);
+                monsterHp -= sDmg;
+                setCombatStats(s => ({ ...s, totalDamage: s.totalDamage + sDmg, highestHit: Math.max(s.highestHit || 0, sDmg) }));
+                skillCDs[sid] = sk.cooldown;
+                setSkillCooldowns(p => ({ ...p, [sid]: true }));
+                setTimeout(() => setSkillCooldowns(p => ({ ...p, [sid]: false })), sk.cooldown);
+                addLog(`${sk.emoji} ${sk.name}! ${fmt(sDmg)} damage!`);
+              }
+            }
+          });
         }
 
         if (mE >= mSpd) {
@@ -1026,19 +1129,9 @@ function GameUI({ account, initialSave, onLogout }) {
     }, step);
 
     return () => { if (battleRef.current) clearInterval(battleRef.current); };
-  }, [isBattling, battleState?.stageNum, totalAtk, totalDef, critRate, critDmg, goldMult, autoProgress, highestStage, unlockedSkills, pets]);
+  }, [isBattling, battleState?.stageNum, totalAtk, totalDef, critRate, critDmg, goldMult, autoProgress, highestStage, unlockedSkills, pets, equippedSkills]);
 
-  // ─── SKILL USAGE ───
-  const useSkill = useCallback((sid) => {
-    const sk = COMBAT_SKILLS.find(s => s.id === sid);
-    if (!sk || !battleState || skillCooldowns[sid]) return;
-    const dmg = Math.floor(totalAtk * sk.dmgMult);
-    setBattleState(prev => prev ? { ...prev, monsterHp: prev.monsterHp - dmg } : prev);
-    setCombatStats(s => ({ ...s, totalDamage: s.totalDamage + dmg, highestHit: Math.max(s.highestHit || 0, dmg) }));
-    addLog(`${sk.emoji} ${sk.name}! ${fmt(dmg)} damage!`);
-    setSkillCooldowns(p => ({ ...p, [sid]: true }));
-    setTimeout(() => setSkillCooldowns(p => ({ ...p, [sid]: false })), sk.cooldown);
-  }, [battleState, totalAtk, skillCooldowns, addLog]);
+  // Skills are now auto-cast in the battle loop — no manual activation needed
 
   // ─── EQUIPMENT ───
   const summonEquipment = useCallback((count) => {
@@ -1100,75 +1193,138 @@ function GameUI({ account, initialSave, onLogout }) {
     return c?.emoji || "⚔️";
   }, [activeCostume]);
 
+  // ─── DUNGEONS ───
+  const getDungeonAttemptsLeft = useCallback((dungeonId) => {
+    const today = new Date().toDateString();
+    const att = dungeonAttempts[dungeonId];
+    if (!att || att.date !== today) return DUNGEONS.find(d => d.id === dungeonId)?.maxAttempts || 0;
+    return Math.max(0, (DUNGEONS.find(d => d.id === dungeonId)?.maxAttempts || 0) - att.used);
+  }, [dungeonAttempts]);
+
+  const runDungeon = useCallback((dungeonId, tierIdx) => {
+    const dungeon = DUNGEONS.find(d => d.id === dungeonId);
+    if (!dungeon) return;
+    const attLeft = getDungeonAttemptsLeft(dungeonId);
+    if (attLeft <= 0) return;
+    const tier = dungeon.tiers[tierIdx];
+    if (!tier || highestStage < tier.minStage) return;
+
+    // Use attempt
+    const today = new Date().toDateString();
+    setDungeonAttempts(prev => {
+      const curr = prev[dungeonId];
+      const used = (curr && curr.date === today) ? curr.used + 1 : 1;
+      return { ...prev, [dungeonId]: { date: today, used } };
+    });
+
+    // Simulate the dungeon run
+    const result = simulateDungeon(dungeon, tierIdx, totalAtk, totalDef, totalMaxHp);
+
+    // Award rewards
+    if (result.totalReward.gold) addGold(result.totalReward.gold);
+    if (result.totalReward.diamonds) setDiamonds(d => d + result.totalReward.diamonds);
+    if (result.totalReward.growthLevels) {
+      const lvls = result.totalReward.growthLevels;
+      const perStat = Math.floor(lvls / 3);
+      const remainder = lvls % 3;
+      setGrowth(g => ({
+        atk: g.atk + perStat + (remainder >= 1 ? 1 : 0),
+        hp: g.hp + perStat + (remainder >= 2 ? 1 : 0),
+        def: g.def + perStat,
+      }));
+    }
+
+    // Show result popup
+    setDungeonResult({ ...result, dungeon, tierIdx });
+    addLog(`🏰 ${dungeon.name} (${tier.name}): ${result.success ? "CLEARED!" : `Failed at wave ${result.waves}/${result.totalWaves}`} ${result.totalReward.gold ? `+${fmt(result.totalReward.gold)}g` : ""} ${result.totalReward.diamonds ? `+${result.totalReward.diamonds}💎` : ""} ${result.totalReward.growthLevels ? `+${result.totalReward.growthLevels} growth levels` : ""}`);
+  }, [getDungeonAttemptsLeft, highestStage, totalAtk, totalDef, totalMaxHp, addGold, addLog]);
+
   // ─── NAV ───
-  const nav = (p) => { setPage(p); setMobileNav(false); };
+  const nav = (p) => { setPage(p); };
   const chapter = getChapter(currentStage);
   const timeMins = Math.floor((stats.timePlayed || 0) / 60);
   const timeStr = timeMins >= 60 ? `${Math.floor(timeMins / 60)}h ${timeMins % 60}m` : `${timeMins}m`;
 
+
   return (
-    <div style={{ display: "flex", height: "100vh", overflow: "hidden", fontFamily: FONT_BODY, background: T.bg, color: T.text }}>
+    <div style={{ position: "relative", width: "100%", height: "100vh", overflow: "hidden", fontFamily: FONT_BODY, background: T.bg, color: T.text }}>
 
-      {/* ═══ POPUPS ═══ */}
-
-      {/* Offline Earnings Popup */}
+      {/* ═══ POPUPS (z: 999) ═══ */}
       {offlinePopup && (
         <Popup title="Welcome Back!" icon="🌙" color={T.gold} onClose={() => setOfflinePopup(null)}>
           <div style={{ textAlign: "center", marginBottom: 16 }}>
             <div style={{ fontSize: 13, color: T.textSec, marginBottom: 12 }}>
               You were away for <span style={{ color: T.white, fontWeight: 700 }}>{offlinePopup.duration}</span>
-              {offlinePopup.capped && <span style={{ color: T.textDim }}> (capped at {OFFLINE_MAX_HOURS}h)</span>}
+              {offlinePopup.capped && <span style={{ color: T.textDim }}> (max {OFFLINE_MAX_HOURS}h)</span>}
             </div>
-            <div style={{ display: "flex", gap: 16, justifyContent: "center" }}>
-              <div style={{ padding: "14px 24px", borderRadius: T.r, background: `${T.gold}12`, border: `1px solid ${T.gold}25` }}>
-                <div style={{ fontSize: 24, fontWeight: 900, color: T.gold, fontFamily: FONT_DISPLAY }}>{fmt(offlinePopup.gold)}</div>
-                <div style={{ fontSize: 10, color: T.textDim, fontWeight: 600 }}>GOLD EARNED</div>
+            <div style={{ display: "flex", gap: 12, justifyContent: "center" }}>
+              <div style={{ padding: "12px 20px", borderRadius: T.r, background: `${T.gold}12`, border: `1px solid ${T.gold}25` }}>
+                <div style={{ fontSize: 22, fontWeight: 900, color: T.gold, fontFamily: FONT_DISPLAY }}>{fmt(offlinePopup.gold)}</div>
+                <div style={{ fontSize: 9, color: T.textDim, fontWeight: 600 }}>GOLD</div>
               </div>
-              <div style={{ padding: "14px 24px", borderRadius: T.r, background: `${T.danger}12`, border: `1px solid ${T.danger}25` }}>
-                <div style={{ fontSize: 24, fontWeight: 900, color: T.danger, fontFamily: FONT_DISPLAY }}>{fmt(offlinePopup.kills)}</div>
-                <div style={{ fontSize: 10, color: T.textDim, fontWeight: 600 }}>MONSTERS SLAIN</div>
+              <div style={{ padding: "12px 20px", borderRadius: T.r, background: `${T.danger}12`, border: `1px solid ${T.danger}25` }}>
+                <div style={{ fontSize: 22, fontWeight: 900, color: T.danger, fontFamily: FONT_DISPLAY }}>{fmt(offlinePopup.kills)}</div>
+                <div style={{ fontSize: 9, color: T.textDim, fontWeight: 600 }}>KILLS</div>
               </div>
             </div>
-          </div>
-          <div style={{ fontSize: 11, color: T.textDim, textAlign: "center" }}>
-            Tip: Progress further in stages to earn more gold while offline!
           </div>
         </Popup>
       )}
 
-      {/* Daily Login Reward Popup */}
       {loginRewardPopup && !offlinePopup && (
-        <Popup title="Daily Login Reward!" icon="🎁" color={T.accent} onClose={() => setLoginRewardPopup(null)}>
-          <div style={{ textAlign: "center", marginBottom: 16 }}>
-            <Badge color={T.orange} style={{ fontSize: 12, padding: "4px 12px", marginBottom: 12 }}>
-              🔥 Day {loginRewardPopup.dayIdx} — Streak: {loginRewardPopup.streak}
-            </Badge>
+        <Popup title="Daily Reward!" icon="🎁" color={T.accent} onClose={() => setLoginRewardPopup(null)}>
+          <div style={{ textAlign: "center", marginBottom: 12 }}>
+            <Badge color={T.orange} style={{ fontSize: 12, padding: "4px 12px" }}>🔥 Day {loginRewardPopup.dayIdx} — Streak {loginRewardPopup.streak}</Badge>
             <div style={{ display: "flex", gap: 12, justifyContent: "center", marginTop: 12 }}>
               <div style={{ padding: "12px 20px", borderRadius: T.r, background: `${T.gold}12`, border: `1px solid ${T.gold}25` }}>
                 <div style={{ fontSize: 20, fontWeight: 900, color: T.gold, fontFamily: FONT_DISPLAY }}>+{fmt(loginRewardPopup.gold)}</div>
-                <div style={{ fontSize: 10, color: T.textDim, fontWeight: 600 }}>GOLD</div>
+                <div style={{ fontSize: 9, color: T.textDim, fontWeight: 600 }}>GOLD</div>
               </div>
               {loginRewardPopup.diamonds > 0 && (
                 <div style={{ padding: "12px 20px", borderRadius: T.r, background: `${T.purple}12`, border: `1px solid ${T.purple}25` }}>
                   <div style={{ fontSize: 20, fontWeight: 900, color: T.purple, fontFamily: FONT_DISPLAY }}>+{loginRewardPopup.diamonds}</div>
-                  <div style={{ fontSize: 10, color: T.textDim, fontWeight: 600 }}>DIAMONDS</div>
+                  <div style={{ fontSize: 9, color: T.textDim, fontWeight: 600 }}>DIAMONDS</div>
                 </div>
               )}
             </div>
           </div>
-          {/* 7-day preview */}
-          <div style={{ display: "flex", gap: 4, justifyContent: "center", flexWrap: "wrap", marginTop: 8 }}>
+          <div style={{ display: "flex", gap: 4, justifyContent: "center" }}>
             {LOGIN_REWARDS.map((r, i) => (
               <div key={i} style={{
-                width: 44, padding: "6px 0", borderRadius: 6, textAlign: "center", fontSize: 9, fontWeight: 700,
+                width: 40, padding: "5px 0", borderRadius: 6, textAlign: "center", fontSize: 8, fontWeight: 700,
                 background: i < loginRewardPopup.dayIdx ? `${T.success}15` : i === loginRewardPopup.dayIdx - 1 ? `${T.accent}20` : T.bgDeep,
                 border: `1px solid ${i === loginRewardPopup.dayIdx - 1 ? T.accent + "40" : T.divider}`,
                 color: i < loginRewardPopup.dayIdx ? T.success : i === loginRewardPopup.dayIdx - 1 ? T.accent : T.textDim,
-              }}>
-                <div>D{i + 1}</div>
-                <div style={{ fontSize: 8 }}>{i < loginRewardPopup.dayIdx ? "✓" : ""}</div>
-              </div>
+              }}>D{i + 1}{i < loginRewardPopup.dayIdx ? " ✓" : ""}</div>
             ))}
+          </div>
+        </Popup>
+      )}
+
+      {dungeonResult && (
+        <Popup title={dungeonResult.success ? "Cleared!" : "Failed"} icon={dungeonResult.success ? "🎉" : "💀"} color={dungeonResult.success ? T.success : T.danger} onClose={() => setDungeonResult(null)}>
+          <div style={{ textAlign: "center", marginBottom: 12 }}>
+            <div style={{ fontSize: 12, color: T.textSec, marginBottom: 10 }}>{dungeonResult.dungeon.emoji} {dungeonResult.tier.name} — {dungeonResult.waves}/{dungeonResult.totalWaves} waves</div>
+            <div style={{ display: "flex", gap: 10, justifyContent: "center", flexWrap: "wrap" }}>
+              {dungeonResult.totalReward.gold > 0 && (
+                <div style={{ padding: "10px 16px", borderRadius: T.r, background: `${T.gold}10`, border: `1px solid ${T.gold}20` }}>
+                  <div style={{ fontSize: 18, fontWeight: 900, color: T.gold, fontFamily: FONT_DISPLAY }}>+{fmt(dungeonResult.totalReward.gold)}</div>
+                  <div style={{ fontSize: 8, color: T.textDim }}>GOLD</div>
+                </div>
+              )}
+              {dungeonResult.totalReward.diamonds > 0 && (
+                <div style={{ padding: "10px 16px", borderRadius: T.r, background: `${T.purple}10`, border: `1px solid ${T.purple}20` }}>
+                  <div style={{ fontSize: 18, fontWeight: 900, color: T.purple, fontFamily: FONT_DISPLAY }}>+{dungeonResult.totalReward.diamonds}</div>
+                  <div style={{ fontSize: 8, color: T.textDim }}>DIAMONDS</div>
+                </div>
+              )}
+              {dungeonResult.totalReward.growthLevels > 0 && (
+                <div style={{ padding: "10px 16px", borderRadius: T.r, background: `${T.success}10`, border: `1px solid ${T.success}20` }}>
+                  <div style={{ fontSize: 18, fontWeight: 900, color: T.success, fontFamily: FONT_DISPLAY }}>+{dungeonResult.totalReward.growthLevels}</div>
+                  <div style={{ fontSize: 8, color: T.textDim }}>GROWTH</div>
+                </div>
+              )}
+            </div>
           </div>
         </Popup>
       )}
@@ -1176,305 +1332,352 @@ function GameUI({ account, initialSave, onLogout }) {
       {/* Achievement Toast */}
       {achToast && (
         <div key={achToast.ts} style={{
-          position: "fixed", top: 20, right: 20, zIndex: 1000,
-          padding: "14px 20px", borderRadius: T.r, minWidth: 280,
+          position: "fixed", top: 50, left: "50%", transform: "translateX(-50%)", zIndex: 1000,
+          padding: "10px 16px", borderRadius: T.r, minWidth: 240, maxWidth: "92%",
           background: `${T.card}f0`, backdropFilter: "blur(12px)",
           border: `1px solid ${achToast.color || T.gold}40`,
-          boxShadow: `0 0 30px ${achToast.color || T.gold}15, 0 8px 32px #00000050`,
+          boxShadow: `0 0 24px ${achToast.color || T.gold}15`,
           animation: "slideDown 0.4s ease, fadeOut 0.5s ease 3.5s forwards",
-          display: "flex", alignItems: "center", gap: 12,
+          display: "flex", alignItems: "center", gap: 10,
         }}>
-          <div style={{
-            width: 40, height: 40, borderRadius: 10,
-            background: `${achToast.color || T.gold}15`, border: `1px solid ${achToast.color || T.gold}30`,
-            display: "flex", alignItems: "center", justifyContent: "center", fontSize: 20,
-          }}>{achToast.icon}</div>
+          <div style={{ width: 32, height: 32, borderRadius: 8, background: `${achToast.color || T.gold}15`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16 }}>{achToast.icon}</div>
           <div style={{ flex: 1 }}>
-            <div style={{ fontSize: 9, fontWeight: 700, color: T.gold, letterSpacing: 1, textTransform: "uppercase" }}>Achievement Unlocked!</div>
-            <div style={{ fontSize: 13, fontWeight: 800, color: T.white, fontFamily: FONT_DISPLAY }}>{achToast.name}</div>
-            <div style={{ fontSize: 10, color: T.textSec }}>{achToast.desc}</div>
+            <div style={{ fontSize: 7, fontWeight: 700, color: T.gold, letterSpacing: 1, textTransform: "uppercase" }}>Achievement!</div>
+            <div style={{ fontSize: 11, fontWeight: 800, color: T.white, fontFamily: FONT_DISPLAY }}>{achToast.name}</div>
           </div>
-          <div style={{ fontSize: 10, fontWeight: 700, color: T.gold, textAlign: "right" }}>
+          <div style={{ fontSize: 9, fontWeight: 700, color: T.gold }}>
             {achToast.reward.gold && <div>+{fmt(achToast.reward.gold)}g</div>}
             {achToast.reward.diamonds && <div>+{achToast.reward.diamonds}💎</div>}
           </div>
         </div>
       )}
 
-      {/* ═══ SIDEBAR (desktop) ═══ */}
-      {!isMobile && (
-        <div style={{
-          width: 240, flexShrink: 0, background: `linear-gradient(180deg, ${T.sidebar} 0%, #080a10 100%)`,
-          borderRight: `1px solid ${T.sidebarBorder}`, display: "flex", flexDirection: "column",
-          height: "100%", overflowY: "auto",
-        }}>
-          {/* Logo */}
-          <div style={{ padding: "20px 18px 12px", borderBottom: `1px solid ${T.sidebarBorder}` }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 12 }}>
-              <div style={{ width: 38, height: 38, borderRadius: 10, background: `linear-gradient(135deg, ${T.accent}25, ${T.purple}20)`, border: `1px solid ${T.accent}30`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18 }}>{heroEmoji}</div>
-              <div>
-                <div style={{ fontSize: 15, fontWeight: 900, color: T.white, fontFamily: FONT_DISPLAY, letterSpacing: 0.5 }}>BLADE REALMS</div>
-                <div style={{ fontSize: 10, color: T.textDim }}>{account.displayName}</div>
-              </div>
-            </div>
-            {/* Mini hero stats */}
-            <div style={{ display: "flex", gap: 6 }}>
-              <div style={{ flex: 1, padding: "5px 0", textAlign: "center", borderRadius: 6, background: `${T.danger}08`, border: `1px solid ${T.danger}10` }}>
-                <div style={{ fontSize: 11, fontWeight: 800, color: T.danger, fontFamily: FONT_DISPLAY }}>{fmt(totalAtk)}</div>
-                <div style={{ fontSize: 7, color: T.textDim, fontWeight: 700 }}>ATK</div>
-              </div>
-              <div style={{ flex: 1, padding: "5px 0", textAlign: "center", borderRadius: 6, background: `${T.info}08`, border: `1px solid ${T.info}10` }}>
-                <div style={{ fontSize: 11, fontWeight: 800, color: T.info, fontFamily: FONT_DISPLAY }}>{fmt(totalDef)}</div>
-                <div style={{ fontSize: 7, color: T.textDim, fontWeight: 700 }}>DEF</div>
-              </div>
-              <div style={{ flex: 1, padding: "5px 0", textAlign: "center", borderRadius: 6, background: `${T.success}08`, border: `1px solid ${T.success}10` }}>
-                <div style={{ fontSize: 11, fontWeight: 800, color: T.success, fontFamily: FONT_DISPLAY }}>{fmt(totalMaxHp)}</div>
-                <div style={{ fontSize: 7, color: T.textDim, fontWeight: 700 }}>HP</div>
-              </div>
-            </div>
-          </div>
+      {/* ═══ LAYER 0: BATTLE (always visible as base layer) ═══ */}
+      {(() => {
+        const monster = battleState?.monster || getStageMonster(currentStage);
+        return (
+          <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column", background: chapter.bgGrad }}>
 
-          <div style={{ padding: "10px 8px", flex: 1 }}>
-            <div style={{ fontSize: 9, fontWeight: 700, color: T.textDim, padding: "10px 14px 4px", letterSpacing: 1.5, textTransform: "uppercase" }}>Battle</div>
-            <SidebarItem icon="⚔️" label="Battle" active={page === "battle"} onClick={() => nav("battle")} color={T.danger} badge={stageLabel(currentStage)} />
-            <SidebarItem icon="📊" label="Growth" active={page === "growth"} onClick={() => nav("growth")} color={T.success} />
-
-            <div style={{ fontSize: 9, fontWeight: 700, color: T.textDim, padding: "12px 14px 4px", letterSpacing: 1.5, textTransform: "uppercase" }}>Gear</div>
-            <SidebarItem icon="🎒" label="Equipment" active={page === "equipment"} onClick={() => nav("equipment")} color={T.warning} badge={`${equipment.length}`} />
-            <SidebarItem icon="✨" label="Summon" active={page === "summon"} onClick={() => nav("summon")} color={T.purple} />
-            <SidebarItem icon="👗" label="Costumes" active={page === "costumes"} onClick={() => nav("costumes")} color={T.teal} badge={`${ownedCostumes.length}/${COSTUMES.length}`} />
-            <SidebarItem icon="🐾" label="Pets" active={page === "pets"} onClick={() => nav("pets")} color={T.pink} badge={pets.length > 0 ? `${pets.length}` : undefined} />
-
-            <div style={{ fontSize: 9, fontWeight: 700, color: T.textDim, padding: "12px 14px 4px", letterSpacing: 1.5, textTransform: "uppercase" }}>Info</div>
-            <SidebarItem icon="🏆" label="Achievements" active={page === "achievements"} onClick={() => nav("achievements")} color={T.gold} badge={`${Object.keys(achievementsUnlocked).length}/${ACHIEVEMENTS.length}`} />
-            <SidebarItem icon="📈" label="Stats" active={page === "stats"} onClick={() => nav("stats")} color={T.info} />
-            <SidebarItem icon="⚙️" label="Settings" active={page === "settings"} onClick={() => nav("settings")} color={T.textSec} />
-          </div>
-
-          <div style={{ padding: "14px 18px", borderTop: `1px solid ${T.sidebarBorder}` }}>
-            {/* Achievement mini progress */}
-            <div style={{ marginBottom: 10 }}>
-              <div style={{ display: "flex", justifyContent: "space-between", fontSize: 9, fontWeight: 700, color: T.textDim, marginBottom: 4 }}>
-                <span>🏆 Achievements</span>
-                <span style={{ color: T.gold }}>{Object.keys(achievementsUnlocked).length}/{ACHIEVEMENTS.length}</span>
+            {/* ── TOP HUD ── */}
+            <div style={{ flexShrink: 0, padding: "8px 12px 4px", zIndex: 10 }}>
+              {/* Currency row */}
+              <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 6 }}>
+                <div style={{
+                  width: 34, height: 34, borderRadius: 10, flexShrink: 0,
+                  background: `${T.accent}20`, border: `2px solid ${T.accent}40`,
+                  display: "flex", alignItems: "center", justifyContent: "center", fontSize: 17,
+                  boxShadow: `0 0 10px ${T.accent}20`,
+                }}>{heroEmoji}</div>
+                <div style={{ flex: 1 }} />
+                {[
+                  { icon: "💰", val: fmt(gold), c: T.gold },
+                  { icon: "💎", val: fmt(diamonds), c: T.purple },
+                ].map((cur, i) => (
+                  <div key={i} style={{
+                    display: "flex", alignItems: "center", gap: 3, padding: "3px 10px",
+                    borderRadius: 99, background: "#00000050", border: `1px solid ${cur.c}20`,
+                  }}>
+                    <span style={{ fontSize: 11 }}>{cur.icon}</span>
+                    <span style={{ fontSize: 11, fontWeight: 800, color: cur.c, fontFamily: FONT_DISPLAY }}>{cur.val}</span>
+                  </div>
+                ))}
               </div>
-              <ProgressBar value={Object.keys(achievementsUnlocked).length} max={ACHIEVEMENTS.length} color={T.gold} height={3} />
-            </div>
-            {/* Currency */}
-            <div style={{ display: "flex", gap: 8, marginBottom: 10 }}>
-              <div style={{ flex: 1, padding: "6px 10px", borderRadius: T.rs, background: `${T.gold}08`, border: `1px solid ${T.gold}12`, textAlign: "center" }}>
-                <div style={{ fontSize: 12, fontWeight: 800, color: T.gold, fontFamily: FONT_DISPLAY }}>{fmt(gold)}</div>
-                <div style={{ fontSize: 8, color: T.textDim, fontWeight: 600 }}>💰 GOLD</div>
-              </div>
-              <div style={{ flex: 1, padding: "6px 10px", borderRadius: T.rs, background: `${T.purple}08`, border: `1px solid ${T.purple}12`, textAlign: "center" }}>
-                <div style={{ fontSize: 12, fontWeight: 800, color: T.purple, fontFamily: FONT_DISPLAY }}>{fmt(diamonds)}</div>
-                <div style={{ fontSize: 8, color: T.textDim, fontWeight: 600 }}>💎 GEMS</div>
-              </div>
-            </div>
-            <div onClick={onLogout} style={{ fontSize: 11, color: T.textDim, cursor: "pointer", padding: "6px 0", transition: "color 0.15s" }}>🚪 Logout</div>
-          </div>
-        </div>
-      )}
 
-      {/* ═══ MOBILE SLIDE-OUT MENU ═══ */}
-      {isMobile && mobileNav && (
-        <div style={{ position: "fixed", inset: 0, zIndex: 200, display: "flex" }} onClick={() => setMobileNav(false)}>
-          <div style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.6)", backdropFilter: "blur(4px)" }} />
-          <div onClick={e => e.stopPropagation()} style={{
-            width: 260, background: T.sidebar, height: "100%", overflowY: "auto", position: "relative",
-            boxShadow: "4px 0 24px #00000050", animation: "slideRight 0.2s ease",
-          }}>
-            <div style={{ padding: "18px 16px", borderBottom: `1px solid ${T.sidebarBorder}`, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-              <div style={{ fontSize: 15, fontWeight: 900, color: T.white, fontFamily: FONT_DISPLAY }}>⚔️ BLADE REALMS</div>
-              <div onClick={() => setMobileNav(false)} style={{ fontSize: 18, cursor: "pointer", color: T.textDim, padding: 4 }}>✕</div>
+              {/* Stage bar */}
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 2 }}>
+                <span style={{ fontSize: 13, fontWeight: 900, color: T.white, fontFamily: FONT_DISPLAY }}>
+                  {stageLabel(currentStage)} {monster.isBoss && <span style={{ color: T.danger, fontSize: 10 }}>BOSS</span>}
+                </span>
+                <span style={{ fontSize: 9, color: T.textSec }}>{chapter.emoji} {chapter.name}</span>
+              </div>
+              <div style={{ height: 6, background: "#00000040", borderRadius: 99, overflow: "hidden", border: "1px solid #ffffff08" }}>
+                <div style={{
+                  width: `${Math.max(5, ((battleState?.killCount || 0) / monster.monstersToKill) * 100)}%`,
+                  height: "100%", borderRadius: 99,
+                  background: `linear-gradient(90deg, ${chapter.color}, ${chapter.color}cc)`,
+                  boxShadow: `0 0 8px ${chapter.color}50`, transition: "width 0.3s",
+                }} />
+              </div>
+              <div style={{ fontSize: 8, color: T.textDim, textAlign: "center", marginTop: 2 }}>{battleState?.killCount || 0} / {monster.monstersToKill}</div>
             </div>
-            <div style={{ padding: "8px" }}>
+
+            {/* ── BATTLE ARENA ── */}
+            <div style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", position: "relative", padding: "0 50px" }}>
+              {/* HP Bars */}
+              <div style={{ width: "100%", maxWidth: 360, marginBottom: 16 }}>
+                {[
+                  { emoji: heroEmoji, hp: playerHp, max: totalMaxHp, c: playerHp < totalMaxHp * 0.3 ? T.danger : T.success, label: account.displayName },
+                  { emoji: monster.emoji, hp: Math.max(0, battleState?.monsterHp || monster.hp), max: monster.hp, c: T.danger, label: monster.name },
+                ].map((bar, i) => (
+                  <div key={i} style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 5 }}>
+                    <span style={{ fontSize: 14, width: 20 }}>{bar.emoji}</span>
+                    <div style={{ flex: 1 }}>
+                      <div style={{ height: 8, background: "#00000050", borderRadius: 99, overflow: "hidden" }}>
+                        <div style={{
+                          width: `${(bar.hp / bar.max) * 100}%`, height: "100%", borderRadius: 99,
+                          background: `linear-gradient(90deg, ${bar.c}, ${bar.c}cc)`,
+                          transition: "width 0.15s", boxShadow: `0 0 6px ${bar.c}40`,
+                        }} />
+                      </div>
+                    </div>
+                    <span style={{ fontSize: 9, fontWeight: 700, color: bar.c, fontFamily: FONT_DISPLAY, minWidth: 44, textAlign: "right" }}>{fmt(bar.hp)}</span>
+                  </div>
+                ))}
+              </div>
+
+              {/* Hero vs Monster */}
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 20 }}>
+                <div style={{ textAlign: "center" }}>
+                  <div style={{
+                    width: 76, height: 76, borderRadius: "50%", margin: "0 auto 4px",
+                    background: `radial-gradient(circle, ${T.accent}25 0%, transparent 70%)`,
+                    border: `2px solid ${T.accent}40`,
+                    display: "flex", alignItems: "center", justifyContent: "center", fontSize: 38,
+                    boxShadow: `0 0 20px ${T.accent}20`,
+                  }}>{heroEmoji}</div>
+                  <div style={{ fontSize: 10, fontWeight: 700, color: T.white, fontFamily: FONT_DISPLAY }}>{account.displayName}</div>
+                </div>
+                <div style={{
+                  width: 28, height: 28, borderRadius: "50%", background: `${T.danger}20`, border: `1px solid ${T.danger}30`,
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  fontSize: 9, fontWeight: 900, color: T.danger, fontFamily: FONT_DISPLAY,
+                }}>VS</div>
+                <div style={{ textAlign: "center" }}>
+                  <div style={{
+                    width: 76, height: 76, borderRadius: "50%", margin: "0 auto 4px",
+                    background: `radial-gradient(circle, ${chapter.color}25 0%, transparent 70%)`,
+                    border: `2px solid ${monster.isBoss ? T.danger + "50" : chapter.color + "30"}`,
+                    display: "flex", alignItems: "center", justifyContent: "center", fontSize: 38,
+                    boxShadow: `0 0 20px ${chapter.color}20`,
+                    animation: isBattling ? "pulse 2s infinite" : undefined,
+                  }}>{monster.emoji}</div>
+                  <div style={{ fontSize: 10, fontWeight: 700, color: monster.isBoss ? T.danger : T.white, fontFamily: FONT_DISPLAY }}>{monster.name}</div>
+                </div>
+              </div>
+              <div style={{ fontSize: 11, fontWeight: 700, color: T.gold, marginTop: 8 }}>💰 +{fmt(battleState?.stageGold || 0)}</div>
+            </div>
+
+            {/* ── SIDE BUTTONS (right) ── */}
+            <div style={{ position: "absolute", right: 6, top: 80, display: "flex", flexDirection: "column", gap: 5, zIndex: 20 }}>
               {[
-                { icon: "⚔️", label: "Battle", p: "battle", c: T.danger },
-                { icon: "📊", label: "Growth", p: "growth", c: T.success },
-                { icon: "🎒", label: "Equipment", p: "equipment", c: T.warning },
-                { icon: "✨", label: "Summon", p: "summon", c: T.purple },
-                { icon: "👗", label: "Costumes", p: "costumes", c: T.teal },
-                { icon: "🐾", label: "Pets", p: "pets", c: T.pink },
-                { icon: "🏆", label: "Achievements", p: "achievements", c: T.gold },
-                { icon: "📈", label: "Stats", p: "stats", c: T.info },
-                { icon: "⚙️", label: "Settings", p: "settings", c: T.textSec },
-              ].map(item => (
-                <SidebarItem key={item.p} icon={item.icon} label={item.label} active={page === item.p} onClick={() => nav(item.p)} color={item.c} />
+                { icon: "📊", p: "growth", c: T.success },
+                { icon: "👗", p: "costumes", c: T.teal },
+                { icon: "🐾", p: "pets", c: T.pink },
+                { icon: "⚙️", p: "settings", c: T.textSec },
+              ].map(sb => (
+                <div key={sb.p} onClick={() => nav(sb.p)} style={{
+                  width: 34, height: 34, borderRadius: 10, cursor: "pointer",
+                  background: "#00000050", border: `1px solid #ffffff10`,
+                  display: "flex", alignItems: "center", justifyContent: "center", fontSize: 15,
+                  transition: "all 0.15s",
+                }}>{sb.icon}</div>
               ))}
             </div>
-            <div style={{ padding: "14px 16px", borderTop: `1px solid ${T.sidebarBorder}` }}>
-              <div style={{ display: "flex", gap: 12, fontSize: 12, fontWeight: 700, marginBottom: 8 }}>
-                <span style={{ color: T.gold }}>💰 {fmt(gold)}</span>
-                <span style={{ color: T.purple }}>💎 {fmt(diamonds)}</span>
+
+            {/* ── LEFT SIDE ── */}
+            <div style={{ position: "absolute", left: 6, top: 80, display: "flex", flexDirection: "column", gap: 5, zIndex: 20 }}>
+              <div onClick={() => setAutoProgress(!autoProgress)} style={{
+                width: 34, height: 34, borderRadius: 10, cursor: "pointer",
+                background: autoProgress ? `${T.success}25` : "#00000050",
+                border: `1px solid ${autoProgress ? T.success + "50" : "#ffffff10"}`,
+                display: "flex", alignItems: "center", justifyContent: "center",
+                fontSize: 7, fontWeight: 900, color: autoProgress ? T.success : T.textDim, fontFamily: FONT_DISPLAY,
+              }}>{autoProgress ? "AUTO" : "STOP"}</div>
+            </div>
+
+            {/* ── SKILL BAR ── */}
+            <div style={{ flexShrink: 0, padding: "4px 12px", zIndex: 10 }}>
+              <div style={{ display: "flex", gap: 5, justifyContent: "center" }}>
+                {equippedSkills.filter(Boolean).map(sid => {
+                  const sk = COMBAT_SKILLS.find(s => s.id === sid);
+                  if (!sk) return null;
+                  const cd = skillCooldowns[sk.id];
+                  return (
+                    <div key={sk.id} style={{
+                      width: 40, height: 40, borderRadius: 10, position: "relative",
+                      background: cd ? "#00000060" : `${sk.color}20`,
+                      border: `2px solid ${cd ? "#ffffff10" : sk.color + "50"}`,
+                      display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18,
+                      opacity: cd ? 0.35 : 1, transition: "all 0.3s",
+                      boxShadow: !cd ? `0 0 10px ${sk.color}20` : undefined,
+                    }}>
+                      {sk.emoji}
+                      {!cd && <div style={{ position: "absolute", inset: 0, borderRadius: 10, background: `${sk.color}08`, animation: "pulse 2s infinite" }} />}
+                    </div>
+                  );
+                })}
+                {equippedSkills.filter(Boolean).length === 0 && <div style={{ fontSize: 9, color: T.textDim, padding: 8 }}>No skills equipped</div>}
               </div>
-              <div onClick={onLogout} style={{ fontSize: 11, color: T.textDim, cursor: "pointer" }}>🚪 Logout</div>
+            </div>
+
+            {/* ── BOTTOM TAB BAR ── */}
+            <div style={{
+              flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "space-around",
+              padding: "5px 4px", paddingBottom: "max(6px, env(safe-area-inset-bottom))",
+              background: `${T.sidebar}f0`, backdropFilter: "blur(12px)",
+              borderTop: `1px solid ${T.sidebarBorder}`,
+            }}>
+              {[
+                { icon: "⚔️", label: "Battle", p: "battle", c: T.danger },
+                { icon: "🏰", label: "Dungeon", p: "dungeons", c: T.orange },
+                { icon: "🎒", label: "Equip", p: "equipment", c: T.warning },
+                { icon: "✨", label: "Summon", p: "summon", c: T.purple },
+                { icon: "🏆", label: "Achieve", p: "achievements", c: T.gold },
+                { icon: "📈", label: "Stats", p: "stats", c: T.info },
+              ].map(tab => {
+                const isActive = page === tab.p;
+                return (
+                  <div key={tab.p} onClick={() => nav(tab.p)} style={{
+                    display: "flex", flexDirection: "column", alignItems: "center", gap: 1,
+                    padding: "3px 5px", borderRadius: 8, cursor: "pointer",
+                    background: isActive ? `${tab.c}15` : "transparent", transition: "all 0.15s",
+                  }}>
+                    <span style={{ fontSize: 17, lineHeight: 1 }}>{tab.icon}</span>
+                    <span style={{ fontSize: 7, fontWeight: 700, color: isActive ? tab.c : T.textDim, fontFamily: FONT_BODY }}>{tab.label}</span>
+                  </div>
+                );
+              })}
             </div>
           </div>
-        </div>
-      )}
+        );
+      })()}
 
-      {/* ═══ MAIN ═══ */}
-      <div style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden" }}>
-
-        {/* HEADER */}
-        <header style={{
-          height: 56, flexShrink: 0, display: "flex", alignItems: "center", gap: 14,
-          padding: isMobile ? "0 14px" : "0 28px",
-          background: chapter.bgGrad, borderBottom: `1px solid ${T.headerBorder}`,
+      {/* ═══ LAYER 1: PAGE OVERLAY (slides up over battle when not on battle page) ═══ */}
+      {page !== "battle" && (
+        <div style={{
+          position: "absolute", inset: 0, zIndex: 50,
+          background: `${T.bg}f5`, backdropFilter: "blur(8px)",
+          display: "flex", flexDirection: "column",
+          animation: "slideUp 0.2s ease",
         }}>
-          {isMobile && <div onClick={() => setMobileNav(!mobileNav)} style={{ fontSize: 22, cursor: "pointer", padding: "4px 6px", color: T.textSec }}>☰</div>}
-          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-            <div style={{ width: 36, height: 36, borderRadius: 10, background: `${chapter.color}18`, border: `1px solid ${chapter.color}30`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16 }}>{chapter.emoji}</div>
+          {/* Overlay header */}
+          <div style={{
+            flexShrink: 0, display: "flex", alignItems: "center", gap: 10,
+            padding: "10px 14px", borderBottom: `1px solid ${T.divider}`, background: T.sidebar,
+          }}>
+            <div onClick={() => nav("battle")} style={{
+              width: 32, height: 32, borderRadius: 10, cursor: "pointer",
+              background: `${T.textDim}15`, border: `1px solid ${T.divider}`,
+              display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, color: T.textSec,
+            }}>✕</div>
+            <div style={{ flex: 1, fontSize: 15, fontWeight: 900, color: T.white, fontFamily: FONT_DISPLAY, textTransform: "uppercase" }}>
+              {page === "dungeons" && "🏰 Dungeons"}
+              {page === "growth" && "📊 Growth"}
+              {page === "equipment" && "🎒 Equipment"}
+              {page === "summon" && "✨ Summon"}
+              {page === "pets" && "🐾 Pets"}
+              {page === "costumes" && "👗 Costumes"}
+              {page === "achievements" && "🏆 Achievements"}
+              {page === "stats" && "📈 Stats"}
+              {page === "settings" && "⚙️ Settings"}
+            </div>
+            <div style={{ display: "flex", gap: 6 }}>
+              <span style={{ fontSize: 10, fontWeight: 800, color: T.gold, fontFamily: FONT_DISPLAY }}>💰{fmt(gold)}</span>
+              <span style={{ fontSize: 10, fontWeight: 800, color: T.purple, fontFamily: FONT_DISPLAY }}>💎{fmt(diamonds)}</span>
+            </div>
+          </div>
+
+          {/* Overlay content — all the existing pages go here */}
+          <div style={{ flex: 1, overflow: "auto", padding: 16, paddingBottom: 70 }}>
+          {/* ═══ DUNGEONS ═══ */}
+          {page === "dungeons" && (
             <div>
-              <div style={{ fontSize: 14, fontWeight: 800, color: chapter.color, fontFamily: FONT_DISPLAY }}>{chapter.name}</div>
-              <div style={{ fontSize: 10, color: T.textDim }}>Stage {stageLabel(currentStage)} • Best: {stageLabel(highestStage)}</div>
-            </div>
-          </div>
-          <div style={{ flex: 1 }} />
-          {/* Power rating */}
-          {!isMobile && (
-            <div style={{ padding: "4px 12px", borderRadius: 99, background: `${T.accent}10`, border: `1px solid ${T.accent}20`, marginRight: 8 }}>
-              <span style={{ fontSize: 10, fontWeight: 700, color: T.accent, fontFamily: FONT_DISPLAY }}>⚡ {fmt(totalAtk + totalDef + totalMaxHp)} CP</span>
-            </div>
-          )}
-          <div style={{ display: "flex", gap: isMobile ? 10 : 18, fontSize: 11, fontWeight: 700 }}>
-            <span style={{ color: T.danger }}>⚔️{fmt(totalAtk)}</span>
-            <span style={{ color: T.info }}>🛡️{fmt(totalDef)}</span>
-            <span style={{ color: T.success }}>❤️{fmt(totalMaxHp)}</span>
-          </div>
-          <div style={{ width: 30, height: 30, borderRadius: "50%", background: `${T.accent}12`, border: `1px solid ${T.accent}25`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16, marginLeft: 8 }}>{heroEmoji}</div>
-        </header>
+              <PageTitle icon="🏰" title="DUNGEONS" subtitle="Daily resource dungeons — clear waves for rewards" />
 
-        {/* HP Bar */}
-        <div style={{ padding: "6px " + (isMobile ? "14px" : "28px"), background: `${T.bgDeep}cc` }}>
-          <ProgressBar value={playerHp} max={totalMaxHp} color={playerHp < totalMaxHp * 0.3 ? T.danger : T.success}
-            height={5} labelLeft="HP" labelRight={`${fmt(playerHp)} / ${fmt(totalMaxHp)}`} animated />
-        </div>
-
-        {/* CONTENT */}
-        <div style={{ flex: 1, overflow: "auto", padding: isMobile ? "14px 14px 80px" : 28 }}>
-
-          {/* ═══ BATTLE ═══ */}
-          {page === "battle" && (() => {
-            const monster = battleState?.monster || getStageMonster(currentStage);
-            return (
-              <div>
-                {/* Stage banner */}
-                <div style={{ padding: "20px 24px", borderRadius: T.r, marginBottom: 18, background: chapter.bgGrad, border: `1px solid ${chapter.color}20`, position: "relative", overflow: "hidden" }}>
-                  {/* Decorative glow */}
-                  <div style={{ position: "absolute", top: -20, right: -20, width: 120, height: 120, borderRadius: "50%", background: `${chapter.color}08`, filter: "blur(40px)" }} />
-                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 12, position: "relative" }}>
-                    <div>
-                      <div style={{ fontSize: 26, fontWeight: 900, color: T.white, fontFamily: FONT_DISPLAY, letterSpacing: -0.5 }}>
-                        Stage {stageLabel(currentStage)}
-                        {monster.isBoss && <Badge color={T.danger} style={{ marginLeft: 10, fontSize: 11, padding: "3px 10px" }}>BOSS</Badge>}
-                      </div>
-                      <div style={{ fontSize: 12, color: T.textSec, marginTop: 2 }}>{chapter.emoji} {chapter.name} • {monster.monstersToKill} enemies</div>
-                    </div>
-                    <div style={{ display: "flex", gap: 8 }}>
-                      <Btn small color={autoProgress ? T.success : T.textDim} onClick={() => setAutoProgress(!autoProgress)}>
-                        {autoProgress ? "▶ Auto" : "⏸ Manual"}
-                      </Btn>
-                      {currentStage > 1 && <Btn small color={T.textSec} onClick={() => { stopBattle(); setCurrentStage(Math.max(1, currentStage - 1)); }}>◀</Btn>}
-                    </div>
+              {/* Daily reset notice */}
+              <Card accent={T.orange} style={{ marginBottom: 18 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                  <span style={{ fontSize: 24 }}>🔄</span>
+                  <div>
+                    <div style={{ fontSize: 13, fontWeight: 700, color: T.white }}>Attempts reset daily at midnight</div>
+                    <div style={{ fontSize: 11, color: T.textSec }}>Higher stage progress unlocks harder tiers with better rewards</div>
                   </div>
                 </div>
+              </Card>
 
-                {/* Battle arena */}
-                <Card glow={monster.isBoss ? T.danger : chapter.color} style={{ marginBottom: 18, padding: isMobile ? 20 : 28 }}>
-                  {/* VS display */}
-                  <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: isMobile ? 16 : 40, marginBottom: 20, flexWrap: "wrap" }}>
-                    {/* Hero */}
-                    <div style={{ textAlign: "center" }}>
-                      <div style={{
-                        width: 70, height: 70, borderRadius: "50%", margin: "0 auto 8px",
-                        background: `radial-gradient(circle, ${T.accent}20 0%, transparent 70%)`,
-                        border: `2px solid ${T.accent}40`,
-                        display: "flex", alignItems: "center", justifyContent: "center", fontSize: 34,
-                        boxShadow: `0 0 20px ${T.accent}15`,
-                      }}>{heroEmoji}</div>
-                      <div style={{ fontSize: 12, fontWeight: 700, color: T.white, fontFamily: FONT_DISPLAY }}>{account.displayName}</div>
-                      <div style={{ fontSize: 9, color: T.textDim }}>ATK {fmt(totalAtk)} • DEF {fmt(totalDef)}</div>
-                    </div>
+              {/* Dungeon list */}
+              <div style={{ display: "grid", gap: 18 }}>
+                {DUNGEONS.map(dg => {
+                  const attLeft = getDungeonAttemptsLeft(dg.id);
+                  return (
+                    <Card key={dg.id} accent={dg.color} style={{ background: dg.bgGrad }}>
+                      {/* Dungeon header */}
+                      <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 16 }}>
+                        <div style={{
+                          width: 56, height: 56, borderRadius: 14,
+                          background: `${dg.color}15`, border: `2px solid ${dg.color}30`,
+                          display: "flex", alignItems: "center", justifyContent: "center", fontSize: 28,
+                          boxShadow: `0 0 16px ${dg.color}12`,
+                        }}>{dg.emoji}</div>
+                        <div style={{ flex: 1 }}>
+                          <div style={{ fontSize: 18, fontWeight: 900, color: T.white, fontFamily: FONT_DISPLAY }}>{dg.name}</div>
+                          <div style={{ fontSize: 11, color: T.textSec }}>{dg.desc}</div>
+                        </div>
+                        <div style={{ textAlign: "right" }}>
+                          <div style={{
+                            fontSize: 16, fontWeight: 900, fontFamily: FONT_DISPLAY,
+                            color: attLeft > 0 ? dg.color : T.textDim,
+                          }}>{attLeft}/{dg.maxAttempts}</div>
+                          <div style={{ fontSize: 9, color: T.textDim, fontWeight: 600 }}>ATTEMPTS</div>
+                        </div>
+                      </div>
 
-                    {/* VS badge */}
-                    <div style={{
-                      width: 40, height: 40, borderRadius: "50%", background: `${T.danger}18`, border: `1px solid ${T.danger}30`,
-                      display: "flex", alignItems: "center", justifyContent: "center",
-                      fontSize: 12, fontWeight: 900, color: T.danger, fontFamily: FONT_DISPLAY,
-                    }}>VS</div>
+                      {/* Tiers */}
+                      <div style={{ display: "grid", gap: 8 }}>
+                        {dg.tiers.map((tier, ti) => {
+                          const unlocked = highestStage >= tier.minStage;
+                          const power = totalAtk + totalDef + totalMaxHp;
+                          const canWin = power >= tier.powerReq;
+                          const powerPct = Math.min(100, Math.floor((power / tier.powerReq) * 100));
 
-                    {/* Monster */}
-                    <div style={{ textAlign: "center" }}>
-                      <div style={{
-                        width: 70, height: 70, borderRadius: "50%", margin: "0 auto 8px",
-                        background: `radial-gradient(circle, ${chapter.color}20 0%, transparent 70%)`,
-                        border: `2px solid ${monster.isBoss ? T.danger + "50" : chapter.color + "30"}`,
-                        display: "flex", alignItems: "center", justifyContent: "center", fontSize: 34,
-                        boxShadow: `0 0 20px ${chapter.color}15`,
-                        animation: isBattling ? "pulse 2s infinite" : undefined,
-                      }}>{monster.emoji}</div>
-                      <div style={{ fontSize: 12, fontWeight: 700, color: monster.isBoss ? T.danger : T.white, fontFamily: FONT_DISPLAY }}>{monster.name}</div>
-                      <div style={{ fontSize: 9, color: T.textDim }}>ATK {fmt(monster.atk)} • DEF {fmt(monster.def)}</div>
-                    </div>
-                  </div>
+                          return (
+                            <div key={ti} style={{
+                              display: "flex", alignItems: "center", gap: 12, padding: "12px 14px",
+                              borderRadius: T.rs, background: unlocked ? `${dg.color}06` : T.bgDeep,
+                              border: `1px solid ${unlocked ? dg.color + "20" : T.divider}`,
+                              opacity: unlocked ? 1 : 0.4,
+                            }}>
+                              {/* Tier info */}
+                              <div style={{ flex: 1 }}>
+                                <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
+                                  <span style={{ fontSize: 13, fontWeight: 800, color: unlocked ? T.white : T.textDim, fontFamily: FONT_DISPLAY }}>{tier.name}</span>
+                                  {!unlocked && <Badge color={T.textDim}>Stage {tier.minStage}+</Badge>}
+                                  {unlocked && canWin && <Badge color={T.success} style={{ fontSize: 8 }}>CLEARABLE</Badge>}
+                                </div>
+                                <div style={{ fontSize: 10, color: T.textSec }}>
+                                  {tier.enemies} waves • Power: {fmt(tier.powerReq)}
+                                  {tier.reward.gold && ` • 💰 ${fmt(tier.reward.gold)}`}
+                                  {tier.reward.diamonds && ` • 💎 ${tier.reward.diamonds}`}
+                                  {tier.reward.growthLevels && ` • 📊 +${tier.reward.growthLevels} levels`}
+                                </div>
+                                {/* Power comparison bar */}
+                                {unlocked && (
+                                  <div style={{ marginTop: 6, maxWidth: 200 }}>
+                                    <ProgressBar value={Math.min(power, tier.powerReq)} max={tier.powerReq}
+                                      color={canWin ? T.success : powerPct > 60 ? T.warning : T.danger}
+                                      height={4} labelRight={`${powerPct}%`} />
+                                  </div>
+                                )}
+                              </div>
 
-                  {/* Monster HP */}
-                  <div style={{ maxWidth: 420, margin: "0 auto 14px" }}>
-                    <ProgressBar value={Math.max(0, battleState?.monsterHp || monster.hp)} max={monster.hp} color={T.danger} height={12} showLabel animated />
-                  </div>
-
-                  {/* Kill progress */}
-                  <div style={{ maxWidth: 420, margin: "0 auto 18px" }}>
-                    <ProgressBar value={battleState?.killCount || 0} max={monster.monstersToKill}
-                      color={chapter.color} height={6} labelLeft="Kills" labelRight={`${battleState?.killCount || 0} / ${monster.monstersToKill}`} />
-                  </div>
-
-                  {/* Stage rewards */}
-                  <div style={{ display: "flex", justifyContent: "center", gap: 24, fontSize: 12, fontWeight: 700 }}>
-                    <span style={{ color: T.gold }}>💰 +{fmt(battleState?.stageGold || 0)}</span>
-                    <span style={{ color: T.textSec }}>⚔️ Total: {fmt(combatStats.kills)}</span>
-                    {combatStats.bossesKilled > 0 && <span style={{ color: T.orange }}>👑 Bosses: {combatStats.bossesKilled}</span>}
-                  </div>
-                </Card>
-
-                {/* Skills */}
-                <Card style={{ marginBottom: 18 }}>
-                  <div style={{ fontSize: 13, fontWeight: 800, color: T.white, marginBottom: 12, fontFamily: FONT_DISPLAY }}>⚡ SKILLS</div>
-                  <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-                    {equippedSkills.filter(Boolean).map(sid => {
-                      const sk = COMBAT_SKILLS.find(s => s.id === sid);
-                      if (!sk) return null;
-                      const cd = skillCooldowns[sk.id];
-                      return (
-                        <div key={sk.id} onClick={() => useSkill(sk.id)} style={{
-                          padding: "12px 20px", borderRadius: T.rs, cursor: cd ? "not-allowed" : "pointer",
-                          background: cd ? T.bar : `${sk.color}12`,
-                          border: `1px solid ${cd ? T.divider : sk.color + "35"}`,
-                          color: cd ? T.textDim : sk.color,
-                          fontWeight: 700, fontSize: 12, opacity: cd ? 0.5 : 1,
-                          transition: "all 0.15s", boxShadow: cd ? undefined : `0 0 12px ${sk.color}10`,
-                        }}>{sk.emoji} {sk.name} {cd && "⏳"}</div>
-                      );
-                    })}
-                    {equippedSkills.filter(Boolean).length === 0 && <div style={{ fontSize: 11, color: T.textDim }}>No skills equipped — visit Growth page.</div>}
-                  </div>
-                </Card>
-
-                {/* Log */}
-                <Card>
-                  <div style={{ fontSize: 13, fontWeight: 800, color: T.white, marginBottom: 8, fontFamily: FONT_DISPLAY }}>📜 BATTLE LOG</div>
-                  <div style={{ maxHeight: 140, overflow: "auto", fontSize: 11, color: T.textSec }}>
-                    {log.slice(-25).reverse().map((l, i) => (
-                      <div key={i} style={{ padding: "3px 0", borderBottom: i < 24 ? `1px solid ${T.divider}08` : undefined, opacity: 1 - i * 0.03 }}>{l.msg}</div>
-                    ))}
-                    {log.length === 0 && <div style={{ color: T.textDim }}>Battle in progress...</div>}
-                  </div>
-                </Card>
+                              {/* Run button */}
+                              <Btn small
+                                color={unlocked && attLeft > 0 ? dg.color : T.textDim}
+                                disabled={!unlocked || attLeft <= 0}
+                                onClick={() => runDungeon(dg.id, ti)}
+                              >
+                                {!unlocked ? "🔒" : attLeft <= 0 ? "No Tries" : "⚔️ Enter"}
+                              </Btn>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </Card>
+                  );
+                })}
               </div>
-            );
-          })()}
+            </div>
+          )}
 
           {/* ═══ GROWTH ═══ */}
           {page === "growth" && (
@@ -1943,59 +2146,63 @@ function GameUI({ account, initialSave, onLogout }) {
                   <Badge color={T.success}>Active</Badge>
                 </div>
               </Card>
+              <Card style={{ marginTop: 12 }}>
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "8px 0" }}>
+                  <div>
+                    <div style={{ fontSize: 13, fontWeight: 700, color: T.white }}>Account</div>
+                    <div style={{ fontSize: 11, color: T.textSec }}>{account.displayName} • {account.email}</div>
+                  </div>
+                  <Btn small color={T.danger} onClick={onLogout}>Logout</Btn>
+                </div>
+              </Card>
             </div>
           )}
 
-        </div>
-      </div>
+          </div>
 
-      {/* ═══ MOBILE BOTTOM TAB BAR ═══ */}
-      {isMobile && (
-        <div style={{
-          position: "fixed", bottom: 0, left: 0, right: 0, zIndex: 150,
-          background: `${T.sidebar}f5`, backdropFilter: "blur(12px)",
-          borderTop: `1px solid ${T.sidebarBorder}`,
-          display: "flex", alignItems: "center", justifyContent: "space-around",
-          padding: "6px 4px 10px", paddingBottom: "max(10px, env(safe-area-inset-bottom))",
-        }}>
-          {[
-            { icon: "⚔️", label: "Battle", p: "battle", c: T.danger },
-            { icon: "📊", label: "Growth", p: "growth", c: T.success },
-            { icon: "🎒", label: "Gear", p: "equipment", c: T.warning },
-            { icon: "✨", label: "Summon", p: "summon", c: T.purple },
-            { icon: "🏆", label: "Achieve", p: "achievements", c: T.gold },
-            { icon: "☰", label: "More", p: "_menu", c: T.textSec },
-          ].map(tab => {
-            const isActive = tab.p === "_menu" ? false : page === tab.p;
-            return (
-              <div key={tab.p} onClick={() => tab.p === "_menu" ? setMobileNav(true) : nav(tab.p)} style={{
-                display: "flex", flexDirection: "column", alignItems: "center", gap: 2,
-                padding: "4px 8px", borderRadius: 8, cursor: "pointer",
-                background: isActive ? `${tab.c}12` : "transparent",
-                transition: "all 0.15s",
-              }}>
-                <span style={{ fontSize: 18, lineHeight: 1 }}>{tab.icon}</span>
-                <span style={{ fontSize: 8, fontWeight: 700, color: isActive ? tab.c : T.textDim, fontFamily: FONT_BODY }}>{tab.label}</span>
-              </div>
-            );
-          })}
+          {/* Bottom nav in overlay too */}
+          <div style={{
+            flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "space-around",
+            padding: "5px 4px", paddingBottom: "max(6px, env(safe-area-inset-bottom))",
+            background: `${T.sidebar}f0`, borderTop: `1px solid ${T.sidebarBorder}`,
+          }}>
+            {[
+              { icon: "⚔️", label: "Battle", p: "battle", c: T.danger },
+              { icon: "🏰", label: "Dungeon", p: "dungeons", c: T.orange },
+              { icon: "🎒", label: "Equip", p: "equipment", c: T.warning },
+              { icon: "✨", label: "Summon", p: "summon", c: T.purple },
+              { icon: "🏆", label: "Achieve", p: "achievements", c: T.gold },
+              { icon: "📈", label: "Stats", p: "stats", c: T.info },
+            ].map(tab => {
+              const isActive = page === tab.p;
+              return (
+                <div key={tab.p} onClick={() => nav(tab.p)} style={{
+                  display: "flex", flexDirection: "column", alignItems: "center", gap: 1,
+                  padding: "3px 5px", borderRadius: 8, cursor: "pointer",
+                  background: isActive ? `${tab.c}15` : "transparent", transition: "all 0.15s",
+                }}>
+                  <span style={{ fontSize: 17, lineHeight: 1 }}>{tab.icon}</span>
+                  <span style={{ fontSize: 7, fontWeight: 700, color: isActive ? tab.c : T.textDim, fontFamily: FONT_BODY }}>{tab.label}</span>
+                </div>
+              );
+            })}
+          </div>
         </div>
       )}
 
       {/* ═══ GLOBAL STYLES ═══ */}
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&family=DM+Sans:wght@400;500;600;700&display=swap');
-
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body { background: ${T.bg}; overflow: hidden; }
-        ::-webkit-scrollbar { width: 5px; }
+        ::-webkit-scrollbar { width: 4px; }
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: ${T.divider}; border-radius: 99px; }
         ::-webkit-scrollbar-thumb:hover { background: ${T.textDim}; }
 
         @keyframes pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.06); } }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-        @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes slideUp { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
         @keyframes shimmer { 0% { transform: translateX(-100%); } 100% { transform: translateX(400%); } }
         @keyframes glow { 0%, 100% { box-shadow: 0 0 8px var(--glow-color, #6366f140); } 50% { box-shadow: 0 0 20px var(--glow-color, #6366f160); } }
         @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-4px); } }
@@ -2004,11 +2211,6 @@ function GameUI({ account, initialSave, onLogout }) {
         @keyframes fadeOut { from { opacity: 1; } to { opacity: 0; pointer-events: none; } }
         @keyframes slideRight { from { opacity: 0; transform: translateX(-30px); } to { opacity: 1; transform: translateX(0); } }
         @keyframes sparkle { 0%, 100% { opacity: 0.3; transform: scale(1); } 50% { opacity: 1; transform: scale(1.3); } }
-
-        /* Smooth page transitions */
-        [data-page] { animation: fadeIn 0.2s ease; }
-
-        /* Selection color */
         ::selection { background: ${T.accent}40; color: ${T.white}; }
       `}</style>
     </div>

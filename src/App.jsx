@@ -1213,6 +1213,10 @@ function GameUI({ account, initialSave, onLogout }) {
   const [petLevels, setPetLevels] = useState(() => sv.petLevels || {});
   const [showPowerBreakdown, setShowPowerBreakdown] = useState(false);
 
+  // Derived values (must be before useCallbacks that reference them)
+  const canPrestige = highestStage >= 50;
+  const prestigeSoulsToEarn = calcPrestigeSouls(highestStage);
+
   // Battle Pass
   const [battlePassXp, setBattlePassXp] = useState(() => sv.battlePassXp || 0);
   const [battlePassLevel, setBattlePassLevel] = useState(() => sv.battlePassLevel || 0);
@@ -1308,77 +1312,6 @@ function GameUI({ account, initialSave, onLogout }) {
     addLog(`🗿 Figure collected: ${fig.emoji} ${fig.name}!`);
   }, [diamonds, gold, ownedFigures, addLog]);
 
-  // Tower of Trials - fight one floor
-  const attemptTowerFloor = useCallback(() => {
-    const floor = towerFloor;
-    const enemy = towerEnemy(floor);
-    const playerDps = Math.max(1, totalAtk - enemy.def * 0.3);
-    const enemyDps = Math.max(1, enemy.atk - totalDef * 0.3);
-    const timeToKill = enemy.hp / playerDps;
-    const timeToDie = totalMaxHp / enemyDps;
-    const success = timeToKill < timeToDie;
-    if (success) {
-      const newFloor = floor + 1;
-      setTowerFloor(newFloor);
-      if (newFloor > towerBestFloor) setTowerBestFloor(newFloor);
-      const reward = TOWER_REWARDS.find(r => r.floor === newFloor);
-      if (reward) {
-        if (reward.reward.gold) setGold(g => g + reward.reward.gold);
-        if (reward.reward.diamonds) setDiamonds(d => d + reward.reward.diamonds);
-        if (reward.reward.souls) setPrestigeSouls(s => s + reward.reward.souls);
-      }
-      setTowerResult({ success: true, floor: newFloor, enemy, reward: reward?.reward });
-      addLog("Tower Floor " + newFloor + " cleared!");
-    } else {
-      setTowerResult({ success: false, floor, enemy, hpPct: Math.floor((timeToKill / timeToDie) * 100) });
-    }
-  }, [towerFloor, towerBestFloor, totalAtk, totalDef, totalMaxHp, addLog]);
-
-  // Daily Wheel Spin
-  const doDailySpin = useCallback(() => {
-    const today = new Date().toISOString().slice(0, 10);
-    if (lastSpinDay === today || isSpinning) return;
-    setIsSpinning(true);
-    const totalWeight = SPIN_PRIZES.reduce((s, p) => s + p.weight, 0);
-    let roll = Math.random() * totalWeight, cum = 0, idx = 0;
-    for (let i = 0; i < SPIN_PRIZES.length; i++) { cum += SPIN_PRIZES[i].weight; if (roll < cum) { idx = i; break; } }
-    const prize = SPIN_PRIZES[idx];
-    setTimeout(() => {
-      if (prize.reward.gold) setGold(g => g + prize.reward.gold);
-      if (prize.reward.diamonds) setDiamonds(d => d + prize.reward.diamonds);
-      if (prize.reward.marks) setEmblemMarks(m => m + prize.reward.marks);
-      if (prize.reward.souls) setPrestigeSouls(s => s + prize.reward.souls);
-      setLastSpinDay(today);
-      setSpinResult(prize);
-      setIsSpinning(false);
-    }, 1500);
-  }, [lastSpinDay, isSpinning]);
-
-  // Boss Rush
-  const doBossRush = useCallback(() => {
-    let bossesKilled = 0, playerHpRem = totalMaxHp;
-    for (const boss of BOSS_RUSH_BOSSES) {
-      const bHp = Math.floor(500 * boss.hpMult * (1 + highestStage * 0.5));
-      const bAtk = Math.floor(20 * boss.atkMult * (1 + highestStage * 0.3));
-      const bDef = Math.floor(10 * boss.defMult * (1 + highestStage * 0.2));
-      const dps = Math.max(1, totalAtk - bDef * 0.3);
-      const eDps = Math.max(1, bAtk - totalDef * 0.3);
-      const timeToKill = bHp / dps;
-      playerHpRem -= eDps * timeToKill;
-      if (playerHpRem <= 0) break;
-      bossesKilled++;
-    }
-    const goldReward = Math.floor(bossesKilled * 2000 * (1 + highestStage * 0.1));
-    const diamondReward = bossesKilled * 15;
-    const soulReward = bossesKilled >= 5 ? bossesKilled * 2 : 0;
-    setGold(g => g + goldReward);
-    setDiamonds(d => d + diamondReward);
-    if (soulReward > 0) setPrestigeSouls(s => s + soulReward);
-    if (bossesKilled > bossRushBest) setBossRushBest(bossesKilled);
-    setCombatStats(s => ({ ...s, bossesKilled: s.bossesKilled + bossesKilled }));
-    setBossRushResult({ bossesKilled, total: BOSS_RUSH_BOSSES.length, goldReward, diamondReward, soulReward });
-  }, [totalAtk, totalDef, totalMaxHp, highestStage, bossRushBest]);
-
   // Battle Pass XP gain
   const addBpXp = useCallback((amount) => {
     if (battlePassLevel >= BP_MAX_LEVEL) return;
@@ -1448,8 +1381,6 @@ function GameUI({ account, initialSave, onLogout }) {
   }, [gold, passiveSkillLevels]);
 
   // ─── PRESTIGE / REBIRTH ───
-  const canPrestige = highestStage >= 50;
-  const prestigeSoulsToEarn = calcPrestigeSouls(highestStage);
 
   const doPrestige = useCallback(() => {
     if (!canPrestige) return;
@@ -1724,7 +1655,79 @@ function GameUI({ account, initialSave, onLogout }) {
   const critRate = Math.min(80, (equipBonus.critRate || 0) + enhanceBonus.critRate + (petBonus.critRate || 0) + (costumeBonus.critRate || 0) + (relicBonus.critRate || 0) + (insigniaBonus.critRate || 0) + (passiveBonus.critRate || 0) + (titleBonus.critRate || 0) + (emblemBonus.critRate || 0) + (resonanceBonus.critRate || 0) + (figureBonus.critRate || 0) + (gemBonus.critRate || 0));
   const critDmg = 150 + (equipBonus.critDmg || 0) + enhanceBonus.critDmg + (petBonus.critDmg || 0) + (costumeBonus.critDmg || 0) + (relicBonus.critDmg || 0) + (insigniaBonus.critDmg || 0) + (passiveBonus.critDmg || 0) + (titleBonus.critDmg || 0) + (emblemBonus.critDmg || 0) + (resonanceBonus.critDmg || 0) + (figureBonus.critDmg || 0) + (gemBonus.critDmg || 0);
   const goldMult = 1 + ((petBonus.goldPct || 0) + (costumeBonus.goldPct || 0) + (relicBonus.goldPct || 0) + (insigniaBonus.goldPct || 0) + (passiveBonus.goldPct || 0) + (titleBonus.goldPct || 0) + (emblemBonus.goldPct || 0) + (resonanceBonus.goldPct || 0) + (figureBonus.goldPct || 0)) / 100;
-  const maxHpRef = useRef(totalMaxHp);
+
+// Tower of Trials - fight one floor
+  const attemptTowerFloor = useCallback(() => {
+    const floor = towerFloor;
+    const enemy = towerEnemy(floor);
+    const playerDps = Math.max(1, totalAtk - enemy.def * 0.3);
+    const enemyDps = Math.max(1, enemy.atk - totalDef * 0.3);
+    const timeToKill = enemy.hp / playerDps;
+    const timeToDie = totalMaxHp / enemyDps;
+    const success = timeToKill < timeToDie;
+    if (success) {
+      const newFloor = floor + 1;
+      setTowerFloor(newFloor);
+      if (newFloor > towerBestFloor) setTowerBestFloor(newFloor);
+      const reward = TOWER_REWARDS.find(r => r.floor === newFloor);
+      if (reward) {
+        if (reward.reward.gold) setGold(g => g + reward.reward.gold);
+        if (reward.reward.diamonds) setDiamonds(d => d + reward.reward.diamonds);
+        if (reward.reward.souls) setPrestigeSouls(s => s + reward.reward.souls);
+      }
+      setTowerResult({ success: true, floor: newFloor, enemy, reward: reward?.reward });
+      addLog("Tower Floor " + newFloor + " cleared!");
+    } else {
+      setTowerResult({ success: false, floor, enemy, hpPct: Math.floor((timeToKill / timeToDie) * 100) });
+    }
+  }, [towerFloor, towerBestFloor, totalAtk, totalDef, totalMaxHp, addLog]);
+
+  // Daily Wheel Spin
+  const doDailySpin = useCallback(() => {
+    const today = new Date().toISOString().slice(0, 10);
+    if (lastSpinDay === today || isSpinning) return;
+    setIsSpinning(true);
+    const totalWeight = SPIN_PRIZES.reduce((s, p) => s + p.weight, 0);
+    let roll = Math.random() * totalWeight, cum = 0, idx = 0;
+    for (let i = 0; i < SPIN_PRIZES.length; i++) { cum += SPIN_PRIZES[i].weight; if (roll < cum) { idx = i; break; } }
+    const prize = SPIN_PRIZES[idx];
+    setTimeout(() => {
+      if (prize.reward.gold) setGold(g => g + prize.reward.gold);
+      if (prize.reward.diamonds) setDiamonds(d => d + prize.reward.diamonds);
+      if (prize.reward.marks) setEmblemMarks(m => m + prize.reward.marks);
+      if (prize.reward.souls) setPrestigeSouls(s => s + prize.reward.souls);
+      setLastSpinDay(today);
+      setSpinResult(prize);
+      setIsSpinning(false);
+    }, 1500);
+  }, [lastSpinDay, isSpinning]);
+
+  // Boss Rush
+  const doBossRush = useCallback(() => {
+    let bossesKilled = 0, playerHpRem = totalMaxHp;
+    for (const boss of BOSS_RUSH_BOSSES) {
+      const bHp = Math.floor(500 * boss.hpMult * (1 + highestStage * 0.5));
+      const bAtk = Math.floor(20 * boss.atkMult * (1 + highestStage * 0.3));
+      const bDef = Math.floor(10 * boss.defMult * (1 + highestStage * 0.2));
+      const dps = Math.max(1, totalAtk - bDef * 0.3);
+      const eDps = Math.max(1, bAtk - totalDef * 0.3);
+      const timeToKill = bHp / dps;
+      playerHpRem -= eDps * timeToKill;
+      if (playerHpRem <= 0) break;
+      bossesKilled++;
+    }
+    const goldReward = Math.floor(bossesKilled * 2000 * (1 + highestStage * 0.1));
+    const diamondReward = bossesKilled * 15;
+    const soulReward = bossesKilled >= 5 ? bossesKilled * 2 : 0;
+    setGold(g => g + goldReward);
+    setDiamonds(d => d + diamondReward);
+    if (soulReward > 0) setPrestigeSouls(s => s + soulReward);
+    if (bossesKilled > bossRushBest) setBossRushBest(bossesKilled);
+    setCombatStats(s => ({ ...s, bossesKilled: s.bossesKilled + bossesKilled }));
+    setBossRushResult({ bossesKilled, total: BOSS_RUSH_BOSSES.length, goldReward, diamondReward, soulReward });
+  }, [totalAtk, totalDef, totalMaxHp, highestStage, bossRushBest]);
+
+    const maxHpRef = useRef(totalMaxHp);
   useEffect(() => { maxHpRef.current = totalMaxHp; }, [totalMaxHp]);
 
   // ─── OFFLINE EARNINGS (runs once on mount) ───

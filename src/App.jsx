@@ -1073,27 +1073,23 @@ function GameUI({ account, initialSave, onLogout }) {
   const doPrestige = useCallback(() => {
     if (!canPrestige) return;
     const souls = prestigeSoulsToEarn;
-    // Reset progress
     setCurrentStage(1);
     setHighestStage(1);
     setGrowth({ atk: 1, hp: 1, def: 1 });
     setGold(100);
     setEquipment([]);
-    setEquipped({ weapon: null, armor: null, helm: null, gloves: null, boots: null, ring: null, amulet: null });
+    setEquipped({ weapon: null, armor: null, helm: null, gloves: null, boots: null, ring: null, amulet: null, earring: null, necklace: null, bracelet: null });
+    setAccessories([]);
     setSkillLevels({});
     setPassiveSkillLevels({});
-    // Keep: diamonds, pets, costumes, relics, insignias, achievements
-    // Award souls
     setPrestigeSouls(s => s + souls);
     setPrestigeCount(c => c + 1);
     setCombatStats(s => ({ ...s, kills: 0, totalDamage: 0, deaths: 0, highestHit: 0, bossesKilled: 0 }));
-    // Restart battle
     setIsBattling(false);
     setBattleState(null);
+    setPage("battle");
     addLog(`🔄 REBIRTH #${prestigeCount + 1}! +${souls} Prestige Souls`);
-    nav("battle");
-    setTimeout(() => startBattle(1), 300);
-  }, [canPrestige, prestigeSoulsToEarn, prestigeCount, startBattle]);
+  }, [canPrestige, prestigeSoulsToEarn, prestigeCount]);
 
   // ─── QUEST STATE ───
   const [questProgress, setQuestProgress] = useState(() => {

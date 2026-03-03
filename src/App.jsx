@@ -467,25 +467,6 @@ function ProgressBar({ value, max, color = T.accent, height = 8, showLabel, labe
   );
 }
 
-function SidebarItem({ icon, label, active, onClick, color, badge }) {
-  const [hover, setHover] = useState(false);
-  return (
-    <div onClick={onClick}
-      onMouseEnter={() => setHover(true)} onMouseLeave={() => setHover(false)}
-      style={{
-        display: "flex", alignItems: "center", gap: 10, padding: "10px 14px", marginBottom: 2,
-        borderRadius: T.rs, cursor: "pointer",
-        background: active ? `${color || T.accent}10` : hover ? T.sidebarHover : "transparent",
-        borderLeft: active ? `3px solid ${color || T.accent}` : "3px solid transparent",
-        transition: "all 0.12s ease",
-      }}>
-      <span style={{ fontSize: 15, width: 22, textAlign: "center" }}>{icon}</span>
-      <span style={{ fontSize: 12, fontWeight: active ? 700 : 500, color: active ? T.white : T.textSec, flex: 1, fontFamily: FONT_BODY }}>{label}</span>
-      {badge && <Badge color={color}>{badge}</Badge>}
-    </div>
-  );
-}
-
 function StatRow({ label, value, color }) {
   return (
     <div style={{ display: "flex", justifyContent: "space-between", padding: "6px 0", borderBottom: `1px solid ${T.divider}08`, fontSize: 12, fontFamily: FONT_BODY }}>
@@ -1303,356 +1284,230 @@ function GameUI({ account, initialSave, onLogout }) {
   const timeStr = timeMins >= 60 ? `${Math.floor(timeMins / 60)}h ${timeMins % 60}m` : `${timeMins}m`;
 
 
-  return (
-    <div style={{ position: "relative", width: "100%", height: "100vh", overflow: "hidden", fontFamily: FONT_BODY, background: T.bg, color: T.text }}>
 
-      {/* ═══ POPUPS (z: 999) ═══ */}
+  return (
+    <div style={{ position: "relative", width: "100%", height: "100vh", maxWidth: 480, margin: "0 auto", overflow: "hidden", fontFamily: FONT_BODY, background: "#0a0c14", color: T.text }}>
+
+      {/* ═══ POPUPS (z:999) ═══ */}
       {offlinePopup && (
         <Popup title="Welcome Back!" icon="🌙" color={T.gold} onClose={() => setOfflinePopup(null)}>
-          <div style={{ textAlign: "center", marginBottom: 16 }}>
-            <div style={{ fontSize: 13, color: T.textSec, marginBottom: 12 }}>
-              You were away for <span style={{ color: T.white, fontWeight: 700 }}>{offlinePopup.duration}</span>
-              {offlinePopup.capped && <span style={{ color: T.textDim }}> (max {OFFLINE_MAX_HOURS}h)</span>}
-            </div>
-            <div style={{ display: "flex", gap: 12, justifyContent: "center" }}>
-              <div style={{ padding: "12px 20px", borderRadius: T.r, background: `${T.gold}12`, border: `1px solid ${T.gold}25` }}>
-                <div style={{ fontSize: 22, fontWeight: 900, color: T.gold, fontFamily: FONT_DISPLAY }}>{fmt(offlinePopup.gold)}</div>
-                <div style={{ fontSize: 9, color: T.textDim, fontWeight: 600 }}>GOLD</div>
+          <div style={{ textAlign: "center" }}>
+            <div style={{ fontSize: 12, color: T.textSec, marginBottom: 10 }}>Away for <span style={{ color: T.white, fontWeight: 700 }}>{offlinePopup.duration}</span>{offlinePopup.capped ? ` (max ${OFFLINE_MAX_HOURS}h)` : ""}</div>
+            <div style={{ display: "flex", gap: 10, justifyContent: "center" }}>
+              <div style={{ padding: "10px 18px", borderRadius: 10, background: `${T.gold}12`, border: `1px solid ${T.gold}25` }}>
+                <div style={{ fontSize: 20, fontWeight: 900, color: T.gold, fontFamily: FONT_DISPLAY }}>{fmt(offlinePopup.gold)}</div>
+                <div style={{ fontSize: 8, color: T.textDim, fontWeight: 700 }}>GOLD</div>
               </div>
-              <div style={{ padding: "12px 20px", borderRadius: T.r, background: `${T.danger}12`, border: `1px solid ${T.danger}25` }}>
-                <div style={{ fontSize: 22, fontWeight: 900, color: T.danger, fontFamily: FONT_DISPLAY }}>{fmt(offlinePopup.kills)}</div>
-                <div style={{ fontSize: 9, color: T.textDim, fontWeight: 600 }}>KILLS</div>
+              <div style={{ padding: "10px 18px", borderRadius: 10, background: `${T.danger}12`, border: `1px solid ${T.danger}25` }}>
+                <div style={{ fontSize: 20, fontWeight: 900, color: T.danger, fontFamily: FONT_DISPLAY }}>{fmt(offlinePopup.kills)}</div>
+                <div style={{ fontSize: 8, color: T.textDim, fontWeight: 700 }}>KILLS</div>
               </div>
             </div>
           </div>
         </Popup>
       )}
-
       {loginRewardPopup && !offlinePopup && (
         <Popup title="Daily Reward!" icon="🎁" color={T.accent} onClose={() => setLoginRewardPopup(null)}>
-          <div style={{ textAlign: "center", marginBottom: 12 }}>
-            <Badge color={T.orange} style={{ fontSize: 12, padding: "4px 12px" }}>🔥 Day {loginRewardPopup.dayIdx} — Streak {loginRewardPopup.streak}</Badge>
-            <div style={{ display: "flex", gap: 12, justifyContent: "center", marginTop: 12 }}>
-              <div style={{ padding: "12px 20px", borderRadius: T.r, background: `${T.gold}12`, border: `1px solid ${T.gold}25` }}>
-                <div style={{ fontSize: 20, fontWeight: 900, color: T.gold, fontFamily: FONT_DISPLAY }}>+{fmt(loginRewardPopup.gold)}</div>
-                <div style={{ fontSize: 9, color: T.textDim, fontWeight: 600 }}>GOLD</div>
+          <div style={{ textAlign: "center" }}>
+            <Badge color={T.orange} style={{ fontSize: 11, padding: "3px 10px", marginBottom: 10 }}>🔥 Day {loginRewardPopup.dayIdx}</Badge>
+            <div style={{ display: "flex", gap: 10, justifyContent: "center", marginTop: 8 }}>
+              <div style={{ padding: "10px 18px", borderRadius: 10, background: `${T.gold}12`, border: `1px solid ${T.gold}25` }}>
+                <div style={{ fontSize: 18, fontWeight: 900, color: T.gold, fontFamily: FONT_DISPLAY }}>+{fmt(loginRewardPopup.gold)}</div>
+                <div style={{ fontSize: 8, color: T.textDim }}>GOLD</div>
               </div>
-              {loginRewardPopup.diamonds > 0 && (
-                <div style={{ padding: "12px 20px", borderRadius: T.r, background: `${T.purple}12`, border: `1px solid ${T.purple}25` }}>
-                  <div style={{ fontSize: 20, fontWeight: 900, color: T.purple, fontFamily: FONT_DISPLAY }}>+{loginRewardPopup.diamonds}</div>
-                  <div style={{ fontSize: 9, color: T.textDim, fontWeight: 600 }}>DIAMONDS</div>
-                </div>
-              )}
+              {loginRewardPopup.diamonds > 0 && <div style={{ padding: "10px 18px", borderRadius: 10, background: `${T.purple}12`, border: `1px solid ${T.purple}25` }}>
+                <div style={{ fontSize: 18, fontWeight: 900, color: T.purple, fontFamily: FONT_DISPLAY }}>+{loginRewardPopup.diamonds}</div>
+                <div style={{ fontSize: 8, color: T.textDim }}>GEMS</div>
+              </div>}
             </div>
-          </div>
-          <div style={{ display: "flex", gap: 4, justifyContent: "center" }}>
-            {LOGIN_REWARDS.map((r, i) => (
-              <div key={i} style={{
-                width: 40, padding: "5px 0", borderRadius: 6, textAlign: "center", fontSize: 8, fontWeight: 700,
-                background: i < loginRewardPopup.dayIdx ? `${T.success}15` : i === loginRewardPopup.dayIdx - 1 ? `${T.accent}20` : T.bgDeep,
-                border: `1px solid ${i === loginRewardPopup.dayIdx - 1 ? T.accent + "40" : T.divider}`,
-                color: i < loginRewardPopup.dayIdx ? T.success : i === loginRewardPopup.dayIdx - 1 ? T.accent : T.textDim,
-              }}>D{i + 1}{i < loginRewardPopup.dayIdx ? " ✓" : ""}</div>
-            ))}
           </div>
         </Popup>
       )}
-
       {dungeonResult && (
         <Popup title={dungeonResult.success ? "Cleared!" : "Failed"} icon={dungeonResult.success ? "🎉" : "💀"} color={dungeonResult.success ? T.success : T.danger} onClose={() => setDungeonResult(null)}>
-          <div style={{ textAlign: "center", marginBottom: 12 }}>
-            <div style={{ fontSize: 12, color: T.textSec, marginBottom: 10 }}>{dungeonResult.dungeon.emoji} {dungeonResult.tier.name} — {dungeonResult.waves}/{dungeonResult.totalWaves} waves</div>
-            <div style={{ display: "flex", gap: 10, justifyContent: "center", flexWrap: "wrap" }}>
-              {dungeonResult.totalReward.gold > 0 && (
-                <div style={{ padding: "10px 16px", borderRadius: T.r, background: `${T.gold}10`, border: `1px solid ${T.gold}20` }}>
-                  <div style={{ fontSize: 18, fontWeight: 900, color: T.gold, fontFamily: FONT_DISPLAY }}>+{fmt(dungeonResult.totalReward.gold)}</div>
-                  <div style={{ fontSize: 8, color: T.textDim }}>GOLD</div>
-                </div>
-              )}
-              {dungeonResult.totalReward.diamonds > 0 && (
-                <div style={{ padding: "10px 16px", borderRadius: T.r, background: `${T.purple}10`, border: `1px solid ${T.purple}20` }}>
-                  <div style={{ fontSize: 18, fontWeight: 900, color: T.purple, fontFamily: FONT_DISPLAY }}>+{dungeonResult.totalReward.diamonds}</div>
-                  <div style={{ fontSize: 8, color: T.textDim }}>DIAMONDS</div>
-                </div>
-              )}
-              {dungeonResult.totalReward.growthLevels > 0 && (
-                <div style={{ padding: "10px 16px", borderRadius: T.r, background: `${T.success}10`, border: `1px solid ${T.success}20` }}>
-                  <div style={{ fontSize: 18, fontWeight: 900, color: T.success, fontFamily: FONT_DISPLAY }}>+{dungeonResult.totalReward.growthLevels}</div>
-                  <div style={{ fontSize: 8, color: T.textDim }}>GROWTH</div>
-                </div>
-              )}
+          <div style={{ textAlign: "center" }}>
+            <div style={{ fontSize: 11, color: T.textSec, marginBottom: 8 }}>{dungeonResult.dungeon.emoji} {dungeonResult.tier.name} — {dungeonResult.waves}/{dungeonResult.totalWaves} waves</div>
+            <div style={{ display: "flex", gap: 8, justifyContent: "center", flexWrap: "wrap" }}>
+              {dungeonResult.totalReward.gold > 0 && <div style={{ padding: "8px 14px", borderRadius: 8, background: `${T.gold}10`, border: `1px solid ${T.gold}20` }}><div style={{ fontSize: 16, fontWeight: 900, color: T.gold, fontFamily: FONT_DISPLAY }}>+{fmt(dungeonResult.totalReward.gold)}</div><div style={{ fontSize: 7, color: T.textDim }}>GOLD</div></div>}
+              {dungeonResult.totalReward.diamonds > 0 && <div style={{ padding: "8px 14px", borderRadius: 8, background: `${T.purple}10`, border: `1px solid ${T.purple}20` }}><div style={{ fontSize: 16, fontWeight: 900, color: T.purple, fontFamily: FONT_DISPLAY }}>+{dungeonResult.totalReward.diamonds}</div><div style={{ fontSize: 7, color: T.textDim }}>GEMS</div></div>}
+              {dungeonResult.totalReward.growthLevels > 0 && <div style={{ padding: "8px 14px", borderRadius: 8, background: `${T.success}10`, border: `1px solid ${T.success}20` }}><div style={{ fontSize: 16, fontWeight: 900, color: T.success, fontFamily: FONT_DISPLAY }}>+{dungeonResult.totalReward.growthLevels}</div><div style={{ fontSize: 7, color: T.textDim }}>GROWTH</div></div>}
             </div>
           </div>
         </Popup>
       )}
-
-      {/* Achievement Toast */}
       {achToast && (
-        <div key={achToast.ts} style={{
-          position: "fixed", top: 50, left: "50%", transform: "translateX(-50%)", zIndex: 1000,
-          padding: "10px 16px", borderRadius: T.r, minWidth: 240, maxWidth: "92%",
-          background: `${T.card}f0`, backdropFilter: "blur(12px)",
-          border: `1px solid ${achToast.color || T.gold}40`,
-          boxShadow: `0 0 24px ${achToast.color || T.gold}15`,
-          animation: "slideDown 0.4s ease, fadeOut 0.5s ease 3.5s forwards",
-          display: "flex", alignItems: "center", gap: 10,
-        }}>
-          <div style={{ width: 32, height: 32, borderRadius: 8, background: `${achToast.color || T.gold}15`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16 }}>{achToast.icon}</div>
-          <div style={{ flex: 1 }}>
-            <div style={{ fontSize: 7, fontWeight: 700, color: T.gold, letterSpacing: 1, textTransform: "uppercase" }}>Achievement!</div>
-            <div style={{ fontSize: 11, fontWeight: 800, color: T.white, fontFamily: FONT_DISPLAY }}>{achToast.name}</div>
-          </div>
-          <div style={{ fontSize: 9, fontWeight: 700, color: T.gold }}>
-            {achToast.reward.gold && <div>+{fmt(achToast.reward.gold)}g</div>}
-            {achToast.reward.diamonds && <div>+{achToast.reward.diamonds}💎</div>}
-          </div>
+        <div key={achToast.ts} style={{ position: "absolute", top: 48, left: "50%", transform: "translateX(-50%)", zIndex: 1000, padding: "8px 14px", borderRadius: 10, minWidth: 220, maxWidth: "88%", background: `${T.card}f0`, backdropFilter: "blur(12px)", border: `1px solid ${achToast.color || T.gold}40`, boxShadow: `0 0 20px ${achToast.color || T.gold}15`, animation: "slideDown 0.4s ease, fadeOut 0.5s ease 3.5s forwards", display: "flex", alignItems: "center", gap: 8 }}>
+          <div style={{ width: 28, height: 28, borderRadius: 7, background: `${achToast.color || T.gold}15`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14 }}>{achToast.icon}</div>
+          <div style={{ flex: 1 }}><div style={{ fontSize: 7, fontWeight: 700, color: T.gold, letterSpacing: 1 }}>ACHIEVEMENT!</div><div style={{ fontSize: 10, fontWeight: 800, color: T.white, fontFamily: FONT_DISPLAY }}>{achToast.name}</div></div>
         </div>
       )}
 
-      {/* ═══ LAYER 0: BATTLE (always visible as base layer) ═══ */}
+      {/* ═══ BATTLE SCREEN ═══ */}
       {(() => {
         const monster = battleState?.monster || getStageMonster(currentStage);
         return (
-          <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column", background: chapter.bgGrad }}>
+          <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column" }}>
 
-            {/* ── TOP HUD ── */}
-            <div style={{ flexShrink: 0, padding: "8px 12px 4px", zIndex: 10 }}>
-              {/* Currency row */}
-              <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 6 }}>
-                <div style={{
-                  width: 34, height: 34, borderRadius: 10, flexShrink: 0,
-                  background: `${T.accent}20`, border: `2px solid ${T.accent}40`,
-                  display: "flex", alignItems: "center", justifyContent: "center", fontSize: 17,
-                  boxShadow: `0 0 10px ${T.accent}20`,
-                }}>{heroEmoji}</div>
-                <div style={{
-                  padding: "2px 8px", borderRadius: 99, background: "#00000050", border: `1px solid ${T.accent}20`,
-                  fontSize: 9, fontWeight: 800, color: T.accent, fontFamily: FONT_DISPLAY,
-                }}>⚡{fmt(totalAtk + totalDef + totalMaxHp)}</div>
-                <div style={{ flex: 1 }} />
-                {[
-                  { icon: "💰", val: fmt(gold), c: T.gold },
-                  { icon: "💎", val: fmt(diamonds), c: T.purple },
-                ].map((cur, i) => (
-                  <div key={i} style={{
-                    display: "flex", alignItems: "center", gap: 3, padding: "3px 10px",
-                    borderRadius: 99, background: "#00000050", border: `1px solid ${cur.c}20`,
-                  }}>
-                    <span style={{ fontSize: 11 }}>{cur.icon}</span>
-                    <span style={{ fontSize: 11, fontWeight: 800, color: cur.c, fontFamily: FONT_DISPLAY }}>{cur.val}</span>
-                  </div>
-                ))}
+            {/* ── TOP: Avatar + currencies ── */}
+            <div style={{ display: "flex", alignItems: "center", padding: "6px 8px 0", gap: 6, zIndex: 10 }}>
+              <div style={{ position: "relative", flexShrink: 0 }}>
+                <div style={{ width: 40, height: 40, borderRadius: "50%", background: `linear-gradient(135deg, ${T.accent}30, ${T.purple}30)`, border: `2px solid ${T.accent}60`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 20, boxShadow: `0 0 12px ${T.accent}30` }}>{heroEmoji}</div>
+                <div style={{ position: "absolute", bottom: -2, right: -2, width: 14, height: 14, borderRadius: "50%", background: T.success, border: "2px solid #0a0c14", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 6 }}>▶</div>
               </div>
-
-              {/* Stage bar */}
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 2 }}>
-                <span style={{ fontSize: 13, fontWeight: 900, color: T.white, fontFamily: FONT_DISPLAY }}>
-                  {stageLabel(currentStage)} {monster.isBoss && <span style={{ color: T.danger, fontSize: 10 }}>BOSS</span>}
-                </span>
-                <span style={{ fontSize: 9, color: T.textSec }}>{chapter.emoji} {chapter.name}</span>
-              </div>
-              <div style={{ height: 6, background: "#00000040", borderRadius: 99, overflow: "hidden", border: "1px solid #ffffff08" }}>
-                <div style={{
-                  width: `${Math.max(5, ((battleState?.killCount || 0) / monster.monstersToKill) * 100)}%`,
-                  height: "100%", borderRadius: 99,
-                  background: `linear-gradient(90deg, ${chapter.color}, ${chapter.color}cc)`,
-                  boxShadow: `0 0 8px ${chapter.color}50`, transition: "width 0.3s",
-                }} />
-              </div>
-              <div style={{ fontSize: 8, color: T.textDim, textAlign: "center", marginTop: 2 }}>{battleState?.killCount || 0} / {monster.monstersToKill}</div>
+              <div style={{ flex: 1 }} />
+              {[
+                { icon: "🪙", val: fmt(gold), c: "#f5c542" },
+                { icon: "💎", val: fmt(diamonds), c: "#60a5fa" },
+                { icon: "❤️", val: fmt(totalMaxHp), c: "#f87171" },
+              ].map((cur, i) => (
+                <div key={i} style={{ display: "flex", alignItems: "center", gap: 3, padding: "2px 8px 2px 4px", borderRadius: 12, background: "linear-gradient(90deg, #1a1c28, #12141e)", border: "1px solid #ffffff0a" }}>
+                  <span style={{ fontSize: 11 }}>{cur.icon}</span>
+                  <span style={{ fontSize: 10, fontWeight: 800, color: cur.c, fontFamily: FONT_DISPLAY }}>{cur.val}</span>
+                </div>
+              ))}
             </div>
 
-            {/* ── BATTLE ARENA ── */}
-            <div style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", position: "relative", padding: "0 50px" }}>
+            {/* ── Stage progress bar ── */}
+            <div style={{ padding: "6px 10px 4px", zIndex: 10 }}>
+              <div style={{ position: "relative", height: 20, background: "#0e1020", borderRadius: 4, border: "1px solid #2a2e40", overflow: "hidden" }}>
+                <div style={{ position: "absolute", left: 0, top: 0, bottom: 0, width: `${Math.max(3, ((battleState?.killCount || 0) / monster.monstersToKill) * 100)}%`, background: "linear-gradient(90deg, #3b82f6, #60a5fa)", borderRadius: 3, transition: "width 0.3s", boxShadow: "0 0 8px #3b82f680" }} />
+                <div style={{ position: "absolute", inset: 0, background: "linear-gradient(90deg, transparent 0%, #ffffff10 50%, transparent 100%)", animation: "shimmer 3s infinite" }} />
+                <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11, fontWeight: 900, color: "#fff", fontFamily: FONT_DISPLAY, textShadow: "0 1px 3px #00000080" }}>
+                  {stageLabel(currentStage)} ({battleState?.killCount || 0}/{monster.monstersToKill})
+                </div>
+              </div>
+            </div>
 
-              {/* Screen flash effect */}
-              {screenFlash && (
-                <div key={screenFlash.ts} style={{
-                  position: "absolute", inset: 0, zIndex: 30, pointerEvents: "none",
-                  background: `radial-gradient(circle at center, ${screenFlash.color}30 0%, transparent 70%)`,
-                  animation: "flashFade 0.15s ease-out forwards",
-                }} />
-              )}
+            {/* ── BATTLEFIELD ── */}
+            <div style={{ flex: 1, position: "relative", overflow: "hidden" }}>
+              {/* BG */}
+              <div style={{ position: "absolute", inset: 0, background: `radial-gradient(ellipse at 50% 30%, ${chapter.color}15 0%, transparent 50%), ${chapter.bgGrad}` }} />
+              {/* Floor */}
+              <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, height: "55%", background: "repeating-conic-gradient(#ffffff04 0% 25%, transparent 0% 50%) 0 0 / 40px 40px", transform: "perspective(300px) rotateX(45deg)", transformOrigin: "bottom center", opacity: 0.5 }} />
+              {/* Portal */}
+              <div style={{ position: "absolute", top: "2%", left: "50%", transform: "translateX(-50%)", width: 140, height: 90, borderRadius: "50%", background: `radial-gradient(ellipse, ${chapter.color}30 0%, ${chapter.color}10 40%, transparent 70%)`, animation: "portalPulse 3s ease-in-out infinite", filter: "blur(2px)" }} />
 
-              {/* Floating damage numbers */}
+              {/* Screen flash */}
+              {screenFlash && <div key={screenFlash.ts} style={{ position: "absolute", inset: 0, zIndex: 30, pointerEvents: "none", background: `radial-gradient(circle, ${screenFlash.color}30 0%, transparent 70%)`, animation: "flashFade 0.15s ease-out forwards" }} />}
+
+              {/* Floating dmg */}
               {floatingDmg.map(d => (
-                <div key={d.id} style={{
-                  position: "absolute", zIndex: 25, pointerEvents: "none",
-                  left: d.side === "right" ? `${55 + Math.random() * 15}%` : `${15 + Math.random() * 15}%`,
-                  top: "35%",
-                  animation: "dmgFloat 1.1s ease-out forwards",
-                }}>
-                  {d.skill && <span style={{ fontSize: 16, marginRight: 2 }}>{d.skill}</span>}
-                  <span style={{
-                    fontSize: d.crit ? 22 : d.skill ? 18 : 15,
-                    fontWeight: 900, fontFamily: FONT_DISPLAY,
-                    color: d.crit ? T.warning : d.side === "right" ? T.white : T.danger,
-                    textShadow: `0 0 8px ${d.crit ? T.warning : d.side === "right" ? T.accent : T.danger}80, 0 2px 4px #00000080`,
-                    letterSpacing: -0.5,
-                  }}>
-                    {d.crit && "💥"}{fmt(d.dmg)}
-                  </span>
+                <div key={d.id} style={{ position: "absolute", zIndex: 25, pointerEvents: "none", left: d.side === "right" ? `${52 + Math.random() * 18}%` : `${12 + Math.random() * 18}%`, top: "35%", animation: "dmgFloat 1.1s ease-out forwards" }}>
+                  {d.skill && <span style={{ fontSize: 14 }}>{d.skill}</span>}
+                  <span style={{ fontSize: d.crit ? 24 : d.skill ? 20 : 16, fontWeight: 900, fontFamily: FONT_DISPLAY, color: d.crit ? "#ffd700" : d.side === "right" ? "#fff" : "#ff4444", textShadow: `0 0 10px ${d.crit ? "#ffd700" : d.side === "right" ? "#6366f1" : "#ff4444"}80, 0 2px 6px #000c` }}>{d.crit ? "CRIT! " : ""}{fmt(d.dmg)}</span>
                 </div>
               ))}
 
               {/* Gold popups */}
               {goldPopups.map(g => (
-                <div key={g.id} style={{
-                  position: "absolute", zIndex: 25, pointerEvents: "none",
-                  left: "50%", top: "60%", transform: "translateX(-50%)",
-                  animation: "goldFloat 1s ease-out forwards",
-                }}>
-                  <span style={{
-                    fontSize: 13, fontWeight: 800, color: T.gold, fontFamily: FONT_DISPLAY,
-                    textShadow: `0 0 6px ${T.gold}60, 0 2px 4px #00000080`,
-                  }}>+{fmt(g.amount)}💰</span>
+                <div key={g.id} style={{ position: "absolute", zIndex: 25, pointerEvents: "none", left: "50%", top: "55%", animation: "goldFloat 1s ease-out forwards" }}>
+                  <span style={{ fontSize: 14, fontWeight: 900, color: T.gold, fontFamily: FONT_DISPLAY, textShadow: `0 0 8px ${T.gold}60, 0 2px 4px #000` }}>+{fmt(g.amount)}</span>
                 </div>
               ))}
 
-              {/* HP Bars */}
-              <div style={{ width: "100%", maxWidth: 360, marginBottom: 16 }}>
+              {/* HERO */}
+              <div style={{ position: "absolute", left: "22%", top: "40%", transform: "translate(-50%, -50%)", textAlign: "center", zIndex: 10 }}>
+                <div style={{ width: 56, height: 5, background: "#00000060", borderRadius: 3, overflow: "hidden", margin: "0 auto 3px", border: "1px solid #ffffff10" }}>
+                  <div style={{ width: `${(playerHp / totalMaxHp) * 100}%`, height: "100%", background: "linear-gradient(90deg, #22c55e, #4ade80)", borderRadius: 3, transition: "width 0.15s" }} />
+                </div>
+                <div style={{ width: 60, height: 60, margin: "0 auto", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 34, animation: heroAnim === "attack" ? "heroAttack 0.3s ease" : heroAnim === "hit" ? "heroHit 0.2s ease" : "heroIdle 3s ease-in-out infinite", filter: heroAnim === "hit" ? "brightness(2)" : "drop-shadow(0 4px 8px #00000060)" }}>{heroEmoji}</div>
+                <div style={{ fontSize: 7, fontWeight: 800, color: "#fff", fontFamily: FONT_DISPLAY, marginTop: 1, textShadow: "0 1px 4px #000" }}>{account.displayName}</div>
+              </div>
+
+              {/* MONSTER */}
+              <div style={{ position: "absolute", right: "22%", top: "40%", transform: "translate(50%, -50%)", textAlign: "center", zIndex: 10 }}>
+                <div style={{ width: 56, height: 5, background: "#00000060", borderRadius: 3, overflow: "hidden", margin: "0 auto 3px", border: "1px solid #ffffff10" }}>
+                  <div style={{ width: `${Math.max(0, ((battleState?.monsterHp || monster.hp) / monster.hp) * 100)}%`, height: "100%", background: "linear-gradient(90deg, #ef4444, #f87171)", borderRadius: 3, transition: "width 0.15s" }} />
+                </div>
+                <div style={{ width: 60, height: 60, margin: "0 auto", display: "flex", alignItems: "center", justifyContent: "center", fontSize: monster.isBoss ? 40 : 34, animation: monsterAnim === "hit" ? "monsterHit 0.2s ease" : monsterAnim === "die" ? "monsterDie 0.4s ease forwards" : "monsterIdle 2.5s ease-in-out infinite", filter: monsterAnim === "hit" ? "brightness(2.5)" : "drop-shadow(0 4px 8px #00000060)" }}>{monster.emoji}</div>
+                <div style={{ fontSize: 7, fontWeight: 800, color: monster.isBoss ? "#f87171" : "#fff", fontFamily: FONT_DISPLAY, marginTop: 1, textShadow: "0 1px 4px #000" }}>{monster.name}{monster.isBoss ? " 👑" : ""}</div>
+              </div>
+
+              {/* Decorative scattered coins */}
+              {[{ x: "25%", y: "65%" }, { x: "55%", y: "72%" }, { x: "72%", y: "60%" }, { x: "38%", y: "68%" }].map((c, i) => (
+                <div key={i} style={{ position: "absolute", left: c.x, top: c.y, fontSize: 9, opacity: 0.35, pointerEvents: "none", animation: `sparkle ${2 + i * 0.5}s ease-in-out infinite ${i * 0.3}s` }}>🪙</div>
+              ))}
+
+              {/* LEFT SIDE ICONS */}
+              <div style={{ position: "absolute", left: 4, top: "20%", display: "flex", flexDirection: "column", gap: 4, zIndex: 20 }}>
                 {[
-                  { emoji: heroEmoji, hp: playerHp, max: totalMaxHp, c: playerHp < totalMaxHp * 0.3 ? T.danger : T.success, label: account.displayName },
-                  { emoji: monster.emoji, hp: Math.max(0, battleState?.monsterHp || monster.hp), max: monster.hp, c: T.danger, label: monster.name },
-                ].map((bar, i) => (
-                  <div key={i} style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 5 }}>
-                    <span style={{ fontSize: 14, width: 20 }}>{bar.emoji}</span>
-                    <div style={{ flex: 1 }}>
-                      <div style={{ height: 8, background: "#00000050", borderRadius: 99, overflow: "hidden" }}>
-                        <div style={{
-                          width: `${(bar.hp / bar.max) * 100}%`, height: "100%", borderRadius: 99,
-                          background: `linear-gradient(90deg, ${bar.c}, ${bar.c}cc)`,
-                          transition: "width 0.15s", boxShadow: `0 0 6px ${bar.c}40`,
-                        }} />
-                      </div>
-                    </div>
-                    <span style={{ fontSize: 9, fontWeight: 700, color: bar.c, fontFamily: FONT_DISPLAY, minWidth: 44, textAlign: "right" }}>{fmt(bar.hp)}</span>
+                  { icon: "💎", sub: fmt(diamonds), p: null, bg: "#101828" },
+                  { icon: "📊", sub: null, p: "growth", bg: "#101828" },
+                  { icon: "👗", sub: null, p: "costumes", bg: "#101828" },
+                  { icon: "⭐", sub: null, p: "achievements", bg: "#101828" },
+                ].map((b, i) => (
+                  <div key={i} onClick={b.p ? () => nav(b.p) : undefined} style={{ width: 34, height: b.sub ? 40 : 34, borderRadius: 7, cursor: b.p ? "pointer" : "default", background: b.bg, border: "1px solid #ffffff08", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 0, boxShadow: "0 2px 6px #00000040" }}>
+                    <span style={{ fontSize: 15, lineHeight: 1 }}>{b.icon}</span>
+                    {b.sub && <span style={{ fontSize: 7, fontWeight: 800, color: "#60a5fa", fontFamily: FONT_DISPLAY, lineHeight: 1 }}>{b.sub}</span>}
                   </div>
                 ))}
               </div>
 
-              {/* Hero vs Monster */}
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 20 }}>
-                {/* Hero */}
-                <div style={{ textAlign: "center" }}>
-                  <div style={{
-                    width: 76, height: 76, borderRadius: "50%", margin: "0 auto 4px",
-                    background: `radial-gradient(circle, ${T.accent}25 0%, transparent 70%)`,
-                    border: `2px solid ${T.accent}40`,
-                    display: "flex", alignItems: "center", justifyContent: "center", fontSize: 38,
-                    boxShadow: `0 0 20px ${T.accent}20`,
-                    animation: heroAnim === "attack" ? "heroAttack 0.3s ease" : heroAnim === "hit" ? "heroHit 0.2s ease" : "heroIdle 3s ease-in-out infinite",
-                    transition: "box-shadow 0.2s",
-                  }}>{heroEmoji}</div>
-                  <div style={{ fontSize: 10, fontWeight: 700, color: T.white, fontFamily: FONT_DISPLAY }}>{account.displayName}</div>
-                </div>
-
-                {/* VS badge */}
-                <div style={{
-                  width: 28, height: 28, borderRadius: "50%", background: `${T.danger}20`, border: `1px solid ${T.danger}30`,
-                  display: "flex", alignItems: "center", justifyContent: "center",
-                  fontSize: 9, fontWeight: 900, color: T.danger, fontFamily: FONT_DISPLAY,
-                }}>VS</div>
-
-                {/* Monster */}
-                <div style={{ textAlign: "center" }}>
-                  <div style={{
-                    width: 76, height: 76, borderRadius: "50%", margin: "0 auto 4px",
-                    background: `radial-gradient(circle, ${chapter.color}25 0%, transparent 70%)`,
-                    border: `2px solid ${monster.isBoss ? T.danger + "50" : chapter.color + "30"}`,
-                    display: "flex", alignItems: "center", justifyContent: "center", fontSize: 38,
-                    boxShadow: `0 0 20px ${chapter.color}20`,
-                    animation: monsterAnim === "hit" ? "monsterHit 0.2s ease" : monsterAnim === "die" ? "monsterDie 0.4s ease forwards" : "monsterIdle 2.5s ease-in-out infinite",
-                    transition: "box-shadow 0.2s",
-                  }}>{monster.emoji}</div>
-                  <div style={{ fontSize: 10, fontWeight: 700, color: monster.isBoss ? T.danger : T.white, fontFamily: FONT_DISPLAY }}>{monster.name}</div>
-                </div>
-              </div>
-
-              {/* Stage gold + CP */}
-              <div style={{ display: "flex", gap: 16, marginTop: 10, fontSize: 11, fontWeight: 700 }}>
-                <span style={{ color: T.gold }}>💰 +{fmt(battleState?.stageGold || 0)}</span>
-                <span style={{ color: T.accent, fontSize: 9 }}>⚡{fmt(totalAtk + totalDef + totalMaxHp)} CP</span>
+              {/* RIGHT SIDE ICONS */}
+              <div style={{ position: "absolute", right: 4, top: "12%", display: "flex", flexDirection: "column", gap: 4, zIndex: 20 }}>
+                {[
+                  { icon: "🏰", p: "dungeons" },
+                  { icon: "🐾", p: "pets" },
+                  { icon: "🎁", p: null },
+                  { icon: "⚙️", p: "settings" },
+                  { icon: "📈", p: "stats" },
+                ].map((b, i) => (
+                  <div key={i} onClick={b.p ? () => nav(b.p) : undefined} style={{ width: 34, height: 34, borderRadius: 7, cursor: b.p ? "pointer" : "default", background: "#1a1610", border: "1px solid #ffffff08", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 15, boxShadow: "0 2px 6px #00000040" }}>{b.icon}</div>
+                ))}
               </div>
             </div>
 
-            {/* ── SIDE BUTTONS (right) ── */}
-            <div style={{ position: "absolute", right: 6, top: 80, display: "flex", flexDirection: "column", gap: 5, zIndex: 20 }}>
-              {[
-                { icon: "📊", p: "growth", c: T.success },
-                { icon: "👗", p: "costumes", c: T.teal },
-                { icon: "🐾", p: "pets", c: T.pink },
-                { icon: "⚙️", p: "settings", c: T.textSec },
-              ].map(sb => (
-                <div key={sb.p} onClick={() => nav(sb.p)} style={{
-                  width: 34, height: 34, borderRadius: 10, cursor: "pointer",
-                  background: "#00000050", border: `1px solid #ffffff10`,
-                  display: "flex", alignItems: "center", justifyContent: "center", fontSize: 15,
-                  transition: "all 0.15s",
-                }}>{sb.icon}</div>
-              ))}
-            </div>
-
-            {/* ── LEFT SIDE ── */}
-            <div style={{ position: "absolute", left: 6, top: 80, display: "flex", flexDirection: "column", gap: 5, zIndex: 20 }}>
-              <div onClick={() => setAutoProgress(!autoProgress)} style={{
-                width: 34, height: 34, borderRadius: 10, cursor: "pointer",
-                background: autoProgress ? `${T.success}25` : "#00000050",
-                border: `1px solid ${autoProgress ? T.success + "50" : "#ffffff10"}`,
-                display: "flex", alignItems: "center", justifyContent: "center",
-                fontSize: 7, fontWeight: 900, color: autoProgress ? T.success : T.textDim, fontFamily: FONT_DISPLAY,
-              }}>{autoProgress ? "AUTO" : "STOP"}</div>
-            </div>
-
-            {/* ── SKILL BAR ── */}
-            <div style={{ flexShrink: 0, padding: "4px 12px", zIndex: 10 }}>
-              <div style={{ display: "flex", gap: 5, justifyContent: "center" }}>
-                {equippedSkills.filter(Boolean).map(sid => {
-                  const sk = COMBAT_SKILLS.find(s => s.id === sid);
-                  if (!sk) return null;
-                  const cd = skillCooldowns[sk.id];
+            {/* ── SKILL SLOTS ── */}
+            <div style={{ flexShrink: 0, padding: "3px 10px", background: "linear-gradient(180deg, #10121a, #0c0e16)", borderTop: "1px solid #ffffff06" }}>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 4 }}>
+                {[0, 1, 2].map(idx => {
+                  const sid = equippedSkills[idx];
+                  const sk = sid ? COMBAT_SKILLS.find(s => s.id === sid) : null;
+                  const cd = sk ? skillCooldowns[sk.id] : false;
                   return (
-                    <div key={sk.id} style={{
-                      width: 40, height: 40, borderRadius: 10, position: "relative",
-                      background: cd ? "#00000060" : `${sk.color}20`,
-                      border: `2px solid ${cd ? "#ffffff10" : sk.color + "50"}`,
-                      display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18,
-                      opacity: cd ? 0.35 : 1, transition: "all 0.3s",
-                      boxShadow: !cd ? `0 0 10px ${sk.color}20` : undefined,
-                    }}>
-                      {sk.emoji}
-                      {!cd && <div style={{ position: "absolute", inset: 0, borderRadius: 10, background: `${sk.color}08`, animation: "pulse 2s infinite" }} />}
+                    <div key={idx} style={{ width: 42, height: 42, borderRadius: 8, position: "relative", background: sk ? (cd ? "#0e1020" : `${sk.color}15`) : "#0a0c14", border: `2px solid ${sk ? (cd ? "#ffffff08" : sk.color + "40") : "#ffffff06"}`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: sk ? 19 : 11, color: sk ? undefined : T.textDim, opacity: cd ? 0.35 : 1, transition: "all 0.3s", boxShadow: sk && !cd ? `0 0 8px ${sk.color}15, inset 0 0 10px ${sk.color}08` : "none" }}>
+                      {sk ? sk.emoji : idx + 1}
+                      {sk && !cd && <div style={{ position: "absolute", inset: 0, borderRadius: 6, background: `${sk.color}06`, animation: "pulse 2s infinite" }} />}
+                      <div style={{ position: "absolute", top: 0, left: 2, fontSize: 7, fontWeight: 900, color: cd ? T.textDim : sk ? sk.color : T.textDim, fontFamily: FONT_DISPLAY }}>{idx + 1}</div>
                     </div>
                   );
                 })}
-                {equippedSkills.filter(Boolean).length === 0 && <div style={{ fontSize: 9, color: T.textDim, padding: 8 }}>No skills equipped</div>}
+                <div style={{ width: 1, height: 28, background: "#ffffff08", margin: "0 2px" }} />
+                <div onClick={() => setAutoProgress(!autoProgress)} style={{ width: 42, height: 42, borderRadius: "50%", cursor: "pointer", background: autoProgress ? "linear-gradient(135deg, #16a34a20, #22c55e10)" : "#0e1020", border: `2px solid ${autoProgress ? "#22c55e50" : "#ffffff08"}`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 8, fontWeight: 900, fontFamily: FONT_DISPLAY, color: autoProgress ? "#22c55e" : T.textDim, boxShadow: autoProgress ? "0 0 10px #22c55e20" : "none" }}>AUTO</div>
               </div>
             </div>
 
-            {/* ── BOTTOM TAB BAR ── */}
-            <div style={{
-              flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "space-around",
-              padding: "5px 4px", paddingBottom: "max(6px, env(safe-area-inset-bottom))",
-              background: `${T.sidebar}f0`, backdropFilter: "blur(12px)",
-              borderTop: `1px solid ${T.sidebarBorder}`,
-            }}>
-              {[
-                { icon: "⚔️", label: "Battle", p: "battle", c: T.danger },
-                { icon: "🏰", label: "Dungeon", p: "dungeons", c: T.orange },
-                { icon: "🎒", label: "Equip", p: "equipment", c: T.warning },
-                { icon: "✨", label: "Summon", p: "summon", c: T.purple },
-                { icon: "🏆", label: "Achieve", p: "achievements", c: T.gold },
-                { icon: "📈", label: "Stats", p: "stats", c: T.info },
-              ].map(tab => {
-                const isActive = page === tab.p;
+            {/* ── SKILL ICONS (equip/unequip) ── */}
+            <div style={{ flexShrink: 0, padding: "3px 10px", background: "#0c0e16", display: "flex", alignItems: "center", justifyContent: "center", gap: 6 }}>
+              {COMBAT_SKILLS.filter(sk => unlockedSkills.includes(sk.id)).map(sk => {
+                const isEq = equippedSkills.includes(sk.id);
                 return (
-                  <div key={tab.p} onClick={() => nav(tab.p)} style={{
-                    display: "flex", flexDirection: "column", alignItems: "center", gap: 1,
-                    padding: "3px 5px", borderRadius: 8, cursor: "pointer",
-                    background: isActive ? `${tab.c}15` : "transparent", transition: "all 0.15s",
-                  }}>
-                    <span style={{ fontSize: 17, lineHeight: 1 }}>{tab.icon}</span>
-                    <span style={{ fontSize: 7, fontWeight: 700, color: isActive ? tab.c : T.textDim, fontFamily: FONT_BODY }}>{tab.label}</span>
+                  <div key={sk.id} onClick={() => { if (isEq) { setEquippedSkills(p => p.map(s => s === sk.id ? null : s)); } else { setEquippedSkills(p => { const c = [...p]; const e = c.indexOf(null); if (e !== -1) c[e] = sk.id; return c; }); } }} style={{ width: 34, height: 34, borderRadius: "50%", cursor: "pointer", background: isEq ? `${sk.color}20` : "#14161e", border: `2px solid ${isEq ? sk.color + "60" : "#ffffff0a"}`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 15, boxShadow: isEq ? `0 0 8px ${sk.color}20` : "none", transition: "all 0.2s" }}>
+                    {sk.emoji}
+                  </div>
+                );
+              })}
+              {COMBAT_SKILLS.filter(sk => !unlockedSkills.includes(sk.id)).slice(0, 3).map((_, i) => (
+                <div key={i} style={{ width: 34, height: 34, borderRadius: "50%", background: "#0e1020", border: "2px solid #ffffff06", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11, color: T.textDim }}>🔒</div>
+              ))}
+            </div>
+
+            {/* ── BOTTOM TABS ── */}
+            <div style={{ flexShrink: 0, display: "flex", alignItems: "stretch", background: "linear-gradient(180deg, #12141e, #0a0c14)", borderTop: "1px solid #ffffff08", paddingBottom: "max(4px, env(safe-area-inset-bottom))" }}>
+              {[
+                { icon: "🗡️", label: "Equip", p: "equipment" },
+                { icon: "🐾", label: "Pets", p: "pets" },
+                { icon: "✨", label: "Summon", p: "summon" },
+                { icon: "⭐", label: "Growth", p: "growth" },
+                { icon: "🏰", label: "Dungeon", p: "dungeons" },
+                { icon: "💀", label: "Achieve", p: "achievements" },
+              ].map(tab => {
+                const act = page === tab.p;
+                return (
+                  <div key={tab.p} onClick={() => nav(tab.p)} style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "5px 0 3px", cursor: "pointer", position: "relative" }}>
+                    {act && <div style={{ position: "absolute", top: 0, left: "20%", right: "20%", height: 2, background: T.accent, borderRadius: "0 0 2px 2px" }} />}
+                    <div style={{ width: 36, height: 36, borderRadius: 9, background: act ? "linear-gradient(180deg, #1e2040, #14162a)" : "transparent", border: act ? `1px solid ${T.accent}30` : "1px solid transparent", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 19, boxShadow: act ? `0 0 10px ${T.accent}15` : "none" }}>{tab.icon}</div>
+                    <span style={{ fontSize: 7, fontWeight: 700, color: act ? T.accent : T.textDim, marginTop: 1, fontFamily: FONT_DISPLAY }}>{tab.label}</span>
                   </div>
                 );
               })}
@@ -1661,46 +1516,20 @@ function GameUI({ account, initialSave, onLogout }) {
         );
       })()}
 
-      {/* ═══ LAYER 1: PAGE OVERLAY (slides up over battle when not on battle page) ═══ */}
+      {/* ═══ PAGE OVERLAY ═══ */}
       {page !== "battle" && (
-        <div style={{
-          position: "absolute", inset: 0, zIndex: 50,
-          background: `${T.bg}f5`, backdropFilter: "blur(8px)",
-          display: "flex", flexDirection: "column",
-          animation: "slideUp 0.2s ease",
-        }}>
-          {/* Overlay header */}
-          <div style={{
-            flexShrink: 0, display: "flex", alignItems: "center", gap: 10,
-            padding: "10px 14px", borderBottom: `1px solid ${T.divider}`,
-            background: `linear-gradient(180deg, ${T.sidebar} 0%, ${T.bgDeep} 100%)`,
-          }}>
-            <div onClick={() => nav("battle")} style={{
-              width: 32, height: 32, borderRadius: 10, cursor: "pointer",
-              background: `${T.danger}12`, border: `1px solid ${T.danger}25`,
-              display: "flex", alignItems: "center", justifyContent: "center",
-              fontSize: 12, color: T.danger, fontWeight: 900, fontFamily: FONT_DISPLAY,
-              transition: "all 0.15s",
-            }}>←</div>
-            <div style={{ flex: 1, fontSize: 15, fontWeight: 900, color: T.white, fontFamily: FONT_DISPLAY, textTransform: "uppercase" }}>
-              {page === "dungeons" && "🏰 Dungeons"}
-              {page === "growth" && "📊 Growth"}
-              {page === "equipment" && "🎒 Equipment"}
-              {page === "summon" && "✨ Summon"}
-              {page === "pets" && "🐾 Pets"}
-              {page === "costumes" && "👗 Costumes"}
-              {page === "achievements" && "🏆 Achievements"}
-              {page === "stats" && "📈 Stats"}
-              {page === "settings" && "⚙️ Settings"}
+        <div style={{ position: "absolute", inset: 0, zIndex: 50, background: `${T.bg}f8`, backdropFilter: "blur(8px)", display: "flex", flexDirection: "column", animation: "slideUp 0.2s ease" }}>
+          <div style={{ flexShrink: 0, display: "flex", alignItems: "center", gap: 8, padding: "8px 12px", background: "linear-gradient(180deg, #14161e, #0e1018)", borderBottom: "1px solid #ffffff08" }}>
+            <div onClick={() => nav("battle")} style={{ width: 30, height: 30, borderRadius: 8, cursor: "pointer", background: "#1a1c28", border: "1px solid #ffffff0a", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11, color: T.textSec, fontWeight: 900 }}>←</div>
+            <div style={{ flex: 1, fontSize: 14, fontWeight: 900, color: T.white, fontFamily: FONT_DISPLAY, textTransform: "uppercase" }}>
+              {page === "dungeons" && "🏰 Dungeons"}{page === "growth" && "📊 Growth"}{page === "equipment" && "🗡️ Equipment"}{page === "summon" && "✨ Summon"}{page === "pets" && "🐾 Pets"}{page === "costumes" && "👗 Costumes"}{page === "achievements" && "💀 Achievements"}{page === "stats" && "📈 Stats"}{page === "settings" && "⚙️ Settings"}
             </div>
             <div style={{ display: "flex", gap: 6 }}>
-              <span style={{ fontSize: 10, fontWeight: 800, color: T.gold, fontFamily: FONT_DISPLAY }}>💰{fmt(gold)}</span>
-              <span style={{ fontSize: 10, fontWeight: 800, color: T.purple, fontFamily: FONT_DISPLAY }}>💎{fmt(diamonds)}</span>
+              <span style={{ fontSize: 9, fontWeight: 800, color: "#f5c542", fontFamily: FONT_DISPLAY }}>🪙{fmt(gold)}</span>
+              <span style={{ fontSize: 9, fontWeight: 800, color: "#60a5fa", fontFamily: FONT_DISPLAY }}>💎{fmt(diamonds)}</span>
             </div>
           </div>
-
-          {/* Overlay content — all the existing pages go here */}
-          <div style={{ flex: 1, overflow: "auto", padding: 16, paddingBottom: 70 }}>
+          <div style={{ flex: 1, overflow: "auto", padding: 14, paddingBottom: 70 }}>
           {/* ═══ DUNGEONS ═══ */}
           {page === "dungeons" && (
             <div>
@@ -2281,30 +2110,22 @@ function GameUI({ account, initialSave, onLogout }) {
           )}
 
           </div>
-
-          {/* Bottom nav in overlay too */}
-          <div style={{
-            flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "space-around",
-            padding: "5px 4px", paddingBottom: "max(6px, env(safe-area-inset-bottom))",
-            background: `${T.sidebar}f0`, borderTop: `1px solid ${T.sidebarBorder}`,
-          }}>
+          {/* Bottom tabs in overlay */}
+          <div style={{ flexShrink: 0, display: "flex", alignItems: "stretch", background: "linear-gradient(180deg, #12141e, #0a0c14)", borderTop: "1px solid #ffffff08", paddingBottom: "max(4px, env(safe-area-inset-bottom))" }}>
             {[
-              { icon: "⚔️", label: "Battle", p: "battle", c: T.danger },
-              { icon: "🏰", label: "Dungeon", p: "dungeons", c: T.orange },
-              { icon: "🎒", label: "Equip", p: "equipment", c: T.warning },
-              { icon: "✨", label: "Summon", p: "summon", c: T.purple },
-              { icon: "🏆", label: "Achieve", p: "achievements", c: T.gold },
-              { icon: "📈", label: "Stats", p: "stats", c: T.info },
+              { icon: "⚔️", label: "Battle", p: "battle" },
+              { icon: "🗡️", label: "Equip", p: "equipment" },
+              { icon: "✨", label: "Summon", p: "summon" },
+              { icon: "⭐", label: "Growth", p: "growth" },
+              { icon: "🏰", label: "Dungeon", p: "dungeons" },
+              { icon: "💀", label: "Achieve", p: "achievements" },
             ].map(tab => {
-              const isActive = page === tab.p;
+              const act = page === tab.p;
               return (
-                <div key={tab.p} onClick={() => nav(tab.p)} style={{
-                  display: "flex", flexDirection: "column", alignItems: "center", gap: 1,
-                  padding: "3px 5px", borderRadius: 8, cursor: "pointer",
-                  background: isActive ? `${tab.c}15` : "transparent", transition: "all 0.15s",
-                }}>
-                  <span style={{ fontSize: 17, lineHeight: 1 }}>{tab.icon}</span>
-                  <span style={{ fontSize: 7, fontWeight: 700, color: isActive ? tab.c : T.textDim, fontFamily: FONT_BODY }}>{tab.label}</span>
+                <div key={tab.p} onClick={() => nav(tab.p)} style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "5px 0 3px", cursor: "pointer", position: "relative" }}>
+                  {act && <div style={{ position: "absolute", top: 0, left: "20%", right: "20%", height: 2, background: T.accent, borderRadius: "0 0 2px 2px" }} />}
+                  <div style={{ width: 36, height: 36, borderRadius: 9, background: act ? "linear-gradient(180deg, #1e2040, #14162a)" : "transparent", border: act ? `1px solid ${T.accent}30` : "1px solid transparent", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 19, boxShadow: act ? `0 0 10px ${T.accent}15` : "none" }}>{tab.icon}</div>
+                  <span style={{ fontSize: 7, fontWeight: 700, color: act ? T.accent : T.textDim, marginTop: 1, fontFamily: FONT_DISPLAY }}>{tab.label}</span>
                 </div>
               );
             })}
@@ -2316,11 +2137,10 @@ function GameUI({ account, initialSave, onLogout }) {
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&family=DM+Sans:wght@400;500;600;700&display=swap');
         * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { background: ${T.bg}; overflow: hidden; }
+        body { background: #0a0c14; overflow: hidden; }
         ::-webkit-scrollbar { width: 4px; }
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: ${T.divider}; border-radius: 99px; }
-        ::-webkit-scrollbar-thumb:hover { background: ${T.textDim}; }
 
         @keyframes pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.06); } }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
@@ -2336,14 +2156,16 @@ function GameUI({ account, initialSave, onLogout }) {
 
         /* Battle animations */
         @keyframes heroIdle { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-3px); } }
-        @keyframes heroAttack { 0% { transform: translateX(0) scale(1); } 40% { transform: translateX(20px) scale(1.1); } 100% { transform: translateX(0) scale(1); } }
-        @keyframes heroHit { 0% { transform: translateX(0); filter: brightness(1); } 50% { transform: translateX(-6px); filter: brightness(2); } 100% { transform: translateX(0); filter: brightness(1); } }
+        @keyframes heroAttack { 0% { transform: translateX(0) scale(1); } 40% { transform: translateX(24px) scale(1.15); } 100% { transform: translateX(0) scale(1); } }
+        @keyframes heroHit { 0% { transform: translateX(0); filter: brightness(1); } 50% { transform: translateX(-8px); filter: brightness(2.5); } 100% { transform: translateX(0); filter: brightness(1); } }
         @keyframes monsterIdle { 0%, 100% { transform: translateY(0) scale(1); } 50% { transform: translateY(-2px) scale(1.02); } }
-        @keyframes monsterHit { 0% { transform: translateX(0) scale(1); filter: brightness(1); } 30% { transform: translateX(8px) scale(0.95); filter: brightness(2.5); } 100% { transform: translateX(0) scale(1); filter: brightness(1); } }
-        @keyframes monsterDie { 0% { transform: scale(1) rotate(0deg); opacity: 1; } 50% { transform: scale(1.1) rotate(5deg); opacity: 0.8; } 100% { transform: scale(0) rotate(20deg); opacity: 0; } }
-        @keyframes dmgFloat { 0% { opacity: 1; transform: translateY(0) scale(0.5); } 15% { opacity: 1; transform: translateY(-10px) scale(1.2); } 30% { transform: translateY(-20px) scale(1); } 100% { opacity: 0; transform: translateY(-70px) scale(0.8); } }
-        @keyframes goldFloat { 0% { opacity: 1; transform: translateX(-50%) translateY(0) scale(0.8); } 20% { opacity: 1; transform: translateX(-50%) translateY(-10px) scale(1.1); } 100% { opacity: 0; transform: translateX(-50%) translateY(-40px) scale(0.7); } }
+        @keyframes monsterHit { 0% { transform: translateX(0) scale(1); filter: brightness(1); } 30% { transform: translateX(10px) scale(0.92); filter: brightness(3); } 100% { transform: translateX(0) scale(1); filter: brightness(1); } }
+        @keyframes monsterDie { 0% { transform: scale(1) rotate(0deg); opacity: 1; } 50% { transform: scale(1.15) rotate(8deg); opacity: 0.7; } 100% { transform: scale(0) rotate(25deg); opacity: 0; } }
+        @keyframes dmgFloat { 0% { opacity: 1; transform: translateY(0) scale(0.5); } 15% { opacity: 1; transform: translateY(-12px) scale(1.3); } 30% { transform: translateY(-24px) scale(1); } 100% { opacity: 0; transform: translateY(-80px) scale(0.7); } }
+        @keyframes goldFloat { 0% { opacity: 1; transform: translateX(-50%) translateY(0) scale(0.8); } 20% { opacity: 1; transform: translateX(-50%) translateY(-12px) scale(1.15); } 100% { opacity: 0; transform: translateX(-50%) translateY(-45px) scale(0.6); } }
         @keyframes flashFade { 0% { opacity: 1; } 100% { opacity: 0; } }
+        @keyframes portalPulse { 0%, 100% { transform: translateX(-50%) scale(1); opacity: 0.6; } 50% { transform: translateX(-50%) scale(1.1); opacity: 1; } }
+
         ::selection { background: ${T.accent}40; color: ${T.white}; }
       `}</style>
     </div>

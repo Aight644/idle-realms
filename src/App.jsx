@@ -342,6 +342,23 @@ const ACH_CATEGORIES = [
   { id: "economy", name: "Economy", icon: "💰", color: T.gold },
 ];
 
+// ─── QUESTS ───
+const DAILY_QUESTS = [
+  { id: "dq_kill", name: "Monster Hunter", desc: "Kill {n} monsters", icon: "⚔️", target: 50, reward: { diamonds: 15 }, color: T.danger, stat: "kills" },
+  { id: "dq_gold", name: "Gold Collector", desc: "Earn {n} gold", icon: "🪙", target: 5000, reward: { diamonds: 10 }, color: T.gold, stat: "goldEarned" },
+  { id: "dq_stage", name: "Stage Clearer", desc: "Clear {n} stages", icon: "🏔️", target: 3, reward: { diamonds: 20 }, color: T.info, stat: "stagesCleared" },
+  { id: "dq_summon", name: "Lucky Draw", desc: "Summon {n} items", icon: "✨", target: 3, reward: { diamonds: 10 }, color: T.purple, stat: "summonsDone" },
+  { id: "dq_upgrade", name: "Power Up", desc: "Upgrade growth {n} times", icon: "📊", target: 5, reward: { diamonds: 10 }, color: T.success, stat: "upgradesDone" },
+  { id: "dq_dungeon", name: "Dungeon Runner", desc: "Complete {n} dungeon", icon: "🏰", target: 1, reward: { diamonds: 15 }, color: T.orange, stat: "dungeonsRun" },
+];
+const WEEKLY_QUESTS = [
+  { id: "wq_kill", name: "Weekly Slaughter", desc: "Kill {n} monsters", icon: "💀", target: 500, reward: { diamonds: 80 }, color: T.danger, stat: "kills" },
+  { id: "wq_stage", name: "Weekly Climber", desc: "Clear {n} stages", icon: "🗻", target: 20, reward: { diamonds: 100 }, color: T.accent, stat: "stagesCleared" },
+  { id: "wq_summon", name: "Weekly Gacha", desc: "Summon {n} items", icon: "🎰", target: 20, reward: { diamonds: 60 }, color: T.purple, stat: "summonsDone" },
+];
+function getQuestDay() { return new Date().toISOString().slice(0, 10); }
+function getQuestWeek() { const d = new Date(); const day = d.getDay(); const diff = d.getDate() - day + (day === 0 ? -6 : 1); return new Date(d.setDate(diff)).toISOString().slice(0, 10); }
+
 // ─── DAILY LOGIN REWARDS ───
 const LOGIN_REWARDS = [
   { day: 1, gold: 100, diamonds: 10, label: "100g + 10💎" },
@@ -523,7 +540,8 @@ const DEFAULT_SAVE = () => ({
   unlockedSkills: ["slash"], equippedSkills: ["slash", null, null],
   ownedCostumes: ["default"], activeCostume: "default",
   achievementsUnlocked: {},
-  dungeonAttempts: {}, // { dungeonId: { date: "datestring", used: 0 } }
+  dungeonAttempts: {},
+  questProgress: { day: "", week: "", daily: {}, weekly: {}, claimedDaily: {}, claimedWeekly: {} },
   combatStats: { kills: 0, totalDamage: 0, deaths: 0, highestHit: 0, bossesKilled: 0, totalGoldEarned: 0 },
   stats: { timePlayed: 0, loginStreak: 0, lastLoginDay: null, summons: 0, merges: 0 },
   isPremium: false, storePurchases: {},
@@ -821,7 +839,41 @@ function GameUI({ account, initialSave, onLogout }) {
   const [activeCostume, setActiveCostume] = useState(() => sv.activeCostume || "default");
   const [achievementsUnlocked, setAchievementsUnlocked] = useState(() => sv.achievementsUnlocked || {});
   const [dungeonAttempts, setDungeonAttempts] = useState(() => sv.dungeonAttempts || {});
-  const [dungeonResult, setDungeonResult] = useState(null); // popup for dungeon result
+  const [dungeonResult, setDungeonResult] = useState(null);
+
+  // ─── QUEST STATE ───
+  const [questProgress, setQuestProgress] = useState(() => {
+    const qp = sv.questProgress || {};
+    const today = getQuestDay();
+    const week = getQuestWeek();
+    // Reset daily progress if day changed
+    if (qp.day !== today) return { day: today, week: qp.week === week ? qp.week : week, daily: {}, weekly: qp.week === week ? (qp.weekly || {}) : {}, claimedDaily: {}, claimedWeekly: qp.week === week ? (qp.claimedWeekly || {}) : {} };
+    if (qp.week !== week) return { ...qp, week, weekly: {}, claimedWeekly: {} };
+    return qp;
+  });
+
+  const addQuestProgress = useCallback((stat, amount = 1) => {
+    setQuestProgress(prev => ({
+      ...prev,
+      daily: { ...prev.daily, [stat]: (prev.daily[stat] || 0) + amount },
+      weekly: { ...prev.weekly, [stat]: (prev.weekly[stat] || 0) + amount },
+    }));
+  }, []);
+
+  const claimQuest = useCallback((questId, isWeekly = false) => {
+    const quests = isWeekly ? WEEKLY_QUESTS : DAILY_QUESTS;
+    const q = quests.find(qq => qq.id === questId);
+    if (!q) return;
+    const prog = isWeekly ? questProgress.weekly : questProgress.daily;
+    const claimed = isWeekly ? questProgress.claimedWeekly : questProgress.claimedDaily;
+    if ((prog[q.stat] || 0) < q.target || claimed[questId]) return;
+    if (q.reward.diamonds) setDiamonds(d => d + q.reward.diamonds);
+    if (q.reward.gold) setGold(g => g + q.reward.gold);
+    setQuestProgress(prev => ({
+      ...prev,
+      [isWeekly ? "claimedWeekly" : "claimedDaily"]: { ...(isWeekly ? prev.claimedWeekly : prev.claimedDaily), [questId]: true },
+    }));
+  }, [questProgress]);
 
   // Combat live
   const [battleState, setBattleState] = useState(null);
@@ -969,11 +1021,11 @@ function GameUI({ account, initialSave, onLogout }) {
   const buildSave = useCallback(() => ({
     currentStage, highestStage, growth, gold, diamonds, combatStats, stats, autoProgress,
     equipment, equipped, pets, activePets, petSlots, unlockedSkills, equippedSkills,
-    ownedCostumes, activeCostume, achievementsUnlocked, dungeonAttempts,
+    ownedCostumes, activeCostume, achievementsUnlocked, dungeonAttempts, questProgress,
     player: { hp: playerHp, maxHp: totalMaxHp },
     isPremium: false, storePurchases: {},
     lastActiveTime: Date.now(),
-  }), [currentStage, highestStage, growth, gold, diamonds, combatStats, stats, autoProgress, equipment, equipped, pets, activePets, petSlots, unlockedSkills, equippedSkills, ownedCostumes, activeCostume, achievementsUnlocked, playerHp, totalMaxHp]);
+  }), [currentStage, highestStage, growth, gold, diamonds, combatStats, stats, autoProgress, equipment, equipped, pets, activePets, petSlots, unlockedSkills, equippedSkills, ownedCostumes, activeCostume, achievementsUnlocked, playerHp, totalMaxHp, questProgress, dungeonAttempts]);
 
   useEffect(() => {
     const timer = setInterval(async () => {
@@ -986,6 +1038,9 @@ function GameUI({ account, initialSave, onLogout }) {
 
   // Time tracker
   useEffect(() => { const t = setInterval(() => setStats(s => ({ ...s, timePlayed: (s.timePlayed || 0) + 1 })), 1000); return () => clearInterval(t); }, []);
+
+  // Passive diamond drip — 1 diamond every 60s of active play
+  useEffect(() => { const t = setInterval(() => setDiamonds(d => d + 1), 60000); return () => clearInterval(t); }, []);
 
   // ─── ACHIEVEMENT CHECKER ───
   const achCheckRef = useRef(null);
@@ -1022,12 +1077,12 @@ function GameUI({ account, initialSave, onLogout }) {
   }, [combatStats, highestStage, growth, stats, equipment.length, pets.length, ownedCostumes.length, addLog]);
 
   // ─── GROWTH UPGRADES ───
-  const upgradeGrowth = useCallback((stat) => { const cost = growthCost(growth[stat]); if (gold < cost) return; setGold(g => g - cost); setGrowth(g => ({ ...g, [stat]: g[stat] + 1 })); }, [growth, gold]);
+  const upgradeGrowth = useCallback((stat) => { const cost = growthCost(growth[stat]); if (gold < cost) return; setGold(g => g - cost); setGrowth(g => ({ ...g, [stat]: g[stat] + 1 })); addQuestProgress("upgradesDone", 1); }, [growth, gold, addQuestProgress]);
   const upgradeGrowthMax = useCallback((stat) => {
-    let rem = gold, lvl = growth[stat], spent = 0;
-    while (rem >= growthCost(lvl)) { const c = growthCost(lvl); rem -= c; spent += c; lvl++; }
-    if (lvl > growth[stat]) { setGold(g => g - spent); setGrowth(g => ({ ...g, [stat]: lvl })); }
-  }, [growth, gold]);
+    let rem = gold, lvl = growth[stat], spent = 0, count = 0;
+    while (rem >= growthCost(lvl)) { const c = growthCost(lvl); rem -= c; spent += c; lvl++; count++; }
+    if (lvl > growth[stat]) { setGold(g => g - spent); setGrowth(g => ({ ...g, [stat]: lvl })); addQuestProgress("upgradesDone", count); }
+  }, [growth, gold, addQuestProgress]);
 
   // ─── BATTLE SYSTEM (multi-enemy like Blade Idle) ───
   const enemyIdRef = useRef(0);
@@ -1162,6 +1217,8 @@ function GameUI({ account, initialSave, onLogout }) {
             killCount++;
             addGold(effGold);
             addGoldPopup(effGold);
+            addQuestProgress("kills", 1);
+            addQuestProgress("goldEarned", effGold);
             setCombatStats(s => ({ ...s, kills: s.kills + 1, bossesKilled: s.bossesKilled + (e.isBoss ? 1 : 0) }));
 
             // Pet drop on boss
@@ -1178,6 +1235,7 @@ function GameUI({ account, initialSave, onLogout }) {
             if (killCount >= targetKills) {
               // Stage cleared
               addLog(`✅ Stage ${stageLabel(stageNum)} cleared! +${fmt(stageGold)}g`);
+              addQuestProgress("stagesCleared", 1);
               const next = stageNum + 1;
               if (stageNum >= highestStage) setHighestStage(next);
               COMBAT_SKILLS.forEach(sk => {
@@ -1229,7 +1287,7 @@ function GameUI({ account, initialSave, onLogout }) {
     }, step);
 
     return () => { if (battleRef.current) clearInterval(battleRef.current); };
-  }, [isBattling, battleState?.stageNum, totalAtk, totalDef, critRate, critDmg, goldMult, autoProgress, highestStage, unlockedSkills, pets, equippedSkills, triggerHeroAttack, triggerHeroHit, triggerFlash, addDmgNumber, addGoldPopup]);
+  }, [isBattling, battleState?.stageNum, totalAtk, totalDef, critRate, critDmg, goldMult, autoProgress, highestStage, unlockedSkills, pets, equippedSkills, triggerHeroAttack, triggerHeroHit, triggerFlash, addDmgNumber, addGoldPopup, addQuestProgress]);
 
   // Skills are now auto-cast in the battle loop — no manual activation needed
 
@@ -1243,6 +1301,7 @@ function GameUI({ account, initialSave, onLogout }) {
     for (let i = 0; i < (count === 1 ? 1 : 10); i++) results.push(generateEquipment(types[Math.floor(Math.random() * types.length)]));
     setEquipment(prev => [...prev, ...results]);
     setStats(s => ({ ...s, summons: (s.summons || 0) + results.length }));
+    addQuestProgress("summonsDone", results.length);
     setShowSummonResult(results);
   }, [diamonds]);
 
@@ -1336,6 +1395,7 @@ function GameUI({ account, initialSave, onLogout }) {
 
     // Show result popup
     setDungeonResult({ ...result, dungeon, tierIdx });
+    addQuestProgress("dungeonsRun", 1);
     addLog(`🏰 ${dungeon.name} (${tier.name}): ${result.success ? "CLEARED!" : `Failed at wave ${result.waves}/${result.totalWaves}`} ${result.totalReward.gold ? `+${fmt(result.totalReward.gold)}g` : ""} ${result.totalReward.diamonds ? `+${result.totalReward.diamonds}💎` : ""} ${result.totalReward.growthLevels ? `+${result.totalReward.growthLevels} growth levels` : ""}`);
   }, [getDungeonAttemptsLeft, highestStage, totalAtk, totalDef, totalMaxHp, addGold, addLog]);
 
@@ -1591,16 +1651,24 @@ function GameUI({ account, initialSave, onLogout }) {
             <div style={{ flexShrink: 0, display: "flex", alignItems: "stretch", background: "linear-gradient(180deg, #12141e, #0a0c14)", borderTop: "1px solid #ffffff08", paddingBottom: "max(4px, env(safe-area-inset-bottom))" }}>
               {[
                 { icon: "🗡️", label: "Equip", p: "equipment" },
-                { icon: "🐾", label: "Pets", p: "pets" },
+                { icon: "📜", label: "Quests", p: "quests" },
                 { icon: "✨", label: "Summon", p: "summon" },
                 { icon: "⭐", label: "Growth", p: "growth" },
                 { icon: "🏰", label: "Dungeon", p: "dungeons" },
                 { icon: "💀", label: "Achieve", p: "achievements" },
               ].map(tab => {
                 const act = page === tab.p;
+                const hasNotif = tab.p === "quests" && (() => {
+                  const dp = questProgress.daily || {};
+                  const wp = questProgress.weekly || {};
+                  const dc = questProgress.claimedDaily || {};
+                  const wc = questProgress.claimedWeekly || {};
+                  return DAILY_QUESTS.some(q => (dp[q.stat] || 0) >= q.target && !dc[q.id]) || WEEKLY_QUESTS.some(q => (wp[q.stat] || 0) >= q.target && !wc[q.id]);
+                })();
                 return (
                   <div key={tab.p} onClick={() => nav(tab.p)} style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "5px 0 3px", cursor: "pointer", position: "relative" }}>
                     {act && <div style={{ position: "absolute", top: 0, left: "20%", right: "20%", height: 2, background: T.accent, borderRadius: "0 0 2px 2px" }} />}
+                    {hasNotif && <div style={{ position: "absolute", top: 2, right: "18%", width: 7, height: 7, borderRadius: "50%", background: T.danger, border: "1px solid #0a0c14", zIndex: 2 }} />}
                     <div style={{ width: 36, height: 36, borderRadius: 9, background: act ? "linear-gradient(180deg, #1e2040, #14162a)" : "transparent", border: act ? `1px solid ${T.accent}30` : "1px solid transparent", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 19, boxShadow: act ? `0 0 10px ${T.accent}15` : "none" }}>{tab.icon}</div>
                     <span style={{ fontSize: 7, fontWeight: 700, color: act ? T.accent : T.textDim, marginTop: 1, fontFamily: FONT_DISPLAY }}>{tab.label}</span>
                   </div>
@@ -1621,7 +1689,7 @@ function GameUI({ account, initialSave, onLogout }) {
             <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
               <div onClick={() => nav("battle")} style={{ width: 28, height: 28, borderRadius: 7, cursor: "pointer", background: "#1a1c28", border: "1px solid #ffffff0a", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 10, color: T.textSec, fontWeight: 900 }}>✕</div>
               <div style={{ flex: 1, fontSize: 13, fontWeight: 900, color: T.white, fontFamily: FONT_DISPLAY, textTransform: "uppercase" }}>
-                {page === "dungeons" && "🏰 Dungeons"}{page === "growth" && "📊 Growth"}{page === "equipment" && "🗡️ Equipment"}{page === "summon" && "✨ Summon"}{page === "pets" && "🐾 Pets"}{page === "costumes" && "👗 Costumes"}{page === "achievements" && "💀 Achievements"}{page === "stats" && "📈 Stats"}{page === "settings" && "⚙️ Settings"}
+                {page === "dungeons" && "🏰 Dungeons"}{page === "growth" && "📊 Growth"}{page === "equipment" && "🗡️ Equipment"}{page === "summon" && "✨ Summon"}{page === "pets" && "🐾 Pets"}{page === "costumes" && "👗 Costumes"}{page === "achievements" && "💀 Achievements"}{page === "stats" && "📈 Stats"}{page === "settings" && "⚙️ Settings"}{page === "quests" && "📜 Quests"}
               </div>
               <div style={{ display: "flex", gap: 5 }}>
                 <span style={{ fontSize: 9, fontWeight: 800, color: "#f5c542", fontFamily: FONT_DISPLAY }}>🪙{fmt(gold)}</span>
@@ -1631,6 +1699,124 @@ function GameUI({ account, initialSave, onLogout }) {
           </div>
           {/* Scrollable content */}
           <div style={{ flex: 1, overflow: "auto", padding: "10px 12px", paddingBottom: 60, background: "#10121aee", backdropFilter: "blur(6px)" }}>
+          {/* ═══ QUESTS ═══ */}
+          {page === "quests" && (
+            <div>
+              {/* Daily quest header */}
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
+                <div style={{ fontSize: 13, fontWeight: 900, color: T.white, fontFamily: FONT_DISPLAY }}>📋 DAILY QUESTS</div>
+                <div style={{ fontSize: 8, color: T.textDim, fontWeight: 700 }}>Resets at midnight</div>
+              </div>
+              <div style={{ display: "flex", flexDirection: "column", gap: 6, marginBottom: 18 }}>
+                {DAILY_QUESTS.map(q => {
+                  const prog = questProgress.daily?.[q.stat] || 0;
+                  const done = prog >= q.target;
+                  const claimed = questProgress.claimedDaily?.[q.id];
+                  const pct = Math.min(100, (prog / q.target) * 100);
+                  return (
+                    <div key={q.id} style={{
+                      display: "flex", alignItems: "center", gap: 8, padding: "8px 10px",
+                      borderRadius: 8, background: claimed ? "#ffffff04" : done ? `${q.color}08` : "#ffffff04",
+                      border: `1px solid ${claimed ? "#ffffff06" : done ? q.color + "25" : "#ffffff08"}`,
+                      opacity: claimed ? 0.5 : 1,
+                    }}>
+                      <div style={{ width: 32, height: 32, borderRadius: 8, background: `${q.color}12`, border: `1px solid ${q.color}20`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16, flexShrink: 0 }}>{q.icon}</div>
+                      <div style={{ flex: 1 }}>
+                        <div style={{ fontSize: 11, fontWeight: 700, color: T.white }}>{q.name}</div>
+                        <div style={{ fontSize: 8, color: T.textDim }}>{q.desc.replace("{n}", q.target)}</div>
+                        {/* Progress bar */}
+                        <div style={{ height: 4, background: "#ffffff08", borderRadius: 99, overflow: "hidden", marginTop: 3 }}>
+                          <div style={{ width: `${pct}%`, height: "100%", background: done ? T.success : q.color, borderRadius: 99, transition: "width 0.3s" }} />
+                        </div>
+                        <div style={{ fontSize: 7, color: done ? T.success : T.textDim, fontWeight: 700, marginTop: 1 }}>{Math.min(prog, q.target)}/{q.target}{claimed ? " ✓ Claimed" : ""}</div>
+                      </div>
+                      <div style={{ flexShrink: 0 }}>
+                        {claimed ? (
+                          <div style={{ padding: "4px 8px", borderRadius: 6, background: "#ffffff06", fontSize: 9, color: T.textDim, fontWeight: 700 }}>Done</div>
+                        ) : done ? (
+                          <div onClick={() => claimQuest(q.id, false)} style={{
+                            padding: "4px 10px", borderRadius: 6, cursor: "pointer",
+                            background: `${T.success}18`, border: `1px solid ${T.success}30`,
+                            fontSize: 9, fontWeight: 800, color: T.success, fontFamily: FONT_DISPLAY,
+                            animation: "pulse 1.5s infinite",
+                          }}>💎+{q.reward.diamonds}</div>
+                        ) : (
+                          <div style={{ padding: "4px 8px", borderRadius: 6, background: "#ffffff06", fontSize: 9, color: T.textDim, fontWeight: 700 }}>💎+{q.reward.diamonds}</div>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* Weekly quests */}
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
+                <div style={{ fontSize: 13, fontWeight: 900, color: T.white, fontFamily: FONT_DISPLAY }}>🏅 WEEKLY QUESTS</div>
+                <div style={{ fontSize: 8, color: T.textDim, fontWeight: 700 }}>Resets Monday</div>
+              </div>
+              <div style={{ display: "flex", flexDirection: "column", gap: 6, marginBottom: 18 }}>
+                {WEEKLY_QUESTS.map(q => {
+                  const prog = questProgress.weekly?.[q.stat] || 0;
+                  const done = prog >= q.target;
+                  const claimed = questProgress.claimedWeekly?.[q.id];
+                  const pct = Math.min(100, (prog / q.target) * 100);
+                  return (
+                    <div key={q.id} style={{
+                      display: "flex", alignItems: "center", gap: 8, padding: "8px 10px",
+                      borderRadius: 8, background: claimed ? "#ffffff04" : done ? `${q.color}08` : "#ffffff04",
+                      border: `1px solid ${claimed ? "#ffffff06" : done ? q.color + "25" : "#ffffff08"}`,
+                      opacity: claimed ? 0.5 : 1,
+                    }}>
+                      <div style={{ width: 32, height: 32, borderRadius: 8, background: `${q.color}12`, border: `1px solid ${q.color}20`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16, flexShrink: 0 }}>{q.icon}</div>
+                      <div style={{ flex: 1 }}>
+                        <div style={{ fontSize: 11, fontWeight: 700, color: T.white }}>{q.name}</div>
+                        <div style={{ fontSize: 8, color: T.textDim }}>{q.desc.replace("{n}", q.target)}</div>
+                        <div style={{ height: 4, background: "#ffffff08", borderRadius: 99, overflow: "hidden", marginTop: 3 }}>
+                          <div style={{ width: `${pct}%`, height: "100%", background: done ? T.success : q.color, borderRadius: 99, transition: "width 0.3s" }} />
+                        </div>
+                        <div style={{ fontSize: 7, color: done ? T.success : T.textDim, fontWeight: 700, marginTop: 1 }}>{Math.min(prog, q.target)}/{q.target}{claimed ? " ✓ Claimed" : ""}</div>
+                      </div>
+                      <div style={{ flexShrink: 0 }}>
+                        {claimed ? (
+                          <div style={{ padding: "4px 8px", borderRadius: 6, background: "#ffffff06", fontSize: 9, color: T.textDim, fontWeight: 700 }}>Done</div>
+                        ) : done ? (
+                          <div onClick={() => claimQuest(q.id, true)} style={{
+                            padding: "4px 10px", borderRadius: 6, cursor: "pointer",
+                            background: `${T.success}18`, border: `1px solid ${T.success}30`,
+                            fontSize: 9, fontWeight: 800, color: T.success, fontFamily: FONT_DISPLAY,
+                            animation: "pulse 1.5s infinite",
+                          }}>💎+{q.reward.diamonds}</div>
+                        ) : (
+                          <div style={{ padding: "4px 8px", borderRadius: 6, background: "#ffffff06", fontSize: 9, color: T.textDim, fontWeight: 700 }}>💎+{q.reward.diamonds}</div>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* Diamond income summary */}
+              <div style={{ padding: "10px 12px", borderRadius: 10, background: "#ffffff04", border: "1px solid #ffffff08" }}>
+                <div style={{ fontSize: 11, fontWeight: 900, color: T.white, fontFamily: FONT_DISPLAY, marginBottom: 6 }}>💎 DIAMOND INCOME</div>
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 4 }}>
+                  {[
+                    { src: "Passive", val: "1/min" },
+                    { src: "Daily Quests", val: `${DAILY_QUESTS.reduce((a, q) => a + q.reward.diamonds, 0)}/day` },
+                    { src: "Weekly Quests", val: `${WEEKLY_QUESTS.reduce((a, q) => a + q.reward.diamonds, 0)}/week` },
+                    { src: "Stage Clear", val: "Every 10 stages" },
+                    { src: "Dungeons", val: "Gem Mine" },
+                    { src: "Achievements", val: "One-time" },
+                  ].map((s, i) => (
+                    <div key={i} style={{ display: "flex", justifyContent: "space-between", padding: "3px 6px", fontSize: 8, color: T.textDim }}>
+                      <span>{s.src}</span>
+                      <span style={{ color: "#60a5fa", fontWeight: 700 }}>{s.val}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* ═══ DUNGEONS ═══ */}
           {page === "dungeons" && (
             <div>
@@ -2221,6 +2407,7 @@ function GameUI({ account, initialSave, onLogout }) {
             {[
               { icon: "⚔️", label: "Battle", p: "battle" },
               { icon: "🗡️", label: "Equip", p: "equipment" },
+              { icon: "📜", label: "Quests", p: "quests" },
               { icon: "✨", label: "Summon", p: "summon" },
               { icon: "⭐", label: "Growth", p: "growth" },
               { icon: "🏰", label: "Dungeon", p: "dungeons" },

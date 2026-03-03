@@ -2615,7 +2615,51 @@ function GameUI({ account, initialSave, onLogout }) {
 
 
   return (
-    <div style={{ position: "relative", width: "100%", height: "100vh", maxWidth: 480, margin: "0 auto", overflow: "hidden", fontFamily: FONT_BODY, background: "#0a0c14", color: T.text }}>
+    <div style={{ position: "relative", width: "100%", height: "100vh", maxWidth: isMobile ? 480 : "100%", margin: "0 auto", overflow: "hidden", fontFamily: FONT_BODY, background: "#0a0c14", color: T.text, display: isMobile ? "block" : "flex" }}>
+
+      {/* ═══ DESKTOP SIDEBAR NAV ═══ */}
+      {!isMobile && (
+        <div style={{ width: 64, flexShrink: 0, display: "flex", flexDirection: "column", background: "linear-gradient(180deg, #12141e, #0a0c14)", borderRight: "1px solid #ffffff08", padding: "8px 0", overflowY: "auto" }}>
+          <div style={{ textAlign: "center", marginBottom: 8, padding: "4px 0" }}>
+            <div style={{ fontSize: 20 }}>⚔️</div>
+            <div style={{ fontSize: 6, fontWeight: 900, color: T.accent, fontFamily: FONT_DISPLAY, letterSpacing: 1 }}>BLADE</div>
+          </div>
+          {[
+            { icon: "🗡️", label: "Equip", p: "equipment" },
+            { icon: "📜", label: "Quests", p: "quests" },
+            { icon: "✨", label: "Summon", p: "summon" },
+            { icon: "⭐", label: "Growth", p: "growth" },
+            { icon: "🏰", label: "Dungeon", p: "dungeons" },
+            { icon: "⚔️", label: "Raids", p: "raids" },
+            { icon: "🐾", label: "Pets", p: "pets" },
+            { icon: "🔄", label: "Rebirth", p: "prestige" },
+            { icon: "🛒", label: "Shop", p: "shop" },
+            { icon: "⚔️", label: "Evolve", p: "weaponevo" },
+            { icon: "🥋", label: "Dojo", p: "dojo" },
+            { icon: "🎯", label: "Chall.", p: "challenge" },
+            { icon: "⋯", label: "More", p: "_more" },
+          ].map(tab => {
+            const act = page === tab.p;
+            if (tab.p === "_more") return (
+              <div key={tab.p} onClick={() => setShowMoreMenu(p => !p)} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 1, padding: "6px 0", cursor: "pointer", position: "relative", background: showMoreMenu ? `${T.accent}10` : "transparent" }}>
+                <span style={{ fontSize: 16 }}>{tab.icon}</span>
+                <span style={{ fontSize: 6, fontWeight: 700, color: T.textDim, fontFamily: FONT_DISPLAY }}>{tab.label}</span>
+              </div>
+            );
+            return (
+              <div key={tab.p} onClick={() => { nav(tab.p); setShowMoreMenu(false); }} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 1, padding: "6px 0", cursor: "pointer", position: "relative", background: act ? `${T.accent}10` : "transparent", borderLeft: act ? `2px solid ${T.accent}` : "2px solid transparent" }}>
+                <span style={{ fontSize: 16 }}>{tab.icon}</span>
+                <span style={{ fontSize: 6, fontWeight: 700, color: act ? T.accent : T.textDim, fontFamily: FONT_DISPLAY }}>{tab.label}</span>
+              </div>
+            );
+          })}
+          <div style={{ flex: 1 }} />
+          <div onClick={() => nav("settings")} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 1, padding: "6px 0", cursor: "pointer" }}>
+            <span style={{ fontSize: 16 }}>⚙️</span>
+            <span style={{ fontSize: 6, fontWeight: 700, color: page === "settings" ? T.accent : T.textDim, fontFamily: FONT_DISPLAY }}>Settings</span>
+          </div>
+        </div>
+      )}
 
       {/* ═══ POPUPS (z:999) ═══ */}
       {offlinePopup && (
@@ -2675,7 +2719,7 @@ function GameUI({ account, initialSave, onLogout }) {
       {(() => {
         const monster = battleState?.monster || getStageMonster(currentStage);
         return (
-          <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column" }}>
+          <div style={{ position: isMobile ? "absolute" : "relative", inset: isMobile ? 0 : undefined, width: isMobile ? undefined : "45%", flexShrink: 0, display: "flex", flexDirection: "column", height: isMobile ? undefined : "100vh" }}>
 
             {/* ── TOP: Avatar + currencies ── */}
             <div style={{ display: "flex", alignItems: "center", padding: "6px 8px 0", gap: 6, zIndex: 10 }}>
@@ -3007,8 +3051,8 @@ function GameUI({ account, initialSave, onLogout }) {
               ))}
             </div>
 
-            {/* ── BOTTOM TABS ── */}
-            <div style={{ flexShrink: 0, display: "flex", alignItems: "stretch", background: "linear-gradient(180deg, #12141e, #0a0c14)", borderTop: "1px solid #ffffff08", paddingBottom: "max(4px, env(safe-area-inset-bottom))" }}>
+            {/* ── BOTTOM TABS (mobile only) ── */}
+            {isMobile && <div style={{ flexShrink: 0, display: "flex", alignItems: "stretch", background: "linear-gradient(180deg, #12141e, #0a0c14)", borderTop: "1px solid #ffffff08", paddingBottom: "max(4px, env(safe-area-inset-bottom))" }}>
               {[
                 { icon: "🗡️", label: "Equip", p: "equipment" },
                 { icon: "📜", label: "Quests", p: "quests" },
@@ -3034,22 +3078,25 @@ function GameUI({ account, initialSave, onLogout }) {
                   </div>
                 );
               })}
-            </div>
+            </div>}
           </div>
         );
       })()}
 
-      {/* ═══ PAGE PANEL (slides up from bottom, battle stays visible at top) ═══ */}
-      {page !== "battle" && (
-        <div style={{ position: "absolute", left: 0, right: 0, bottom: 0, top: "18%", zIndex: 50, display: "flex", flexDirection: "column", animation: "panelSlideUp 0.25s ease" }}>
-          {/* Panel header with drag handle */}
-          <div style={{ flexShrink: 0, borderRadius: "16px 16px 0 0", background: "linear-gradient(180deg, #181a24, #10121a)", borderTop: "1px solid #ffffff10", padding: "6px 12px 8px" }}>
-            {/* Drag handle */}
-            <div style={{ width: 36, height: 4, borderRadius: 99, background: "#ffffff15", margin: "0 auto 6px" }} />
+      {/* ═══ PAGE PANEL ═══ */}
+      {(isMobile ? page !== "battle" : true) && (
+        <div style={{
+          ...(isMobile ? { position: "absolute", left: 0, right: 0, bottom: 0, top: "18%", zIndex: 50, animation: "panelSlideUp 0.25s ease" } : { position: "relative", flex: 1, height: "100vh", borderLeft: "1px solid #ffffff08" }),
+          display: "flex", flexDirection: "column",
+        }}>
+          {/* Panel header */}
+          <div style={{ flexShrink: 0, borderRadius: isMobile ? "16px 16px 0 0" : 0, background: "linear-gradient(180deg, #181a24, #10121a)", borderTop: isMobile ? "1px solid #ffffff10" : "none", borderBottom: isMobile ? "none" : "1px solid #ffffff08", padding: isMobile ? "6px 12px 8px" : "10px 16px" }}>
+            {/* Drag handle (mobile only) */}
+            {isMobile && <div style={{ width: 36, height: 4, borderRadius: 99, background: "#ffffff15", margin: "0 auto 6px" }} />}
             <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-              <div onClick={() => nav("battle")} style={{ width: 28, height: 28, borderRadius: 7, cursor: "pointer", background: "#1a1c28", border: "1px solid #ffffff0a", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 10, color: T.textSec, fontWeight: 900 }}>✕</div>
-              <div style={{ flex: 1, fontSize: 13, fontWeight: 900, color: T.white, fontFamily: FONT_DISPLAY, textTransform: "uppercase" }}>
-                {page === "dungeons" && "🏰 Dungeons"}{page === "growth" && "📊 Growth"}{page === "equipment" && "🗡️ Equipment"}{page === "summon" && "✨ Summon"}{page === "pets" && "🐾 Pets"}{page === "costumes" && "👗 Costumes"}{page === "achievements" && "💀 Achievements"}{page === "stats" && "📈 Stats"}{page === "settings" && "⚙️ Settings"}{page === "quests" && "📜 Quests"}{page === "relics" && "🏺 Relics & Insignias"}{page === "prestige" && "🔄 Rebirth & Skills"}{page === "raids" && "⚔️ Raid Bosses"}{page === "shop" && "🛒 Shop"}{page === "titles" && "🏷️ Titles"}{page === "emblems" && "🏅 Emblems"}{page === "alchemy" && "⚗️ Alchemy"}{page === "resonance" && "✨ Resonance"}{page === "figures" && "🗿 Figures"}{page === "tower" && "🗼 Tower"}{page === "spin" && "🎡 Daily Spin"}{page === "bossrush" && "💥 Boss Rush"}{page === "battlepass" && "🎖️ Battle Pass"}{page === "gems" && "💎 Gems"}{page === "bestiary" && "📖 Bestiary"}{page === "power" && "📊 Power"}{page === "weaponevo" && "⚔️ Weapon Evolution"}{page === "dojo" && "🥋 Training Dojo"}{page === "challenge" && "🎯 Challenges"}
+              {isMobile && <div onClick={() => nav("battle")} style={{ width: 28, height: 28, borderRadius: 7, cursor: "pointer", background: "#1a1c28", border: "1px solid #ffffff0a", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 10, color: T.textSec, fontWeight: 900 }}>✕</div>}
+              <div style={{ flex: 1, fontSize: isMobile ? 13 : 15, fontWeight: 900, color: T.white, fontFamily: FONT_DISPLAY, textTransform: "uppercase" }}>
+                {page === "dungeons" && "🏰 Dungeons"}{page === "growth" && "📊 Growth"}{page === "equipment" && "🗡️ Equipment"}{page === "summon" && "✨ Summon"}{page === "pets" && "🐾 Pets"}{page === "costumes" && "👗 Costumes"}{page === "achievements" && "💀 Achievements"}{page === "stats" && "📈 Stats"}{page === "settings" && "⚙️ Settings"}{page === "quests" && "📜 Quests"}{page === "relics" && "🏺 Relics & Insignias"}{page === "prestige" && "🔄 Rebirth & Skills"}{page === "raids" && "⚔️ Raid Bosses"}{page === "shop" && "🛒 Shop"}{page === "titles" && "🏷️ Titles"}{page === "emblems" && "🏅 Emblems"}{page === "alchemy" && "⚗️ Alchemy"}{page === "resonance" && "✨ Resonance"}{page === "figures" && "🗿 Figures"}{page === "tower" && "🗼 Tower"}{page === "spin" && "🎡 Daily Spin"}{page === "bossrush" && "💥 Boss Rush"}{page === "battlepass" && "🎖️ Battle Pass"}{page === "gems" && "💎 Gems"}{page === "bestiary" && "📖 Bestiary"}{page === "power" && "📊 Power"}{page === "weaponevo" && "⚔️ Weapon Evolution"}{page === "dojo" && "🥋 Training Dojo"}{page === "challenge" && "🎯 Challenges"}{page === "battle" && !isMobile && "⚔️ Quick Stats"}
               </div>
               <div style={{ display: "flex", gap: 5 }}>
                 <span style={{ fontSize: 9, fontWeight: 800, color: "#f5c542", fontFamily: FONT_DISPLAY }}>🪙{fmt(gold)}</span>
@@ -3058,7 +3105,69 @@ function GameUI({ account, initialSave, onLogout }) {
             </div>
           </div>
           {/* Scrollable content */}
-          <div style={{ flex: 1, overflow: "auto", padding: "10px 12px", paddingBottom: 60, background: "#10121aee", backdropFilter: "blur(6px)" }}>
+          <div style={{ flex: 1, overflow: "auto", padding: isMobile ? "10px 12px" : "16px 20px", paddingBottom: 60, background: "#10121aee", backdropFilter: "blur(6px)" }}>
+
+          {/* ═══ DESKTOP BATTLE QUICK STATS ═══ */}
+          {page === "battle" && !isMobile && (
+            <div>
+              <div style={{ fontSize: 15, fontWeight: 900, color: T.white, fontFamily: FONT_DISPLAY, marginBottom: 12 }}>⚔️ BATTLE OVERVIEW</div>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginBottom: 16 }}>
+                {[
+                  { label: "ATK", val: fmt(totalAtk), color: T.danger, icon: "⚔️" },
+                  { label: "DEF", val: fmt(totalDef), color: T.info, icon: "🛡️" },
+                  { label: "HP", val: fmt(totalMaxHp), color: T.success, icon: "❤️" },
+                  { label: "CRIT", val: `${critRate}%`, color: T.warning, icon: "🎯" },
+                  { label: "STAGE", val: stageLabel(currentStage), color: T.accent, icon: "📍" },
+                  { label: "HIGHEST", val: stageLabel(highestStage), color: T.purple, icon: "🏆" },
+                  { label: "KILLS", val: fmt(combatStats.kills), color: T.orange, icon: "💀" },
+                  { label: "GOLD", val: fmt(gold), color: T.gold, icon: "🪙" },
+                ].map(s => (
+                  <div key={s.label} style={{ padding: "10px 12px", borderRadius: 10, background: `${s.color}06`, border: `1px solid ${s.color}15` }}>
+                    <div style={{ fontSize: 8, fontWeight: 700, color: s.color, fontFamily: FONT_DISPLAY, marginBottom: 4 }}>{s.icon} {s.label}</div>
+                    <div style={{ fontSize: 16, fontWeight: 900, color: T.white, fontFamily: FONT_DISPLAY }}>{s.val}</div>
+                  </div>
+                ))}
+              </div>
+              {/* Weapon evolution mini */}
+              <div style={{ padding: "10px 12px", borderRadius: 10, background: `${wEvo.color}06`, border: `1px solid ${wEvo.color}15`, marginBottom: 8 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                  <span style={{ fontSize: 24 }}>{wEvo.emoji}</span>
+                  <div>
+                    <div style={{ fontSize: 11, fontWeight: 800, color: wEvo.color, fontFamily: FONT_DISPLAY }}>{wEvo.name}</div>
+                    <div style={{ fontSize: 8, color: T.textDim }}>Tier {wEvo.tier} • +{wEvo.atkBonus} ATK</div>
+                  </div>
+                </div>
+              </div>
+              {/* Active set bonus */}
+              {(() => {
+                const equippedTypes = Object.entries(equipped).filter(([, v]) => v).map(([k]) => k);
+                const activeSet = EQUIP_SETS.find(set => set.pieces.filter(p => equippedTypes.includes(p)).length >= 2);
+                return activeSet ? (
+                  <div style={{ padding: "10px 12px", borderRadius: 10, background: `${activeSet.aura}06`, border: `1px solid ${activeSet.aura}15`, marginBottom: 8 }}>
+                    <div style={{ fontSize: 11, fontWeight: 800, color: activeSet.aura, fontFamily: FONT_DISPLAY }}>{activeSet.name}</div>
+                    <div style={{ fontSize: 8, color: T.textDim }}>{activeSet.desc}</div>
+                  </div>
+                ) : null;
+              })()}
+              {/* Quick nav buttons */}
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 6, marginTop: 12 }}>
+                {[
+                  { icon: "⚔️", label: "Evolve", p: "weaponevo" },
+                  { icon: "🥋", label: "Dojo", p: "dojo" },
+                  { icon: "🎯", label: "Challenge", p: "challenge" },
+                  { icon: "⭐", label: "Growth", p: "growth" },
+                  { icon: "🗡️", label: "Equip", p: "equipment" },
+                  { icon: "📊", label: "Power", p: "power" },
+                ].map(q => (
+                  <div key={q.p} onClick={() => nav(q.p)} style={{ padding: "8px 6px", borderRadius: 8, background: "#ffffff04", border: "1px solid #ffffff08", cursor: "pointer", textAlign: "center" }}>
+                    <div style={{ fontSize: 18 }}>{q.icon}</div>
+                    <div style={{ fontSize: 8, fontWeight: 700, color: T.textSec, fontFamily: FONT_DISPLAY }}>{q.label}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
           {/* ═══ RAIDS ═══ */}
           {page === "raids" && (
             <div>

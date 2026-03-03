@@ -1516,20 +1516,26 @@ function GameUI({ account, initialSave, onLogout }) {
         );
       })()}
 
-      {/* ═══ PAGE OVERLAY ═══ */}
+      {/* ═══ PAGE PANEL (slides up from bottom, battle stays visible at top) ═══ */}
       {page !== "battle" && (
-        <div style={{ position: "absolute", inset: 0, zIndex: 50, background: `${T.bg}f8`, backdropFilter: "blur(8px)", display: "flex", flexDirection: "column", animation: "slideUp 0.2s ease" }}>
-          <div style={{ flexShrink: 0, display: "flex", alignItems: "center", gap: 8, padding: "8px 12px", background: "linear-gradient(180deg, #14161e, #0e1018)", borderBottom: "1px solid #ffffff08" }}>
-            <div onClick={() => nav("battle")} style={{ width: 30, height: 30, borderRadius: 8, cursor: "pointer", background: "#1a1c28", border: "1px solid #ffffff0a", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11, color: T.textSec, fontWeight: 900 }}>←</div>
-            <div style={{ flex: 1, fontSize: 14, fontWeight: 900, color: T.white, fontFamily: FONT_DISPLAY, textTransform: "uppercase" }}>
-              {page === "dungeons" && "🏰 Dungeons"}{page === "growth" && "📊 Growth"}{page === "equipment" && "🗡️ Equipment"}{page === "summon" && "✨ Summon"}{page === "pets" && "🐾 Pets"}{page === "costumes" && "👗 Costumes"}{page === "achievements" && "💀 Achievements"}{page === "stats" && "📈 Stats"}{page === "settings" && "⚙️ Settings"}
-            </div>
-            <div style={{ display: "flex", gap: 6 }}>
-              <span style={{ fontSize: 9, fontWeight: 800, color: "#f5c542", fontFamily: FONT_DISPLAY }}>🪙{fmt(gold)}</span>
-              <span style={{ fontSize: 9, fontWeight: 800, color: "#60a5fa", fontFamily: FONT_DISPLAY }}>💎{fmt(diamonds)}</span>
+        <div style={{ position: "absolute", left: 0, right: 0, bottom: 0, top: "18%", zIndex: 50, display: "flex", flexDirection: "column", animation: "panelSlideUp 0.25s ease" }}>
+          {/* Panel header with drag handle */}
+          <div style={{ flexShrink: 0, borderRadius: "16px 16px 0 0", background: "linear-gradient(180deg, #181a24, #10121a)", borderTop: "1px solid #ffffff10", padding: "6px 12px 8px" }}>
+            {/* Drag handle */}
+            <div style={{ width: 36, height: 4, borderRadius: 99, background: "#ffffff15", margin: "0 auto 6px" }} />
+            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              <div onClick={() => nav("battle")} style={{ width: 28, height: 28, borderRadius: 7, cursor: "pointer", background: "#1a1c28", border: "1px solid #ffffff0a", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 10, color: T.textSec, fontWeight: 900 }}>✕</div>
+              <div style={{ flex: 1, fontSize: 13, fontWeight: 900, color: T.white, fontFamily: FONT_DISPLAY, textTransform: "uppercase" }}>
+                {page === "dungeons" && "🏰 Dungeons"}{page === "growth" && "📊 Growth"}{page === "equipment" && "🗡️ Equipment"}{page === "summon" && "✨ Summon"}{page === "pets" && "🐾 Pets"}{page === "costumes" && "👗 Costumes"}{page === "achievements" && "💀 Achievements"}{page === "stats" && "📈 Stats"}{page === "settings" && "⚙️ Settings"}
+              </div>
+              <div style={{ display: "flex", gap: 5 }}>
+                <span style={{ fontSize: 9, fontWeight: 800, color: "#f5c542", fontFamily: FONT_DISPLAY }}>🪙{fmt(gold)}</span>
+                <span style={{ fontSize: 9, fontWeight: 800, color: "#60a5fa", fontFamily: FONT_DISPLAY }}>💎{fmt(diamonds)}</span>
+              </div>
             </div>
           </div>
-          <div style={{ flex: 1, overflow: "auto", padding: 14, paddingBottom: 70 }}>
+          {/* Scrollable content */}
+          <div style={{ flex: 1, overflow: "auto", padding: "10px 12px", paddingBottom: 60, background: "#10121aee", backdropFilter: "blur(6px)" }}>
           {/* ═══ DUNGEONS ═══ */}
           {page === "dungeons" && (
             <div>
@@ -2110,8 +2116,8 @@ function GameUI({ account, initialSave, onLogout }) {
           )}
 
           </div>
-          {/* Bottom tabs in overlay */}
-          <div style={{ flexShrink: 0, display: "flex", alignItems: "stretch", background: "linear-gradient(180deg, #12141e, #0a0c14)", borderTop: "1px solid #ffffff08", paddingBottom: "max(4px, env(safe-area-inset-bottom))" }}>
+          {/* Bottom tabs in panel */}
+          <div style={{ flexShrink: 0, display: "flex", alignItems: "stretch", background: "#0e1018", borderTop: "1px solid #ffffff08", paddingBottom: "max(4px, env(safe-area-inset-bottom))" }}>
             {[
               { icon: "⚔️", label: "Battle", p: "battle" },
               { icon: "🗡️", label: "Equip", p: "equipment" },
@@ -2165,6 +2171,7 @@ function GameUI({ account, initialSave, onLogout }) {
         @keyframes goldFloat { 0% { opacity: 1; transform: translateX(-50%) translateY(0) scale(0.8); } 20% { opacity: 1; transform: translateX(-50%) translateY(-12px) scale(1.15); } 100% { opacity: 0; transform: translateX(-50%) translateY(-45px) scale(0.6); } }
         @keyframes flashFade { 0% { opacity: 1; } 100% { opacity: 0; } }
         @keyframes portalPulse { 0%, 100% { transform: translateX(-50%) scale(1); opacity: 0.6; } 50% { transform: translateX(-50%) scale(1.1); opacity: 1; } }
+        @keyframes panelSlideUp { from { transform: translateY(40%); opacity: 0.5; } to { transform: translateY(0); opacity: 1; } }
 
         ::selection { background: ${T.accent}40; color: ${T.white}; }
       `}</style>

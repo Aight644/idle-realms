@@ -1458,7 +1458,13 @@ function GameUI({ account, initialSave, onLogout }) {
   const [heroAnim, setHeroAnim] = useState(""); // "attack", "hit", "idle"
   const [screenFlash, setScreenFlash] = useState(null); // {color, ts}
   const [goldPopups, setGoldPopups] = useState([]); // [{id, amount, ts}]
+  const [comboCount, setComboCount] = useState(0); // hit combo counter
+  const [comboTimer, setComboTimer] = useState(null);
+  const [screenShake, setScreenShake] = useState(false);
+  const [bossCinematic, setBossCinematic] = useState(null); // {name, emoji, sprite}
+  const [announcer, setAnnouncer] = useState(null); // {text, color, ts}
   const dmgIdRef = useRef(0);
+  const comboRef = useRef(0);
 
   const addDmgNumber = useCallback((dmg, side, crit = false, skill = null) => {
     const id = ++dmgIdRef.current;
@@ -1487,6 +1493,47 @@ function GameUI({ account, initialSave, onLogout }) {
     setScreenFlash({ color, ts: Date.now() });
     setTimeout(() => setScreenFlash(null), 150);
   }, []);
+
+  const triggerShake = useCallback((intensity = "normal") => {
+    setScreenShake(intensity);
+    setTimeout(() => setScreenShake(false), intensity === "heavy" ? 400 : 200);
+  }, []);
+
+  const incrementCombo = useCallback(() => {
+    comboRef.current += 1;
+    setComboCount(comboRef.current);
+    if (comboTimer) clearTimeout(comboTimer);
+    const t = setTimeout(() => { comboRef.current = 0; setComboCount(0); }, 2000);
+    setComboTimer(t);
+  }, [comboTimer]);
+
+  const showAnnouncer = useCallback((text, color = "#fff") => {
+    setAnnouncer({ text, color, ts: Date.now() });
+    setTimeout(() => setAnnouncer(null), 1500);
+  }, []);
+
+  // Tap-to-attack handler
+  const handleTapAttack = useCallback(() => {
+    if (!isBattling || !battleState) return;
+    const alive = battleState.enemies.filter(e => e.hp > 0 && e.anim !== "die");
+    if (alive.length === 0) return;
+    const target = alive[0];
+    const tapDmg = Math.max(1, Math.floor(totalAtk * 0.3) + Math.floor(Math.random() * 4));
+    const wasCrit = Math.random() * 100 < critRate;
+    const finalDmg = wasCrit ? Math.floor(tapDmg * critDmg / 100) : tapDmg;
+    setBattleState(prev => {
+      if (!prev) return prev;
+      return { ...prev, enemies: prev.enemies.map(e => e.id === target.id ? { ...e, hp: e.hp - finalDmg, anim: "hit" } : e) };
+    });
+    setTimeout(() => setBattleState(p => {
+      if (!p) return p;
+      return { ...p, enemies: p.enemies.map(e => e.id === target.id && e.anim === "hit" ? { ...e, anim: "idle" } : e) };
+    }), 200);
+    triggerHeroAttack();
+    addDmgNumber(finalDmg, "right", wasCrit, "👊");
+    incrementCombo();
+    if (wasCrit) { triggerFlash(T.warning); triggerShake(); }
+  }, [isBattling, battleState, totalAtk, critRate, critDmg, triggerHeroAttack, addDmgNumber, incrementCombo, triggerFlash, triggerShake]);
 
   // Auto-dismiss toast
   useEffect(() => {
@@ -1985,13 +2032,20 @@ function GameUI({ account, initialSave, onLogout }) {
       enemies, killCount: 0, targetKills: monster.monstersToKill,
       stageGold: 0, monster, stageNum: stage, spawnIdx: count,
     });
-    setIsBattling(true);
+    // Boss cinematic
+    if (monster.isBoss) {
+      setBossCinematic({ name: monster.name, emoji: monster.emoji, sprite: monster.sprite });
+      setIsBattling(false);
+      setTimeout(() => { setBossCinematic(null); setIsBattling(true); }, 2000);
+    } else {
+      setIsBattling(true);
+    }
     setSkillCooldowns({});
   }, [totalMaxHp, spawnEnemy]);
 
   const stopBattle = useCallback(() => { if (battleRef.current) { clearInterval(battleRef.current); battleRef.current = null; } setIsBattling(false); setBattleState(null); }, []);
 
-  useEffect(() => { if (!isBattling) startBattle(currentStage); }, [currentStage]);
+  useEffect(() => { if (!isBattling && !bossCinematic) startBattle(currentStage); }, [currentStage]);
   useEffect(() => { startBattle(currentStage); return () => { if (battleRef.current) clearInterval(battleRef.current); }; }, []);
 
   useEffect(() => {
@@ -2033,7 +2087,8 @@ function GameUI({ account, initialSave, onLogout }) {
           setCombatStats(s => ({ ...s, totalDamage: s.totalDamage + dmg, highestHit: Math.max(s.highestHit || 0, dmg) }));
           triggerHeroAttack();
           addDmgNumber(dmg, "right", wasCrit);
-          if (wasCrit) triggerFlash(T.warning);
+          incrementCombo();
+          if (wasCrit) { triggerFlash(T.warning); triggerShake(); }
 
           // Auto-cast skills on same or other targets
           equippedSkills.filter(Boolean).forEach(sid => {
@@ -2089,6 +2144,7 @@ function GameUI({ account, initialSave, onLogout }) {
             addQuestProgress("kills", 1);
             addQuestProgress("goldEarned", effGold);
             setCombatStats(s => ({ ...s, kills: s.kills + 1, bossesKilled: s.bossesKilled + (e.isBoss ? 1 : 0) }));
+            if (e.isBoss) { triggerShake("heavy"); showAnnouncer("BOSS DEFEATED!", T.gold); triggerFlash(T.gold); }
 
             // Resonance XP gain (more from bosses and higher stages)
             const resXpGain = Math.floor(1 + stageNum * 0.1 + (e.isBoss ? 10 : 0));
@@ -2191,7 +2247,7 @@ function GameUI({ account, initialSave, onLogout }) {
     }, step);
 
     return () => { if (battleRef.current) clearInterval(battleRef.current); };
-  }, [isBattling, battleState?.stageNum, totalAtk, totalDef, critRate, critDmg, goldMult, autoProgress, farmStage, highestStage, unlockedSkills, pets, equippedSkills, triggerHeroAttack, triggerHeroHit, triggerFlash, addDmgNumber, addGoldPopup, addQuestProgress, skillLevels, resonanceLevel]);
+  }, [isBattling, battleState?.stageNum, totalAtk, totalDef, critRate, critDmg, goldMult, autoProgress, farmStage, highestStage, unlockedSkills, pets, equippedSkills, triggerHeroAttack, triggerHeroHit, triggerFlash, triggerShake, incrementCombo, showAnnouncer, addDmgNumber, addGoldPopup, addQuestProgress, skillLevels, resonanceLevel]);
 
   // Skills are now auto-cast in the battle loop — no manual activation needed
 
@@ -2497,7 +2553,7 @@ function GameUI({ account, initialSave, onLogout }) {
             </div>
 
             {/* ── PIXEL FIGHTER ARENA ── */}
-            <div style={{ flex: 1, position: "relative", overflow: "hidden" }}>
+            <div onClick={handleTapAttack} style={{ flex: 1, position: "relative", overflow: "hidden", cursor: "pointer", animation: screenShake === "heavy" ? "shakeHeavy 0.4s ease" : screenShake ? "shakeLight 0.2s ease" : undefined }}>
               {/* Sky/background gradient per chapter */}
               <div style={{ position: "absolute", inset: 0, background: `linear-gradient(180deg, ${chapter.color}08 0%, ${chapter.color}18 40%, #0a0c14 100%)` }} />
               {/* Parallax background elements */}
@@ -2531,6 +2587,68 @@ function GameUI({ account, initialSave, onLogout }) {
                   <span style={{ fontSize: 14, fontWeight: 900, color: T.gold, fontFamily: FONT_DISPLAY, textShadow: `0 0 8px ${T.gold}60, 0 2px 4px #000` }}>+{fmt(g.amount)}</span>
                 </div>
               ))}
+
+              {/* ── COMBO COUNTER ── */}
+              {comboCount >= 3 && (
+                <div key={comboCount} style={{ position: "absolute", right: "5%", top: "15%", zIndex: 30, pointerEvents: "none", animation: "comboPopIn 0.3s ease" }}>
+                  <div style={{ fontSize: comboCount >= 10 ? 28 : comboCount >= 7 ? 24 : 20, fontWeight: 900, fontFamily: FONT_DISPLAY, color: comboCount >= 10 ? "#ff4444" : comboCount >= 7 ? "#ff8800" : "#ffcc00", textShadow: `0 0 12px ${comboCount >= 10 ? "#ff000080" : comboCount >= 7 ? "#ff880080" : "#ffcc0060"}, 0 2px 6px #000`, letterSpacing: 1 }}>
+                    {comboCount}-HIT!
+                  </div>
+                  <div style={{ fontSize: 8, fontWeight: 700, color: "#ffffff80", fontFamily: FONT_DISPLAY, textAlign: "center", textShadow: "0 1px 3px #000" }}>COMBO</div>
+                </div>
+              )}
+
+              {/* ── ANNOUNCER TEXT ── */}
+              {announcer && (
+                <div key={announcer.ts} style={{ position: "absolute", left: "50%", top: "20%", transform: "translateX(-50%)", zIndex: 35, pointerEvents: "none", animation: "announcerSlam 1.5s ease forwards" }}>
+                  <div style={{ fontSize: 26, fontWeight: 900, fontFamily: FONT_DISPLAY, color: announcer.color, textShadow: `0 0 20px ${announcer.color}80, 0 0 40px ${announcer.color}40, 0 3px 8px #000`, letterSpacing: 3, whiteSpace: "nowrap" }}>{announcer.text}</div>
+                </div>
+              )}
+
+              {/* ── BOSS CINEMATIC OVERLAY ── */}
+              {bossCinematic && (
+                <div style={{ position: "absolute", inset: 0, zIndex: 50, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", background: "linear-gradient(180deg, #000000e0 0%, #0a0000d0 50%, #000000e0 100%)", animation: "cinematicFade 2s ease" }}>
+                  <div style={{ animation: "warningFlash 0.5s ease-in-out infinite", fontSize: 10, fontWeight: 900, color: "#ff4444", fontFamily: FONT_DISPLAY, letterSpacing: 6, textTransform: "uppercase", marginBottom: 12 }}>⚠️ WARNING ⚠️</div>
+                  <div style={{ animation: "bossSpriteEnter 0.8s ease 0.3s both" }}>
+                    {bossCinematic.sprite ? (
+                      <img src={bossCinematic.sprite} alt={bossCinematic.name} style={{ width: 96, height: 96, imageRendering: "pixelated", filter: "drop-shadow(0 0 20px #ff000060) drop-shadow(0 0 40px #ff000030)" }} />
+                    ) : (
+                      <div style={{ fontSize: 72, filter: "drop-shadow(0 0 20px #ff000060)" }}>{bossCinematic.emoji}</div>
+                    )}
+                  </div>
+                  <div style={{ animation: "bossNameEnter 0.6s ease 0.6s both", fontSize: 22, fontWeight: 900, fontFamily: FONT_DISPLAY, color: T.gold, textShadow: `0 0 20px ${T.gold}80, 0 2px 8px #000`, letterSpacing: 2, marginTop: 8 }}>{bossCinematic.name}</div>
+                  <div style={{ animation: "bossNameEnter 0.6s ease 0.9s both", fontSize: 10, fontWeight: 700, color: "#ff666680", fontFamily: FONT_DISPLAY, letterSpacing: 4, marginTop: 4, textTransform: "uppercase" }}>BOSS BATTLE</div>
+                  {/* Red scanlines */}
+                  <div style={{ position: "absolute", inset: 0, background: "repeating-linear-gradient(0deg, transparent, transparent 3px, #ff000008 3px, #ff000008 4px)", pointerEvents: "none" }} />
+                </div>
+              )}
+
+              {/* ── ANIMATED BACKGROUND PARTICLES ── */}
+              {[...Array(8)].map((_, i) => (
+                <div key={`p${i}`} style={{
+                  position: "absolute", pointerEvents: "none", zIndex: 1,
+                  left: `${10 + (i * 12)}%`, bottom: `${30 + (i % 3) * 8}%`,
+                  width: 3, height: 3, borderRadius: "50%",
+                  background: `${chapter.color}${i % 2 === 0 ? "30" : "18"}`,
+                  animation: `particleFloat ${4 + (i % 3) * 2}s ease-in-out infinite ${i * 0.5}s`,
+                  filter: "blur(1px)",
+                }} />
+              ))}
+              {/* Floating dust motes */}
+              {[...Array(5)].map((_, i) => (
+                <div key={`d${i}`} style={{
+                  position: "absolute", pointerEvents: "none", zIndex: 1,
+                  left: `${5 + i * 20}%`, top: `${15 + (i % 4) * 15}%`,
+                  width: 2, height: 2, borderRadius: "50%",
+                  background: "#ffffff10",
+                  animation: `dustDrift ${6 + i * 1.5}s linear infinite ${i * 1.2}s`,
+                }} />
+              ))}
+
+              {/* ── TAP INDICATOR ── */}
+              <div style={{ position: "absolute", bottom: "32%", left: "50%", transform: "translateX(-50%)", zIndex: 5, pointerEvents: "none", opacity: 0.25, animation: "pulse 2s infinite" }}>
+                <div style={{ fontSize: 8, fontWeight: 700, color: "#ffffff60", fontFamily: FONT_DISPLAY, textAlign: "center" }}>TAP TO ATTACK</div>
+              </div>
 
               {/* ── HERO (left side fighter) ── */}
               <div style={{ position: "absolute", left: "22%", bottom: "28%", transform: "translateX(-50%)", textAlign: "center", zIndex: 10 }}>
@@ -4723,6 +4841,16 @@ function GameUI({ account, initialSave, onLogout }) {
         @keyframes fighterDie { 0% { transform: scale(1) translateY(0); opacity: 1; } 40% { transform: scale(1.1) translateY(-10px); opacity: 0.8; } 100% { transform: scale(0.3) translateY(20px); opacity: 0; } }
         @keyframes enemyEnter { 0% { opacity: 0; transform: translateX(80px) scale(0.5); } 60% { transform: translateX(-5px) scale(1.05); } 100% { opacity: 1; transform: translateX(0) scale(1); } }
         @keyframes slashVfx { 0% { opacity: 1; transform: scale(0.5) rotate(-45deg); } 50% { opacity: 1; transform: scale(1.3) rotate(-30deg); } 100% { opacity: 0; transform: scale(1.8) rotate(-20deg); } }
+        @keyframes shakeLight { 0%, 100% { transform: translate(0); } 25% { transform: translate(-3px, 2px); } 50% { transform: translate(3px, -2px); } 75% { transform: translate(-2px, -1px); } }
+        @keyframes shakeHeavy { 0%, 100% { transform: translate(0); } 10% { transform: translate(-6px, 4px); } 20% { transform: translate(6px, -4px); } 30% { transform: translate(-5px, -3px); } 40% { transform: translate(5px, 3px); } 50% { transform: translate(-4px, 2px); } 60% { transform: translate(4px, -2px); } 70% { transform: translate(-3px, 1px); } 80% { transform: translate(2px, -1px); } }
+        @keyframes comboPopIn { 0% { opacity: 0; transform: scale(2) rotate(-10deg); } 50% { opacity: 1; transform: scale(0.9) rotate(2deg); } 100% { opacity: 1; transform: scale(1) rotate(0deg); } }
+        @keyframes announcerSlam { 0% { opacity: 0; transform: translateX(-50%) scale(3); } 10% { opacity: 1; transform: translateX(-50%) scale(1); } 70% { opacity: 1; transform: translateX(-50%) scale(1); } 100% { opacity: 0; transform: translateX(-50%) scale(0.8) translateY(-20px); } }
+        @keyframes cinematicFade { 0% { opacity: 0; } 15% { opacity: 1; } 85% { opacity: 1; } 100% { opacity: 0; } }
+        @keyframes warningFlash { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+        @keyframes bossSpriteEnter { 0% { opacity: 0; transform: scale(3) translateY(20px); filter: blur(10px); } 100% { opacity: 1; transform: scale(1) translateY(0); filter: blur(0); } }
+        @keyframes bossNameEnter { 0% { opacity: 0; transform: translateY(15px); } 100% { opacity: 1; transform: translateY(0); } }
+        @keyframes particleFloat { 0%, 100% { transform: translateY(0) translateX(0); opacity: 0.3; } 25% { transform: translateY(-20px) translateX(5px); opacity: 0.6; } 50% { transform: translateY(-40px) translateX(-3px); opacity: 0.4; } 75% { transform: translateY(-60px) translateX(4px); opacity: 0.2; } }
+        @keyframes dustDrift { 0% { transform: translate(0, 0); opacity: 0; } 10% { opacity: 0.4; } 90% { opacity: 0.4; } 100% { transform: translate(30px, -60px); opacity: 0; } }
         @keyframes goldFloat { 0% { opacity: 1; transform: translateX(-50%) translateY(0) scale(0.8); } 20% { opacity: 1; transform: translateX(-50%) translateY(-12px) scale(1.15); } 100% { opacity: 0; transform: translateX(-50%) translateY(-45px) scale(0.6); } }
         @keyframes flashFade { 0% { opacity: 1; } 100% { opacity: 0; } }
         @keyframes portalPulse { 0%, 100% { transform: translateX(-50%) scale(1); opacity: 0.6; } 50% { transform: translateX(-50%) scale(1.1); opacity: 1; } }

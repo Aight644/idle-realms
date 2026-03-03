@@ -835,7 +835,6 @@ function GameUI({ account, initialSave, onLogout }) {
   // ─── BATTLE EFFECTS STATE ───
   const [floatingDmg, setFloatingDmg] = useState([]); // [{id, dmg, x, side, crit, skill, ts}]
   const [heroAnim, setHeroAnim] = useState(""); // "attack", "hit", "idle"
-  const [monsterAnim, setMonsterAnim] = useState(""); // "hit", "die", "idle"
   const [screenFlash, setScreenFlash] = useState(null); // {color, ts}
   const [goldPopups, setGoldPopups] = useState([]); // [{id, amount, ts}]
   const dmgIdRef = useRef(0);
@@ -858,19 +857,9 @@ function GameUI({ account, initialSave, onLogout }) {
     setTimeout(() => setHeroAnim(""), 300);
   }, []);
 
-  const triggerMonsterHit = useCallback(() => {
-    setMonsterAnim("hit");
-    setTimeout(() => setMonsterAnim(""), 200);
-  }, []);
-
   const triggerHeroHit = useCallback(() => {
     setHeroAnim("hit");
     setTimeout(() => setHeroAnim(""), 200);
-  }, []);
-
-  const triggerMonsterDie = useCallback(() => {
-    setMonsterAnim("die");
-    setTimeout(() => setMonsterAnim(""), 400);
   }, []);
 
   const triggerFlash = useCallback((color) => {
@@ -1040,14 +1029,45 @@ function GameUI({ account, initialSave, onLogout }) {
     if (lvl > growth[stat]) { setGold(g => g - spent); setGrowth(g => ({ ...g, [stat]: lvl })); }
   }, [growth, gold]);
 
-  // ─── BATTLE SYSTEM ───
+  // ─── BATTLE SYSTEM (multi-enemy like Blade Idle) ───
+  const enemyIdRef = useRef(0);
+
+  const spawnEnemy = useCallback((monster, posIdx) => {
+    // Predefined positions scattered around the field
+    const positions = [
+      { x: 62, y: 25 }, { x: 75, y: 42 }, { x: 55, y: 55 },
+      { x: 70, y: 65 }, { x: 80, y: 30 }, { x: 60, y: 72 },
+      { x: 85, y: 55 }, { x: 50, y: 40 },
+    ];
+    const pos = positions[posIdx % positions.length];
+    return {
+      id: ++enemyIdRef.current,
+      hp: monster.hp, maxHp: monster.hp,
+      atk: monster.atk, def: monster.def, gold: monster.gold,
+      emoji: monster.emoji, name: monster.name, isBoss: monster.isBoss,
+      x: pos.x + (Math.random() * 8 - 4),
+      y: pos.y + (Math.random() * 6 - 3),
+      anim: "spawn", // spawn, idle, hit, die
+      scale: monster.isBoss ? 1.4 : 0.9 + Math.random() * 0.2,
+    };
+  }, []);
+
   const startBattle = useCallback((stage) => {
     const monster = getStageMonster(stage);
     setPlayerHp(totalMaxHp);
-    setBattleState({ monsterHp: monster.hp, monsterMaxHp: monster.hp, killCount: 0, targetKills: monster.monstersToKill, stageGold: 0, monster, stageNum: stage });
+    // Spawn initial enemies
+    const count = monster.isBoss ? 1 : Math.min(monster.monstersToKill, 5);
+    const enemies = [];
+    for (let i = 0; i < count; i++) {
+      enemies.push(spawnEnemy(monster, i));
+    }
+    setBattleState({
+      enemies, killCount: 0, targetKills: monster.monstersToKill,
+      stageGold: 0, monster, stageNum: stage, spawnIdx: count,
+    });
     setIsBattling(true);
     setSkillCooldowns({});
-  }, [totalMaxHp]);
+  }, [totalMaxHp, spawnEnemy]);
 
   const stopBattle = useCallback(() => { if (battleRef.current) { clearInterval(battleRef.current); battleRef.current = null; } setIsBattling(false); setBattleState(null); }, []);
 
@@ -1056,56 +1076,69 @@ function GameUI({ account, initialSave, onLogout }) {
 
   useEffect(() => {
     if (!isBattling || !battleState) return;
-    const step = 100, atkSpd = 1500, mSpd = 2000;
+    const step = 100, atkSpd = 1200, mSpd = 2500;
     let pE = 0, mE = 0;
-    // Auto-skill cooldown tracking (ms remaining)
     const skillCDs = {};
 
     battleRef.current = setInterval(() => {
       setBattleState(prev => {
         if (!prev) return prev;
-        let { monsterHp, monsterMaxHp, killCount, targetKills, stageGold, monster, stageNum } = prev;
+        let { enemies, killCount, targetKills, stageGold, monster, stageNum, spawnIdx } = prev;
+        let newEnemies = enemies.map(e => ({ ...e })); // shallow copy
         pE += step; mE += step;
 
-        // Tick down skill cooldowns
+        // Tick skill cooldowns
         equippedSkills.filter(Boolean).forEach(sid => {
           if (skillCDs[sid] > 0) skillCDs[sid] -= step;
         });
 
-        if (pE >= atkSpd) {
+        // Find closest alive enemy
+        const alive = newEnemies.filter(e => e.hp > 0 && e.anim !== "die");
+        const target = alive.length > 0 ? alive[0] : null;
+
+        if (pE >= atkSpd && target) {
           pE = 0;
-          let dmg = Math.max(1, totalAtk - monster.def + Math.floor(Math.random() * 4));
+          let dmg = Math.max(1, totalAtk - target.def + Math.floor(Math.random() * 4));
           const wasCrit = Math.random() * 100 < critRate;
           if (wasCrit) dmg = Math.floor(dmg * critDmg / 100);
-          monsterHp -= dmg;
+          target.hp -= dmg;
+          target.anim = "hit";
+          setTimeout(() => setBattleState(p => {
+            if (!p) return p;
+            return { ...p, enemies: p.enemies.map(e => e.id === target.id && e.anim === "hit" ? { ...e, anim: "idle" } : e) };
+          }), 200);
           setCombatStats(s => ({ ...s, totalDamage: s.totalDamage + dmg, highestHit: Math.max(s.highestHit || 0, dmg) }));
           triggerHeroAttack();
-          triggerMonsterHit();
           addDmgNumber(dmg, "right", wasCrit);
           if (wasCrit) triggerFlash(T.warning);
 
-          // Auto-cast equipped skills when off cooldown
+          // Auto-cast skills on same or other targets
           equippedSkills.filter(Boolean).forEach(sid => {
             if ((skillCDs[sid] || 0) <= 0) {
               const sk = COMBAT_SKILLS.find(s => s.id === sid);
               if (sk) {
-                const sDmg = Math.floor(totalAtk * sk.dmgMult);
-                monsterHp -= sDmg;
-                setCombatStats(s => ({ ...s, totalDamage: s.totalDamage + sDmg, highestHit: Math.max(s.highestHit || 0, sDmg) }));
+                // Skills can hit all alive enemies (AoE feel)
+                const aoeTargets = alive.slice(0, sk.dmgMult > 2 ? 3 : 1);
+                aoeTargets.forEach(t => {
+                  const sDmg = Math.floor(totalAtk * sk.dmgMult / aoeTargets.length);
+                  t.hp -= sDmg;
+                  addDmgNumber(sDmg, "right", false, sk.emoji);
+                });
                 skillCDs[sid] = sk.cooldown;
                 setSkillCooldowns(p => ({ ...p, [sid]: true }));
                 setTimeout(() => setSkillCooldowns(p => ({ ...p, [sid]: false })), sk.cooldown);
-                addLog(`${sk.emoji} ${sk.name}! ${fmt(sDmg)} damage!`);
-                addDmgNumber(sDmg, "right", false, sk.emoji);
                 triggerFlash(sk.color);
+                addLog(`${sk.emoji} ${sk.name}!`);
               }
             }
           });
         }
 
-        if (mE >= mSpd) {
+        // Monster attacks (random alive enemy attacks hero)
+        if (mE >= mSpd && alive.length > 0) {
           mE = 0;
-          const mDmg = Math.max(1, monster.atk - totalDef + Math.floor(Math.random() * 3));
+          const attacker = alive[Math.floor(Math.random() * alive.length)];
+          const mDmg = Math.max(1, attacker.atk - totalDef + Math.floor(Math.random() * 3));
           triggerHeroHit();
           addDmgNumber(mDmg, "left", false);
           setPlayerHp(hp => {
@@ -1120,54 +1153,83 @@ function GameUI({ account, initialSave, onLogout }) {
           });
         }
 
-        if (monsterHp <= 0) {
-          const effGold = Math.floor(monster.gold * goldMult);
-          stageGold += effGold; killCount++;
-          addGold(effGold);
-          triggerMonsterDie();
-          addGoldPopup(effGold);
-          setCombatStats(s => ({ ...s, kills: s.kills + 1, bossesKilled: s.bossesKilled + (monster.isBoss ? 1 : 0) }));
+        // Check for dead enemies
+        newEnemies.forEach(e => {
+          if (e.hp <= 0 && e.anim !== "die") {
+            e.anim = "die";
+            const effGold = Math.floor(e.gold * goldMult);
+            stageGold += effGold;
+            killCount++;
+            addGold(effGold);
+            addGoldPopup(effGold);
+            setCombatStats(s => ({ ...s, kills: s.kills + 1, bossesKilled: s.bossesKilled + (e.isBoss ? 1 : 0) }));
 
-          // Pet drop chance on boss kills
-          if (monster.isBoss && Math.random() < 0.08) {
-            const available = PET_DEFS.filter(p => !pets.includes(p.name));
-            if (available.length > 0) {
-              const newPet = available[Math.floor(Math.random() * available.length)];
-              setPets(prev => [...prev, newPet.name]);
-              addLog(`🐾 Boss dropped a pet: ${newPet.emoji} ${newPet.name}!`);
-            }
-          }
-
-          if (killCount >= targetKills) {
-            addLog(`✅ Stage ${stageLabel(stageNum)} cleared! +${fmt(stageGold)} gold`);
-            const next = stageNum + 1;
-            if (stageNum >= highestStage) setHighestStage(next);
-            COMBAT_SKILLS.forEach(sk => {
-              if (sk.unlockStage === next && !unlockedSkills.includes(sk.id)) {
-                setUnlockedSkills(prev => [...prev, sk.id]);
-                addLog(`🎉 New skill: ${sk.emoji} ${sk.name}!`);
+            // Pet drop on boss
+            if (e.isBoss && Math.random() < 0.08) {
+              const available = PET_DEFS.filter(p => !pets.includes(p.name));
+              if (available.length > 0) {
+                const newPet = available[Math.floor(Math.random() * available.length)];
+                setPets(pv => [...pv, newPet.name]);
+                addLog(`🐾 Boss dropped: ${newPet.emoji} ${newPet.name}!`);
               }
-            });
-            // Award diamonds every 10 stages
-            if (stageNum % 10 === 0) {
-              const dReward = 10 + Math.floor(stageNum / 10) * 5;
-              setDiamonds(d => d + dReward);
-              addLog(`💎 Stage ${stageLabel(stageNum)} bonus: +${dReward} diamonds!`);
             }
-            if (autoProgress) {
-              setCurrentStage(next);
-              const nm = getStageMonster(next);
-              return { monsterHp: nm.hp, monsterMaxHp: nm.hp, killCount: 0, targetKills: nm.monstersToKill, stageGold: 0, monster: nm, stageNum: next };
-            } else { setIsBattling(false); return null; }
+
+            // Spawn replacement after delay (or check stage clear)
+            if (killCount >= targetKills) {
+              // Stage cleared
+              addLog(`✅ Stage ${stageLabel(stageNum)} cleared! +${fmt(stageGold)}g`);
+              const next = stageNum + 1;
+              if (stageNum >= highestStage) setHighestStage(next);
+              COMBAT_SKILLS.forEach(sk => {
+                if (sk.unlockStage === next && !unlockedSkills.includes(sk.id)) {
+                  setUnlockedSkills(pv => [...pv, sk.id]);
+                  addLog(`🎉 New skill: ${sk.emoji} ${sk.name}!`);
+                }
+              });
+              if (autoProgress) {
+                setCurrentStage(next);
+                setTimeout(() => startBattle(next), 400);
+              }
+              // Diamond bonus every 10 stages
+              if (stageNum % 10 === 0) {
+                const dReward = 10 + Math.floor(stageNum / 10) * 5;
+                setDiamonds(d => d + dReward);
+                addLog(`💎 +${dReward} diamonds!`);
+              }
+            } else {
+              // Spawn new enemy after short delay
+              const si = spawnIdx++;
+              setTimeout(() => {
+                setBattleState(p => {
+                  if (!p) return p;
+                  const m = p.monster;
+                  const newEnemy = {
+                    id: ++enemyIdRef.current,
+                    hp: m.hp, maxHp: m.hp, atk: m.atk, def: m.def, gold: m.gold,
+                    emoji: m.emoji, name: m.name, isBoss: false,
+                    x: 55 + Math.random() * 30, y: 20 + Math.random() * 50,
+                    anim: "spawn", scale: 0.9 + Math.random() * 0.2,
+                  };
+                  setTimeout(() => setBattleState(pp => {
+                    if (!pp) return pp;
+                    return { ...pp, enemies: pp.enemies.map(ee => ee.id === newEnemy.id ? { ...ee, anim: "idle" } : ee) };
+                  }), 300);
+                  return { ...p, enemies: [...p.enemies.filter(ee => ee.anim !== "die" || Date.now() - 500 > 0), newEnemy] };
+                });
+              }, 350);
+            }
           }
-          monsterHp = monsterMaxHp;
-        }
-        return { ...prev, monsterHp, killCount, stageGold };
+        });
+
+        // Clean up old dead enemies
+        newEnemies = newEnemies.filter(e => e.anim !== "die" || e.hp > -9999);
+
+        return { ...prev, enemies: newEnemies, killCount, stageGold, spawnIdx };
       });
     }, step);
 
     return () => { if (battleRef.current) clearInterval(battleRef.current); };
-  }, [isBattling, battleState?.stageNum, totalAtk, totalDef, critRate, critDmg, goldMult, autoProgress, highestStage, unlockedSkills, pets, equippedSkills, triggerHeroAttack, triggerMonsterHit, triggerHeroHit, triggerMonsterDie, triggerFlash, addDmgNumber, addGoldPopup]);
+  }, [isBattling, battleState?.stageNum, totalAtk, totalDef, critRate, critDmg, goldMult, autoProgress, highestStage, unlockedSkills, pets, equippedSkills, triggerHeroAttack, triggerHeroHit, triggerFlash, addDmgNumber, addGoldPopup]);
 
   // Skills are now auto-cast in the battle loop — no manual activation needed
 
@@ -1386,7 +1448,7 @@ function GameUI({ account, initialSave, onLogout }) {
             <div style={{ flex: 1, position: "relative", overflow: "hidden" }}>
               {/* BG */}
               <div style={{ position: "absolute", inset: 0, background: `radial-gradient(ellipse at 50% 30%, ${chapter.color}15 0%, transparent 50%), ${chapter.bgGrad}` }} />
-              {/* Floor */}
+              {/* Floor grid */}
               <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, height: "55%", background: "repeating-conic-gradient(#ffffff04 0% 25%, transparent 0% 50%) 0 0 / 40px 40px", transform: "perspective(300px) rotateX(45deg)", transformOrigin: "bottom center", opacity: 0.5 }} />
               {/* Portal */}
               <div style={{ position: "absolute", top: "2%", left: "50%", transform: "translateX(-50%)", width: 140, height: 90, borderRadius: "50%", background: `radial-gradient(ellipse, ${chapter.color}30 0%, ${chapter.color}10 40%, transparent 70%)`, animation: "portalPulse 3s ease-in-out infinite", filter: "blur(2px)" }} />
@@ -1394,7 +1456,7 @@ function GameUI({ account, initialSave, onLogout }) {
               {/* Screen flash */}
               {screenFlash && <div key={screenFlash.ts} style={{ position: "absolute", inset: 0, zIndex: 30, pointerEvents: "none", background: `radial-gradient(circle, ${screenFlash.color}30 0%, transparent 70%)`, animation: "flashFade 0.15s ease-out forwards" }} />}
 
-              {/* Floating dmg */}
+              {/* Floating dmg numbers */}
               {floatingDmg.map(d => (
                 <div key={d.id} style={{ position: "absolute", zIndex: 25, pointerEvents: "none", left: d.side === "right" ? `${52 + Math.random() * 18}%` : `${12 + Math.random() * 18}%`, top: "35%", animation: "dmgFloat 1.1s ease-out forwards" }}>
                   {d.skill && <span style={{ fontSize: 14 }}>{d.skill}</span>}
@@ -1409,27 +1471,56 @@ function GameUI({ account, initialSave, onLogout }) {
                 </div>
               ))}
 
-              {/* HERO */}
-              <div style={{ position: "absolute", left: "22%", top: "40%", transform: "translate(-50%, -50%)", textAlign: "center", zIndex: 10 }}>
-                <div style={{ width: 56, height: 5, background: "#00000060", borderRadius: 3, overflow: "hidden", margin: "0 auto 3px", border: "1px solid #ffffff10" }}>
+              {/* ── HERO (left-center of field) ── */}
+              <div style={{ position: "absolute", left: "20%", top: "45%", transform: "translate(-50%, -50%)", textAlign: "center", zIndex: 10 }}>
+                {/* Hero HP bar */}
+                <div style={{ width: 52, height: 5, background: "#00000060", borderRadius: 3, overflow: "hidden", margin: "0 auto 2px", border: "1px solid #ffffff10" }}>
                   <div style={{ width: `${(playerHp / totalMaxHp) * 100}%`, height: "100%", background: "linear-gradient(90deg, #22c55e, #4ade80)", borderRadius: 3, transition: "width 0.15s" }} />
                 </div>
-                <div style={{ width: 60, height: 60, margin: "0 auto", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 34, animation: heroAnim === "attack" ? "heroAttack 0.3s ease" : heroAnim === "hit" ? "heroHit 0.2s ease" : "heroIdle 3s ease-in-out infinite", filter: heroAnim === "hit" ? "brightness(2)" : "drop-shadow(0 4px 8px #00000060)" }}>{heroEmoji}</div>
-                <div style={{ fontSize: 7, fontWeight: 800, color: "#fff", fontFamily: FONT_DISPLAY, marginTop: 1, textShadow: "0 1px 4px #000" }}>{account.displayName}</div>
+                <div style={{ width: 56, height: 56, margin: "0 auto", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 32, animation: heroAnim === "attack" ? "heroAttack 0.3s ease" : heroAnim === "hit" ? "heroHit 0.2s ease" : "heroIdle 3s ease-in-out infinite", filter: heroAnim === "hit" ? "brightness(2)" : "drop-shadow(0 4px 8px #00000060)" }}>{heroEmoji}</div>
               </div>
 
-              {/* MONSTER */}
-              <div style={{ position: "absolute", right: "22%", top: "40%", transform: "translate(50%, -50%)", textAlign: "center", zIndex: 10 }}>
-                <div style={{ width: 56, height: 5, background: "#00000060", borderRadius: 3, overflow: "hidden", margin: "0 auto 3px", border: "1px solid #ffffff10" }}>
-                  <div style={{ width: `${Math.max(0, ((battleState?.monsterHp || monster.hp) / monster.hp) * 100)}%`, height: "100%", background: "linear-gradient(90deg, #ef4444, #f87171)", borderRadius: 3, transition: "width 0.15s" }} />
+              {/* ── ENEMIES (multiple, scattered across field) ── */}
+              {(battleState?.enemies || []).map(enemy => (
+                <div key={enemy.id} style={{
+                  position: "absolute",
+                  left: `${enemy.x}%`, top: `${enemy.y}%`,
+                  transform: `translate(-50%, -50%) scale(${enemy.scale || 1})`,
+                  textAlign: "center", zIndex: 8,
+                  transition: "left 0.3s, top 0.3s",
+                  animation: enemy.anim === "spawn" ? "enemySpawn 0.3s ease" : enemy.anim === "die" ? "monsterDie 0.4s ease forwards" : undefined,
+                  pointerEvents: "none",
+                }}>
+                  {/* Enemy HP bar */}
+                  {enemy.anim !== "die" && (
+                    <div style={{ width: 44, height: 4, background: "#00000060", borderRadius: 3, overflow: "hidden", margin: "0 auto 2px", border: "1px solid #ffffff10" }}>
+                      <div style={{ width: `${Math.max(0, (enemy.hp / enemy.maxHp) * 100)}%`, height: "100%", background: "linear-gradient(90deg, #ef4444, #f87171)", borderRadius: 3, transition: "width 0.1s" }} />
+                    </div>
+                  )}
+                  {/* Enemy sprite */}
+                  <div style={{
+                    width: enemy.isBoss ? 58 : 46, height: enemy.isBoss ? 58 : 46,
+                    margin: "0 auto",
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                    fontSize: enemy.isBoss ? 32 : 24,
+                    animation: enemy.anim === "hit" ? "monsterHit 0.2s ease" : enemy.anim === "idle" ? `monsterIdle ${2 + (enemy.id % 3) * 0.5}s ease-in-out infinite` : undefined,
+                    filter: enemy.anim === "hit" ? "brightness(2.5)" : "drop-shadow(0 3px 6px #00000060)",
+                    opacity: enemy.anim === "die" ? 0 : 1,
+                  }}>{enemy.emoji}</div>
+                  {/* Boss crown */}
+                  {enemy.isBoss && enemy.anim !== "die" && (
+                    <div style={{ fontSize: 10, marginTop: -2 }}>👑</div>
+                  )}
                 </div>
-                <div style={{ width: 60, height: 60, margin: "0 auto", display: "flex", alignItems: "center", justifyContent: "center", fontSize: monster.isBoss ? 40 : 34, animation: monsterAnim === "hit" ? "monsterHit 0.2s ease" : monsterAnim === "die" ? "monsterDie 0.4s ease forwards" : "monsterIdle 2.5s ease-in-out infinite", filter: monsterAnim === "hit" ? "brightness(2.5)" : "drop-shadow(0 4px 8px #00000060)" }}>{monster.emoji}</div>
-                <div style={{ fontSize: 7, fontWeight: 800, color: monster.isBoss ? "#f87171" : "#fff", fontFamily: FONT_DISPLAY, marginTop: 1, textShadow: "0 1px 4px #000" }}>{monster.name}{monster.isBoss ? " 👑" : ""}</div>
-              </div>
+              ))}
 
-              {/* Decorative scattered coins */}
-              {[{ x: "25%", y: "65%" }, { x: "55%", y: "72%" }, { x: "72%", y: "60%" }, { x: "38%", y: "68%" }].map((c, i) => (
-                <div key={i} style={{ position: "absolute", left: c.x, top: c.y, fontSize: 9, opacity: 0.35, pointerEvents: "none", animation: `sparkle ${2 + i * 0.5}s ease-in-out infinite ${i * 0.3}s` }}>🪙</div>
+              {/* Scattered coins on ground */}
+              {[{ x: "30%", y: "70%" }, { x: "50%", y: "75%" }, { x: "68%", y: "62%" }, { x: "42%", y: "80%" }, { x: "78%", y: "72%" }].map((c, i) => (
+                <div key={i} style={{ position: "absolute", left: c.x, top: c.y, fontSize: 9, opacity: 0.3, pointerEvents: "none", animation: `sparkle ${2 + i * 0.5}s ease-in-out infinite ${i * 0.3}s` }}>🪙</div>
+              ))}
+              {/* Scattered gems */}
+              {[{ x: "35%", y: "66%" }, { x: "65%", y: "78%" }].map((c, i) => (
+                <div key={i} style={{ position: "absolute", left: c.x, top: c.y, fontSize: 8, opacity: 0.25, pointerEvents: "none", animation: `sparkle ${3 + i}s ease-in-out infinite ${i * 0.7}s` }}>💎</div>
               ))}
 
               {/* LEFT SIDE ICONS */}
@@ -2176,6 +2267,7 @@ function GameUI({ account, initialSave, onLogout }) {
         @keyframes monsterIdle { 0%, 100% { transform: translateY(0) scale(1); } 50% { transform: translateY(-2px) scale(1.02); } }
         @keyframes monsterHit { 0% { transform: translateX(0) scale(1); filter: brightness(1); } 30% { transform: translateX(10px) scale(0.92); filter: brightness(3); } 100% { transform: translateX(0) scale(1); filter: brightness(1); } }
         @keyframes monsterDie { 0% { transform: scale(1) rotate(0deg); opacity: 1; } 50% { transform: scale(1.15) rotate(8deg); opacity: 0.7; } 100% { transform: scale(0) rotate(25deg); opacity: 0; } }
+        @keyframes enemySpawn { 0% { opacity: 0; transform: translate(-50%, -50%) scale(0); } 50% { transform: translate(-50%, -50%) scale(1.2); } 100% { opacity: 1; transform: translate(-50%, -50%) scale(1); } }
         @keyframes dmgFloat { 0% { opacity: 1; transform: translateY(0) scale(0.5); } 15% { opacity: 1; transform: translateY(-12px) scale(1.3); } 30% { transform: translateY(-24px) scale(1); } 100% { opacity: 0; transform: translateY(-80px) scale(0.7); } }
         @keyframes goldFloat { 0% { opacity: 1; transform: translateX(-50%) translateY(0) scale(0.8); } 20% { opacity: 1; transform: translateX(-50%) translateY(-12px) scale(1.15); } 100% { opacity: 0; transform: translateX(-50%) translateY(-45px) scale(0.6); } }
         @keyframes flashFade { 0% { opacity: 1; } 100% { opacity: 0; } }

@@ -128,6 +128,13 @@ const EQUIP_TYPES = [
   { id: "amulet", name: "Amulet", emoji: "📿", stat: "critDmg" },
 ];
 
+// Accessories — separate category with their own summon
+const ACCESSORY_TYPES = [
+  { id: "earring", name: "Earring", emoji: "👂", stat: "pen" },
+  { id: "necklace", name: "Necklace", emoji: "📿", stat: "acu" },
+  { id: "bracelet", name: "Bracelet", emoji: "⌚", stat: "spd" },
+];
+
 const EQUIP_NAMES = {
   weapon: ["Rusty Blade", "Iron Sword", "Steel Cleaver", "Shadow Edge", "Void Slasher", "Titan Blade", "God Sword"],
   armor: ["Cloth Vest", "Leather Armor", "Iron Plate", "Shadow Mail", "Void Plate", "Titan Armor", "God Armor"],
@@ -136,13 +143,16 @@ const EQUIP_NAMES = {
   boots: ["Sandals", "Leather Boots", "Iron Greaves", "Shadow Steps", "Void Treads", "Titan Boots", "God Boots"],
   ring: ["Copper Ring", "Silver Ring", "Gold Ring", "Shadow Ring", "Void Ring", "Titan Ring", "God Ring"],
   amulet: ["Bone Charm", "Crystal Pendant", "Gold Amulet", "Shadow Talisman", "Void Pendant", "Titan Amulet", "God Amulet"],
+  earring: ["Wooden Stud", "Iron Hoop", "Silver Earring", "Shadow Loop", "Void Spike", "Titan Ring", "God Stud"],
+  necklace: ["Cord Necklace", "Chain Link", "Silver Chain", "Shadow Choker", "Void Pendant", "Titan Chain", "God Collar"],
+  bracelet: ["Leather Band", "Iron Cuff", "Steel Brace", "Shadow Wrap", "Void Band", "Titan Cuff", "God Brace"],
 };
 
 function generateEquipment(type) {
   let roll = Math.random() * 100, cum = 0, ri = 0;
   for (let i = 0; i < RARITIES.length; i++) { cum += RARITIES[i].weight; if (roll < cum) { ri = i; break; } }
   const rarity = RARITIES[ri];
-  const td = EQUIP_TYPES.find(t => t.id === type);
+  const td = EQUIP_TYPES.find(t => t.id === type) || ACCESSORY_TYPES.find(t => t.id === type);
   const baseMult = [1, 2.5, 6, 15, 40, 100, 300][ri];
   const stats = {};
   if (td.stat === "atk") stats.atk = Math.floor(5 * baseMult * (0.9 + Math.random() * 0.2));
@@ -150,6 +160,10 @@ function generateEquipment(type) {
   if (td.stat === "hp") stats.hp = Math.floor(20 * baseMult * (0.9 + Math.random() * 0.2));
   if (td.stat === "critRate") stats.critRate = Math.min(80, Math.floor(2 + ri * 3 + Math.random() * 3));
   if (td.stat === "critDmg") stats.critDmg = Math.floor(10 + ri * 15 + Math.random() * 10);
+  // Accessory stats
+  if (td.stat === "pen") stats.pen = Math.floor(3 + ri * 4 + Math.random() * 3); // Penetration: ignore DEF%
+  if (td.stat === "acu") stats.acu = Math.floor(2 + ri * 3 + Math.random() * 2); // Accuracy: bonus hit rate
+  if (td.stat === "spd") stats.spd = Math.floor(1 + ri * 2 + Math.random() * 2); // Speed: attack speed %
   if (Math.random() < 0.3 + ri * 0.1) {
     const secs = ["atk", "def", "hp"].filter(s => s !== td.stat);
     const sec = secs[Math.floor(Math.random() * secs.length)];
@@ -242,6 +256,33 @@ const INSIGNIAS = [
   { id: "ins_rich", name: "Tycoon", emoji: "💰", desc: "Earn 100,000 total gold", check: (s) => (s.combatStats.totalGoldEarned || 0) >= 100000, bonus: { goldPct: 8 }, color: T.gold },
   { id: "ins_collector", name: "Collector", emoji: "🎒", desc: "Own 20 equipment pieces", check: (s) => (s.equipCount || 0) >= 20, bonus: { defPct: 3 }, color: T.teal },
   { id: "ins_summoner", name: "Summoner", emoji: "✨", desc: "Summon 50 items", check: (s) => (s.stats.summons || 0) >= 50, bonus: { critRate: 2, atkFlat: 15 }, color: T.purple },
+];
+
+// ─── TITLES ───
+// Equippable name titles earned from milestones. Each gives stat bonuses when equipped.
+const TITLES = [
+  { id: "tl_newbie", name: "Newbie", desc: "Start your adventure", check: () => true, bonus: {}, color: T.textDim },
+  { id: "tl_slayer", name: "Monster Slayer", desc: "Kill 500 monsters", check: (s) => s.combatStats.kills >= 500, bonus: { atkFlat: 10 }, color: T.danger },
+  { id: "tl_rich", name: "Wealthy", desc: "Earn 50,000 gold total", check: (s) => (s.combatStats.totalGoldEarned || 0) >= 50000, bonus: { goldPct: 5 }, color: T.gold },
+  { id: "tl_explorer", name: "Explorer", desc: "Reach stage 30", check: (s) => s.highestStage >= 30, bonus: { hpFlat: 30 }, color: T.info },
+  { id: "tl_warrior", name: "Elite Warrior", desc: "Reach stage 100", check: (s) => s.highestStage >= 100, bonus: { atkPct: 3, defPct: 2 }, color: T.accent },
+  { id: "tl_champion", name: "Champion", desc: "Reach stage 200", check: (s) => s.highestStage >= 200, bonus: { atkPct: 5, critRate: 2 }, color: T.purple },
+  { id: "tl_legend", name: "Living Legend", desc: "Reach stage 300", check: (s) => s.highestStage >= 300, bonus: { atkPct: 8, critDmg: 15, goldPct: 5 }, color: T.gold },
+  { id: "tl_boss", name: "Boss Crusher", desc: "Kill 50 bosses", check: (s) => (s.combatStats.bossesKilled || 0) >= 50, bonus: { critDmg: 10 }, color: T.orange },
+  { id: "tl_reborn", name: "Reborn", desc: "Prestige once", check: (s) => (s.prestigeCount || 0) >= 1, bonus: { atkPct: 2, hpPct: 2 }, color: T.purple },
+  { id: "tl_ascended", name: "Ascended", desc: "Prestige 5 times", check: (s) => (s.prestigeCount || 0) >= 5, bonus: { atkPct: 5, defPct: 3, hpPct: 3 }, color: "#fbbf24" },
+  { id: "tl_collector", name: "Grand Collector", desc: "Own 50 equipment", check: (s) => (s.equipCount || 0) >= 50, bonus: { defFlat: 15, critRate: 1 }, color: T.teal },
+  { id: "tl_whale", name: "Diamond Lord", desc: "Summon 100 items", check: (s) => (s.stats.summons || 0) >= 100, bonus: { atkFlat: 25, goldPct: 3 }, color: "#60a5fa" },
+];
+
+// ─── SHOP DEALS ───
+const SHOP_ITEMS = [
+  { id: "shop_gold_s", name: "Gold Pouch", desc: "+5,000 gold", icon: "🪙", cost: 50, costType: "diamonds", reward: { gold: 5000 }, daily: true, color: T.gold },
+  { id: "shop_gold_l", name: "Gold Chest", desc: "+25,000 gold", icon: "💰", cost: 200, costType: "diamonds", reward: { gold: 25000 }, daily: true, color: T.gold },
+  { id: "shop_dia_s", name: "Gem Sack", desc: "+30 diamonds", icon: "💎", cost: 3000, costType: "gold", reward: { diamonds: 30 }, daily: true, color: T.purple },
+  { id: "shop_soul_s", name: "Soul Fragment", desc: "+5 prestige souls", icon: "✦", cost: 500, costType: "diamonds", reward: { souls: 5 }, daily: false, color: "#a855f7" },
+  { id: "shop_soul_l", name: "Soul Crystal", desc: "+25 prestige souls", icon: "🔮", cost: 2000, costType: "diamonds", reward: { souls: 25 }, daily: false, color: "#a855f7" },
+  { id: "shop_skill_reset", name: "Skill Reset", desc: "Reset all skill levels, refund gold", icon: "🔄", cost: 100, costType: "diamonds", reward: { skillReset: true }, daily: false, color: T.info },
 ];
 
 // ─── COSTUMES / SKINS ───
@@ -346,6 +387,16 @@ function simulateDungeon(dungeon, tierIdx, totalAtk, totalDef, totalMaxHp) {
 
   return { success, waves: wavesCleared, totalWaves, totalReward, tier };
 }
+
+// ─── RAID BOSSES ───
+const RAID_BOSSES = [
+  { id: "raid_wolf", name: "Alpha Dire Wolf", emoji: "🐺", hp: 5000, atk: 80, def: 20, timeLimit: 30, minStage: 20, reward: { diamonds: 30, gold: 3000, souls: 2 }, color: T.info },
+  { id: "raid_golem", name: "Ancient Golem", emoji: "🗿", hp: 20000, atk: 150, def: 60, timeLimit: 45, minStage: 50, reward: { diamonds: 60, gold: 8000, souls: 5 }, color: T.orange },
+  { id: "raid_dragon", name: "Elder Dragon", emoji: "🐉", hp: 80000, atk: 300, def: 120, timeLimit: 60, minStage: 100, reward: { diamonds: 120, gold: 25000, souls: 12 }, color: T.danger },
+  { id: "raid_lich", name: "Lich King", emoji: "💀", hp: 250000, atk: 600, def: 250, timeLimit: 60, minStage: 200, reward: { diamonds: 250, gold: 60000, souls: 25 }, color: T.purple },
+  { id: "raid_void", name: "Void Titan", emoji: "🕳️", hp: 1000000, atk: 1200, def: 500, timeLimit: 90, minStage: 300, reward: { diamonds: 500, gold: 150000, souls: 50 }, color: "#a855f7" },
+  { id: "raid_god", name: "Fallen God", emoji: "⚜️", hp: 5000000, atk: 3000, def: 1200, timeLimit: 120, minStage: 400, reward: { diamonds: 1000, gold: 500000, souls: 100 }, color: T.gold },
+];
 
 // ─── ACHIEVEMENTS ───
 const ACHIEVEMENTS = [
@@ -599,7 +650,9 @@ const DEFAULT_SAVE = () => ({
   growth: { atk: 1, hp: 1, def: 1 },
   player: { hp: 100, maxHp: 100 },
   equipment: [],
-  equipped: { weapon: null, armor: null, helm: null, gloves: null, boots: null, ring: null, amulet: null },
+  equipped: { weapon: null, armor: null, helm: null, gloves: null, boots: null, ring: null, amulet: null, earring: null, necklace: null, bracelet: null },
+  accessories: [], // separate pool for accessories
+  raidAttempts: {}, // { raidId: { date, used } }
   pets: [], activePets: [], petSlots: 1,
   gold: 100, diamonds: 50,
   unlockedSkills: ["slash"], equippedSkills: ["slash", null, null],
@@ -608,6 +661,8 @@ const DEFAULT_SAVE = () => ({
   dungeonAttempts: {},
   questProgress: { day: "", week: "", daily: {}, weekly: {}, claimedDaily: {}, claimedWeekly: {} },
   ownedRelics: {}, earnedInsignias: {},
+  activeTitle: "tl_newbie", earnedTitles: { tl_newbie: true },
+  shopPurchases: {}, // { shopId: { date, count } }
   prestigeCount: 0, prestigeSouls: 0, // souls = permanent currency from rebirth
   skillLevels: {}, // { skillId: level }
   passiveSkillLevels: {}, // { passiveId: level }
@@ -898,7 +953,20 @@ function GameUI({ account, initialSave, onLogout }) {
   const [stats, setStats] = useState(() => sv.stats || DEFAULT_SAVE().stats);
   const [autoProgress, setAutoProgress] = useState(() => sv.autoProgress !== false);
   const [equipment, setEquipment] = useState(() => sv.equipment || []);
-  const [equipped, setEquipped] = useState(() => sv.equipped || DEFAULT_SAVE().equipped);
+  const [equipped, setEquipped] = useState(() => {
+    const eq = sv.equipped || DEFAULT_SAVE().equipped;
+    // Ensure accessory slots exist for old saves
+    return { earring: null, necklace: null, bracelet: null, ...eq };
+  });
+  const [accessories, setAccessories] = useState(() => sv.accessories || []);
+  const [raidAttempts, setRaidAttempts] = useState(() => sv.raidAttempts || {});
+
+  // Titles
+  const [activeTitle, setActiveTitle] = useState(() => sv.activeTitle || "tl_newbie");
+  const [earnedTitles, setEarnedTitles] = useState(() => sv.earnedTitles || { tl_newbie: true });
+
+  // Shop
+  const [shopPurchases, setShopPurchases] = useState(() => sv.shopPurchases || {});
   const [pets, setPets] = useState(() => sv.pets || []);
   const [activePets, setActivePets] = useState(() => sv.activePets || []);
   const [petSlots] = useState(() => sv.petSlots || 1);
@@ -1126,10 +1194,15 @@ function GameUI({ account, initialSave, onLogout }) {
   const baseDef = growth.def * 2;
 
   const equipBonus = useMemo(() => {
-    const b = { atk: 0, def: 0, hp: 0, critRate: 0, critDmg: 0 };
-    Object.values(equipped).forEach(id => { if (!id) return; const eq = equipment.find(e => e.id === id); if (!eq) return; Object.entries(eq.stats).forEach(([k, v]) => { b[k] = (b[k] || 0) + v; }); });
+    const b = { atk: 0, def: 0, hp: 0, critRate: 0, critDmg: 0, pen: 0, acu: 0, spd: 0 };
+    Object.values(equipped).forEach(id => {
+      if (!id) return;
+      const eq = equipment.find(e => e.id === id) || accessories.find(e => e.id === id);
+      if (!eq) return;
+      Object.entries(eq.stats).forEach(([k, v]) => { b[k] = (b[k] || 0) + v; });
+    });
     return b;
-  }, [equipped, equipment]);
+  }, [equipped, equipment, accessories]);
 
   const petBonus = useMemo(() => {
     const b = { atkPct: 0, defPct: 0, hpPct: 0, goldPct: 0, xpPct: 0, critRate: 0, critDmg: 0 };
@@ -1176,6 +1249,14 @@ function GameUI({ account, initialSave, onLogout }) {
     return b;
   }, [earnedInsignias]);
 
+  // Title bonus (active title only)
+  const titleBonus = useMemo(() => {
+    const b = { atkFlat: 0, defFlat: 0, hpFlat: 0, atkPct: 0, defPct: 0, hpPct: 0, critRate: 0, critDmg: 0, goldPct: 0 };
+    const t = TITLES.find(x => x.id === activeTitle);
+    if (t) Object.entries(t.bonus).forEach(([k, v]) => { b[k] = (b[k] || 0) + v; });
+    return b;
+  }, [activeTitle]);
+
   // Passive skill bonuses
   const passiveBonus = useMemo(() => {
     const b = { atkPct: 0, defPct: 0, hpPct: 0, critRate: 0, critDmg: 0, goldPct: 0 };
@@ -1192,24 +1273,23 @@ function GameUI({ account, initialSave, onLogout }) {
     const b = { atk: 0, def: 0, hp: 0, critRate: 0, critDmg: 0 };
     Object.values(equipped).forEach(id => {
       if (!id) return;
-      const eq = equipment.find(e => e.id === id);
+      const eq = equipment.find(e => e.id === id) || accessories.find(e => e.id === id);
       if (!eq || !eq.level) return;
-      // Each enhance level adds 8% to base stats
       const mult = eq.level * 0.08;
-      Object.entries(eq.stats).forEach(([k, v]) => { b[k] = (b[k] || 0) + Math.floor(v * mult); });
+      Object.entries(eq.stats).forEach(([k, v]) => { if (b[k] !== undefined) b[k] = (b[k] || 0) + Math.floor(v * mult); });
     });
     return b;
-  }, [equipped, equipment]);
+  }, [equipped, equipment, accessories]);
 
   // Prestige multiplier: each soul gives +1% to all stats
   const prestigeMult = 1 + prestigeSouls * 0.01;
 
-  const totalAtk = Math.floor((baseAtk + equipBonus.atk + enhanceBonus.atk + (costumeBonus.atkFlat || 0) + (relicBonus.atk || 0) + (insigniaBonus.atkFlat || 0)) * (1 + ((petBonus.atkPct || 0) + (costumeBonus.atkPct || 0) + (relicBonus.atkPct || 0) + (insigniaBonus.atkPct || 0) + (passiveBonus.atkPct || 0)) / 100) * prestigeMult);
-  const totalDef = Math.floor((baseDef + equipBonus.def + enhanceBonus.def + (costumeBonus.defFlat || 0) + (relicBonus.def || 0) + (insigniaBonus.defFlat || 0)) * (1 + ((petBonus.defPct || 0) + (costumeBonus.defPct || 0) + (relicBonus.defPct || 0) + (insigniaBonus.defPct || 0) + (passiveBonus.defPct || 0)) / 100) * prestigeMult);
-  const totalMaxHp = Math.floor((baseHp + equipBonus.hp + enhanceBonus.hp + (costumeBonus.hpFlat || 0) + (relicBonus.hp || 0) + (insigniaBonus.hpFlat || 0)) * (1 + ((petBonus.hpPct || 0) + (costumeBonus.hpPct || 0) + (relicBonus.hpPct || 0) + (insigniaBonus.hpPct || 0) + (passiveBonus.hpPct || 0)) / 100) * prestigeMult);
-  const critRate = Math.min(80, (equipBonus.critRate || 0) + enhanceBonus.critRate + (petBonus.critRate || 0) + (costumeBonus.critRate || 0) + (relicBonus.critRate || 0) + (insigniaBonus.critRate || 0) + (passiveBonus.critRate || 0));
-  const critDmg = 150 + (equipBonus.critDmg || 0) + enhanceBonus.critDmg + (petBonus.critDmg || 0) + (costumeBonus.critDmg || 0) + (relicBonus.critDmg || 0) + (insigniaBonus.critDmg || 0) + (passiveBonus.critDmg || 0);
-  const goldMult = 1 + ((petBonus.goldPct || 0) + (costumeBonus.goldPct || 0) + (relicBonus.goldPct || 0) + (insigniaBonus.goldPct || 0) + (passiveBonus.goldPct || 0)) / 100;
+  const totalAtk = Math.floor((baseAtk + equipBonus.atk + enhanceBonus.atk + (costumeBonus.atkFlat || 0) + (relicBonus.atk || 0) + (insigniaBonus.atkFlat || 0) + (titleBonus.atkFlat || 0)) * (1 + ((petBonus.atkPct || 0) + (costumeBonus.atkPct || 0) + (relicBonus.atkPct || 0) + (insigniaBonus.atkPct || 0) + (passiveBonus.atkPct || 0) + (titleBonus.atkPct || 0)) / 100) * prestigeMult);
+  const totalDef = Math.floor((baseDef + equipBonus.def + enhanceBonus.def + (costumeBonus.defFlat || 0) + (relicBonus.def || 0) + (insigniaBonus.defFlat || 0) + (titleBonus.defFlat || 0)) * (1 + ((petBonus.defPct || 0) + (costumeBonus.defPct || 0) + (relicBonus.defPct || 0) + (insigniaBonus.defPct || 0) + (passiveBonus.defPct || 0) + (titleBonus.defPct || 0)) / 100) * prestigeMult);
+  const totalMaxHp = Math.floor((baseHp + equipBonus.hp + enhanceBonus.hp + (costumeBonus.hpFlat || 0) + (relicBonus.hp || 0) + (insigniaBonus.hpFlat || 0) + (titleBonus.hpFlat || 0)) * (1 + ((petBonus.hpPct || 0) + (costumeBonus.hpPct || 0) + (relicBonus.hpPct || 0) + (insigniaBonus.hpPct || 0) + (passiveBonus.hpPct || 0) + (titleBonus.hpPct || 0)) / 100) * prestigeMult);
+  const critRate = Math.min(80, (equipBonus.critRate || 0) + enhanceBonus.critRate + (petBonus.critRate || 0) + (costumeBonus.critRate || 0) + (relicBonus.critRate || 0) + (insigniaBonus.critRate || 0) + (passiveBonus.critRate || 0) + (titleBonus.critRate || 0));
+  const critDmg = 150 + (equipBonus.critDmg || 0) + enhanceBonus.critDmg + (petBonus.critDmg || 0) + (costumeBonus.critDmg || 0) + (relicBonus.critDmg || 0) + (insigniaBonus.critDmg || 0) + (passiveBonus.critDmg || 0) + (titleBonus.critDmg || 0);
+  const goldMult = 1 + ((petBonus.goldPct || 0) + (costumeBonus.goldPct || 0) + (relicBonus.goldPct || 0) + (insigniaBonus.goldPct || 0) + (passiveBonus.goldPct || 0) + (titleBonus.goldPct || 0)) / 100;
   const maxHpRef = useRef(totalMaxHp);
   useEffect(() => { maxHpRef.current = totalMaxHp; }, [totalMaxHp]);
 
@@ -1260,6 +1340,8 @@ function GameUI({ account, initialSave, onLogout }) {
   const buildSave = useCallback(() => ({
     currentStage, highestStage, growth, gold, diamonds, combatStats, stats, autoProgress,
     equipment, equipped, pets, activePets, petSlots, unlockedSkills, equippedSkills,
+    accessories, raidAttempts,
+    activeTitle, earnedTitles, shopPurchases,
     ownedCostumes, activeCostume, achievementsUnlocked, dungeonAttempts, questProgress,
     ownedRelics, earnedInsignias,
     prestigeCount, prestigeSouls, skillLevels, passiveSkillLevels,
@@ -1344,6 +1426,56 @@ function GameUI({ account, initialSave, onLogout }) {
     return () => clearInterval(check);
   }, [combatStats, highestStage, growth, stats, equipment.length, pets.length, addLog]);
 
+  // Title auto-checker
+  useEffect(() => {
+    const check = setInterval(() => {
+      const snapshot = { combatStats, highestStage, growth, stats, equipCount: equipment.length, prestigeCount };
+      setEarnedTitles(prev => {
+        let updated = false;
+        const next = { ...prev };
+        for (const t of TITLES) {
+          if (next[t.id]) continue;
+          try { if (t.check(snapshot)) { next[t.id] = true; updated = true; addLog(`🏷️ Title unlocked: "${t.name}"`); } } catch {}
+        }
+        return updated ? next : prev;
+      });
+    }, 4000);
+    return () => clearInterval(check);
+  }, [combatStats, highestStage, growth, stats, equipment.length, prestigeCount, addLog]);
+
+  // Shop purchase
+  const buyShopItem = useCallback((itemId) => {
+    const item = SHOP_ITEMS.find(x => x.id === itemId);
+    if (!item) return;
+    const today = new Date().toISOString().slice(0, 10);
+    const purchase = shopPurchases[itemId];
+    if (item.daily && purchase && purchase.date === today) return; // daily limit
+
+    if (item.costType === "diamonds" && diamonds < item.cost) return;
+    if (item.costType === "gold" && gold < item.cost) return;
+
+    // Pay
+    if (item.costType === "diamonds") setDiamonds(d => d - item.cost);
+    if (item.costType === "gold") setGold(g => g - item.cost);
+
+    // Reward
+    if (item.reward.gold) setGold(g => g + item.reward.gold);
+    if (item.reward.diamonds) setDiamonds(d => d + item.reward.diamonds);
+    if (item.reward.souls) setPrestigeSouls(s => s + item.reward.souls);
+    if (item.reward.skillReset) {
+      // Refund gold from skill levels
+      let refund = 0;
+      Object.entries(skillLevels).forEach(([, lvl]) => { for (let i = 0; i < lvl; i++) refund += skillUpgradeCost(i); });
+      Object.entries(passiveSkillLevels).forEach(([, lvl]) => { for (let i = 0; i < lvl; i++) refund += passiveSkillCost(i); });
+      setGold(g => g + refund);
+      setSkillLevels({});
+      setPassiveSkillLevels({});
+      addLog(`🔄 Skills reset! Refunded ${fmt(refund)} gold`);
+    }
+
+    setShopPurchases(prev => ({ ...prev, [itemId]: { date: today, count: ((purchase?.count) || 0) + 1 } }));
+  }, [diamonds, gold, shopPurchases, skillLevels, passiveSkillLevels, addLog]);
+
   // ─── GROWTH UPGRADES ───
   const upgradeGrowth = useCallback((stat) => { const cost = growthCost(growth[stat]); if (gold < cost) return; setGold(g => g - cost); setGrowth(g => ({ ...g, [stat]: g[stat] + 1 })); addQuestProgress("upgradesDone", 1); }, [growth, gold, addQuestProgress]);
   const upgradeGrowthMax = useCallback((stat) => {
@@ -1399,7 +1531,9 @@ function GameUI({ account, initialSave, onLogout }) {
 
   useEffect(() => {
     if (!isBattling || !battleState) return;
-    const step = 100, atkSpd = 1200, mSpd = 2500;
+    const step = 100, baseAtkSpd = 1200, mSpd = 2500;
+    const spdBonus = Math.min(0.5, (equipBonus.spd || 0) * 0.01); // SPD: each point = 1% faster, max 50%
+    const atkSpd = Math.floor(baseAtkSpd * (1 - spdBonus));
     let pE = 0, mE = 0;
     const skillCDs = {};
 
@@ -1421,7 +1555,8 @@ function GameUI({ account, initialSave, onLogout }) {
 
         if (pE >= atkSpd && target) {
           pE = 0;
-          let dmg = Math.max(1, totalAtk - target.def + Math.floor(Math.random() * 4));
+          const penReduction = Math.min(0.8, (equipBonus.pen || 0) * 0.01); // PEN: each point ignores 1% DEF, max 80%
+          let dmg = Math.max(1, totalAtk - Math.floor(target.def * (1 - penReduction)) + Math.floor(Math.random() * 4));
           const wasCrit = Math.random() * 100 < critRate;
           if (wasCrit) dmg = Math.floor(dmg * critDmg / 100);
           target.hp -= dmg;
@@ -1574,8 +1709,58 @@ function GameUI({ account, initialSave, onLogout }) {
     setShowSummonResult(results);
   }, [diamonds]);
 
-  const equipItem = useCallback((eqId) => { const item = equipment.find(e => e.id === eqId); if (item) setEquipped(p => ({ ...p, [item.type]: eqId })); }, [equipment]);
+  const equipItem = useCallback((eqId) => {
+    const item = equipment.find(e => e.id === eqId) || accessories.find(e => e.id === eqId);
+    if (item) setEquipped(p => ({ ...p, [item.type]: eqId }));
+  }, [equipment, accessories]);
   const unequipItem = useCallback((slot) => { setEquipped(p => ({ ...p, [slot]: null })); }, []);
+
+  // Accessory summon
+  const summonAccessories = useCallback((count) => {
+    const cost = count === 1 ? 150 : 1350;
+    if (diamonds < cost) return;
+    setDiamonds(d => d - cost);
+    const results = [];
+    const types = ACCESSORY_TYPES.map(t => t.id);
+    for (let i = 0; i < (count === 1 ? 1 : 10); i++) results.push(generateEquipment(types[Math.floor(Math.random() * types.length)]));
+    setAccessories(prev => [...prev, ...results]);
+    setStats(s => ({ ...s, summons: (s.summons || 0) + results.length }));
+    addQuestProgress("summonsDone", results.length);
+    setShowSummonResult(results);
+  }, [diamonds]);
+
+  // Raid boss fight
+  const [raidResult, setRaidResult] = useState(null);
+  const attemptRaid = useCallback((raidId) => {
+    const raid = RAID_BOSSES.find(r => r.id === raidId);
+    if (!raid || highestStage < raid.minStage) return;
+    const today = new Date().toISOString().slice(0, 10);
+    const att = raidAttempts[raidId];
+    if (att && att.date === today && att.used >= 1) return; // 1 attempt per day per boss
+
+    // Simulate timed fight
+    const timeLimit = raid.timeLimit;
+    const playerDps = Math.max(1, totalAtk - raid.def * 0.3);
+    const totalDmg = playerDps * timeLimit;
+    const success = totalDmg >= raid.hp;
+    const hpPct = Math.min(100, (totalDmg / raid.hp) * 100);
+
+    // Update attempts
+    setRaidAttempts(prev => ({
+      ...prev, [raidId]: { date: today, used: (att && att.date === today ? att.used : 0) + 1 },
+    }));
+
+    if (success) {
+      if (raid.reward.gold) setGold(g => g + raid.reward.gold);
+      if (raid.reward.diamonds) setDiamonds(d => d + raid.reward.diamonds);
+      if (raid.reward.souls) setPrestigeSouls(s => s + raid.reward.souls);
+      setCombatStats(s => ({ ...s, bossesKilled: s.bossesKilled + 1 }));
+      addLog(`⚔️ Raid ${raid.name} defeated! +${raid.reward.diamonds}💎 +${raid.reward.souls}✦`);
+    } else {
+      addLog(`💀 Raid ${raid.name} failed (${Math.floor(hpPct)}% damage dealt)`);
+    }
+    setRaidResult({ raid, success, hpPct: Math.floor(hpPct), totalDmg: Math.floor(totalDmg) });
+  }, [highestStage, totalAtk, raidAttempts, gold]);
 
   const mergeEquipment = useCallback((type, rarityId) => {
     const candidates = equipment.filter(e => e.type === type && e.rarity === rarityId && !Object.values(equipped).includes(e.id));
@@ -1747,6 +1932,7 @@ function GameUI({ account, initialSave, onLogout }) {
               </div>
               <div style={{ flexShrink: 0 }}>
                 <div style={{ fontSize: 10, fontWeight: 800, color: T.white, fontFamily: FONT_DISPLAY, lineHeight: 1.1 }}>{account.displayName}</div>
+                <div style={{ fontSize: 7, fontWeight: 700, color: TITLES.find(t => t.id === activeTitle)?.color || T.textDim, fontFamily: FONT_DISPLAY }}>{TITLES.find(t => t.id === activeTitle)?.name || "Newbie"}</div>
                 <div style={{ fontSize: 8, fontWeight: 700, color: T.accent, fontFamily: FONT_DISPLAY }}>⚡{fmt(totalAtk + totalDef + totalMaxHp)}</div>
               </div>
               <div style={{ flex: 1 }} />
@@ -1857,7 +2043,7 @@ function GameUI({ account, initialSave, onLogout }) {
                 {[
                   { icon: "💎", sub: fmt(diamonds), p: null, bg: "#101828" },
                   { icon: "🏺", sub: null, p: "relics", bg: "#101828" },
-                  { icon: "📊", sub: null, p: "growth", bg: "#101828" },
+                  { icon: "🛒", sub: null, p: "shop", bg: "#101828" },
                   { icon: "👗", sub: null, p: "costumes", bg: "#101828" },
                 ].map((b, i) => (
                   <div key={i} onClick={b.p ? () => nav(b.p) : undefined} style={{ width: 34, height: b.sub ? 40 : 34, borderRadius: 7, cursor: b.p ? "pointer" : "default", background: b.bg, border: "1px solid #ffffff08", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 0, boxShadow: "0 2px 6px #00000040" }}>
@@ -1873,8 +2059,9 @@ function GameUI({ account, initialSave, onLogout }) {
                   { icon: "🏰", p: "dungeons" },
                   { icon: "🐾", p: "pets" },
                   { icon: "🔄", p: "prestige" },
+                  { icon: "🏷️", p: "titles" },
+                  { icon: "💀", p: "achievements" },
                   { icon: "⚙️", p: "settings" },
-                  { icon: "📈", p: "stats" },
                 ].map((b, i) => (
                   <div key={i} onClick={b.p ? () => nav(b.p) : undefined} style={{ width: 34, height: 34, borderRadius: 7, cursor: b.p ? "pointer" : "default", background: "#1a1610", border: "1px solid #ffffff08", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 15, boxShadow: "0 2px 6px #00000040" }}>{b.icon}</div>
                 ))}
@@ -1924,7 +2111,7 @@ function GameUI({ account, initialSave, onLogout }) {
                 { icon: "✨", label: "Summon", p: "summon" },
                 { icon: "⭐", label: "Growth", p: "growth" },
                 { icon: "🏰", label: "Dungeon", p: "dungeons" },
-                { icon: "💀", label: "Achieve", p: "achievements" },
+                { icon: "⚔️", label: "Raids", p: "raids" },
               ].map(tab => {
                 const act = page === tab.p;
                 const hasNotif = tab.p === "quests" && (() => {
@@ -1958,7 +2145,7 @@ function GameUI({ account, initialSave, onLogout }) {
             <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
               <div onClick={() => nav("battle")} style={{ width: 28, height: 28, borderRadius: 7, cursor: "pointer", background: "#1a1c28", border: "1px solid #ffffff0a", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 10, color: T.textSec, fontWeight: 900 }}>✕</div>
               <div style={{ flex: 1, fontSize: 13, fontWeight: 900, color: T.white, fontFamily: FONT_DISPLAY, textTransform: "uppercase" }}>
-                {page === "dungeons" && "🏰 Dungeons"}{page === "growth" && "📊 Growth"}{page === "equipment" && "🗡️ Equipment"}{page === "summon" && "✨ Summon"}{page === "pets" && "🐾 Pets"}{page === "costumes" && "👗 Costumes"}{page === "achievements" && "💀 Achievements"}{page === "stats" && "📈 Stats"}{page === "settings" && "⚙️ Settings"}{page === "quests" && "📜 Quests"}{page === "relics" && "🏺 Relics & Insignias"}{page === "prestige" && "🔄 Rebirth & Skills"}
+                {page === "dungeons" && "🏰 Dungeons"}{page === "growth" && "📊 Growth"}{page === "equipment" && "🗡️ Equipment"}{page === "summon" && "✨ Summon"}{page === "pets" && "🐾 Pets"}{page === "costumes" && "👗 Costumes"}{page === "achievements" && "💀 Achievements"}{page === "stats" && "📈 Stats"}{page === "settings" && "⚙️ Settings"}{page === "quests" && "📜 Quests"}{page === "relics" && "🏺 Relics & Insignias"}{page === "prestige" && "🔄 Rebirth & Skills"}{page === "raids" && "⚔️ Raid Bosses"}{page === "shop" && "🛒 Shop"}{page === "titles" && "🏷️ Titles"}
               </div>
               <div style={{ display: "flex", gap: 5 }}>
                 <span style={{ fontSize: 9, fontWeight: 800, color: "#f5c542", fontFamily: FONT_DISPLAY }}>🪙{fmt(gold)}</span>
@@ -1968,6 +2155,64 @@ function GameUI({ account, initialSave, onLogout }) {
           </div>
           {/* Scrollable content */}
           <div style={{ flex: 1, overflow: "auto", padding: "10px 12px", paddingBottom: 60, background: "#10121aee", backdropFilter: "blur(6px)" }}>
+          {/* ═══ RAIDS ═══ */}
+          {page === "raids" && (
+            <div>
+              <div style={{ fontSize: 13, fontWeight: 900, color: T.white, fontFamily: FONT_DISPLAY, marginBottom: 4 }}>⚔️ RAID BOSSES</div>
+              <div style={{ fontSize: 8, color: T.textDim, marginBottom: 12 }}>Powerful bosses with timed fights. 1 attempt per boss per day. Rewards include Prestige Souls!</div>
+
+              {/* Raid result popup */}
+              {raidResult && (
+                <div style={{ padding: 14, borderRadius: 10, marginBottom: 14, background: raidResult.success ? `${T.success}08` : `${T.danger}08`, border: `1px solid ${raidResult.success ? T.success + "25" : T.danger + "25"}` }}>
+                  <div style={{ fontSize: 12, fontWeight: 900, color: raidResult.success ? T.success : T.danger, fontFamily: FONT_DISPLAY, marginBottom: 4 }}>{raidResult.success ? "VICTORY!" : "DEFEATED"} — {raidResult.raid.emoji} {raidResult.raid.name}</div>
+                  <div style={{ fontSize: 9, color: T.textSec }}>Damage dealt: {fmt(raidResult.totalDmg)} ({raidResult.hpPct}% of HP)</div>
+                  {raidResult.success && <div style={{ fontSize: 9, color: T.gold, fontWeight: 700, marginTop: 2 }}>+{raidResult.raid.reward.diamonds}💎 +{fmt(raidResult.raid.reward.gold)}🪙 +{raidResult.raid.reward.souls}✦ Souls</div>}
+                  <div onClick={() => setRaidResult(null)} style={{ marginTop: 6, padding: "4px 12px", borderRadius: 6, background: "#ffffff08", border: "1px solid #ffffff10", fontSize: 9, fontWeight: 700, color: T.textSec, cursor: "pointer", display: "inline-block" }}>Dismiss</div>
+                </div>
+              )}
+
+              <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                {RAID_BOSSES.map(raid => {
+                  const unlocked = highestStage >= raid.minStage;
+                  const today = new Date().toISOString().slice(0, 10);
+                  const att = raidAttempts[raid.id];
+                  const usedToday = att && att.date === today ? att.used : 0;
+                  const canFight = unlocked && usedToday < 1;
+                  return (
+                    <div key={raid.id} style={{
+                      padding: "10px 12px", borderRadius: 10,
+                      background: unlocked ? `${raid.color}06` : "#ffffff03",
+                      border: `1px solid ${unlocked ? raid.color + "20" : "#ffffff06"}`,
+                      opacity: unlocked ? 1 : 0.4,
+                    }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                        <div style={{ width: 42, height: 42, borderRadius: 10, background: `${raid.color}12`, border: `1px solid ${raid.color}25`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 22, flexShrink: 0 }}>{raid.emoji}</div>
+                        <div style={{ flex: 1 }}>
+                          <div style={{ fontSize: 12, fontWeight: 700, color: unlocked ? T.white : T.textDim }}>{raid.name}</div>
+                          <div style={{ fontSize: 8, color: T.textDim }}>HP: {fmt(raid.hp)} • ATK: {fmt(raid.atk)} • DEF: {fmt(raid.def)} • ⏱️{raid.timeLimit}s</div>
+                          <div style={{ fontSize: 8, color: raid.color, fontWeight: 700, marginTop: 1 }}>💎{raid.reward.diamonds} 🪙{fmt(raid.reward.gold)} ✦{raid.reward.souls} souls</div>
+                        </div>
+                        <div style={{ flexShrink: 0 }}>
+                          {!unlocked ? (
+                            <div style={{ padding: "5px 8px", borderRadius: 6, background: "#ffffff06", fontSize: 8, color: T.textDim, fontWeight: 700 }}>Stage {raid.minStage}</div>
+                          ) : usedToday >= 1 ? (
+                            <div style={{ padding: "5px 8px", borderRadius: 6, background: "#ffffff06", fontSize: 8, color: T.textDim, fontWeight: 700 }}>Done today</div>
+                          ) : (
+                            <div onClick={() => attemptRaid(raid.id)} style={{
+                              padding: "5px 12px", borderRadius: 6, cursor: "pointer",
+                              background: `${raid.color}18`, border: `1px solid ${raid.color}30`,
+                              fontSize: 10, fontWeight: 800, color: raid.color, fontFamily: FONT_DISPLAY,
+                            }}>⚔️ FIGHT</div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
           {/* ═══ QUESTS ═══ */}
           {page === "quests" && (
             <div>
@@ -2328,7 +2573,52 @@ function GameUI({ account, initialSave, onLogout }) {
                     );
                   })}
                 </div>
+                {/* Accessory slots */}
+                <div style={{ fontSize: 12, fontWeight: 800, color: T.teal, marginTop: 14, marginBottom: 8, fontFamily: FONT_DISPLAY }}>ACCESSORIES</div>
+                <div style={{ display: "grid", gridTemplateColumns: `repeat(auto-fill, minmax(${isMobile ? "100%" : "190px"}, 1fr))`, gap: 8 }}>
+                  {ACCESSORY_TYPES.map(slot => {
+                    const eqId = equipped[slot.id];
+                    const eq = eqId ? accessories.find(e => e.id === eqId) : null;
+                    return (
+                      <div key={slot.id} onClick={() => eq && unequipItem(slot.id)} style={{
+                        padding: 13, borderRadius: T.rs, cursor: eq ? "pointer" : "default",
+                        background: eq ? `${rarColor(eq.rarity)}06` : T.bgDeep,
+                        border: `1px solid ${eq ? rarColor(eq.rarity) + "25" : T.divider}`,
+                      }}>
+                        <div style={{ fontSize: 9, fontWeight: 700, color: T.teal, marginBottom: 5, textTransform: "uppercase" }}>{slot.name}</div>
+                        {eq ? (<>
+                          <div style={{ fontSize: 12, fontWeight: 700, color: rarColor(eq.rarity) }}>{eq.emoji} {eq.name} {eq.level > 0 ? <span style={{ color: T.gold, fontSize: 10 }}>+{eq.level}</span> : ""}</div>
+                          <div style={{ fontSize: 9, color: T.textSec, marginTop: 2 }}>{Object.entries(eq.stats).map(([k, v]) => `+${v} ${k}`).join(" • ")}</div>
+                        </>) : <div style={{ fontSize: 11, color: T.textDim }}>{slot.emoji} Empty</div>}
+                      </div>
+                    );
+                  })}
+                </div>
               </Card>
+
+              {/* Accessory inventory */}
+              {accessories.length > 0 && (
+                <Card style={{ marginBottom: 12 }}>
+                  <div style={{ fontSize: 13, fontWeight: 800, color: T.teal, marginBottom: 10, fontFamily: FONT_DISPLAY }}>👂 ACCESSORIES ({accessories.filter(a => !Object.values(equipped).includes(a.id)).length})</div>
+                  <div style={{ display: "grid", gridTemplateColumns: `repeat(auto-fill, minmax(${isMobile ? "100%" : "200px"}, 1fr))`, gap: 6 }}>
+                    {accessories.filter(a => !Object.values(equipped).includes(a.id)).sort((a, b) => b.rarityIdx - a.rarityIdx).map(eq => (
+                      <div key={eq.id} onClick={() => equipItem(eq.id)} style={{
+                        padding: 10, borderRadius: T.rs, cursor: "pointer",
+                        background: `${rarColor(eq.rarity)}05`, border: `1px solid ${rarColor(eq.rarity)}18`,
+                      }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                          <span style={{ fontSize: 16 }}>{eq.emoji}</span>
+                          <div style={{ flex: 1 }}>
+                            <div style={{ fontSize: 11, fontWeight: 700, color: rarColor(eq.rarity) }}>{eq.name}</div>
+                            <div style={{ fontSize: 9, color: T.textSec }}>{Object.entries(eq.stats).map(([k, v]) => `+${v} ${k}`).join(" • ")}</div>
+                          </div>
+                          <Badge color={rarColor(eq.rarity)}>{RARITIES.find(r => r.id === eq.rarity)?.name?.[0]}</Badge>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </Card>
+              )}
 
               {EQUIP_TYPES.map(type => {
                 const items = equipment.filter(e => e.type === type.id && !Object.values(equipped).includes(e.id));
@@ -2416,6 +2706,22 @@ function GameUI({ account, initialSave, onLogout }) {
               <Card>
                 <div style={{ fontSize: 14, fontWeight: 800, color: T.white, marginBottom: 8, fontFamily: FONT_DISPLAY }}>🔨 MERGE SYSTEM</div>
                 <div style={{ fontSize: 12, color: T.textSec }}>Combine 5 same-type same-rarity equipment → 1 of the next rarity tier. Visit Equipment page to merge!</div>
+              </Card>
+
+              {/* Accessory Summon Banner */}
+              <Card glow={T.teal} style={{ marginTop: 14, padding: isMobile ? 20 : 28, textAlign: "center", position: "relative", overflow: "hidden" }}>
+                <div style={{ position: "absolute", top: -20, left: "50%", transform: "translateX(-50%)", width: 160, height: 160, borderRadius: "50%", background: `${T.teal}08`, filter: "blur(50px)" }} />
+                <div style={{ fontSize: 36, marginBottom: 8, position: "relative" }}>👂📿⌚</div>
+                <div style={{ fontSize: 13, fontWeight: 900, color: T.white, fontFamily: FONT_DISPLAY, marginBottom: 4, position: "relative" }}>ACCESSORY SUMMON</div>
+                <div style={{ fontSize: 11, color: T.textSec, marginBottom: 14, position: "relative" }}>Earrings, necklaces & bracelets with PEN, ACU & SPD stats</div>
+                <div style={{ display: "flex", gap: 6, justifyContent: "center", flexWrap: "wrap", marginBottom: 12, position: "relative", fontSize: 9, color: T.textDim }}>
+                  <span>PEN = Ignore enemy DEF%</span> • <span>ACU = Bonus accuracy</span> • <span>SPD = Faster attacks</span>
+                </div>
+                <div style={{ display: "flex", gap: 12, justifyContent: "center", flexWrap: "wrap", position: "relative" }}>
+                  <Btn color={T.teal} disabled={diamonds < 150} onClick={() => summonAccessories(1)}>Summon ×1 (💎150)</Btn>
+                  <Btn color={T.gold} disabled={diamonds < 1350} onClick={() => summonAccessories(10)}>Summon ×10 (💎1350)</Btn>
+                </div>
+                <div style={{ fontSize: 10, color: T.textDim, marginTop: 8, position: "relative" }}>{accessories.length} accessories owned</div>
               </Card>
             </div>
           )}
@@ -2759,6 +3065,98 @@ function GameUI({ account, initialSave, onLogout }) {
             </div>
           )}
 
+          {/* ═══ SHOP ═══ */}
+          {page === "shop" && (
+            <div>
+              <div style={{ fontSize: 13, fontWeight: 900, color: T.white, fontFamily: FONT_DISPLAY, marginBottom: 4 }}>🛒 SHOP</div>
+              <div style={{ fontSize: 8, color: T.textDim, marginBottom: 12 }}>Exchange resources and buy boosts. Daily items reset at midnight.</div>
+              <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                {SHOP_ITEMS.map(item => {
+                  const today = new Date().toISOString().slice(0, 10);
+                  const purchase = shopPurchases[item.id];
+                  const boughtToday = item.daily && purchase && purchase.date === today;
+                  const canAfford = item.costType === "diamonds" ? diamonds >= item.cost : gold >= item.cost;
+                  const canBuy = !boughtToday && canAfford;
+                  return (
+                    <div key={item.id} style={{
+                      display: "flex", alignItems: "center", gap: 8, padding: "10px 12px",
+                      borderRadius: 8, background: boughtToday ? "#ffffff03" : `${item.color}06`,
+                      border: `1px solid ${boughtToday ? "#ffffff06" : item.color + "18"}`,
+                      opacity: boughtToday ? 0.45 : 1,
+                    }}>
+                      <div style={{ width: 36, height: 36, borderRadius: 10, background: `${item.color}12`, border: `1px solid ${item.color}20`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18, flexShrink: 0 }}>{item.icon}</div>
+                      <div style={{ flex: 1 }}>
+                        <div style={{ fontSize: 11, fontWeight: 700, color: T.white }}>{item.name} {item.daily && <span style={{ fontSize: 7, color: T.textDim }}>(daily)</span>}</div>
+                        <div style={{ fontSize: 9, color: item.color }}>{item.desc}</div>
+                      </div>
+                      <div onClick={canBuy ? () => buyShopItem(item.id) : undefined} style={{
+                        padding: "5px 10px", borderRadius: 6, cursor: canBuy ? "pointer" : "default",
+                        background: canBuy ? `${item.color}18` : "#ffffff06",
+                        border: `1px solid ${canBuy ? item.color + "30" : "#ffffff08"}`,
+                        fontSize: 9, fontWeight: 800, color: canBuy ? item.color : T.textDim, fontFamily: FONT_DISPLAY,
+                      }}>{boughtToday ? "Sold Out" : `${item.costType === "diamonds" ? "💎" : "🪙"}${fmt(item.cost)}`}</div>
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* Balance display */}
+              <div style={{ marginTop: 14, padding: "10px 12px", borderRadius: 8, background: "#ffffff04", border: "1px solid #ffffff08", display: "flex", justifyContent: "center", gap: 20, fontSize: 11 }}>
+                <span style={{ color: T.gold, fontWeight: 800 }}>🪙 {fmt(gold)}</span>
+                <span style={{ color: "#60a5fa", fontWeight: 800 }}>💎 {fmt(diamonds)}</span>
+                <span style={{ color: "#a855f7", fontWeight: 800 }}>✦ {prestigeSouls} souls</span>
+              </div>
+            </div>
+          )}
+
+          {/* ═══ TITLES ═══ */}
+          {page === "titles" && (
+            <div>
+              <div style={{ fontSize: 13, fontWeight: 900, color: T.white, fontFamily: FONT_DISPLAY, marginBottom: 4 }}>🏷️ TITLES</div>
+              <div style={{ fontSize: 8, color: T.textDim, marginBottom: 12 }}>Equip a title for stat bonuses. Displayed next to your name.</div>
+
+              {/* Active title */}
+              {(() => {
+                const t = TITLES.find(x => x.id === activeTitle);
+                return t && (
+                  <div style={{ padding: 12, borderRadius: 10, background: `${t.color}08`, border: `1px solid ${t.color}20`, marginBottom: 14, textAlign: "center" }}>
+                    <div style={{ fontSize: 8, color: T.textDim, marginBottom: 2 }}>ACTIVE TITLE</div>
+                    <div style={{ fontSize: 15, fontWeight: 900, color: t.color, fontFamily: FONT_DISPLAY }}>{t.name}</div>
+                    {Object.keys(t.bonus).length > 0 && (
+                      <div style={{ fontSize: 9, color: t.color, marginTop: 2 }}>{Object.entries(t.bonus).map(([k, v]) => `+${v} ${k}`).join(" • ")}</div>
+                    )}
+                  </div>
+                );
+              })()}
+
+              <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                {TITLES.map(t => {
+                  const earned = !!earnedTitles[t.id];
+                  const isActive = activeTitle === t.id;
+                  const bonusText = Object.entries(t.bonus).map(([k, v]) => `+${v} ${k}`).join(", ");
+                  return (
+                    <div key={t.id} onClick={earned && !isActive ? () => setActiveTitle(t.id) : undefined} style={{
+                      display: "flex", alignItems: "center", gap: 8, padding: "8px 10px",
+                      borderRadius: 8, cursor: earned && !isActive ? "pointer" : "default",
+                      background: isActive ? `${t.color}10` : earned ? `${t.color}04` : "#ffffff03",
+                      border: `1px solid ${isActive ? t.color + "30" : earned ? t.color + "12" : "#ffffff06"}`,
+                      opacity: earned ? 1 : 0.35,
+                    }}>
+                      <div style={{ width: 28, height: 28, borderRadius: "50%", background: `${t.color}15`, border: `2px solid ${earned ? t.color + "40" : "#ffffff08"}`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, flexShrink: 0, fontWeight: 900, color: t.color, fontFamily: FONT_DISPLAY }}>{earned ? "✓" : "?"}</div>
+                      <div style={{ flex: 1 }}>
+                        <div style={{ fontSize: 11, fontWeight: 700, color: earned ? t.color : T.textDim }}>{t.name}</div>
+                        <div style={{ fontSize: 8, color: T.textDim }}>{t.desc}</div>
+                        {bonusText && <div style={{ fontSize: 8, color: t.color, marginTop: 1 }}>{bonusText}</div>}
+                      </div>
+                      {isActive && <div style={{ fontSize: 8, fontWeight: 800, color: T.success, fontFamily: FONT_DISPLAY }}>ACTIVE</div>}
+                      {earned && !isActive && <div style={{ fontSize: 8, fontWeight: 700, color: T.textDim }}>Tap to equip</div>}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
           {/* ═══ PRESTIGE / REBIRTH ═══ */}
           {page === "prestige" && (
             <div>
@@ -2922,7 +3320,7 @@ function GameUI({ account, initialSave, onLogout }) {
               { icon: "✨", label: "Summon", p: "summon" },
               { icon: "⭐", label: "Growth", p: "growth" },
               { icon: "🏰", label: "Dungeon", p: "dungeons" },
-              { icon: "💀", label: "Achieve", p: "achievements" },
+              { icon: "⚔️", label: "Raids", p: "raids" },
             ].map(tab => {
               const act = page === tab.p;
               return (

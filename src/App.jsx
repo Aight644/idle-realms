@@ -84,11 +84,12 @@ function getStageMonster(stageNum) {
   const monsters = STAGE_MONSTERS[ch];
   const bosses = BOSSES[ch];
 
-  const baseHp = Math.floor(20 * Math.pow(1.08, stageNum - 1));
-  const baseAtk = Math.floor(3 * Math.pow(1.06, stageNum - 1));
-  const baseDef = Math.floor(1 * Math.pow(1.05, stageNum - 1));
-  const baseGold = Math.floor(5 * Math.pow(1.04, stageNum - 1));
-  const baseXp = Math.floor(10 * Math.pow(1.05, stageNum - 1));
+  const sf = stageNum <= 100 ? stageNum - 1 : 99 + (stageNum - 100) * 0.7;
+  const baseHp = Math.floor(20 * Math.pow(1.055, sf));
+  const baseAtk = Math.floor(3 * Math.pow(1.045, sf));
+  const baseDef = Math.floor(1 * Math.pow(1.03, sf));
+  const baseGold = Math.floor(5 * Math.pow(1.06, sf));
+  const baseXp = Math.floor(10 * Math.pow(1.05, sf));
 
   if (isBoss) {
     const b = bosses[Math.min(bossIdx, bosses.length - 1)];
@@ -105,7 +106,7 @@ function getStageMonster(stageNum) {
 
 function getChapter(stageNum) { return CHAPTERS[Math.min(Math.floor((stageNum - 1) / 50), CHAPTERS.length - 1)]; }
 function stageLabel(s) { return `${Math.floor((s - 1) / 50) + 1}-${((s - 1) % 50) + 1}`; }
-function growthCost(level) { return Math.floor(10 * Math.pow(1.12, level - 1)); }
+function growthCost(level) { return Math.floor(8 * Math.pow(1.08, level - 1)); }
 
 // ─── EQUIPMENT ───
 const RARITIES = [
@@ -367,12 +368,12 @@ function enhanceCost(eqLevel, rarityIdx) { return Math.floor((50 + rarityIdx * 3
 
 // ─── PRESTIGE / REBIRTH ───
 const PRESTIGE_MILESTONES = [
-  { stage: 50, souls: 5, bonus: "ATK +5%" },
-  { stage: 100, souls: 15, bonus: "ATK +10%" },
-  { stage: 150, souls: 30, bonus: "All +5%" },
-  { stage: 200, souls: 60, bonus: "All +10%" },
-  { stage: 300, souls: 120, bonus: "All +15%" },
-  { stage: 400, souls: 250, bonus: "All +20%" },
+  { stage: 50, souls: 10, bonus: "All +20%" },
+  { stage: 100, souls: 30, bonus: "All +60%" },
+  { stage: 150, souls: 60, bonus: "All +120%" },
+  { stage: 200, souls: 100, bonus: "All +200%" },
+  { stage: 300, souls: 200, bonus: "All +400%" },
+  { stage: 400, souls: 400, bonus: "All +800%" },
 ];
 function calcPrestigeSouls(highestStage) {
   let souls = 0;
@@ -380,7 +381,7 @@ function calcPrestigeSouls(highestStage) {
     if (highestStage >= m.stage) souls = m.souls;
   }
   // Bonus souls for every 10 stages past 50
-  if (highestStage >= 50) souls += Math.floor((highestStage - 50) / 10) * 2;
+  if (highestStage >= 50) souls += Math.floor((highestStage - 50) / 10) * 5;
   return souls;
 }
 // Relics are permanent artifacts with stat bonuses. Upgrade with gold to increase their power.
@@ -657,9 +658,9 @@ const LOGIN_REWARDS = [
 ];
 
 // ─── OFFLINE EARNINGS CONFIG ───
-const OFFLINE_GOLD_PER_SEC = 0.5; // base gold per second offline (multiplied by stage)
+const OFFLINE_GOLD_PER_SEC = 1; // base gold per second offline (multiplied by stage)
 const OFFLINE_MAX_HOURS = 12; // max offline earnings cap
-const OFFLINE_STAGE_MULT = 0.02; // extra gold per stage per second
+const OFFLINE_STAGE_MULT = 0.05; // extra gold per stage per second
 
 // ═══════════════════════════════════════════════
 // HELPERS
@@ -1499,9 +1500,9 @@ function GameUI({ account, initialSave, onLogout }) {
   const addGold = useCallback((n) => { setGold(g => g + n); if (n > 0) setCombatStats(s => ({ ...s, totalGoldEarned: (s.totalGoldEarned || 0) + n })); }, []);
 
   // ─── DERIVED STATS ───
-  const baseAtk = growth.atk * 3;
-  const baseHp = 80 + growth.hp * 20;
-  const baseDef = growth.def * 2;
+  const baseAtk = Math.floor(growth.atk * 4 * (1 + growth.atk * 0.008));
+  const baseHp = 80 + Math.floor(growth.hp * 20 * (1 + growth.hp * 0.006));
+  const baseDef = Math.floor(growth.def * 2 * (1 + growth.def * 0.005));
 
   const equipBonus = useMemo(() => {
     const b = { atk: 0, def: 0, hp: 0, critRate: 0, critDmg: 0, pen: 0, acu: 0, spd: 0 };
@@ -1604,8 +1605,8 @@ function GameUI({ account, initialSave, onLogout }) {
     return b;
   }, [equipped, equipment, accessories]);
 
-  // Prestige multiplier: each soul gives +1% to all stats
-  const prestigeMult = 1 + prestigeSouls * 0.01;
+  // Prestige multiplier: each soul gives +2% to all stats
+  const prestigeMult = 1 + prestigeSouls * 0.02;
 
   // Resonance bonus: +2% all stats per level + milestones
   const resonanceBonus = useMemo(() => {

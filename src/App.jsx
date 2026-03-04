@@ -1074,7 +1074,9 @@ function GameUI({account,onLogout}){
   const[leaderboard,setLeaderboard]=useState([]);
   const[lbLoading,setLbLoading]=useState(false);
   const[showLogoutConfirm,setShowLogoutConfirm]=useState(false);
-  const[chatOpen,setChatOpen]=useState(true);         // bottom chat bar
+  const[chatOpen,setChatOpen]=useState(true);
+  const[rightTab,setRightTab]=useState("inventory");
+  const[invFilter,setInvFilter]=useState("");
   // ── Social ──
   const chatEndRef=useRef(null);
   const[chatMessages,setChatMessages]=useState([]);  // global chat
@@ -3716,129 +3718,220 @@ function GameUI({account,onLogout}){
           </div>
         </div>
 
-        {/* RIGHT PANEL — scrollable sidebar, no duplicate nav pages */}
-        <div style={{width:280,flexShrink:0,display:"flex",flexDirection:"column",background:C.panel,borderLeft:"1px solid "+C.border,overflowY:"auto"}}>
+        {/* RIGHT PANEL — MWI style: tabs + filter + icon grid */}
+        <div style={{width:300,flexShrink:0,display:"flex",flexDirection:"column",background:C.panel,borderLeft:"1px solid "+C.border,overflow:"hidden"}}>
 
-          {/* ── ACTIVE TASK ── */}
-          <div style={{padding:"10px 12px",borderBottom:"1px solid "+C.border,background:C.bg}}>
-            <div style={{fontSize:9,fontWeight:700,color:C.acc,letterSpacing:2,marginBottom:6,textTransform:"uppercase"}}>Active</div>
-            {(()=>{
-              if(curAct){
-                const sk=SKILLS.find(s=>s.id===curAct.sk);
-                const act=sk?.acts.find(a=>a.id===curAct.act);
-                return(
-                  <div>
-                    <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:5}}>
-                      <span style={{fontSize:12,color:C.white,fontFamily:FONT_BODY,fontWeight:600}}>{sk?.icon} {sk?.name}</span>
-                      <span style={{fontSize:12,color:C.ts,fontFamily:FONT_BODY}}>{act?.name}</span>
-                    </div>
-                    <div style={{height:4,borderRadius:2,background:C.card,overflow:"hidden"}}>
-                      <div style={{width:actProg*100+"%",height:"100%",borderRadius:2,background:"linear-gradient(90deg,"+C.accD+","+C.acc+")",transition:"width 0.1s linear"}}/>
-                    </div>
-                  </div>
-                );
-              }
-              if(zoneId&&cbt?.mob){
-                const zone=ZONES.find(z=>z.id===zoneId);
-                const mob=cbt.mob;
-                return(
-                  <div>
-                    <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:5}}>
-                      <span style={{fontSize:12,color:C.bad,fontFamily:FONT_BODY,fontWeight:600}}>{mob.i||"⚔️"} {mob.n}</span>
-                      <span style={{fontSize:12,color:C.ts}}>{zone?.name}</span>
-                    </div>
-                    <div style={{display:"flex",gap:6}}>
-                      <div style={{flex:1}}>
-                        <div style={{fontSize:11,color:C.td,marginBottom:2}}>You</div>
-                        <div style={{height:4,borderRadius:2,background:C.card,overflow:"hidden"}}><div style={{width:(cbt.php/cbt.mxhp)*100+"%",height:"100%",background:C.ok,borderRadius:2,transition:"width 0.2s"}}/></div>
-                      </div>
-                      <div style={{flex:1}}>
-                        <div style={{fontSize:11,color:C.td,marginBottom:2}}>{mob.n}</div>
-                        <div style={{height:4,borderRadius:2,background:C.card,overflow:"hidden"}}><div style={{width:Math.max(0,(cbt.mhp/mob.hp)*100)+"%",height:"100%",background:C.bad,borderRadius:2,transition:"width 0.2s"}}/></div>
-                      </div>
-                    </div>
-                  </div>
-                );
-              }
-              return <div style={{fontSize:12,color:C.td,fontFamily:FONT_BODY}}>— idle —</div>;
-            })()}
-          </div>
-
-          {/* ── LOADOUT ── */}
-          <div style={{padding:"10px 12px",borderBottom:"1px solid "+C.border}}>
-            <div style={{fontSize:9,fontWeight:700,color:C.acc,letterSpacing:2,marginBottom:6,textTransform:"uppercase"}}>Loadout</div>
-            {ESLOTS.map(slot=>{
-              const iid=eq[slot.id];const it=iid?ITEMS[iid]:null;const el=iid?(enh[iid]||0):0;
-              return(
-                <div key={slot.id} style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"3px 0",borderBottom:"1px solid "+C.bg}}>
-                  <span style={{fontSize:12,color:C.td,fontFamily:FONT_BODY,flexShrink:0,width:72}}>{slot.i} {slot.n}</span>
-                  <span style={{fontSize:12,color:it?C.white:C.td,fontWeight:it?600:400,fontFamily:FONT_BODY,textAlign:"right"}}>
-                    {it?(it.i+" "+it.n+(el>0?" +"+el:"")):"—"}
-                  </span>
-                </div>
-              );
-            })}
-          </div>
-
-          {/* ── COMBAT STATS ── */}
-          <div style={{padding:"10px 12px",borderBottom:"1px solid "+C.border}}>
-            <div style={{fontSize:9,fontWeight:700,color:C.acc,letterSpacing:2,marginBottom:6,textTransform:"uppercase"}}>Systems</div>
+          {/* Tab bar — Inventory | Equipment | Stats | Loadout */}
+          <div style={{display:"flex",borderBottom:"2px solid "+C.border,flexShrink:0,background:C.bg}}>
             {[
-              {l:"Hull HP",   v:pStats.hp,  c:C.ok,   i:"❤️"},
-              {l:"Attack",    v:pStats.atk, c:C.bad,  i:"⚔️"},
-              {l:"Defense",   v:pStats.def, c:C.acc,  i:"🛡️"},
-              {l:"Sonic",     v:pStats.rng, c:C.okD,  i:"🔊"},
-              {l:"Leviathan", v:pStats.mag, c:C.purp, i:"🌀"},
-            ].map(s=>(
-              <div key={s.l} style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"3px 0",borderBottom:"1px solid "+C.bg}}>
-                <span style={{fontSize:12,color:C.ts,fontFamily:FONT_BODY}}>{s.i} {s.l}</span>
-                <span style={{fontSize:12,color:s.c,fontWeight:700,fontFamily:FONT}}>{s.v}</span>
+              {id:"inventory", label:"Inventory"},
+              {id:"equipment", label:"Equipment"},
+              {id:"stats",     label:"Stats"},
+              {id:"loadout",   label:"Loadout"},
+            ].map(t=>(
+              <div key={t.id} onClick={()=>setRightTab(t.id)} style={{flex:1,padding:"8px 2px",textAlign:"center",fontSize:12,fontWeight:600,fontFamily:FONT_BODY,color:rightTab===t.id?C.white:C.td,background:rightTab===t.id?C.panel:C.bg,borderBottom:rightTab===t.id?"2px solid "+C.acc:"2px solid transparent",cursor:"pointer",transition:"all 0.15s",marginBottom:-2}}>
+                {t.label}
               </div>
             ))}
           </div>
 
-          {/* ── RESOURCES ── */}
-          <div style={{padding:"10px 12px",borderBottom:"1px solid "+C.border}}>
-            <div style={{fontSize:9,fontWeight:700,color:C.acc,letterSpacing:2,marginBottom:6,textTransform:"uppercase"}}>Resources</div>
-            <div style={{display:"flex",flexWrap:"wrap",gap:4}}>
-              {Object.entries(inv).filter(([id,qty])=>qty>0&&ITEMS[id]).map(([id,qty])=>{
-                const it=ITEMS[id];
-                const rareColor=it.rarity==="rare"?C.gold:it.rarity==="uncommon"?C.purp:null;
-                return(
-                  <div key={id} title={it.n+" ×"+fmt(qty)} style={{position:"relative",width:48,height:48,borderRadius:7,background:rareColor?rareColor+"18":C.card,border:"1px solid "+(rareColor?rareColor+"50":C.border),display:"flex",alignItems:"center",justifyContent:"center",flexDirection:"column",flexShrink:0}}>
-                    <span style={{fontSize:20,lineHeight:1}}>{it.i||"📦"}</span>
-                    <span style={{fontSize:10,color:rareColor||C.ts,fontWeight:700,fontFamily:FONT,marginTop:1}}>{qty>=1000?Math.floor(qty/1000)+"k":qty}</span>
-                    {rareColor&&<div style={{position:"absolute",top:0,left:0,right:0,height:2,background:rareColor,borderRadius:"7px 7px 0 0"}}/>}
+          {/* Filter row — only on inventory */}
+          {rightTab==="inventory"&&(
+            <div style={{padding:"6px 8px",borderBottom:"1px solid "+C.border,flexShrink:0,background:C.bg}}>
+              <input
+                value={invFilter} onChange={e=>setInvFilter(e.target.value)}
+                placeholder="Item Filter"
+                style={{width:"100%",padding:"5px 10px",borderRadius:4,background:C.card,border:"1px solid "+C.border,color:C.white,fontSize:12,fontFamily:FONT_BODY,outline:"none",boxSizing:"border-box"}}
+              />
+            </div>
+          )}
+
+          {/* Scrollable content */}
+          <div style={{flex:1,overflowY:"auto",padding:"8px"}}>
+
+            {/* ── INVENTORY TAB ── */}
+            {rightTab==="inventory"&&(()=>{
+              const q=invFilter.toLowerCase();
+              const allItems=Object.entries(inv).filter(([id,qty])=>qty>0&&ITEMS[id]&&(!q||ITEMS[id].n.toLowerCase().includes(q)));
+              const cats=[
+                {label:"Currencies",  items:allItems.filter(([id])=>ITEMS[id].type==="currency"||id==="gold")},
+                {label:"Equipment",   items:allItems.filter(([id])=>ITEMS[id].eq)},
+                {label:"Food",        items:allItems.filter(([id])=>ITEMS[id].food)},
+                {label:"Rare Mats",   items:allItems.filter(([id])=>ITEMS[id].rarity==="rare"||ITEMS[id].rarity==="uncommon")},
+                {label:"Resources",   items:allItems.filter(([id])=>{const it=ITEMS[id];return it.s&&!it.eq&&!it.food&&!it.rarity&&it.type!=="currency"&&id!=="gold";})},
+              ];
+              // Add gold manually to currencies
+              const goldEntry=[["gold",gold]];
+              return(
+                <div>
+                  {/* Always show gold + research at top */}
+                  <div style={{marginBottom:8}}>
+                    <div style={{fontSize:11,fontWeight:700,color:C.td,letterSpacing:1,marginBottom:5,textTransform:"uppercase"}}>Currencies</div>
+                    <div style={{display:"flex",flexWrap:"wrap",gap:3}}>
+                      {[
+                        {id:"◈",  icon:"◈",  n:"Credits",  qty:gold,   c:C.gold},
+                        {id:"🔬", icon:"🔬", n:"Research",  qty:researchPts, c:C.acc},
+                        {id:"⚡", icon:"⚡", n:"Energy",    qty:energy, c:C.ok},
+                      ].map(s=>(
+                        <div key={s.id} title={s.n+" ×"+fmt(s.qty)} style={{width:52,height:52,borderRadius:6,background:C.card,border:"1px solid "+C.border,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:1}}>
+                          <span style={{fontSize:20}}>{s.icon}</span>
+                          <span style={{fontSize:10,color:s.c,fontWeight:700,fontFamily:FONT}}>{s.qty>=1e6?(s.qty/1e6).toFixed(1)+"M":s.qty>=1000?Math.floor(s.qty/1000)+"k":Math.floor(s.qty)}</span>
+                        </div>
+                      ))}
+                    </div>
                   </div>
-                );
-              })}
-              {Object.keys(inv).length===0&&<div style={{fontSize:12,color:C.td,fontFamily:FONT_BODY}}>Empty</div>}
-            </div>
-          </div>
-
-          {/* ── DRONES ── */}
-          {Object.values(drones).some(Boolean)&&(
-            <div style={{padding:"10px 12px",borderBottom:"1px solid "+C.border}}>
-              <div style={{fontSize:9,fontWeight:700,color:C.acc,letterSpacing:2,marginBottom:6,textTransform:"uppercase"}}>Drones Active</div>
-              {DRONE_TYPES.filter(dt=>drones[dt.id]>0).map(dt=>(
-                <div key={dt.id} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"3px 0",borderBottom:"1px solid "+C.bg}}>
-                  <span style={{fontSize:12,color:C.ts,fontFamily:FONT_BODY}}>{dt.icon} {dt.name}</span>
-                  <span style={{fontSize:12,color:C.acc,fontWeight:700,fontFamily:FONT}}>×{drones[dt.id]}</span>
+                  {cats.map(cat=>{
+                    if(!cat.items.length)return null;
+                    return(
+                      <div key={cat.label} style={{marginBottom:10}}>
+                        <div style={{fontSize:11,fontWeight:700,color:C.td,letterSpacing:1,marginBottom:5,textTransform:"uppercase"}}>{cat.label}</div>
+                        <div style={{display:"flex",flexWrap:"wrap",gap:3}}>
+                          {cat.items.map(([id,qty])=>{
+                            const it=ITEMS[id];
+                            const rareColor=it.rarity==="rare"?C.gold:it.rarity==="uncommon"?C.purp:null;
+                            return(
+                              <div key={id} title={it.n+" ×"+fmt(qty)} style={{position:"relative",width:52,height:52,borderRadius:6,background:rareColor?rareColor+"18":C.card,border:"1px solid "+(rareColor?rareColor+"50":C.border),display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:1,flexShrink:0,overflow:"hidden"}}>
+                                <span style={{fontSize:22,lineHeight:1}}>{it.i||"📦"}</span>
+                                <span style={{fontSize:10,color:rareColor||C.ts,fontWeight:700,fontFamily:FONT}}>{qty>=1e6?(qty/1e6).toFixed(1)+"M":qty>=1000?Math.floor(qty/1000)+"k":qty}</span>
+                                {rareColor&&<div style={{position:"absolute",top:0,left:0,right:0,height:2,background:rareColor}}/>}
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    );
+                  })}
+                  {allItems.length===0&&<div style={{fontSize:12,color:C.td,fontFamily:FONT_BODY,padding:"16px 0",textAlign:"center"}}>Cargo hold empty</div>}
                 </div>
-              ))}
-            </div>
-          )}
+              );
+            })()}
 
-          {/* ── DISCOVERIES ── */}
-          {discoveryLog.length>0&&(
-            <div style={{padding:"10px 12px"}}>
-              <div style={{fontSize:9,fontWeight:700,color:C.gold,letterSpacing:2,marginBottom:6,textTransform:"uppercase"}}>Discoveries</div>
-              {discoveryLog.slice(-6).reverse().map((l,i)=>(
-                <div key={i} style={{fontSize:12,color:C.ts,padding:"3px 0",borderBottom:"1px solid "+C.bg,opacity:1-i*0.14,fontFamily:FONT_BODY,lineHeight:1.4}}>{l}</div>
-              ))}
-            </div>
-          )}
+            {/* ── EQUIPMENT TAB ── */}
+            {rightTab==="equipment"&&(
+              <div>
+                <div style={{fontSize:11,fontWeight:700,color:C.td,letterSpacing:1,marginBottom:8,textTransform:"uppercase"}}>Equipped</div>
+                {ESLOTS.map(slot=>{
+                  const iid=eq[slot.id];const it=iid?ITEMS[iid]:null;const el=iid?(enh[iid]||0):0;
+                  return(
+                    <div key={slot.id} onClick={()=>it&&setPage("equipment")} style={{display:"flex",alignItems:"center",gap:10,padding:"7px 8px",borderRadius:8,background:it?"linear-gradient(90deg,"+C.acc+"10,"+C.card+")":C.card,border:"1px solid "+(it?C.acc+"40":C.border),marginBottom:6,cursor:it?"pointer":"default"}}>
+                      <div style={{width:40,height:40,borderRadius:6,background:C.bg,border:"1px solid "+C.border,display:"flex",alignItems:"center",justifyContent:"center",fontSize:20,flexShrink:0}}>
+                        {it?it.i:slot.i}
+                      </div>
+                      <div style={{flex:1,minWidth:0}}>
+                        <div style={{fontSize:11,color:C.td,fontFamily:FONT_BODY,marginBottom:2}}>{slot.n}</div>
+                        {it
+                          ?<div style={{fontSize:12,color:C.white,fontWeight:600,fontFamily:FONT_BODY}}>{it.n}{el>0&&<span style={{color:C.gold}}> +{el}</span>}</div>
+                          :<div style={{fontSize:12,color:C.td,fontFamily:FONT_BODY}}>— empty —</div>
+                        }
+                        {it?.st&&<div style={{fontSize:10,color:C.ts,fontFamily:FONT_BODY}}>{Object.entries(it.st).map(([k,v])=>k.toUpperCase()+":+"+Math.floor(v*(1+el*0.08))).join(" ")}</div>}
+                      </div>
+                    </div>
+                  );
+                })}
+                {discoveryLog.length>0&&(
+                  <div style={{marginTop:12}}>
+                    <div style={{fontSize:11,fontWeight:700,color:C.gold,letterSpacing:1,marginBottom:6,textTransform:"uppercase"}}>Recent Finds</div>
+                    {discoveryLog.slice(-5).reverse().map((l,i)=>(
+                      <div key={i} style={{fontSize:12,color:C.ts,padding:"3px 0",borderBottom:"1px solid "+C.bg,opacity:1-i*0.15,fontFamily:FONT_BODY}}>{l}</div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
 
+            {/* ── STATS TAB ── */}
+            {rightTab==="stats"&&(
+              <div>
+                <div style={{fontSize:11,fontWeight:700,color:C.td,letterSpacing:1,marginBottom:8,textTransform:"uppercase"}}>Combat Systems</div>
+                {[
+                  {l:"Hull HP",    v:pStats.hp,  c:C.ok,   i:"❤️"},
+                  {l:"Attack",     v:pStats.atk, c:C.bad,  i:"⚔️"},
+                  {l:"Defense",    v:pStats.def, c:C.acc,  i:"🛡️"},
+                  {l:"Sonic",      v:pStats.rng, c:C.okD,  i:"🔊"},
+                  {l:"Leviathan",  v:pStats.mag, c:C.purp, i:"🌀"},
+                ].map(s=>(
+                  <div key={s.l} style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"6px 8px",borderRadius:6,background:C.card,border:"1px solid "+C.border,marginBottom:4}}>
+                    <span style={{fontSize:12,color:C.ts,fontFamily:FONT_BODY}}>{s.i} {s.l}</span>
+                    <span style={{fontSize:13,color:s.c,fontWeight:700,fontFamily:FONT}}>{s.v}</span>
+                  </div>
+                ))}
+                {Object.values(drones).some(Boolean)&&(
+                  <div style={{marginTop:12}}>
+                    <div style={{fontSize:11,fontWeight:700,color:C.td,letterSpacing:1,marginBottom:6,textTransform:"uppercase"}}>Drones Active</div>
+                    {DRONE_TYPES.filter(dt=>drones[dt.id]>0).map(dt=>(
+                      <div key={dt.id} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"5px 8px",borderRadius:6,background:C.card,marginBottom:3}}>
+                        <span style={{fontSize:12,color:C.ts,fontFamily:FONT_BODY}}>{dt.icon} {dt.name}</span>
+                        <span style={{fontSize:12,color:C.acc,fontWeight:700,fontFamily:FONT}}>×{drones[dt.id]}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* ── LOADOUT TAB ── */}
+            {rightTab==="loadout"&&(
+              <div>
+                {/* Active task */}
+                <div style={{marginBottom:12,padding:"10px",borderRadius:8,background:C.card,border:"1px solid "+C.border}}>
+                  <div style={{fontSize:11,fontWeight:700,color:C.acc,letterSpacing:1,marginBottom:6,textTransform:"uppercase"}}>Active</div>
+                  {(()=>{
+                    if(curAct){
+                      const sk=SKILLS.find(s=>s.id===curAct.sk);
+                      const act=sk?.acts.find(a=>a.id===curAct.act);
+                      return(
+                        <div>
+                          <div style={{display:"flex",justifyContent:"space-between",marginBottom:5}}>
+                            <span style={{fontSize:12,color:C.white,fontFamily:FONT_BODY,fontWeight:600}}>{sk?.icon} {sk?.name} — {act?.name}</span>
+                          </div>
+                          <div style={{height:4,borderRadius:2,background:C.bg,overflow:"hidden"}}>
+                            <div style={{width:actProg*100+"%",height:"100%",background:"linear-gradient(90deg,"+C.accD+","+C.acc+")",borderRadius:2,transition:"width 0.1s linear"}}/>
+                          </div>
+                        </div>
+                      );
+                    }
+                    if(zoneId&&cbt?.mob){
+                      const zone=ZONES.find(z=>z.id===zoneId);
+                      const mob=cbt.mob;
+                      return(
+                        <div>
+                          <div style={{display:"flex",justifyContent:"space-between",marginBottom:5}}>
+                            <span style={{fontSize:12,color:C.bad,fontFamily:FONT_BODY,fontWeight:600}}>{mob.i} {mob.n}</span>
+                            <span style={{fontSize:12,color:C.ts}}>{zone?.name}</span>
+                          </div>
+                          <div style={{display:"flex",gap:6}}>
+                            <div style={{flex:1}}>
+                              <div style={{fontSize:11,color:C.td,marginBottom:2}}>You</div>
+                              <div style={{height:4,borderRadius:2,background:C.bg,overflow:"hidden"}}><div style={{width:(cbt.php/cbt.mxhp)*100+"%",height:"100%",background:C.ok,borderRadius:2}}/></div>
+                            </div>
+                            <div style={{flex:1}}>
+                              <div style={{fontSize:11,color:C.td,marginBottom:2}}>{mob.n}</div>
+                              <div style={{height:4,borderRadius:2,background:C.bg,overflow:"hidden"}}><div style={{width:Math.max(0,(cbt.mhp/mob.hp)*100)+"%",height:"100%",background:C.bad,borderRadius:2}}/></div>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    }
+                    return <div style={{fontSize:12,color:C.td,fontFamily:FONT_BODY}}>— idle —</div>;
+                  })()}
+                </div>
+                {/* Equipment slots compact list */}
+                <div style={{fontSize:11,fontWeight:700,color:C.td,letterSpacing:1,marginBottom:6,textTransform:"uppercase"}}>Loadout</div>
+                {ESLOTS.map(slot=>{
+                  const iid=eq[slot.id];const it=iid?ITEMS[iid]:null;const el=iid?(enh[iid]||0):0;
+                  return(
+                    <div key={slot.id} style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"4px 0",borderBottom:"1px solid "+C.bg}}>
+                      <span style={{fontSize:12,color:C.td,fontFamily:FONT_BODY,flexShrink:0,width:76}}>{slot.i} {slot.n}</span>
+                      <span style={{fontSize:12,color:it?C.white:C.td,fontWeight:it?600:400,fontFamily:FONT_BODY,textAlign:"right",minWidth:0,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>
+                        {it?(it.i+" "+it.n+(el>0?" +"+el:"")):"—"}
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+
+          </div>
         </div>
 
         </div>{/* end middle row */}

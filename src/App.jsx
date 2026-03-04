@@ -3722,14 +3722,14 @@ function GameUI({account,onLogout}){
         <div style={{width:300,flexShrink:0,display:"flex",flexDirection:"column",background:C.panel,borderLeft:"1px solid "+C.border,overflow:"hidden"}}>
 
           {/* Tab bar — Inventory | Equipment | Stats | Loadout */}
-          <div style={{display:"flex",borderBottom:"2px solid "+C.border,flexShrink:0,background:C.bg}}>
+          <div style={{display:"flex",flexShrink:0,background:C.bg,borderBottom:"1px solid "+C.border}}>
             {[
               {id:"inventory", label:"Inventory"},
               {id:"equipment", label:"Equipment"},
               {id:"stats",     label:"Stats"},
               {id:"loadout",   label:"Loadout"},
             ].map(t=>(
-              <div key={t.id} onClick={()=>setRightTab(t.id)} style={{flex:1,padding:"8px 2px",textAlign:"center",fontSize:12,fontWeight:600,fontFamily:FONT_BODY,color:rightTab===t.id?C.white:C.td,background:rightTab===t.id?C.panel:C.bg,borderBottom:rightTab===t.id?"2px solid "+C.acc:"2px solid transparent",cursor:"pointer",transition:"all 0.15s",marginBottom:-2}}>
+              <div key={t.id} onClick={()=>setRightTab(t.id)} style={{flex:1,padding:"10px 4px",textAlign:"center",fontSize:13,fontWeight:700,fontFamily:FONT_BODY,color:rightTab===t.id?C.white:C.td,background:rightTab===t.id?"linear-gradient(180deg,"+C.panel+","+C.card+")":C.bg,borderBottom:rightTab===t.id?"3px solid "+C.acc:"3px solid transparent",cursor:"pointer",transition:"all 0.15s",whiteSpace:"nowrap"}}>
                 {t.label}
               </div>
             ))}

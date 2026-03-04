@@ -2160,26 +2160,6 @@ function GameUI({account,onLogout}){
               {/* Skills tab */}
               {mobileTab==="skills"&&(
                 <div style={{height:"100%",overflowY:"auto",padding:"12px"}}>
-                  {/* Active skill header */}
-                  {actSkill&&(()=>{
-                    const sk=SKILLS.find(s=>s.id===actSkill);
-                    if(!sk)return null;
-                    const s=sl(sk.id);
-                    const pct=s.need>0?(s.xp/s.need)*100:0;
-                    return(
-                      <div style={{marginBottom:14,padding:"12px 14px",borderRadius:10,background:"linear-gradient(135deg,"+sk.color+"18,"+C.card+")",border:"1px solid "+sk.color+"40"}}>
-                        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:6}}>
-                          <span style={{fontSize:18,fontWeight:700,color:sk.color}}>{sk.icon} {sk.name}</span>
-                          <span style={{fontSize:13,color:C.ts,fontFamily:FONT}}>Lv {s.lv}</span>
-                        </div>
-                        <div style={{height:5,borderRadius:3,background:C.bg,overflow:"hidden",marginBottom:4}}>
-                          <div style={{width:pct+"%",height:"100%",background:sk.color,borderRadius:3,transition:"width 0.3s"}}/>
-                        </div>
-                        <div style={{fontSize:12,color:C.td,fontFamily:FONT_BODY}}>{pct.toFixed(1)}% to level {s.lv+1}</div>
-                      </div>
-                    );
-                  })()}
-                  {/* Skill list */}
                   <div style={{display:"flex",flexDirection:"column",gap:4}}>
                     {SKILLS.map(sk=>{
                       const s=sl(sk.id);
@@ -2187,53 +2167,49 @@ function GameUI({account,onLogout}){
                       const running=curAct?.sk===sk.id;
                       const isActive=actSkill===sk.id;
                       return(
-                        <div key={sk.id} onClick={()=>setActSkill(sk.id)} style={{display:"flex",alignItems:"center",gap:10,padding:"10px 12px",borderRadius:8,background:isActive?"linear-gradient(90deg,"+sk.color+"20,"+C.card+")":C.card,border:"1px solid "+(isActive?sk.color+"50":C.border),cursor:"pointer"}}>
-                          <span style={{fontSize:18,flexShrink:0,filter:running?"drop-shadow(0 0 5px "+sk.color+")":s.mastered?"drop-shadow(0 0 5px "+C.gold+")":"none"}}>{sk.icon}</span>
-                          <div style={{flex:1,minWidth:0}}>
-                            <div style={{display:"flex",justifyContent:"space-between",marginBottom:4}}>
-                              <span style={{fontSize:13,color:isActive?sk.color:C.text,fontWeight:600,fontFamily:FONT_BODY}}>{sk.name}</span>
-                              <span style={{fontSize:12,color:s.mastered?C.gold:C.ts,fontWeight:700,fontFamily:FONT}}>{s.mastered?"★":pct.toFixed(1)+"% "+s.lv}</span>
+                        <div key={sk.id}>
+                          {/* Skill row */}
+                          <div onClick={()=>setActSkill(isActive?null:sk.id)} style={{display:"flex",alignItems:"center",gap:10,padding:"10px 12px",borderRadius:isActive?"8px 8px 0 0":8,background:isActive?"linear-gradient(90deg,"+sk.color+"25,"+C.card+")":C.card,border:"1px solid "+(isActive?sk.color+"60":C.border),cursor:"pointer",borderBottom:isActive?"none":"1px solid "+(C.border)}}>
+                            <span style={{fontSize:18,flexShrink:0,filter:running?"drop-shadow(0 0 5px "+sk.color+")":s.mastered?"drop-shadow(0 0 5px "+C.gold+")":"none"}}>{sk.icon}</span>
+                            <div style={{flex:1,minWidth:0}}>
+                              <div style={{display:"flex",justifyContent:"space-between",marginBottom:4}}>
+                                <span style={{fontSize:13,color:isActive?sk.color:C.text,fontWeight:600,fontFamily:FONT_BODY}}>{sk.name}</span>
+                                <span style={{fontSize:12,color:s.mastered?C.gold:C.ts,fontWeight:700,fontFamily:FONT}}>{s.mastered?"★":pct.toFixed(1)+"% "+s.lv}</span>
+                              </div>
+                              <div style={{height:3,borderRadius:2,background:C.bg,overflow:"hidden"}}>
+                                <div style={{width:pct+"%",height:"100%",background:s.mastered?C.gold:running?C.ok:sk.color,borderRadius:2,transition:"width 0.3s"}}/>
+                              </div>
                             </div>
-                            <div style={{height:3,borderRadius:2,background:C.bg,overflow:"hidden"}}>
-                              <div style={{width:pct+"%",height:"100%",background:s.mastered?C.gold:running?C.ok:sk.color,borderRadius:2,transition:"width 0.3s"}}/>
-                            </div>
+                            <span style={{fontSize:12,color:isActive?sk.color:C.td,flexShrink:0,marginLeft:4}}>{isActive?"▾":"▸"}</span>
+                            {running&&<span style={{fontSize:11,color:C.ok,fontWeight:700,flexShrink:0}}>▶</span>}
                           </div>
-                          {running&&<span style={{fontSize:12,color:C.ok,fontWeight:700,flexShrink:0}}>▶</span>}
+                          {/* Actions — expand inline directly under this skill */}
+                          {isActive&&(
+                            <div style={{background:C.bg,border:"1px solid "+sk.color+"40",borderTop:"none",borderRadius:"0 0 8px 8px",padding:"8px",display:"flex",flexDirection:"column",gap:6,marginBottom:4}}>
+                              {sk.acts.map(act=>{
+                                const canDo=s.lv>=act.lv;
+                                const isAct=curAct?.sk===sk.id&&curAct?.act===act.id;
+                                return(
+                                  <div key={act.id} style={{padding:"10px 12px",borderRadius:7,background:isAct?"linear-gradient(135deg,"+C.acc+"20,"+C.card+")":C.card,border:"1px solid "+(isAct?C.acc+"70":canDo?C.border:C.border+"40"),opacity:canDo?1:0.45,display:"flex",justifyContent:"space-between",alignItems:"center",gap:10}}>
+                                    <div style={{flex:1,minWidth:0}}>
+                                      <div style={{fontSize:13,color:isAct?C.acc:canDo?C.text:C.td,fontWeight:700,fontFamily:FONT_BODY,marginBottom:2}}>{act.name}</div>
+                                      <div style={{fontSize:11,color:C.ts,fontFamily:FONT_BODY}}>+{act.xp} XP · {act.t}s → {act.out.map(o=>(ITEMS[o.id]?.i||"📦")+" "+(ITEMS[o.id]?.n||o.id)).join(", ")}</div>
+                                      {!canDo&&<div style={{fontSize:11,color:C.bad,marginTop:2,fontFamily:FONT_BODY}}>Requires Lv {act.lv}</div>}
+                                    </div>
+                                    {canDo&&(
+                                      <div onClick={e=>{e.stopPropagation();isAct?(setCurAct(null),setActProg(0)):startAct(sk.id,act.id)}} style={{padding:"7px 14px",borderRadius:7,background:isAct?"linear-gradient(90deg,"+C.bad+"cc,"+C.bad+")":"linear-gradient(90deg,"+C.accD+","+C.acc+")",color:C.bg,fontSize:12,fontWeight:700,cursor:"pointer",flexShrink:0,fontFamily:FONT,whiteSpace:"nowrap"}}>
+                                        {isAct?"STOP":"START"}
+                                      </div>
+                                    )}
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          )}
                         </div>
                       );
                     })}
                   </div>
-                  {/* Actions for selected skill */}
-                  {actSkill&&(()=>{
-                    const sk=SKILLS.find(s=>s.id===actSkill);
-                    if(!sk)return null;
-                    return(
-                      <div style={{marginTop:16}}>
-                        <div style={{fontSize:11,fontWeight:700,color:C.td,letterSpacing:2,marginBottom:8,textTransform:"uppercase"}}>Available Actions</div>
-                        <div style={{display:"flex",flexDirection:"column",gap:8}}>
-                          {sk.acts.map(act=>{
-                            const s=sl(sk.id);
-                            const canDo=s.lv>=act.lv;
-                            const isAct=curAct?.sk===sk.id&&curAct?.act===act.id;
-                            return(
-                              <div key={act.id} style={{padding:"12px 14px",borderRadius:8,background:isAct?"linear-gradient(135deg,"+C.acc+"18,"+C.card+")":C.card,border:"1px solid "+(isAct?C.acc+"60":canDo?C.border:C.border+"60"),opacity:canDo?1:0.5,display:"flex",justifyContent:"space-between",alignItems:"center"}}>
-                                <div style={{flex:1,minWidth:0}}>
-                                  <div style={{fontSize:14,color:isAct?C.acc:canDo?C.text:C.td,fontWeight:700,fontFamily:FONT_BODY,marginBottom:3}}>{act.name}</div>
-                                  <div style={{fontSize:12,color:C.ts,fontFamily:FONT_BODY}}>+{act.xp} XP · {act.t}s → {act.out.map(o=>(ITEMS[o.id]?.i||"📦")+" "+(ITEMS[o.id]?.n||o.id)).join(", ")}</div>
-                                  {!canDo&&<div style={{fontSize:11,color:C.bad,marginTop:2,fontFamily:FONT_BODY}}>Requires Level {act.lv}</div>}
-                                </div>
-                                {canDo&&(
-                                  <div onClick={e=>{e.stopPropagation();isAct?(setCurAct(null),setActProg(0)):startAct(sk.id,act.id)}} style={{padding:"8px 16px",borderRadius:8,background:isAct?"linear-gradient(90deg,"+C.bad+"cc,"+C.bad+")":"linear-gradient(90deg,"+C.accD+","+C.acc+")",color:C.bg,fontSize:13,fontWeight:700,cursor:"pointer",flexShrink:0,marginLeft:10,fontFamily:FONT}}>
-                                    {isAct?"STOP":"START"}
-                                  </div>
-                                )}
-                              </div>
-                            );
-                          })}
-                        </div>
-                      </div>
-                    );
-                  })()}
                 </div>
               )}
 

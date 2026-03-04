@@ -1,16 +1,13 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from "react";
-import { initializeApp } from "firebase/app";
-import { getAuth, onAuthStateChanged, signInWithPopup, GoogleAuthProvider, signOut } from "firebase/auth";
-import { getFirestore, doc, setDoc, getDoc } from "firebase/firestore";
-
-const firebaseConfig = {
-  apiKey: "AIzaSyD7HBHGBHC0GzV6YnKBnCMa0UrBfMbJFkA", authDomain: "idle-realms.firebaseapp.com",
-  projectId: "idle-realms", storageBucket: "idle-realms.firebasestorage.app",
-  messagingSenderId: "127292757389", appId: "1:127292757389:web:e81d1ec4d6ed764b6a4895",
-};
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
-const db = getFirestore(app);
+import { auth, db } from './firebase.js';
+import {
+  signInWithEmailAndPassword,
+  createUserWithEmailAndPassword,
+  signOut,
+  onAuthStateChanged,
+  updateProfile,
+} from 'firebase/auth';
+import { doc, setDoc, getDoc } from 'firebase/firestore';
 
 const FONT = "'Segoe UI', system-ui, sans-serif";
 const C = {bg:"#1b1d23",panel:"#22252d",card:"#2a2d36",border:"#383c47",text:"#d4d4d8",ts:"#9ca3af",td:"#6b7280",acc:"#60a5fa",accD:"#3b82f6",ok:"#4ade80",okD:"#22c55e",bad:"#f87171",badD:"#ef4444",warn:"#fbbf24",gold:"#eab308",purp:"#a78bfa",white:"#f4f4f5"};
@@ -71,13 +68,60 @@ const ZONES=[
 
 const ESLOTS=[{id:"head",n:"Head",i:"🪖"},{id:"body",n:"Body",i:"👕"},{id:"hands",n:"Hands",i:"🧤"},{id:"feet",n:"Feet",i:"👢"},{id:"weapon",n:"Weapon",i:"⚔️"},{id:"shield",n:"Shield",i:"🛡️"},{id:"neck",n:"Neck",i:"📿"},{id:"ring",n:"Ring",i:"💍"}];
 
-function AuthScreen(){
+function AuthScreen({onLogin}){
+  const[tab,setTab]=useState("login");
+  const[displayName,setDisplayName]=useState("");
+  const[email,setEmail]=useState("");
+  const[password,setPassword]=useState("");
+  const[confirmPw,setConfirmPw]=useState("");
+  const[error,setError]=useState("");
+  const[loading,setLoading]=useState(false);
+  const clearForm=()=>{setDisplayName("");setEmail("");setPassword("");setConfirmPw("");setError("")};
+  const handleSignup=async()=>{
+    setError("");
+    if(!displayName.trim()||displayName.length<3)return setError("Display name must be at least 3 characters");
+    if(!email.trim())return setError("Please enter an email");
+    if(!password||password.length<6)return setError("Password must be at least 6 characters");
+    if(password!==confirmPw)return setError("Passwords do not match");
+    setLoading(true);
+    try{
+      const cred=await createUserWithEmailAndPassword(auth,email.trim(),password);
+      await updateProfile(cred.user,{displayName:displayName.trim()});
+      onLogin(cred.user);
+    }catch(e){setError(e.code==="auth/email-already-in-use"?"Email already in use":e.message)}
+    setLoading(false);
+  };
+  const handleLogin=async()=>{
+    setError("");
+    if(!email.trim()||!password)return setError("Enter email and password");
+    setLoading(true);
+    try{await signInWithEmailAndPassword(auth,email.trim(),password)}
+    catch(e){setError(e.code==="auth/invalid-credential"?"Invalid email or password":e.message)}
+    setLoading(false);
+  };
+  const inp={padding:"10px 14px",borderRadius:6,background:C.bg,border:"1px solid "+C.border,color:C.white,fontSize:13,outline:"none",width:"100%",boxSizing:"border-box"};
   return(<div style={{width:"100%",height:"100vh",display:"flex",alignItems:"center",justifyContent:"center",background:C.bg,fontFamily:FONT}}>
-    <div style={{textAlign:"center",padding:40,borderRadius:12,background:C.panel,border:`1px solid ${C.border}`}}>
-      <div style={{fontSize:48,marginBottom:12}}>🥛</div>
-      <div style={{fontSize:24,fontWeight:700,color:C.white,marginBottom:4}}>Milky Way Idle</div>
-      <div style={{fontSize:13,color:C.ts,marginBottom:24}}>A multiplayer idle RPG</div>
-      <div onClick={()=>signInWithPopup(auth,new GoogleAuthProvider())} style={{padding:"10px 32px",borderRadius:8,background:C.acc,color:C.white,fontWeight:700,fontSize:14,cursor:"pointer"}}>Sign in with Google</div>
+    <div style={{width:"100%",maxWidth:380,padding:24}}>
+      <div style={{textAlign:"center",marginBottom:24}}>
+        <div style={{fontSize:48,marginBottom:8}}>🥛</div>
+        <div style={{fontSize:24,fontWeight:700,color:C.white,marginBottom:4}}>Milky Way Idle</div>
+        <div style={{fontSize:13,color:C.ts}}>A multiplayer idle RPG</div>
+      </div>
+      <div style={{padding:20,borderRadius:12,background:C.panel,border:"1px solid "+C.border}}>
+        <div style={{display:"flex",gap:8,marginBottom:16}}>
+          {["login","signup"].map(t=>(
+            <div key={t} onClick={()=>{setTab(t);clearForm()}} style={{flex:1,padding:"8px 0",textAlign:"center",borderRadius:6,background:tab===t?C.acc+"20":"transparent",color:tab===t?C.acc:C.td,fontWeight:700,fontSize:13,cursor:"pointer",border:"1px solid "+(tab===t?C.acc+"30":"transparent")}}>{t==="login"?"Sign In":"Create Account"}</div>
+          ))}
+        </div>
+        {error&&<div style={{padding:"8px 12px",borderRadius:6,background:C.bad+"15",color:C.bad,fontSize:12,fontWeight:600,marginBottom:12,border:"1px solid "+C.bad+"25"}}>{error}</div>}
+        <div style={{display:"flex",flexDirection:"column",gap:10}}>
+          {tab==="signup"&&<input value={displayName} onChange={e=>setDisplayName(e.target.value)} placeholder="Display Name" style={inp}/>}
+          <input value={email} onChange={e=>setEmail(e.target.value)} placeholder="Email" type="email" style={inp}/>
+          <input value={password} onChange={e=>setPassword(e.target.value)} placeholder="Password" type="password" style={inp} onKeyDown={e=>e.key==="Enter"&&(tab==="login"?handleLogin():null)}/>
+          {tab==="signup"&&<input value={confirmPw} onChange={e=>setConfirmPw(e.target.value)} placeholder="Confirm Password" type="password" style={inp}/>}
+          <div onClick={loading?undefined:(tab==="login"?handleLogin:handleSignup)} style={{padding:"12px 0",borderRadius:6,background:loading?C.card:C.acc+"20",color:loading?C.td:C.acc,border:"1px solid "+(loading?C.border:C.acc+"35"),fontWeight:700,fontSize:14,textAlign:"center",cursor:loading?"default":"pointer"}}>{loading?"Loading...":tab==="login"?"Sign In":"Create Account"}</div>
+        </div>
+      </div>
     </div>
   </div>);
 }
@@ -411,6 +455,6 @@ export default function App(){
   const[loading,setLoading]=useState(true);
   useEffect(()=>{const unsub=onAuthStateChanged(auth,(u)=>{setUser(u);setLoading(false)});return unsub},[]);
   if(loading)return <div style={{width:"100%",height:"100vh",display:"flex",alignItems:"center",justifyContent:"center",background:C.bg,color:C.text,fontFamily:FONT}}>Loading...</div>;
-  if(!user)return <AuthScreen/>;
+  if(!user)return <AuthScreen onLogin={setUser}/>;
   return <GameUI account={user} onLogout={()=>signOut(auth)}/>;
 }

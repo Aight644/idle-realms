@@ -2250,7 +2250,7 @@ function GameUI({account,onLogout}){
                         <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}>
                           <span style={{fontSize:16,color:mobColor,fontWeight:700}}>{mob.i||"⚔️"} {mob.n}</span>
                           <div style={{display:"flex",gap:8,alignItems:"center"}}>
-                            <span style={{fontSize:12,color:C.ts}}>⚔ {killCount}</span>
+                            <span style={{fontSize:12,color:C.ts}}>⚔ {cbt?.kills||0}</span>
                             <div onClick={stopZone} style={{padding:"5px 14px",borderRadius:6,background:C.bad+"22",border:"1px solid "+C.bad+"60",color:C.bad,fontSize:12,fontWeight:700,cursor:"pointer",fontFamily:FONT}}>RETREAT</div>
                           </div>
                         </div>

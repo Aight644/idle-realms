@@ -285,37 +285,17 @@ const DRONE_TYPES = [
   },
 ];
 
-// ===================== RANDOM DISCOVERIES =====================
-const DISCOVERIES = [
-  { id:"ancient_wreck",   name:"Ancient Submarine Wreck",  icon:"🚢", rarity:0.04,
-    desc:"You found an ancient submarine! Salvaging yields rare materials and ancient blueprints.",
-    rewards:[{type:"item",id:"drone_processor",q:2},{type:"item",id:"reinforced_alloy",q:5},{type:"xp",mult:3},
-             {type:"blueprint",pool:["bp_void_kelp","bp_leviathan_scale","bp_deep_scan","bp_supply_mastery"]}] },
-  { id:"lost_facility",   name:"Lost Research Facility",   icon:"🏚️", rarity:0.03,
-    desc:"A hidden research lab! You recover valuable data, components, and research blueprints.",
-    rewards:[{type:"item",id:"abyss_crystal",q:2},{type:"item",id:"pressure_reactor",q:1},{type:"rp",amt:50},
-             {type:"blueprint",pool:["bp_void_crystal","bp_ancient_brew","bp_atlas_complete"]}] },
-  { id:"hidden_trench",   name:"Hidden Trench Cave",        icon:"🕳️", rarity:0.05,
-    desc:"A concealed trench filled with rare minerals!",
-    rewards:[{type:"item",id:"thermal_ore",q:8},{type:"item",id:"trench_stone",q:10},{type:"xp",mult:2}] },
-  { id:"alien_bloom",     name:"Alien Coral Bloom",         icon:"🌸", rarity:0.06,
-    desc:"A rare bioluminescent bloom! Harvesting yields bonus materials.",
-    rewards:[{type:"item",id:"soft_coral",q:12},{type:"item",id:"luminescent_gel",q:3},{type:"xp",mult:2}] },
-  { id:"signal_beacon",   name:"Deep Signal Beacon",        icon:"📡", rarity:0.02,
-    desc:"An alien signal beacon — analyzing it grants rare knowledge and legendary blueprints.",
-    rewards:[{type:"rp",amt:120},{type:"item",id:"artifact_scanner",q:1},{type:"xp",mult:4},
-             {type:"blueprint",pool:["bp_thermal_forge","bp_void_reactor"]}] },
-  { id:"crystal_vein",    name:"Crystal Vein Exposed",      icon:"💎", rarity:0.035,
-    desc:"A massive abyss crystal vein is exposed! Also contains ancient construction schematics.",
-    rewards:[{type:"item",id:"abyss_crystal",q:4},{type:"item",id:"salt_crystals",q:6},
-             {type:"blueprint",pool:["bp_ancient_armor"]}] },
-  { id:"thermal_pocket",  name:"Thermal Vent Pocket",       icon:"🔥", rarity:0.045,
-    desc:"A superheated pocket bursts open, revealing thermal ore.",
-    rewards:[{type:"item",id:"thermal_ore",q:6},{type:"item",id:"enzyme_compound",q:2},{type:"xp",mult:2}] },
+// ===================== BLUEPRINT DROPS =====================
+// Rare blueprint drops while gathering — no item/XP bonuses, just blueprint unlocks
+const BP_DROPS = [
+  { id:"drop_wreck",   rarity:0.004, pool:["bp_void_kelp","bp_leviathan_scale","bp_deep_scan","bp_supply_mastery"] },
+  { id:"drop_lab",     rarity:0.003, pool:["bp_void_crystal","bp_ancient_brew","bp_atlas_complete"] },
+  { id:"drop_beacon",  rarity:0.002, pool:["bp_thermal_forge","bp_void_reactor"] },
+  { id:"drop_vein",    rarity:0.003, pool:["bp_ancient_armor"] },
 ];
 
 // ===================== BLUEPRINTS =====================
-// Hidden skill actions unlocked via discoveries or rare item use.
+// Hidden skill actions unlocked rarely while gathering.
 // Each blueprint adds an extra act to an existing skill once unlocked.
 const BLUEPRINTS = [
   {
@@ -439,7 +419,7 @@ const TUTORIAL_STEPS = [
   {
     title:"Discoveries & Blueprints",
     icon:"🔭",
-    body:"While gathering you'll occasionally find Random Discoveries — ancient wrecks, lost labs, crystal veins. Some discoveries unlock secret Blueprints: powerful hidden operations!",
+    body:"While gathering you'll occasionally unlock rare Blueprints — powerful hidden operations that permanently expand what a skill can do. They're rare, so keep gathering!",
     highlight:null,
   },
   {
@@ -459,8 +439,8 @@ const ACHIEVEMENTS = [
   {id:"kelp100",       cat:"gather", icon:"🌿", name:"Kelp Farmer",         desc:"Gather 100 kelp",                         check:(s)=>s.kelp>=100,                 reward:{rp:25}},
   {id:"crystal10",     cat:"gather", icon:"💎", name:"Crystal Hunter",      desc:"Gather 10 abyss crystals",                check:(s)=>s.abyss_crystal>=10,         reward:{rp:50}},
   {id:"crystal100",    cat:"gather", icon:"💎", name:"Crystal Baron",       desc:"Gather 100 abyss crystals",               check:(s)=>s.abyss_crystal>=100,        reward:{rp:150}},
-  {id:"discovery1",    cat:"gather", icon:"🔍", name:"Explorer",            desc:"Find your first discovery",               check:(s)=>s.discoveries>=1,            reward:{rp:30,gold:50}},
-  {id:"discovery10",   cat:"gather", icon:"🔭", name:"Deep Explorer",       desc:"Find 10 discoveries",                     check:(s)=>s.discoveries>=10,           reward:{rp:100,gold:200}},
+  {id:"first_bp",     cat:"gather", icon:"📘", name:"Blueprint Found",       desc:"Unlock your first blueprint",             check:(s)=>s.blueprintsFound>=1,        reward:{rp:50,gold:100}},
+  {id:"bp5",          cat:"gather", icon:"📚", name:"Scholar",              desc:"Unlock 5 blueprints",                     check:(s)=>s.blueprintsFound>=5,        reward:{rp:200,gold:500}},
   // Combat
   {id:"first_kill",    cat:"combat", icon:"⚔️", name:"First Blood",         desc:"Defeat your first enemy",                 check:(s)=>s.kills>=1,                  reward:{rp:10}},
   {id:"kills50",       cat:"combat", icon:"⚔️", name:"Warrior",             desc:"Defeat 50 enemies",                       check:(s)=>s.kills>=50,                 reward:{rp:40,gold:100}},
@@ -509,6 +489,33 @@ const ITEMS={
   drone_processor:{n:"Drone Processor",i:"📡",s:1}, pressure_reactor:{n:"Pressure Reactor",i:"⚡",s:1},
   coral_cutter:{n:"Coral Cutter",i:"🔪",s:1}, deep_drill:{n:"Deep Drill",i:"🔩",s:1},
   artifact_scanner:{n:"Artifact Scanner",i:"📟",s:1}, barnacles:{n:"Barnacles",i:"🦪",s:1},
+  // ── New gathering drops ──
+  tide_sap:{n:"Tide Sap",i:"🟢",s:1},
+  kelp_spores:{n:"Kelp Spores",i:"🌱",s:1},
+  void_kelp:{n:"Void Kelp",i:"🌑",s:1},
+  coral_dust:{n:"Coral Dust",i:"🩷",s:1},
+  reef_pigment:{n:"Reef Pigment",i:"🎨",s:1},
+  black_coral_shard:{n:"Black Coral Shard",i:"🖤",s:1},
+  cave_pearl:{n:"Cave Pearl",i:"⚪",s:1},
+  deep_barnacle:{n:"Deep Barnacle",i:"🦞",s:1},
+  iron_barnacle:{n:"Iron Barnacle",i:"🦾",s:1},
+  phosphor_scales:{n:"Phosphor Scales",i:"🐡",s:1},
+  deepsea_roe:{n:"Deepsea Roe",i:"🟡",s:1},
+  void_fin:{n:"Void Fin",i:"🌊",s:1},
+  brine_silt:{n:"Brine Silt",i:"🟤",s:1},
+  mineral_crust:{n:"Mineral Crust",i:"⬛",s:1},
+  magma_shard:{n:"Magma Shard",i:"🔴",s:1},
+  silt_crystal:{n:"Silt Crystal",i:"🔹",s:1},
+  raw_quartz:{n:"Raw Quartz",i:"🔲",s:1},
+  ether_dust:{n:"Ether Dust",i:"💫",s:1},
+  leviathan_shard:{n:"Leviathan Shard",i:"🧱",s:1},
+  sulfur_deposit:{n:"Sulfur Deposit",i:"🟡",s:1},
+  vent_mineral:{n:"Vent Mineral",i:"🧲",s:1},
+  obsidian_ore:{n:"Obsidian Ore",i:"⬜",s:1},
+  deep_moss:{n:"Deep Moss",i:"🌾",s:1},
+  sediment_core:{n:"Sediment Core",i:"🗜️",s:1},
+  ancient_fragment:{n:"Ancient Fragment",i:"🧩",s:1},
+  abyss_silt:{n:"Abyss Silt",i:"🔘",s:1},
   basic_harpoon:{n:"Basic Harpoon",i:"🗡️",eq:"weapon",st:{atk:8}},
   pulse_harpoon:{n:"Pulse Harpoon",i:"⚡",eq:"weapon",st:{atk:14,rng:4}},
   shock_harpoon:{n:"Shock Harpoon",i:"🌩️",eq:"weapon",st:{atk:18,rng:6}},
@@ -954,8 +961,8 @@ function GameUI({account,onLogout}){
   const[drones,setDrones]=useState({}); // {droneTypeId: count deployed}
   const[droneLogs,setDroneLogs]=useState([]);
   // Discoveries
-  const[activeDiscovery,setActiveDiscovery]=useState(null); // {disc, rewards collected}
-  const[discoveryLog,setDiscoveryLog]=useState([]);
+  // Blueprints log
+  const[bpLog,setBpLog]=useState([]);
   // Blueprints — set of unlocked blueprint IDs
   const[blueprints,setBlueprints]=useState([]);
   // Marketplace
@@ -976,7 +983,7 @@ function GameUI({account,onLogout}){
     totalGathered:0, kelp:0, abyss_crystal:0, kills:0, bossKills:0,
     totalGold:0, crafts:0, equippedSlots:0, researched:0, structures:0,
     dronesDeployed:0, dronesConcurrent:0, maxSkillLv:0,
-    totalSkillLv:0, discoveries:0,
+    totalSkillLv:0, blueprintsFound:0,
   });
   // QoL / UI state
   const[navCollapsed,setNavCollapsed]=useState(false);
@@ -1191,23 +1198,31 @@ function GameUI({account,onLogout}){
           if(u.type==="gold")setGold(g=>g+u.val);
           if(u.type==="rp")setResearchPts(p=>p+u.val);
         }
-        // Random discovery chance (gather only, ~8% base + rare_chance bonus)
-        if(sk.cat==="gather"&&!activeDiscovery){
-          const baseChance=0.08+(bonuses.rare_chance||0)*0.5;
-          if(Math.random()<baseChance){
-            const pool=DISCOVERIES.filter(d=>Math.random()<d.rarity*20);
-            if(pool.length>0){
-              const disc=pool[Math.floor(Math.random()*pool.length)];
-              setActiveDiscovery(disc);
-              setLifeStats(p=>({...p,discoveries:(p.discoveries||0)+1}));
+        // Blueprint drop chance (gather only — rare)
+        if(sk.cat==="gather"){
+          const bonusChance=(bonuses.rare_chance||0)*0.3;
+          BP_DROPS.forEach(drop=>{
+            if(Math.random()<drop.rarity+bonusChance){
+              const avail=drop.pool.filter(id=>!blueprints.includes(id));
+              if(avail.length>0){
+                const chosen=avail[Math.floor(Math.random()*avail.length)];
+                setBlueprints(p=>[...p,chosen]);
+                  setLifeStats(p=>({...p,blueprintsFound:(p.blueprintsFound||0)+1}));
+                const bp=BLUEPRINTS.find(b=>b.id===chosen);
+                if(bp){
+                  setBpLog(p=>[...p.slice(-20),"📘 Blueprint unlocked: "+bp.name]);
+                  setNewAch({id:"_bp",name:"Blueprint Found!",desc:bp.name,icon:"📘",reward:{}});
+                  setTimeout(()=>setNewAch(n=>n?.id==="_bp"?null:n),4000);
+                }
+              }
             }
-          }
+          });
         }
         start=Date.now();setActProg(0);
       }
     },100);
     return()=>clearInterval(tick);
-  },[curAct,gainXp,addIt,remIt,bonuses,activeDiscovery]);
+  },[curAct,gainXp,addIt,remIt,bonuses,blueprints]);
 
   // Combat tick
   useEffect(()=>{
@@ -1313,32 +1328,6 @@ function GameUI({account,onLogout}){
     itemKeys.forEach(k=>remIt(k,cost[k]));
     setStructures(p=>({...p,[st.id]:(p[st.id]||0)+1}));
   },[structures,gold,remIt]);
-
-  // Collect discovery rewards
-  const collectDiscovery=useCallback(()=>{
-    if(!activeDiscovery)return;
-    const disc=activeDiscovery;
-    let bpUnlocked=null;
-    disc.rewards.forEach(r=>{
-      if(r.type==="item")addIt(r.id,r.q);
-      if(r.type==="xp")SKILLS.filter(s=>s.cat==="gather").forEach(sk=>gainXp(sk.id,20*r.mult));
-      if(r.type==="rp")setResearchPts(p=>p+r.amt);
-      if(r.type==="blueprint"){
-        // Pick one blueprint from the pool that isn't already unlocked
-        const avail=r.pool.filter(id=>!blueprints.includes(id));
-        if(avail.length>0){
-          const chosen=avail[Math.floor(Math.random()*avail.length)];
-          setBlueprints(p=>[...p,chosen]);
-          bpUnlocked=chosen;
-        }
-      }
-    });
-    const bpMeta=bpUnlocked?BLUEPRINTS.find(b=>b.id===bpUnlocked):null;
-    const logItems=disc.rewards.filter(r=>r.type==="item").map(r=>(ITEMS[r.id]?ITEMS[r.id].i:"")+r.q+" "+r.id).join(", ");
-    const logBp=bpMeta?" 📘 Blueprint: "+bpMeta.name:"";
-    setDiscoveryLog(p=>[...p.slice(-20),"🔍 "+disc.name+" — "+logItems+logBp]);
-    setActiveDiscovery(null);
-  },[activeDiscovery,addIt,gainXp,blueprints]);
 
   // Marketplace — load shared orders from Firebase
   const loadMarket=useCallback(async()=>{
@@ -1948,34 +1937,6 @@ function GameUI({account,onLogout}){
         </div>
       )}
 
-
-      {activeDiscovery&&(
-        <div style={{position:"fixed",inset:0,zIndex:999,display:"flex",alignItems:"center",justifyContent:"center",background:"#00000088",backdropFilter:"blur(4px)"}}>
-          <div style={{maxWidth:400,width:"90%",padding:"28px 24px",borderRadius:16,background:"linear-gradient(135deg,"+C.panel+","+C.card+")",border:"2px solid "+C.gold+"60",boxShadow:"0 0 40px "+C.gold+"40, 0 0 80px "+C.gold+"15",animation:"slideIn 0.3s ease-out"}}>
-            <div style={{textAlign:"center",marginBottom:16}}>
-              <div style={{fontSize:52,marginBottom:8,filter:"drop-shadow(0 0 16px "+C.gold+")",animation:"pulse 1.5s infinite"}}>{activeDiscovery.icon}</div>
-              <div style={{fontSize:14,fontWeight:700,color:C.gold,letterSpacing:2,marginBottom:6,fontFamily:FONT}}>DISCOVERY!</div>
-              <div style={{fontSize:13,fontWeight:700,color:C.white,letterSpacing:1,marginBottom:8,fontFamily:FONT}}>{activeDiscovery.name}</div>
-              <div style={{fontSize:11,color:C.ts,fontFamily:FONT_BODY,lineHeight:1.5}}>{activeDiscovery.desc}</div>
-            </div>
-            <div style={{padding:"12px 16px",borderRadius:8,background:C.gold+"12",border:"1px solid "+C.gold+"30",marginBottom:16}}>
-              <div style={{fontSize:9,fontWeight:700,color:C.gold,marginBottom:8,letterSpacing:2}}>REWARDS</div>
-              <div style={{display:"flex",flexDirection:"column",gap:4}}>
-                {activeDiscovery.rewards.map((r,i)=>(
-                  <div key={i} style={{display:"flex",alignItems:"center",gap:8,fontSize:11,color:C.text,fontFamily:FONT_BODY}}>
-                    {r.type==="item"&&<><span>{ITEMS[r.id]?ITEMS[r.id].i:"📦"}</span><span style={{color:C.ok,fontWeight:700}}>+{r.q}</span><span>{ITEMS[r.id]?ITEMS[r.id].n:r.id}</span></>}
-                    {r.type==="xp"&&<><span>⭐</span><span style={{color:C.warn,fontWeight:700}}>Gather XP ×{r.mult} boost</span></>}
-                    {r.type==="rp"&&<><span>🔬</span><span style={{color:C.acc,fontWeight:700}}>+{r.amt} Research Points</span></>}
-                  </div>
-                ))}
-              </div>
-            </div>
-            <div onClick={collectDiscovery} style={{padding:"12px 0",borderRadius:8,background:"linear-gradient(90deg,"+C.gold+"cc,"+C.warn+")",color:C.bg,fontSize:12,fontWeight:700,textAlign:"center",cursor:"pointer",letterSpacing:2,fontFamily:FONT,boxShadow:"0 0 16px "+C.gold+"60"}}>
-              ✦ COLLECT REWARDS
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* ===== MOBILE UI ===== */}
       {isMobile&&(()=>{
@@ -3149,7 +3110,7 @@ function GameUI({account,onLogout}){
                 {unlockedBps===0&&(
                   <div style={{padding:"14px 16px",borderRadius:10,background:C.card,border:"1px dashed "+C.border,marginBottom:16,marginTop:12}}>
                     <div style={{fontSize:11,color:C.ts,fontFamily:FONT_BODY,lineHeight:1.6}}>
-                      📘 Blueprints are hidden recipes unlocked through <span style={{color:C.acc}}>Random Discoveries</span> while gathering. Each discovery type contains a pool of possible blueprints — once unlocked, the new operation appears permanently in that skill's action list.
+                      📘 Blueprints are hidden recipes that unlock rarely while gathering. Each blueprint permanently adds a powerful new operation to that skill's action list.
                     </div>
                   </div>
                 )}
@@ -3556,7 +3517,7 @@ function GameUI({account,onLogout}){
                     {label:"Bosses Killed",value:fmt(lifeStats.bossKills||0),icon:"👑",color:C.warn},
                     {label:"Credits Earned",value:"◈"+fmt(lifeStats.totalGold||0),icon:"💰",color:C.gold},
                     {label:"Items Crafted",value:fmt(lifeStats.crafts||0),icon:"🔧",color:C.purp},
-                    {label:"Discoveries",value:fmt(lifeStats.discoveries||0),icon:"🔭",color:C.acc},
+                    {label:"Blueprints",value:fmt(blueprints.length),icon:"📘",color:C.acc},
                     {label:"Active Drones",value:totalDrones,icon:"🤖",color:"#ff006e"},
                     {label:"Structures Built",value:totalStructures+"/8",icon:"🏗️",color:"#00ffb3"},
                     {label:"Research Pts",value:fmt(researchPts),icon:"🔬",color:"#7b61ff"},
@@ -3920,10 +3881,10 @@ function GameUI({account,onLogout}){
                     </div>
                   );
                 })}
-                {discoveryLog.length>0&&(
+                {bpLog.length>0&&(
                   <div style={{marginTop:12}}>
-                    <div style={{fontSize:11,fontWeight:700,color:C.gold,letterSpacing:1,marginBottom:6,textTransform:"uppercase"}}>Recent Finds</div>
-                    {discoveryLog.slice(-5).reverse().map((l,i)=>(
+                    <div style={{fontSize:11,fontWeight:700,color:C.gold,letterSpacing:1,marginBottom:6,textTransform:"uppercase"}}>Recent Blueprints</div>
+                    {bpLog.slice(-5).reverse().map((l,i)=>(
                       <div key={i} style={{fontSize:12,color:C.ts,padding:"3px 0",borderBottom:"1px solid "+C.bg,opacity:1-i*0.15,fontFamily:FONT_BODY}}>{l}</div>
                     ))}
                   </div>

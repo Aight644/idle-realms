@@ -70,6 +70,360 @@ const BRANCH_META = {
   ancient:     {label:"Ancient Tech",  color:"#7b61ff"},
 };
 
+// ===================== STRUCTURES =====================
+const STRUCTURES = [
+  {
+    id: "kelp_farm",
+    name: "Kelp Farm",
+    icon: "🌿",
+    color: "#00ffb3",
+    desc: "Automated kelp cultivation. Passively generates kelp every 8s.",
+    category: "production",
+    cost: { gold: 200, kelp: 50, coral_blocks: 10 },
+    maxLevel: 5,
+    levelCost: (lv) => ({ gold: Math.floor(150 * Math.pow(2, lv)), coral_blocks: lv * 5, biofuel: lv * 3 }),
+    passive: { item: "kelp", baseQty: 1, interval: 8000, qtyPerLevel: 1 },
+    bonus: { gather_yield: 0.05 }, // per level
+    desc2: (lv) => `+${lv} kelp / 8s · Gather yield +${lv*5}%`,
+  },
+  {
+    id: "coral_refinery",
+    name: "Coral Refinery",
+    icon: "🪸",
+    color: "#ff6b9d",
+    desc: "Refines coral into usable blocks automatically.",
+    category: "production",
+    cost: { gold: 350, soft_coral: 80, trench_stone: 20 },
+    maxLevel: 5,
+    levelCost: (lv) => ({ gold: Math.floor(250 * Math.pow(2, lv)), soft_coral: lv * 20, reinforced_alloy: lv * 2 }),
+    passive: { item: "coral_blocks", baseQty: 1, interval: 12000, qtyPerLevel: 1 },
+    bonus: { prod_speed: 0.04 },
+    desc2: (lv) => `+${lv} coral blocks / 12s · Prod speed +${lv*4}%`,
+  },
+  {
+    id: "biofuel_reactor",
+    name: "Biofuel Reactor",
+    icon: "⚡",
+    color: "#ffb700",
+    desc: "Converts biomass into energy. Boosts energy regen.",
+    category: "energy",
+    cost: { gold: 500, biofuel: 30, pressure_glass: 5 },
+    maxLevel: 5,
+    levelCost: (lv) => ({ gold: Math.floor(400 * Math.pow(2, lv)), biofuel: lv * 10, enzyme_compound: lv * 2 }),
+    passive: null,
+    bonus: { energy_regen: 0.10 },
+    desc2: (lv) => `Energy regen +${lv*10}% · Max energy +${lv*20}`,
+    bonusExtra: { max_energy: 20 },
+  },
+  {
+    id: "drone_factory",
+    name: "Drone Factory",
+    icon: "🤖",
+    color: "#00d4ff",
+    desc: "Manufactures drone processors. Boosts combat effectiveness.",
+    category: "combat",
+    cost: { gold: 800, reinforced_alloy: 15, drone_processor: 3 },
+    maxLevel: 5,
+    levelCost: (lv) => ({ gold: Math.floor(600 * Math.pow(2, lv)), reinforced_alloy: lv * 8, pressure_glass: lv * 3 }),
+    passive: { item: "drone_processor", baseQty: 1, interval: 30000, qtyPerLevel: 0 },
+    bonus: { combat_xp: 0.08, atk_pct: 0.03 },
+    desc2: (lv) => `+1 drone processor / 30s · Combat XP +${lv*8}% · ATK +${lv*3}%`,
+  },
+  {
+    id: "research_lab",
+    name: "Research Lab",
+    icon: "🔬",
+    color: "#7b61ff",
+    desc: "Advanced research facility. Accelerates RP generation.",
+    category: "research",
+    cost: { gold: 600, abyss_crystal: 5, drone_processor: 2 },
+    maxLevel: 5,
+    levelCost: (lv) => ({ gold: Math.floor(450 * Math.pow(2, lv)), abyss_crystal: lv * 2, luminescent_gel: lv * 3 }),
+    passive: null,
+    bonus: { rp_gen: 1 }, // +rp per tick per level
+    desc2: (lv) => `+${lv} RP / 10s · XP gains +${lv*5}%`,
+    bonusExtra: { xp_pct: 0.05 },
+  },
+  {
+    id: "pressure_reactor",
+    name: "Pressure Reactor",
+    icon: "🔵",
+    color: "#c084fc",
+    desc: "Harnesses deep pressure for power. Reduces pressure buildup.",
+    category: "energy",
+    cost: { gold: 1000, pressure_glass: 10, pressure_reactor: 2 },
+    maxLevel: 5,
+    levelCost: (lv) => ({ gold: Math.floor(750 * Math.pow(2, lv)), pressure_glass: lv * 5, thermal_ore: lv * 10 }),
+    passive: null,
+    bonus: { pressure_resist: 0.15 }, // reduces pressure gain rate
+    desc2: (lv) => `Pressure build-up -${lv*15}% · Max energy +${lv*30}`,
+    bonusExtra: { max_energy: 30 },
+  },
+  {
+    id: "artifact_archive",
+    name: "Artifact Archive",
+    icon: "🏛️",
+    color: "#ffd60a",
+    desc: "Stores and analyzes artifacts. Boosts rare item chances.",
+    category: "research",
+    cost: { gold: 750, trench_stone: 30, abyss_crystal: 3 },
+    maxLevel: 5,
+    levelCost: (lv) => ({ gold: Math.floor(550 * Math.pow(2, lv)), trench_stone: lv * 15, abyss_crystal: lv * 1 }),
+    passive: null,
+    bonus: { rare_chance: 0.04, crystal_yield: 0.20 },
+    desc2: (lv) => `Rare item chance +${lv*4}% · Crystal yield +${(lv*0.2).toFixed(1)}×`,
+  },
+  {
+    id: "defense_platform",
+    name: "Defense Platform",
+    icon: "🛡️",
+    color: "#ff006e",
+    desc: "Automated defense turrets. Boosts combat stats significantly.",
+    category: "combat",
+    cost: { gold: 1200, reinforced_alloy: 25, pressure_reactor: 3, shell_shield: 1 },
+    maxLevel: 5,
+    levelCost: (lv) => ({ gold: Math.floor(900 * Math.pow(2, lv)), reinforced_alloy: lv * 12, drone_processor: lv * 2 }),
+    passive: null,
+    bonus: { atk_pct: 0.06, def_pct: 0.06 },
+    desc2: (lv) => `ATK +${lv*6}% · DEF +${lv*6}%`,
+  },
+];
+
+const STRUCT_CATEGORIES = {
+  production: { label: "Production", color: "#00ffb3" },
+  energy:     { label: "Energy",     color: "#ffb700" },
+  combat:     { label: "Combat",     color: "#ff006e" },
+  research:   { label: "Research",   color: "#7b61ff" },
+};
+
+// ===================== DRONES =====================
+const DRONE_TYPES = [
+  {
+    id: "harvest_drone",
+    name: "Harvest Drone",
+    icon: "🌾",
+    color: "#00ffb3",
+    desc: "Automatically harvests kelp and coral every 15s.",
+    unlockItem: "drone_processor",
+    deployCost: { drone_processor: 2, coral_blocks: 8 },
+    maxDeployed: 5,
+    action: "gather",
+    outputs: [{ id: "kelp", q: 2 }, { id: "soft_coral", q: 1 }],
+    interval: 15000,
+    xpSkill: "kelp_farming",
+    xpAmt: 5,
+  },
+  {
+    id: "mining_drone",
+    name: "Mining Drone",
+    icon: "⛏️",
+    color: "#7b61ff",
+    desc: "Mines ores and stone from the deep automatically.",
+    unlockItem: "drone_processor",
+    deployCost: { drone_processor: 2, reinforced_alloy: 5 },
+    maxDeployed: 5,
+    action: "gather",
+    outputs: [{ id: "trench_stone", q: 2 }, { id: "thermal_ore", q: 1 }],
+    interval: 18000,
+    xpSkill: "deep_mining",
+    xpAmt: 6,
+  },
+  {
+    id: "fishing_drone",
+    name: "Fishing Drone",
+    icon: "🐟",
+    color: "#00d4ff",
+    desc: "Autonomously fishes for glowfish and sea creatures.",
+    unlockItem: "drone_processor",
+    deployCost: { drone_processor: 2, ocean_fiber: 10 },
+    maxDeployed: 5,
+    action: "gather",
+    outputs: [{ id: "glowfish", q: 2 }, { id: "shell_fragments", q: 1 }],
+    interval: 14000,
+    xpSkill: "bioluminescent_fishing",
+    xpAmt: 5,
+  },
+  {
+    id: "combat_drone",
+    name: "Combat Drone",
+    icon: "🤖",
+    color: "#ff006e",
+    desc: "Patrols and fights enemies, earning credits and XP.",
+    unlockItem: "drone_processor",
+    deployCost: { drone_processor: 3, pressure_glass: 3 },
+    maxDeployed: 3,
+    action: "combat",
+    outputs: [{ id: null, q: 0 }], // earns gold instead
+    interval: 20000,
+    goldPerKill: 8,
+    xpSkill: "harpoon_mastery",
+    xpAmt: 12,
+  },
+  {
+    id: "explorer_drone",
+    name: "Explorer Drone",
+    icon: "🔭",
+    color: "#ffd60a",
+    desc: "Explores the ocean, occasionally finding rare materials.",
+    unlockItem: "drone_processor",
+    deployCost: { drone_processor: 3, abyss_crystal: 1 },
+    maxDeployed: 3,
+    action: "explore",
+    outputs: [{ id: "abyss_crystal", q: 1, chance: 0.2 }, { id: "thermal_ore", q: 2, chance: 0.5 }, { id: "trench_stone", q: 3, chance: 0.8 }],
+    interval: 25000,
+    xpSkill: "artifact_research",
+    xpAmt: 8,
+  },
+];
+
+// ===================== PRESTIGE =====================
+// Ascension requires total skill level sum >= threshold
+const ASCENSION_THRESHOLDS = [100, 250, 500, 900, 1500]; // cumulative skill levels per ascension
+
+const PRESTIGE_UPGRADES = [
+  {
+    id: "pressure_mastery",
+    name: "Pressure Mastery",
+    icon: "💠",
+    color: "#00d4ff",
+    desc: "Reduces pressure build-up permanently across all ascensions.",
+    maxLevel: 10,
+    costPerLevel: 1, // Ancient Data Cores
+    effect: (lv) => ({ pressure_resist: lv * 0.08 }), // 8% per level
+    effectDesc: (lv) => `Pressure build-up -${lv*8}%`,
+  },
+  {
+    id: "drone_mastery",
+    name: "Drone Efficiency",
+    icon: "🤖",
+    color: "#ff006e",
+    desc: "Increases all drone output and reduces cycle time.",
+    maxLevel: 10,
+    costPerLevel: 1,
+    effect: (lv) => ({ drone_efficiency: lv * 0.10 }),
+    effectDesc: (lv) => `Drone yield +${lv*10}%`,
+  },
+  {
+    id: "yield_mastery",
+    name: "Resource Yield",
+    icon: "🌿",
+    color: "#00ffb3",
+    desc: "Permanently boosts all resource gathering yields.",
+    maxLevel: 10,
+    costPerLevel: 2,
+    effect: (lv) => ({ gather_yield: lv * 0.08, kelp_yield: lv * 0.05 }),
+    effectDesc: (lv) => `Gather yield +${lv*8}%, Kelp +${lv*5}%`,
+  },
+  {
+    id: "xp_mastery",
+    name: "XP Multiplier",
+    icon: "⭐",
+    color: "#ffd60a",
+    desc: "Multiplies all XP gains permanently.",
+    maxLevel: 10,
+    costPerLevel: 2,
+    effect: (lv) => ({ xp_pct: lv * 0.10 }),
+    effectDesc: (lv) => `All XP +${lv*10}%`,
+  },
+  {
+    id: "combat_mastery",
+    name: "Combat Legacy",
+    icon: "⚔️",
+    color: "#ff6b35",
+    desc: "Permanent boost to ATK, DEF and combat XP.",
+    maxLevel: 10,
+    costPerLevel: 2,
+    effect: (lv) => ({ atk_pct: lv * 0.05, def_pct: lv * 0.05, combat_xp: lv * 0.08 }),
+    effectDesc: (lv) => `ATK/DEF +${lv*5}%, Combat XP +${lv*8}%`,
+  },
+  {
+    id: "research_mastery",
+    name: "Deep Knowledge",
+    icon: "🔬",
+    color: "#7b61ff",
+    desc: "Accelerates RP generation and production speed permanently.",
+    maxLevel: 10,
+    costPerLevel: 3,
+    effect: (lv) => ({ rp_gen: lv * 2, prod_speed: lv * 0.06 }),
+    effectDesc: (lv) => `+${lv*2} RP/tick, Prod speed +${lv*6}%`,
+  },
+];
+
+// ===================== RANDOM DISCOVERIES =====================
+const DISCOVERIES = [
+  { id:"ancient_wreck",   name:"Ancient Submarine Wreck",  icon:"🚢", rarity:0.04,
+    desc:"You found an ancient submarine! Salvaging yields rare materials.",
+    rewards:[{type:"item",id:"drone_processor",q:2},{type:"item",id:"reinforced_alloy",q:5},{type:"xp",mult:3}] },
+  { id:"lost_facility",   name:"Lost Research Facility",   icon:"🏚️", rarity:0.03,
+    desc:"A hidden research lab! You recover valuable data and components.",
+    rewards:[{type:"item",id:"abyss_crystal",q:2},{type:"item",id:"pressure_reactor",q:1},{type:"rp",amt:50}] },
+  { id:"hidden_trench",   name:"Hidden Trench Cave",        icon:"🕳️", rarity:0.05,
+    desc:"A concealed trench filled with rare minerals!",
+    rewards:[{type:"item",id:"thermal_ore",q:8},{type:"item",id:"trench_stone",q:10},{type:"xp",mult:2}] },
+  { id:"alien_bloom",     name:"Alien Coral Bloom",         icon:"🌸", rarity:0.06,
+    desc:"A rare bioluminescent bloom! Harvesting yields bonus materials.",
+    rewards:[{type:"item",id:"soft_coral",q:12},{type:"item",id:"luminescent_gel",q:3},{type:"xp",mult:2}] },
+  { id:"signal_beacon",   name:"Deep Signal Beacon",        icon:"📡", rarity:0.02,
+    desc:"An alien signal beacon — analyzing it grants rare knowledge.",
+    rewards:[{type:"rp",amt:120},{type:"item",id:"artifact_scanner",q:1},{type:"xp",mult:4}] },
+  { id:"crystal_vein",    name:"Crystal Vein Exposed",      icon:"💎", rarity:0.035,
+    desc:"A massive abyss crystal vein is exposed! Collect quickly.",
+    rewards:[{type:"item",id:"abyss_crystal",q:4},{type:"item",id:"salt_crystals",q:6}] },
+  { id:"thermal_pocket",  name:"Thermal Vent Pocket",       icon:"🔥", rarity:0.045,
+    desc:"A superheated pocket bursts open, revealing thermal ore.",
+    rewards:[{type:"item",id:"thermal_ore",q:6},{type:"item",id:"enzyme_compound",q:2},{type:"xp",mult:2}] },
+];
+
+// ===================== MARKETPLACE =====================
+// Uses Firebase shared storage — orders visible to all players
+// ===================== ACHIEVEMENTS =====================
+const ACHIEVEMENTS = [
+  // Gathering
+  {id:"first_kelp",    cat:"gather", icon:"🌿", name:"First Harvest",       desc:"Gather your first kelp",                  check:(s)=>s.totalGathered>=1,         reward:{rp:10}},
+  {id:"kelp100",       cat:"gather", icon:"🌿", name:"Kelp Farmer",         desc:"Gather 100 kelp",                         check:(s)=>s.kelp>=100,                 reward:{rp:25}},
+  {id:"crystal10",     cat:"gather", icon:"💎", name:"Crystal Hunter",      desc:"Gather 10 abyss crystals",                check:(s)=>s.abyss_crystal>=10,         reward:{rp:50}},
+  {id:"crystal100",    cat:"gather", icon:"💎", name:"Crystal Baron",       desc:"Gather 100 abyss crystals",               check:(s)=>s.abyss_crystal>=100,        reward:{rp:150}},
+  {id:"discovery1",    cat:"gather", icon:"🔍", name:"Explorer",            desc:"Find your first discovery",               check:(s)=>s.discoveries>=1,            reward:{rp:30,gold:50}},
+  {id:"discovery10",   cat:"gather", icon:"🔭", name:"Deep Explorer",       desc:"Find 10 discoveries",                     check:(s)=>s.discoveries>=10,           reward:{rp:100,gold:200}},
+  // Combat
+  {id:"first_kill",    cat:"combat", icon:"⚔️", name:"First Blood",         desc:"Defeat your first enemy",                 check:(s)=>s.kills>=1,                  reward:{rp:10}},
+  {id:"kills50",       cat:"combat", icon:"⚔️", name:"Warrior",             desc:"Defeat 50 enemies",                       check:(s)=>s.kills>=50,                 reward:{rp:40,gold:100}},
+  {id:"kills500",      cat:"combat", icon:"🗡️", name:"Veteran",             desc:"Defeat 500 enemies",                      check:(s)=>s.kills>=500,                reward:{rp:150,gold:500}},
+  {id:"boss1",         cat:"combat", icon:"👑", name:"Boss Slayer",         desc:"Defeat your first boss",                  check:(s)=>s.bossKills>=1,              reward:{rp:60,gold:150}},
+  {id:"boss10",        cat:"combat", icon:"🐉", name:"Leviathan Hunter",    desc:"Defeat 10 bosses",                        check:(s)=>s.bossKills>=10,             reward:{rp:200,gold:600}},
+  {id:"gold1000",      cat:"combat", icon:"◈",  name:"Treasure Hunter",    desc:"Earn 1,000 credits",                      check:(s)=>s.totalGold>=1000,           reward:{rp:30}},
+  {id:"gold100k",      cat:"combat", icon:"💰", name:"Credit Baron",        desc:"Earn 100,000 credits",                    check:(s)=>s.totalGold>=100000,         reward:{rp:200}},
+  // Production
+  {id:"craft10",       cat:"prod",   icon:"🔧", name:"Craftsman",           desc:"Complete 10 production actions",          check:(s)=>s.crafts>=10,                reward:{rp:20}},
+  {id:"craft100",      cat:"prod",   icon:"⚙️", name:"Engineer",            desc:"Complete 100 production actions",         check:(s)=>s.crafts>=100,               reward:{rp:80,gold:200}},
+  {id:"equip_full",    cat:"prod",   icon:"🛡️", name:"Fully Armed",         desc:"Fill all 8 equipment slots",              check:(s)=>s.equippedSlots>=8,          reward:{rp:100,gold:300}},
+  // Research & Structures
+  {id:"research5",     cat:"tech",   icon:"🔬", name:"Researcher",          desc:"Unlock 5 research nodes",                 check:(s)=>s.researched>=5,             reward:{rp:50}},
+  {id:"research_all",  cat:"tech",   icon:"🧬", name:"Master Scientist",    desc:"Unlock all 20 research nodes",            check:(s)=>s.researched>=20,            reward:{rp:500,gold:1000}},
+  {id:"build1",        cat:"tech",   icon:"🏗️", name:"Builder",             desc:"Build your first structure",              check:(s)=>s.structures>=1,             reward:{rp:40,gold:100}},
+  {id:"build_all",     cat:"tech",   icon:"🏛️", name:"Architect",           desc:"Build all 8 structures",                  check:(s)=>s.structures>=8,             reward:{rp:300,gold:800}},
+  // Drones
+  {id:"drone1",        cat:"drone",  icon:"🤖", name:"Drone Operator",      desc:"Deploy your first drone",                 check:(s)=>s.dronesDeployed>=1,         reward:{rp:30}},
+  {id:"drone10",       cat:"drone",  icon:"🚀", name:"Fleet Commander",     desc:"Have 10 drones deployed at once",         check:(s)=>s.dronesConcurrent>=10,      reward:{rp:150,gold:400}},
+  // Ascension
+  {id:"ascend1",       cat:"prestige",icon:"✨", name:"Ascended",            desc:"Complete your first ascension",           check:(s)=>s.ascensions>=1,             reward:{rp:200}},
+  {id:"ascend3",       cat:"prestige",icon:"🌌", name:"Transcendent",        desc:"Ascend 3 times",                          check:(s)=>s.ascensions>=3,             reward:{rp:500,dataCores:1}},
+  // Skill milestones
+  {id:"skill50",       cat:"skill",  icon:"⭐", name:"Seasoned Diver",      desc:"Reach level 50 in any skill",             check:(s)=>s.maxSkillLv>=50,            reward:{rp:100,gold:250}},
+  {id:"skill100",      cat:"skill",  icon:"🌟", name:"Master of the Deep",  desc:"Reach level 100 in any skill",            check:(s)=>s.maxSkillLv>=100,           reward:{rp:400,gold:1000,dataCores:1}},
+  {id:"total500",      cat:"skill",  icon:"💫", name:"Legend",              desc:"Reach 500 total skill levels",            check:(s)=>s.totalSkillLv>=500,         reward:{rp:600,dataCores:2}},
+];
+
+const ACHIEVEMENT_CATS = {
+  gather:  {label:"Gathering",  color:"#00ffb3"},
+  combat:  {label:"Combat",     color:"#ff006e"},
+  prod:    {label:"Production", color:"#ffd60a"},
+  tech:    {label:"Technology", color:"#00d4ff"},
+  drone:   {label:"Drones",     color:"#7b61ff"},
+  prestige:{label:"Prestige",   color:"#ff9500"},
+  skill:   {label:"Skills",     color:"#c084fc"},
+};
+
 // ===================== ITEMS =====================
 const ITEMS={
   kelp:{n:"Kelp",i:"🌿",s:1}, soft_coral:{n:"Soft Coral",i:"🪸",s:1},
@@ -82,7 +436,7 @@ const ITEMS={
   enzyme_compound:{n:"Enzyme Compound",i:"🧪",s:1}, luminescent_gel:{n:"Luminescent Gel",i:"✨",s:1},
   drone_processor:{n:"Drone Processor",i:"📡",s:1}, pressure_reactor:{n:"Pressure Reactor",i:"⚡",s:1},
   coral_cutter:{n:"Coral Cutter",i:"🔪",s:1}, deep_drill:{n:"Deep Drill",i:"🔩",s:1},
-  artifact_scanner:{n:"Artifact Scanner",i:"📟",s:1},
+  artifact_scanner:{n:"Artifact Scanner",i:"📟",s:1}, barnacles:{n:"Barnacles",i:"🦪",s:1},
   basic_harpoon:{n:"Basic Harpoon",i:"🗡️",eq:"weapon",st:{atk:8}},
   pulse_harpoon:{n:"Pulse Harpoon",i:"⚡",eq:"weapon",st:{atk:14,rng:4}},
   shock_harpoon:{n:"Shock Harpoon",i:"🌩️",eq:"weapon",st:{atk:18,rng:6}},
@@ -154,6 +508,48 @@ const SKILLS=[
   {id:"artifact_research",name:"Artifact Research",icon:"🔬",color:"#ff9500",cat:"prod",acts:[
     {id:"ar1",name:"Process Ore Sample",lv:1,xp:20,t:5,inp:[{id:"trench_stone",q:8}],out:[{id:"drone_processor",q:1}]},
     {id:"ar2",name:"Crystal Refinement",lv:15,xp:45,t:6,inp:[{id:"abyss_crystal",q:2}],out:[{id:"pressure_reactor",q:1}]}]},
+  // --- New gathering skills ---
+  {id:"shell_scavenging",name:"Shell Scavenging",icon:"🐚",color:"#e8c87a",cat:"gather",acts:[
+    {id:"ss1",name:"Reef Shallows",lv:1,xp:10,t:3,out:[{id:"shell_fragments",q:2}]},
+    {id:"ss2",name:"Tidal Shelf",lv:10,xp:26,t:4,out:[{id:"shell_fragments",q:3},{id:"barnacles",q:1}]},
+    {id:"ss3",name:"Deep Shell Bed",lv:25,xp:58,t:5,out:[{id:"shell_fragments",q:5},{id:"barnacles",q:2}]},
+    {id:"ss4",name:"Void Shell Mound",lv:50,xp:125,t:6,out:[{id:"shell_fragments",q:8},{id:"reinforced_alloy",q:1}]}]},
+  {id:"thermal_vent_extraction",name:"Thermal Vent Extraction",icon:"♨️",color:"#ff7043",cat:"gather",acts:[
+    {id:"tv1",name:"Warm Fissure",lv:5,xp:15,t:4,out:[{id:"thermal_ore",q:2}]},
+    {id:"tv2",name:"Active Vent",lv:20,xp:40,t:5,out:[{id:"thermal_ore",q:3},{id:"salt_crystals",q:2}]},
+    {id:"tv3",name:"Superheated Plume",lv:40,xp:80,t:6,out:[{id:"thermal_ore",q:5},{id:"enzyme_compound",q:1}]},
+    {id:"tv4",name:"Magma Seep",lv:65,xp:160,t:7,out:[{id:"thermal_ore",q:8},{id:"abyss_crystal",q:1}]}]},
+  {id:"crystal_diving",name:"Crystal Diving",icon:"💎",color:"#a78bfa",cat:"gather",acts:[
+    {id:"cd1",name:"Shallows Crystals",lv:15,xp:30,t:5,out:[{id:"abyss_crystal",q:1}]},
+    {id:"cd2",name:"Midnight Crystal Bed",lv:30,xp:65,t:6,out:[{id:"abyss_crystal",q:2},{id:"salt_crystals",q:3}]},
+    {id:"cd3",name:"Abyssal Crystal Cave",lv:50,xp:120,t:7,out:[{id:"abyss_crystal",q:3},{id:"pressure_glass",q:1}]},
+    {id:"cd4",name:"Void Crystal Core",lv:75,xp:240,t:8,out:[{id:"abyss_crystal",q:5},{id:"luminescent_gel",q:2}]}]},
+  {id:"trench_exploration",name:"Trench Exploration",icon:"🗺️",color:"#38bdf8",cat:"gather",acts:[
+    {id:"te1",name:"Shallow Survey",lv:1,xp:12,t:4,out:[{id:"ocean_fiber",q:2},{id:"sea_mushrooms",q:1}]},
+    {id:"te2",name:"Twilight Mapping",lv:15,xp:35,t:5,out:[{id:"ocean_fiber",q:3},{id:"trench_stone",q:2}]},
+    {id:"te3",name:"Deep Trench Survey",lv:35,xp:75,t:6,out:[{id:"trench_stone",q:4},{id:"thermal_ore",q:2}]},
+    {id:"te4",name:"Ancient Ruins Dig",lv:60,xp:150,t:7,out:[{id:"abyss_crystal",q:2},{id:"drone_processor",q:1}]}]},
+  // --- New production skills ---
+  {id:"submersible_fabrication",name:"Submersible Fabrication",icon:"🚢",color:"#06b6d4",cat:"prod",acts:[
+    {id:"sf1",name:"Basic Frame",lv:1,xp:25,t:5,inp:[{id:"coral_blocks",q:10},{id:"ocean_fiber",q:5}],out:[{id:"void_ring",q:1}]},
+    {id:"sf2",name:"Shock Harpoon",lv:20,xp:60,t:6,inp:[{id:"pressure_glass",q:4},{id:"enzyme_compound",q:3}],out:[{id:"shock_harpoon",q:1}]},
+    {id:"sf3",name:"Thermal Lance",lv:40,xp:100,t:7,inp:[{id:"thermal_ore",q:8},{id:"abyss_crystal",q:2}],out:[{id:"thermal_lance",q:1}]},
+    {id:"sf4",name:"Abyss Armor",lv:55,xp:150,t:8,inp:[{id:"reinforced_alloy",q:15},{id:"pressure_glass",q:6},{id:"abyss_crystal",q:3}],out:[{id:"abyss_armor",q:1}]}]},
+  {id:"drone_construction",name:"Drone Construction",icon:"🤖",color:"#f472b6",cat:"prod",acts:[
+    {id:"dc1",name:"Basic Processor",lv:1,xp:20,t:4,inp:[{id:"trench_stone",q:5},{id:"thermal_ore",q:3}],out:[{id:"drone_processor",q:2}]},
+    {id:"dc2",name:"Pressure Reactor",lv:15,xp:50,t:6,inp:[{id:"pressure_glass",q:3},{id:"enzyme_compound",q:2}],out:[{id:"pressure_reactor",q:2}]},
+    {id:"dc3",name:"Depth Pendant",lv:10,xp:35,t:5,inp:[{id:"abyss_crystal",q:1},{id:"ocean_fiber",q:4}],out:[{id:"depth_pendant",q:1}]},
+    {id:"dc4",name:"Bioluminescent Brew",lv:25,xp:70,t:6,inp:[{id:"luminescent_gel",q:2},{id:"glowfish",q:4}],out:[{id:"bioluminescent_drink",q:2}]}]},
+  {id:"ocean_architecture",name:"Ocean Architecture",icon:"🏗️",color:"#34d399",cat:"prod",acts:[
+    {id:"oa1",name:"Thermal Steel",lv:10,xp:30,t:5,inp:[{id:"thermal_ore",q:4},{id:"salt_crystals",q:3}],out:[{id:"reinforced_alloy",q:2}]},
+    {id:"oa2",name:"Void Elixir",lv:30,xp:75,t:6,inp:[{id:"abyss_crystal",q:2},{id:"enzyme_compound",q:2}],out:[{id:"void_elixir",q:1}]},
+    {id:"oa3",name:"Deep Extract",lv:20,xp:50,t:5,inp:[{id:"sea_mushrooms",q:5},{id:"glowfish",q:3}],out:[{id:"deep_extract",q:2}]},
+    {id:"oa4",name:"Bio Stim Mk2",lv:45,xp:110,t:7,inp:[{id:"luminescent_gel",q:3},{id:"pressure_tonic",q:1}],out:[{id:"bio_stim",q:3}]}]},
+  {id:"energy_systems",name:"Energy Systems",icon:"⚡",color:"#facc15",cat:"prod",acts:[
+    {id:"es1",name:"Biofuel Refined",lv:5,xp:18,t:4,inp:[{id:"kelp",q:8},{id:"sea_mushrooms",q:2}],out:[{id:"biofuel",q:3}]},
+    {id:"es2",name:"Pressure Conduit",lv:20,xp:55,t:6,inp:[{id:"pressure_glass",q:2},{id:"reinforced_alloy",q:3}],out:[{id:"pressure_reactor",q:1},{id:"drone_processor",q:1}]},
+    {id:"es3",name:"Kelp Broth Premium",lv:15,xp:42,t:5,inp:[{id:"kelp",q:6},{id:"enzyme_compound",q:2}],out:[{id:"kelp_broth",q:2}]},
+    {id:"es4",name:"Pressure Tonic Mk2",lv:40,xp:95,t:7,inp:[{id:"abyss_crystal",q:1},{id:"enzyme_compound",q:3},{id:"luminescent_gel",q:2}],out:[{id:"pressure_tonic",q:2}]}]},
 ];
 
 // ===================== COMBAT SKILLS =====================
@@ -171,9 +567,13 @@ const CSUBS=[
 const ZONES=[
   {id:"z1",name:"Sunlit Reef",icon:"🪸",lv:1,mobs:[{n:"Coral Crab",hp:20,atk:2,def:1,xp:8,g:3},{n:"Reef Eel",hp:35,atk:4,def:2,xp:15,g:6}],boss:{n:"Reef Hunter",hp:120,atk:8,def:5,xp:60,g:30}},
   {id:"z2",name:"Coral Forest",icon:"🌊",lv:10,mobs:[{n:"Glass Jellyfish",hp:70,atk:9,def:5,xp:28,g:12},{n:"Shadow Octopus",hp:100,atk:13,def:8,xp:42,g:20}],boss:{n:"Predator Squid",hp:350,atk:22,def:14,xp:160,g:90}},
-  {id:"z3",name:"Midnight Depths",icon:"🌑",lv:25,mobs:[{n:"Bone Fish",hp:150,atk:20,def:14,xp:60,g:30},{n:"Electric Ray",hp:240,atk:28,def:18,xp:90,g:45}],boss:{n:"Deep Angler",hp:700,atk:42,def:30,xp:320,g:170}},
-  {id:"z4",name:"Hydrothermal Vents",icon:"🔥",lv:40,mobs:[{n:"Pressure Worm",hp:300,atk:36,def:24,xp:120,g:60},{n:"Abyss Crawler",hp:480,atk:48,def:36,xp:180,g:95}],boss:{n:"Thermal Leviathan",hp:1400,atk:72,def:48,xp:580,g:340}},
-  {id:"z5",name:"Black Trench",icon:"🕳️",lv:60,mobs:[{n:"Void Eel",hp:480,atk:60,def:42,xp:240,g:120},{n:"Trench Serpent",hp:840,atk:84,def:60,xp:420,g:210}],boss:{n:"Abyss Kraken",hp:3000,atk:120,def:84,xp:1200,g:720}},
+  {id:"z3",name:"Twilight Shelf",icon:"🌆",lv:18,mobs:[{n:"Dusk Shark",hp:120,atk:17,def:11,xp:48,g:22},{n:"Lantern Ray",hp:180,atk:22,def:14,xp:70,g:35}],boss:{n:"Phantom Whale",hp:550,atk:34,def:20,xp:240,g:130}},
+  {id:"z4",name:"Midnight Depths",icon:"🌑",lv:25,mobs:[{n:"Bone Fish",hp:150,atk:20,def:14,xp:60,g:30},{n:"Electric Ray",hp:240,atk:28,def:18,xp:90,g:45}],boss:{n:"Deep Angler",hp:700,atk:42,def:30,xp:320,g:170}},
+  {id:"z5",name:"Abyssal Plain",icon:"🫧",lv:35,mobs:[{n:"Pressure Crab",hp:260,atk:32,def:22,xp:105,g:52},{n:"Void Serpent",hp:380,atk:44,def:30,xp:155,g:80}],boss:{n:"Abyssal Titan",hp:1100,atk:62,def:44,xp:460,g:260}},
+  {id:"z6",name:"Hydrothermal Vents",icon:"🔥",lv:40,mobs:[{n:"Pressure Worm",hp:300,atk:36,def:24,xp:120,g:60},{n:"Abyss Crawler",hp:480,atk:48,def:36,xp:180,g:95}],boss:{n:"Thermal Leviathan",hp:1400,atk:72,def:48,xp:580,g:340}},
+  {id:"z7",name:"Frozen Trench",icon:"🧊",lv:50,mobs:[{n:"Ice Stalker",hp:420,atk:54,def:38,xp:170,g:88},{n:"Cryo Leviathan",hp:650,atk:72,def:52,xp:260,g:135}],boss:{n:"Glacier Kraken",hp:2200,atk:100,def:70,xp:860,g:500}},
+  {id:"z8",name:"Black Trench",icon:"🕳️",lv:60,mobs:[{n:"Void Eel",hp:480,atk:60,def:42,xp:240,g:120},{n:"Trench Serpent",hp:840,atk:84,def:60,xp:420,g:210}],boss:{n:"Abyss Kraken",hp:3000,atk:120,def:84,xp:1200,g:720}},
+  {id:"z9",name:"Ancient Ruins",icon:"🏛️",lv:80,mobs:[{n:"Relic Guardian",hp:720,atk:90,def:66,xp:360,g:185},{n:"Void Sentinel",hp:1100,atk:120,def:88,xp:560,g:285}],boss:{n:"Leviathan Prime",hp:6000,atk:180,def:130,xp:2400,g:1500}},
 ];
 
 const ESLOTS=[
@@ -270,6 +670,40 @@ function GameUI({account,onLogout}){
   // Research
   const[researched,setResearched]=useState({});
   const[researchBranch,setResearchBranch]=useState("agriculture");
+  // Structures
+  const[structures,setStructures]=useState({});
+  const[structCat,setStructCat]=useState("production");
+  // Drones
+  const[drones,setDrones]=useState({}); // {droneTypeId: count deployed}
+  const[droneLogs,setDroneLogs]=useState([]);
+  // Prestige
+  const[ascensionLevel,setAscensionLevel]=useState(0);
+  const[dataCores,setDataCores]=useState(0);
+  const[prestigeUpgrades,setPrestigeUpgrades]=useState({}); // {upgradeId: level}
+  const[showAscendConfirm,setShowAscendConfirm]=useState(false);
+  // Discoveries
+  const[activeDiscovery,setActiveDiscovery]=useState(null); // {disc, rewards collected}
+  const[discoveryLog,setDiscoveryLog]=useState([]);
+  // Marketplace
+  const[marketOrders,setMarketOrders]=useState([]); // loaded from Firebase shared
+  const[myListings,setMyListings]=useState([]); // player's own listings
+  const[marketTab,setMarketTab]=useState("browse"); // browse | sell
+  const[sellItem,setSellItem]=useState("");
+  const[sellQty,setSellQty]=useState(1);
+  const[sellPrice,setSellPrice]=useState(10);
+  const[marketLoading,setMarketLoading]=useState(false);
+  // Offline gains modal
+  const[offlineGains,setOfflineGains]=useState(null);
+  // Achievements & lifetime stats
+  const[achievements,setAchievements]=useState({});  // {achievementId: true}
+  const[achCat,setAchCat]=useState("gather");
+  const[newAch,setNewAch]=useState(null); // toast notification
+  const[lifeStats,setLifeStats]=useState({
+    totalGathered:0, kelp:0, abyss_crystal:0, kills:0, bossKills:0,
+    totalGold:0, crafts:0, equippedSlots:0, researched:0, structures:0,
+    dronesDeployed:0, dronesConcurrent:0, ascensions:0, maxSkillLv:0,
+    totalSkillLv:0, discoveries:0,
+  });
   const invRef=useRef(inv);
   invRef.current=inv;
 
@@ -278,10 +712,14 @@ function GameUI({account,onLogout}){
 
   // Aggregate research bonuses
   const bonuses=useMemo(()=>{
-    const b={kelp_yield:0,gather_yield:0,gather_speed:0,energy_regen:0,max_energy:0,atk_pct:0,def_pct:0,combat_xp:0,boss_drop:0,prod_speed:0,gold_pct:0,xp_pct:0,rare_chance:0,crystal_yield:0};
+    const b={kelp_yield:0,gather_yield:0,gather_speed:0,energy_regen:0,max_energy:0,atk_pct:0,def_pct:0,combat_xp:0,boss_drop:0,prod_speed:0,gold_pct:0,xp_pct:0,rare_chance:0,crystal_yield:0,rp_gen:0,pressure_resist:0,drone_efficiency:0};
     ALL_RESEARCH.forEach(r=>{if(researched[r.id]&&r.effect)Object.entries(r.effect).forEach(([k,v])=>{b[k]=(b[k]||0)+v})});
+    // Structure bonuses (per level)
+    STRUCTURES.forEach(st=>{const lv=structures[st.id]||0;if(lv>0){if(st.bonus)Object.entries(st.bonus).forEach(([k,v])=>{b[k]=(b[k]||0)+v*lv});if(st.bonusExtra)Object.entries(st.bonusExtra).forEach(([k,v])=>{b[k]=(b[k]||0)+v*lv})}});
+    // Prestige upgrades (permanent, survive resets)
+    PRESTIGE_UPGRADES.forEach(pu=>{const lv=prestigeUpgrades[pu.id]||0;if(lv>0){const eff=pu.effect(lv);Object.entries(eff).forEach(([k,v])=>{b[k]=(b[k]||0)+v})}});
     return b;
-  },[researched]);
+  },[researched,structures,prestigeUpgrades]);
 
   const maxEnergy=useMemo(()=>100+(bonuses.max_energy||0),[bonuses]);
 
@@ -296,9 +734,47 @@ function GameUI({account,onLogout}){
   },[eq,sl,enh,bonuses]);
 
   // Load
-  useEffect(()=>{(async()=>{try{const snap=await getDoc(doc(db,"doc_saves",account.uid));if(snap.exists()){const d=snap.data();if(d.skills)setSkills(d.skills);if(d.inv)setInv(d.inv);if(d.eq)setEq(d.eq);if(d.gold)setGold(d.gold);if(d.enh)setEnh(d.enh);if(d.researchPts)setResearchPts(d.researchPts);if(d.researched)setResearched(d.researched)}}catch(e){console.error(e)}})()},[account.uid]);
+  useEffect(()=>{(async()=>{try{const snap=await getDoc(doc(db,"doc_saves",account.uid));if(snap.exists()){const d=snap.data();if(d.skills)setSkills(d.skills);if(d.inv)setInv(d.inv);if(d.eq)setEq(d.eq);if(d.gold)setGold(d.gold);if(d.enh)setEnh(d.enh);if(d.researchPts)setResearchPts(d.researchPts);if(d.researched)setResearched(d.researched);if(d.structures)setStructures(d.structures);if(d.drones)setDrones(d.drones);if(d.ascensionLevel)setAscensionLevel(d.ascensionLevel);if(d.dataCores)setDataCores(d.dataCores);if(d.prestigeUpgrades)setPrestigeUpgrades(d.prestigeUpgrades);
+      if(d.achievements)setAchievements(d.achievements);if(d.lifeStats)setLifeStats(p=>({...p,...d.lifeStats}));
+      // Offline progress — up to 8 hours
+      if(d.ts){
+        const away=Math.min(Date.now()-d.ts, 8*60*60*1000); // cap at 8h
+        if(away>60000){ // only if away > 1 min
+          const gains={items:{},rp:0,gold:0};
+          const savedDrones=d.drones||{};
+          const savedStructures=d.structures||{};
+          // Drone passive gains
+          DRONE_TYPES.forEach(dt=>{
+            const count=savedDrones[dt.id]||0;if(!count)return;
+            const cycles=Math.floor(away/dt.interval);if(!cycles)return;
+            if(dt.action==="gather"||dt.action==="explore"){
+              dt.outputs.forEach(out=>{
+                if(!out.id)return;
+                const roll=out.chance!==undefined?(Math.random()<out.chance*cycles):true;
+                if(!roll)return;
+                const qty=Math.floor(out.q*count*cycles);
+                if(qty>0){gains.items[out.id]=(gains.items[out.id]||0)+qty;setInv(p=>({...p,[out.id]:(p[out.id]||0)+qty}))}
+              });
+            }
+            if(dt.action==="combat"){const g=Math.floor(dt.goldPerKill*count*cycles);gains.gold+=g;setGold(gv=>gv+g)}
+          });
+          // Structure passive gains
+          STRUCTURES.forEach(st=>{
+            if(!st.passive)return;
+            const lv=savedStructures[st.id]||0;if(!lv)return;
+            const qty=(st.passive.baseQty+st.passive.qtyPerLevel*(lv-1))*Math.floor(away/st.passive.interval);
+            if(qty>0){gains.items[st.passive.item]=(gains.items[st.passive.item]||0)+qty;setInv(p=>({...p,[st.passive.item]:(p[st.passive.item]||0)+qty}))}
+          });
+          // RP trickle
+          const rpGained=Math.floor((away/10000)*(1+(d.prestigeUpgrades?.research_mastery||0)*2));
+          if(rpGained>0){gains.rp=rpGained;setResearchPts(p=>p+rpGained)}
+          const hasGains=Object.keys(gains.items).length>0||gains.rp>0||gains.gold>0;
+          if(hasGains)setOfflineGains({away,gains});
+        }
+      }
+    }}catch(e){console.error(e)}})()},[account.uid]);
   // Save
-  useEffect(()=>{const t=setInterval(()=>{setDoc(doc(db,"doc_saves",account.uid),{skills,inv,eq,gold,enh,researchPts,researched,ts:Date.now()},{merge:true}).catch(()=>{})},30000);return()=>clearInterval(t)},[skills,inv,eq,gold,enh,researchPts,researched,account.uid]);
+  useEffect(()=>{const t=setInterval(()=>{setDoc(doc(db,"doc_saves",account.uid),{skills,inv,eq,gold,enh,researchPts,researched,structures,drones,ascensionLevel,dataCores,prestigeUpgrades,achievements,lifeStats,ts:Date.now()},{merge:true}).catch(()=>{})},30000);return()=>clearInterval(t)},[skills,inv,eq,gold,enh,researchPts,researched,structures,drones,ascensionLevel,dataCores,prestigeUpgrades,achievements,lifeStats,account.uid]);
 
   // Energy regen
   useEffect(()=>{const t=setInterval(()=>{setEnergy(e=>Math.min(maxEnergy,e+1*(1+(bonuses.energy_regen||0))))},1000);return()=>clearInterval(t)},[maxEnergy,bonuses.energy_regen]);
@@ -306,20 +782,37 @@ function GameUI({account,onLogout}){
   // Pressure — rises in combat, falls when idle
   useEffect(()=>{
     const t=setInterval(()=>{
-      if(zoneId){const idx=ZONES.findIndex(z=>z.id===zoneId);setPressure(p=>Math.min(100,p+(idx+1)*0.5))}
+      if(zoneId){const idx=ZONES.findIndex(z=>z.id===zoneId);const resist=bonuses.pressure_resist||0;setPressure(p=>Math.min(100,p+(idx+1)*0.5*(1-resist)))}
       else setPressure(p=>Math.max(0,p-1));
     },500);
     return()=>clearInterval(t);
-  },[zoneId]);
+  },[zoneId,bonuses.pressure_resist]);
 
   // Research points trickle
   useEffect(()=>{
     const t=setInterval(()=>{
       const prodLevels=SKILLS.filter(s=>s.cat==="prod").reduce((sum,sk)=>sum+sl(sk.id).lv,0);
-      setResearchPts(p=>p+1+Math.floor(prodLevels/10));
+      const labBonus=bonuses.rp_gen||0;
+      setResearchPts(p=>p+1+Math.floor(prodLevels/10)+Math.floor(labBonus));
     },10000);
     return()=>clearInterval(t);
-  },[sl]);
+  },[sl,bonuses.rp_gen]);
+
+  // Structure passive production
+  useEffect(()=>{
+    const timers=[];
+    STRUCTURES.forEach(st=>{
+      if(!st.passive)return;
+      const lv=structures[st.id]||0;
+      if(lv<=0)return;
+      const qty=st.passive.baseQty+st.passive.qtyPerLevel*(lv-1);
+      const t=setInterval(()=>{
+        setInv(p=>({...p,[st.passive.item]:(p[st.passive.item]||0)+qty}));
+      },st.passive.interval);
+      timers.push(t);
+    });
+    return()=>timers.forEach(t=>clearInterval(t));
+  },[structures]);
 
   const gainXp=useCallback((sid,amt)=>setSkills(p=>({...p,[sid]:(p[sid]||0)+Math.floor(amt*(1+(bonuses.xp_pct||0)))})),[bonuses.xp_pct]);
   const addIt=useCallback((iid,q)=>setInv(p=>({...p,[iid]:(p[iid]||0)+q})),[]);
@@ -345,12 +838,27 @@ function GameUI({account,onLogout}){
           if(sk.cat==="gather"){qty=Math.floor(qty*(1+(bonuses.gather_yield||0)));if(i.id==="kelp")qty=Math.floor(qty*(1+(bonuses.kelp_yield||0)));if(i.id==="abyss_crystal")qty=Math.floor(qty*(1+(bonuses.crystal_yield||0)))}
           if(Math.random()<(bonuses.rare_chance||0))qty+=1;
           addIt(i.id,qty);
+          // Track lifetime gathered items
+          if(sk.cat==="gather")setLifeStats(p=>({...p,totalGathered:(p.totalGathered||0)+qty,[i.id]:(p[i.id]||0)+qty}));
         });
+        if(sk.cat==="prod")setLifeStats(p=>({...p,crafts:(p.crafts||0)+1}));
+        // Random discovery chance (gather only, ~8% base + rare_chance bonus)
+        if(sk.cat==="gather"&&!activeDiscovery){
+          const baseChance=0.08+(bonuses.rare_chance||0)*0.5;
+          if(Math.random()<baseChance){
+            const pool=DISCOVERIES.filter(d=>Math.random()<d.rarity*20);
+            if(pool.length>0){
+              const disc=pool[Math.floor(Math.random()*pool.length)];
+              setActiveDiscovery(disc);
+              setLifeStats(p=>({...p,discoveries:(p.discoveries||0)+1}));
+            }
+          }
+        }
         start=Date.now();setActProg(0);
       }
     },100);
     return()=>clearInterval(tick);
-  },[curAct,gainXp,addIt,remIt,bonuses]);
+  },[curAct,gainXp,addIt,remIt,bonuses,activeDiscovery]);
 
   // Combat tick
   useEffect(()=>{
@@ -373,8 +881,27 @@ function GameUI({account,onLogout}){
           CSUBS.forEach(s=>gainXp(s.id,xpp));
           const goldGain=Math.floor(mob.g*(1+(bonuses.gold_pct||0)));
           setGold(g=>g+goldGain);setResearchPts(p=>p+Math.floor(mob.xp/20));
-          setClog(p=>[...p.slice(-20),"⚔️ Neutralized "+mob.n+"! +"+mob.xp+"xp +"+goldGain+"cr"]);
-          const nb=(nk%10===9)&&zone.boss;const nm=nb?zone.boss:zone.mobs[Math.floor(Math.random()*zone.mobs.length)];
+          // Track lifetime stats
+          setLifeStats(p=>({...p,kills:(p.kills||0)+1,totalGold:(p.totalGold||0)+goldGain}));
+          // Boss drops
+          const nb=(nk%10===9)&&zone.boss;
+          let logMsg="⚔️ Neutralized "+mob.n+"! +"+mob.xp+"xp +"+goldGain+"cr";
+          if(boss){
+            // Boss guaranteed drops
+            const dropChance=0.4+(bonuses.boss_drop||0);
+            const bossDrops=[
+              {id:"abyss_crystal",q:2,ch:dropChance},
+              {id:"drone_processor",q:1,ch:dropChance*0.5},
+              {id:"pressure_reactor",q:1,ch:dropChance*0.3},
+              {id:"reinforced_alloy",q:3,ch:dropChance*0.8},
+            ];
+            const dropped=[];
+            bossDrops.forEach(d=>{if(Math.random()<d.ch){setInv(p=>({...p,[d.id]:(p[d.id]||0)+d.q}));dropped.push((ITEMS[d.id]?ITEMS[d.id].i:"")+"×"+d.q)}});
+            if(dropped.length)logMsg+=" 🎁 "+dropped.join(" ");
+            setLifeStats(p=>({...p,bossKills:(p.bossKills||0)+1}));
+          }
+          setClog(p=>[...p.slice(-20),logMsg]);
+          const nm=nb?zone.boss:zone.mobs[Math.floor(Math.random()*zone.mobs.length)];
           return{mob:nm,mhp:nm.hp,php,mxhp,kills:nk,boss:nb};
         }
         return{...prev,mhp,php};
@@ -396,6 +923,208 @@ function GameUI({account,onLogout}){
     setResearchPts(p=>p-node.cost);setResearched(p=>({...p,[node.id]:true}));
   },[researched,researchPts]);
 
+  const doBuild=useCallback((st)=>{
+    const lv=structures[st.id]||0;
+    if(lv>=st.maxLevel)return;
+    const cost=lv===0?st.cost:st.levelCost(lv);
+    // Check gold
+    if((cost.gold||0)>gold)return;
+    // Check items
+    const itemKeys=Object.keys(cost).filter(k=>k!=="gold");
+    if(!itemKeys.every(k=>(invRef.current[k]||0)>=cost[k]))return;
+    // Deduct
+    if(cost.gold)setGold(g=>g-cost.gold);
+    itemKeys.forEach(k=>remIt(k,cost[k]));
+    setStructures(p=>({...p,[st.id]:(p[st.id]||0)+1}));
+  },[structures,gold,remIt]);
+
+  // Collect discovery rewards
+  const collectDiscovery=useCallback(()=>{
+    if(!activeDiscovery)return;
+    const disc=activeDiscovery;
+    disc.rewards.forEach(r=>{
+      if(r.type==="item")addIt(r.id,r.q);
+      if(r.type==="xp")SKILLS.filter(s=>s.cat==="gather").forEach(sk=>gainXp(sk.id,20*r.mult));
+      if(r.type==="rp")setResearchPts(p=>p+r.amt);
+    });
+    setDiscoveryLog(p=>[...p.slice(-20),"🔍 "+disc.name+" — "+disc.rewards.filter(r=>r.type==="item").map(r=>(ITEMS[r.id]?ITEMS[r.id].i:"")+r.q+" "+r.id).join(", ")]);
+    setActiveDiscovery(null);
+  },[activeDiscovery,addIt,gainXp]);
+
+  // Marketplace — load shared orders from Firebase
+  const loadMarket=useCallback(async()=>{
+    setMarketLoading(true);
+    try{
+      const {collection,getDocs,query,orderBy,limit}=await import("firebase/firestore");
+      const q=query(collection(db,"marketplace"),orderBy("ts","desc"),limit(50));
+      const snap=await getDocs(q);
+      const orders=snap.docs.map(d=>({id:d.id,...d.data()}));
+      setMarketOrders(orders.filter(o=>o.seller!==account.uid));
+      setMyListings(orders.filter(o=>o.seller===account.uid));
+    }catch(e){console.error("Market load:",e)}
+    setMarketLoading(false);
+  },[account.uid]);
+
+  const listItem=useCallback(async()=>{
+    if(!sellItem||(inv[sellItem]||0)<sellQty||sellQty<1||sellPrice<1)return;
+    try{
+      const {collection,addDoc}=await import("firebase/firestore");
+      await addDoc(collection(db,"marketplace"),{
+        seller:account.uid,sellerName:account.displayName,
+        itemId:sellItem,qty:sellQty,price:sellPrice,
+        ts:Date.now()
+      });
+      remIt(sellItem,sellQty);
+      setSellItem("");setSellQty(1);setSellPrice(10);
+      await loadMarket();
+    }catch(e){console.error("List item:",e)}
+  },[sellItem,sellQty,sellPrice,inv,account,remIt,loadMarket]);
+
+  const buyItem=useCallback(async(order)=>{
+    if(gold<order.price)return;
+    try{
+      const {doc:fdoc,deleteDoc,updateDoc,increment}=await import("firebase/firestore");
+      await deleteDoc(fdoc(db,"marketplace",order.id));
+      setGold(g=>g-order.price);
+      addIt(order.itemId,order.qty);
+      // Credit seller (best-effort)
+      await updateDoc(fdoc(db,"doc_saves",order.seller),{gold:increment(order.price)}).catch(()=>{});
+      await loadMarket();
+    }catch(e){console.error("Buy item:",e)}
+  },[gold,addIt,loadMarket]);
+
+  const cancelListing=useCallback(async(order)=>{
+    try{
+      const {doc:fdoc,deleteDoc}=await import("firebase/firestore");
+      await deleteDoc(fdoc(db,"marketplace",order.id));
+      addIt(order.itemId,order.qty);
+      await loadMarket();
+    }catch(e){console.error("Cancel listing:",e)}
+  },[addIt,loadMarket]);
+
+  // Total skill level for ascension threshold
+  const totalSkillLevel=useMemo(()=>{
+    const allSkillIds=[...SKILLS.map(s=>s.id),...CSUBS.map(c=>c.id),"enhancing"];
+    return allSkillIds.reduce((sum,sid)=>sum+sl(sid).lv,0);
+  },[sl]);
+
+  const maxSkillLevel=useMemo(()=>{
+    const allSkillIds=[...SKILLS.map(s=>s.id),...CSUBS.map(c=>c.id),"enhancing"];
+    return allSkillIds.reduce((mx,sid)=>Math.max(mx,sl(sid).lv),0);
+  },[sl]);
+
+  // Build current achievement check snapshot
+  const achSnapshot=useMemo(()=>({
+    ...lifeStats,
+    equippedSlots:Object.values(eq).filter(Boolean).length,
+    researched:Object.values(researched).filter(Boolean).length,
+    structures:Object.values(structures).filter(v=>v>0).length,
+    dronesConcurrent:Object.values(drones).reduce((s,v)=>s+(v||0),0),
+    ascensions:ascensionLevel,
+    maxSkillLv:maxSkillLevel,
+    totalSkillLv:totalSkillLevel,
+  }),[lifeStats,eq,researched,structures,drones,ascensionLevel,maxSkillLevel,totalSkillLevel]);
+
+  // Check achievements whenever snapshot changes
+  useEffect(()=>{
+    ACHIEVEMENTS.forEach(ach=>{
+      if(achievements[ach.id])return;
+      if(ach.check(achSnapshot)){
+        setAchievements(p=>({...p,[ach.id]:true}));
+        // Apply reward
+        if(ach.reward.rp)setResearchPts(p=>p+ach.reward.rp);
+        if(ach.reward.gold)setGold(g=>g+ach.reward.gold);
+        if(ach.reward.dataCores)setDataCores(c=>c+ach.reward.dataCores);
+        setNewAch(ach);
+        setTimeout(()=>setNewAch(null),4000);
+      }
+    });
+  },[achSnapshot]); // eslint-disable-line
+
+  const nextThreshold=ASCENSION_THRESHOLDS[ascensionLevel]||null;
+  const canAscend=nextThreshold!==null&&totalSkillLevel>=nextThreshold;
+  const coresOnAscend=ascensionLevel+1; // earn 1 core per ascension, scaling
+
+  const doAscend=useCallback(()=>{
+    if(!canAscend)return;
+    const earned=coresOnAscend;
+    // Reset: resources, structures, equipment, gold, drones, research, action
+    setInv({});setEq({});setGold(0);setEnh({});
+    setStructures({});setDrones({});
+    setResearched({});setResearchPts(0);
+    setCurAct(null);setActProg(0);setZoneId(null);setCbt(null);
+    // Keep: skills (XP halved), prestige upgrades, ascension level
+    setSkills(p=>{const n={};Object.entries(p).forEach(([k,v])=>{n[k]=Math.floor(v*0.5)});return n});
+    setAscensionLevel(a=>a+1);
+    setDataCores(c=>c+earned);
+    setShowAscendConfirm(false);
+  },[canAscend,coresOnAscend]);
+
+  const doBuyPrestige=useCallback((pu)=>{
+    const lv=prestigeUpgrades[pu.id]||0;
+    if(lv>=pu.maxLevel)return;
+    const cost=pu.costPerLevel*(lv+1);
+    if(dataCores<cost)return;
+    setDataCores(c=>c-cost);
+    setPrestigeUpgrades(p=>({...p,[pu.id]:(p[pu.id]||0)+1}));
+  },[prestigeUpgrades,dataCores]);
+
+  // Deploy a drone
+  const deployDrone=useCallback((dt)=>{
+    const deployed=drones[dt.id]||0;
+    if(deployed>=dt.maxDeployed)return;
+    const cost=dt.deployCost;
+    const gold_cost=cost.gold||0;
+    if(gold_cost>gold)return;
+    const itemKeys=Object.keys(cost).filter(k=>k!=="gold");
+    if(!itemKeys.every(k=>(invRef.current[k]||0)>=cost[k]))return;
+    if(gold_cost)setGold(g=>g-gold_cost);
+    itemKeys.forEach(k=>remIt(k,cost[k]));
+    setDrones(p=>({...p,[dt.id]:(p[dt.id]||0)+1}));
+    setLifeStats(p=>({...p,dronesDeployed:(p.dronesDeployed||0)+1}));
+    setDroneLogs(p=>[...p.slice(-30),"🚀 "+dt.name+" deployed! ("+((drones[dt.id]||0)+1)+"/"+dt.maxDeployed+")"]);
+  },[drones,gold,remIt]);
+
+  const recallDrone=useCallback((dt)=>{
+    if((drones[dt.id]||0)<=0)return;
+    setDrones(p=>({...p,[dt.id]:Math.max(0,(p[dt.id]||0)-1)}));
+    setDroneLogs(p=>[...p.slice(-30),"◄ "+dt.name+" recalled."]);
+  },[drones]);
+
+  // Drone tick — each drone type runs at its interval, qty = deployed count
+  useEffect(()=>{
+    const timers=[];
+    DRONE_TYPES.forEach(dt=>{
+      const count=drones[dt.id]||0;
+      if(count<=0)return;
+      const t=setInterval(()=>{
+        if(dt.action==="gather"||dt.action==="explore"){
+          const yieldMult=(1+(bonuses.gather_yield||0))*(1+(bonuses.drone_efficiency||0));
+          dt.outputs.forEach(out=>{
+            if(!out.id)return;
+            const roll=out.chance!==undefined?Math.random()<out.chance:true;
+            if(!roll)return;
+            const qty=Math.floor(out.q*count*yieldMult);
+            if(qty>0)setInv(p=>({...p,[out.id]:(p[out.id]||0)+qty}));
+          });
+          gainXp(dt.xpSkill,Math.floor(dt.xpAmt*count*(1+(bonuses.xp_pct||0))));
+          if(dt.action==="explore"&&Math.random()<0.08*count){
+            setDroneLogs(p=>[...p.slice(-30),"🔭 Explorer found something unusual..."]);
+          }
+        }
+        if(dt.action==="combat"){
+          const goldEarned=Math.floor(dt.goldPerKill*count*(1+(bonuses.gold_pct||0))*(1+(bonuses.drone_efficiency||0)));
+          setGold(g=>g+goldEarned);
+          gainXp(dt.xpSkill,Math.floor(dt.xpAmt*count*(1+(bonuses.combat_xp||0))));
+          setResearchPts(p=>p+count);
+          setDroneLogs(p=>[...p.slice(-30),"⚔️ Combat drones earned ◈"+goldEarned]);
+        }
+      },dt.interval);
+      timers.push(t);
+    });
+    return()=>timers.forEach(t=>clearInterval(t));
+  },[drones,bonuses,gainXp]);
+
   const skData=SKILLS.find(s=>s.id===actSkill);
 
   const activeBonusList=useMemo(()=>{
@@ -412,6 +1141,9 @@ function GameUI({account,onLogout}){
     if(bonuses.max_energy>0)lines.push("MaxE +"+bonuses.max_energy);
     if(bonuses.rare_chance>0)lines.push("Rare +"+(bonuses.rare_chance*100).toFixed(0)+"%");
     if(bonuses.crystal_yield>0)lines.push("Crystal ×"+(1+bonuses.crystal_yield).toFixed(1));
+    if(bonuses.rp_gen>0)lines.push("RP +"+Math.floor(bonuses.rp_gen)+"/tick");
+    if(bonuses.pressure_resist>0)lines.push("PressBuild -"+(bonuses.pressure_resist*100).toFixed(0)+"%");
+    if(bonuses.drone_efficiency>0)lines.push("DroneYield +"+(bonuses.drone_efficiency*100).toFixed(0)+"%");
     return lines;
   },[bonuses]);
 
@@ -434,6 +1166,82 @@ function GameUI({account,onLogout}){
 
   return(
     <div style={{width:"100%",height:"100vh",display:"flex",flexDirection:"column",fontFamily:FONT,background:C.bg,color:C.text,overflow:"hidden"}}>
+
+      {/* ===== ACHIEVEMENT TOAST ===== */}
+      {newAch&&(
+        <div style={{position:"fixed",bottom:24,right:24,zIndex:997,maxWidth:320,padding:"14px 18px",borderRadius:12,background:"linear-gradient(135deg,"+C.panel+","+C.card+")",border:"2px solid "+C.gold+"70",boxShadow:"0 0 30px "+C.gold+"40",animation:"slideIn 0.3s ease-out",display:"flex",alignItems:"center",gap:12}}>
+          <span style={{fontSize:28,filter:"drop-shadow(0 0 8px "+C.gold+")",flexShrink:0}}>{newAch.icon}</span>
+          <div>
+            <div style={{fontSize:9,fontWeight:700,color:C.gold,letterSpacing:2,marginBottom:2}}>ACHIEVEMENT UNLOCKED</div>
+            <div style={{fontSize:12,fontWeight:700,color:C.white,fontFamily:FONT,marginBottom:2}}>{newAch.name}</div>
+            <div style={{fontSize:10,color:C.ts,fontFamily:FONT_BODY}}>{newAch.desc}</div>
+            <div style={{fontSize:9,color:C.ok,marginTop:4,fontFamily:FONT_BODY}}>
+              {newAch.reward.rp&&`+${newAch.reward.rp} RP `}{newAch.reward.gold&&`+${newAch.reward.gold} cr `}{newAch.reward.dataCores&&`+${newAch.reward.dataCores} Core`}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ===== OFFLINE GAINS MODAL ===== */}
+      {offlineGains&&(
+        <div style={{position:"fixed",inset:0,zIndex:998,display:"flex",alignItems:"center",justifyContent:"center",background:"#00000088",backdropFilter:"blur(4px)"}}>
+          <div style={{maxWidth:420,width:"90%",padding:"28px 24px",borderRadius:16,background:"linear-gradient(135deg,"+C.panel+","+C.card+")",border:"2px solid "+C.acc+"60",boxShadow:"0 0 40px "+C.acc+"30",animation:"slideIn 0.3s ease-out"}}>
+            <div style={{textAlign:"center",marginBottom:16}}>
+              <div style={{fontSize:40,marginBottom:8}}>🌊</div>
+              <div style={{fontSize:14,fontWeight:700,color:C.acc,letterSpacing:2,marginBottom:4,fontFamily:FONT}}>WELCOME BACK</div>
+              <div style={{fontSize:11,color:C.ts,fontFamily:FONT_BODY}}>
+                Away for {offlineGains.away>=3600000?(offlineGains.away/3600000).toFixed(1)+"h":(offlineGains.away/60000).toFixed(0)+"m"} · Your drones kept working!
+              </div>
+            </div>
+            <div style={{padding:"12px 16px",borderRadius:8,background:C.acc+"10",border:"1px solid "+C.acc+"30",marginBottom:16}}>
+              <div style={{fontSize:9,fontWeight:700,color:C.acc,marginBottom:8,letterSpacing:2}}>OFFLINE GAINS</div>
+              <div style={{display:"flex",flexDirection:"column",gap:4}}>
+                {Object.entries(offlineGains.gains.items).map(([id,qty])=>(
+                  <div key={id} style={{display:"flex",alignItems:"center",gap:8,fontSize:11,fontFamily:FONT_BODY}}>
+                    <span>{ITEMS[id]?ITEMS[id].i:"📦"}</span>
+                    <span style={{color:C.ok,fontWeight:700}}>+{fmt(qty)}</span>
+                    <span style={{color:C.ts}}>{ITEMS[id]?ITEMS[id].n:id}</span>
+                  </div>
+                ))}
+                {offlineGains.gains.gold>0&&<div style={{display:"flex",alignItems:"center",gap:8,fontSize:11,fontFamily:FONT_BODY}}><span>◈</span><span style={{color:C.gold,fontWeight:700}}>+{fmt(offlineGains.gains.gold)}</span><span style={{color:C.ts}}>Credits</span></div>}
+                {offlineGains.gains.rp>0&&<div style={{display:"flex",alignItems:"center",gap:8,fontSize:11,fontFamily:FONT_BODY}}><span>🔬</span><span style={{color:C.purp,fontWeight:700}}>+{fmt(offlineGains.gains.rp)}</span><span style={{color:C.ts}}>Research Points</span></div>}
+              </div>
+            </div>
+            <div onClick={()=>setOfflineGains(null)} style={{padding:"11px 0",borderRadius:8,background:"linear-gradient(90deg,"+C.accD+","+C.acc+")",color:C.bg,fontSize:12,fontWeight:700,textAlign:"center",cursor:"pointer",letterSpacing:2,fontFamily:FONT,boxShadow:GLOW_STYLE}}>
+              CONTINUE DIVE
+            </div>
+          </div>
+        </div>
+      )}
+
+
+      {activeDiscovery&&(
+        <div style={{position:"fixed",inset:0,zIndex:999,display:"flex",alignItems:"center",justifyContent:"center",background:"#00000088",backdropFilter:"blur(4px)"}}>
+          <div style={{maxWidth:400,width:"90%",padding:"28px 24px",borderRadius:16,background:"linear-gradient(135deg,"+C.panel+","+C.card+")",border:"2px solid "+C.gold+"60",boxShadow:"0 0 40px "+C.gold+"40, 0 0 80px "+C.gold+"15",animation:"slideIn 0.3s ease-out"}}>
+            <div style={{textAlign:"center",marginBottom:16}}>
+              <div style={{fontSize:52,marginBottom:8,filter:"drop-shadow(0 0 16px "+C.gold+")",animation:"pulse 1.5s infinite"}}>{activeDiscovery.icon}</div>
+              <div style={{fontSize:14,fontWeight:700,color:C.gold,letterSpacing:2,marginBottom:6,fontFamily:FONT}}>DISCOVERY!</div>
+              <div style={{fontSize:13,fontWeight:700,color:C.white,letterSpacing:1,marginBottom:8,fontFamily:FONT}}>{activeDiscovery.name}</div>
+              <div style={{fontSize:11,color:C.ts,fontFamily:FONT_BODY,lineHeight:1.5}}>{activeDiscovery.desc}</div>
+            </div>
+            <div style={{padding:"12px 16px",borderRadius:8,background:C.gold+"12",border:"1px solid "+C.gold+"30",marginBottom:16}}>
+              <div style={{fontSize:9,fontWeight:700,color:C.gold,marginBottom:8,letterSpacing:2}}>REWARDS</div>
+              <div style={{display:"flex",flexDirection:"column",gap:4}}>
+                {activeDiscovery.rewards.map((r,i)=>(
+                  <div key={i} style={{display:"flex",alignItems:"center",gap:8,fontSize:11,color:C.text,fontFamily:FONT_BODY}}>
+                    {r.type==="item"&&<><span>{ITEMS[r.id]?ITEMS[r.id].i:"📦"}</span><span style={{color:C.ok,fontWeight:700}}>+{r.q}</span><span>{ITEMS[r.id]?ITEMS[r.id].n:r.id}</span></>}
+                    {r.type==="xp"&&<><span>⭐</span><span style={{color:C.warn,fontWeight:700}}>Gather XP ×{r.mult} boost</span></>}
+                    {r.type==="rp"&&<><span>🔬</span><span style={{color:C.acc,fontWeight:700}}>+{r.amt} Research Points</span></>}
+                  </div>
+                ))}
+              </div>
+            </div>
+            <div onClick={collectDiscovery} style={{padding:"12px 0",borderRadius:8,background:"linear-gradient(90deg,"+C.gold+"cc,"+C.warn+")",color:C.bg,fontSize:12,fontWeight:700,textAlign:"center",cursor:"pointer",letterSpacing:2,fontFamily:FONT,boxShadow:"0 0 16px "+C.gold+"60"}}>
+              ✦ COLLECT REWARDS
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* ===== TOP BAR ===== */}
       <div style={{flexShrink:0,height:46,background:C.panel,borderBottom:"1px solid "+C.border,display:"flex",alignItems:"center",padding:"0 14px",gap:16}}>
@@ -472,6 +1280,9 @@ function GameUI({account,onLogout}){
 
         {/* Credits */}
         <div style={{fontSize:11,color:C.gold,fontWeight:700,letterSpacing:1,whiteSpace:"nowrap",flexShrink:0}}>◈ {fmt(gold)}</div>
+        {/* Ascension indicator */}
+        {ascensionLevel>0&&<div style={{fontSize:9,color:C.purp,fontWeight:700,letterSpacing:1,whiteSpace:"nowrap",flexShrink:0,padding:"2px 8px",borderRadius:8,background:C.purp+"18",border:"1px solid "+C.purp+"40"}}>✦ ASC {ascensionLevel}</div>}
+        {canAscend&&<div onClick={()=>{setPage("prestige");setShowAscendConfirm(true)}} style={{fontSize:9,fontWeight:700,letterSpacing:1,whiteSpace:"nowrap",flexShrink:0,padding:"2px 8px",borderRadius:8,background:C.gold+"25",border:"1px solid "+C.gold+"60",color:C.gold,cursor:"pointer",animation:"pulse 1.5s infinite"}}>⬆ ASCEND</div>}
       </div>
 
       {/* ===== BODY ===== */}
@@ -518,6 +1329,12 @@ function GameUI({account,onLogout}){
           </div>
           <div style={{padding:"4px 0",borderBottom:"1px solid "+C.border}}>
             <NavItem id="research" icon="🔬" label="Research Tree"/>
+            <NavItem id="structures" icon="🏗️" label="Structures"/>
+            <NavItem id="drones" icon="🤖" label="Drone Fleet"/>
+            <NavItem id="prestige" icon="✨" label={canAscend?"ASCEND NOW!":"Ascension"}/>
+            <NavItem id="market" icon="🏪" label="Marketplace"/>
+            <NavItem id="achievements" icon="🏆" label="Achievements"/>
+            <NavItem id="stats" icon="📊" label="Stats & Profile"/>
             <NavItem id="equipment" icon="🗡️" label="Equipment"/>
             <NavItem id="inventory" icon="🎒" label="Inventory"/>
           </div>
@@ -647,6 +1464,665 @@ function GameUI({account,onLogout}){
               </div>
             )}
 
+            {/* ===== STRUCTURES PAGE ===== */}
+            {page==="structures"&&(()=>{
+              const totalBuilt=STRUCTURES.reduce((s,st)=>s+(structures[st.id]>0?1:0),0);
+              return(
+              <div style={{maxWidth:860}}>
+                <div style={{display:"flex",alignItems:"baseline",gap:16,marginBottom:6}}>
+                  <div style={{fontSize:14,fontWeight:700,color:C.white,letterSpacing:2}}>STRUCTURES</div>
+                  <div style={{fontSize:11,color:C.ts,fontFamily:FONT_BODY}}>{totalBuilt}/{STRUCTURES.length} built · ◈ {fmt(gold)} credits</div>
+                </div>
+                <div style={{fontSize:10,color:C.ts,marginBottom:14,fontFamily:FONT_BODY}}>Build structures to passively generate resources and unlock powerful bonuses. Each structure can be upgraded up to level 5.</div>
+
+                {/* Category tabs */}
+                <div style={{display:"flex",gap:6,marginBottom:18,flexWrap:"wrap"}}>
+                  {Object.entries(STRUCT_CATEGORIES).map(([cat,meta])=>{
+                    const built=STRUCTURES.filter(s=>s.category===cat&&(structures[s.id]||0)>0).length;
+                    const total=STRUCTURES.filter(s=>s.category===cat).length;
+                    const active=structCat===cat;
+                    return(
+                      <div key={cat} onClick={()=>setStructCat(cat)} style={{padding:"6px 14px",borderRadius:6,cursor:"pointer",background:active?meta.color+"25":C.card,border:"2px solid "+(active?meta.color+"90":C.border),color:active?meta.color:C.ts,fontSize:10,fontWeight:700,letterSpacing:1,fontFamily:FONT,transition:"all 0.15s"}}>
+                        {meta.label} <span style={{opacity:0.65,fontFamily:FONT_BODY,fontWeight:400,fontSize:9}}>({built}/{total})</span>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                {/* Structure cards */}
+                <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}}>
+                  {STRUCTURES.filter(st=>st.category===structCat).map(st=>{
+                    const lv=structures[st.id]||0;
+                    const maxed=lv>=st.maxLevel;
+                    const cost=lv===0?st.cost:st.levelCost(lv);
+                    const canAfford=(cost.gold||0)<=gold;
+                    const itemKeys=Object.keys(cost).filter(k=>k!=="gold");
+                    const hasItems=itemKeys.every(k=>(inv[k]||0)>=cost[k]);
+                    const canBuild=canAfford&&hasItems&&!maxed;
+                    const col=st.color;
+                    return(
+                      <div key={st.id} style={{padding:"16px",borderRadius:10,background:lv>0?"linear-gradient(135deg,"+col+"18,"+C.card+")":C.card,border:"2px solid "+(lv>0?col+"60":C.border),boxShadow:lv>0?"0 0 16px "+col+"30":"none",transition:"all 0.2s"}}>
+                        {/* Header */}
+                        <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:10}}>
+                          <span style={{fontSize:28,filter:lv>0?"drop-shadow(0 0 8px "+col+")":"none"}}>{st.icon}</span>
+                          <div style={{flex:1}}>
+                            <div style={{fontSize:12,fontWeight:700,color:lv>0?col:C.white,fontFamily:FONT,letterSpacing:1}}>{st.name.toUpperCase()}</div>
+                            <div style={{fontSize:10,color:C.ts,fontFamily:FONT_BODY,marginTop:1}}>{st.desc}</div>
+                          </div>
+                          {lv>0&&(
+                            <div style={{padding:"3px 10px",borderRadius:12,background:col+"25",border:"1px solid "+col+"50",fontSize:11,fontWeight:700,color:col,fontFamily:FONT,flexShrink:0}}>
+                              Lv {lv}
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Level progress dots */}
+                        <div style={{display:"flex",gap:4,marginBottom:10}}>
+                          {[...Array(st.maxLevel)].map((_,i)=>(
+                            <div key={i} style={{flex:1,height:4,borderRadius:2,background:i<lv?col:C.bg,border:"1px solid "+(i<lv?col:C.border),boxShadow:i<lv?"0 0 4px "+col+"80":"none",transition:"all 0.3s"}}/>
+                          ))}
+                        </div>
+
+                        {/* Effects */}
+                        {lv>0&&(
+                          <div style={{padding:"6px 10px",borderRadius:6,background:col+"12",border:"1px solid "+col+"25",marginBottom:10}}>
+                            <div style={{fontSize:9,fontWeight:700,color:col,marginBottom:3,letterSpacing:1}}>ACTIVE EFFECTS</div>
+                            <div style={{fontSize:10,color:C.text,fontFamily:FONT_BODY}}>{st.desc2(lv)}</div>
+                          </div>
+                        )}
+
+                        {/* Cost breakdown */}
+                        {!maxed&&(
+                          <div style={{marginBottom:10}}>
+                            <div style={{fontSize:9,color:C.td,marginBottom:5,letterSpacing:1,fontWeight:700}}>{lv===0?"BUILD COST:":"UPGRADE TO LV "+(lv+1)+":"}</div>
+                            <div style={{display:"flex",flexWrap:"wrap",gap:4}}>
+                              {cost.gold>0&&(
+                                <span style={{padding:"2px 8px",borderRadius:4,background:gold>=cost.gold?C.gold+"20":C.bad+"20",border:"1px solid "+(gold>=cost.gold?C.gold+"40":C.bad+"40"),fontSize:10,color:gold>=cost.gold?C.gold:C.bad,fontFamily:FONT_BODY}}>◈ {fmt(cost.gold)}</span>
+                              )}
+                              {itemKeys.map(k=>{const have=(inv[k]||0)>=cost[k];return(
+                                <span key={k} style={{padding:"2px 8px",borderRadius:4,background:have?C.ok+"15":C.bad+"15",border:"1px solid "+(have?C.ok+"35":C.bad+"35"),fontSize:10,color:have?C.ok:C.bad,fontFamily:FONT_BODY}}>{ITEMS[k]?ITEMS[k].i:k} {cost[k]}<span style={{opacity:0.6}}> / {inv[k]||0}</span></span>
+                              );})}
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Action button */}
+                        {maxed?(
+                          <div style={{padding:"7px 0",borderRadius:6,background:col+"20",border:"1px solid "+col+"40",color:col,fontSize:10,fontWeight:700,textAlign:"center",letterSpacing:1,fontFamily:FONT}}>✦ MAX LEVEL</div>
+                        ):(
+                          <div onClick={()=>canBuild&&doBuild(st)} style={{padding:"7px 0",borderRadius:6,background:canBuild?"linear-gradient(90deg,"+col+"cc,"+col+")":C.bg,color:canBuild?C.bg:C.td,fontSize:10,fontWeight:700,textAlign:"center",cursor:canBuild?"pointer":"default",letterSpacing:1,fontFamily:FONT,border:"1px solid "+(canBuild?col:C.border),boxShadow:canBuild?"0 0 10px "+col+"55":"none",transition:"all 0.15s"}}>
+                            {canBuild?(lv===0?"BUILD":"UPGRADE"):(canAfford?"MISSING MATERIALS":"INSUFFICIENT CREDITS")}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+
+                {/* Global structure bonuses summary */}
+                {Object.values(structures).some(v=>v>0)&&(
+                  <div style={{marginTop:20,padding:"14px 16px",borderRadius:8,background:C.card,border:"1px solid "+C.acc+"35"}}>
+                    <div style={{fontSize:9,fontWeight:700,color:C.acc,marginBottom:8,letterSpacing:2}}>ACTIVE STRUCTURE BONUSES</div>
+                    <div style={{display:"flex",gap:8,flexWrap:"wrap"}}>
+                      {STRUCTURES.filter(st=>(structures[st.id]||0)>0).map(st=>{
+                        const lv=structures[st.id];
+                        return(<span key={st.id} style={{padding:"3px 10px",borderRadius:10,background:st.color+"18",border:"1px solid "+st.color+"40",fontSize:10,color:st.color,fontFamily:FONT_BODY}}>{st.icon} {st.name} Lv{lv}</span>);
+                      })}
+                    </div>
+                  </div>
+                )}
+              </div>
+            );})()}
+
+            {/* ===== DRONES PAGE ===== */}
+            {page==="drones"&&(()=>{
+              const totalDeployed=DRONE_TYPES.reduce((s,dt)=>s+(drones[dt.id]||0),0);
+              return(
+              <div style={{maxWidth:860}}>
+                <div style={{display:"flex",alignItems:"baseline",gap:16,marginBottom:6}}>
+                  <div style={{fontSize:14,fontWeight:700,color:C.white,letterSpacing:2}}>DRONE FLEET</div>
+                  <div style={{fontSize:11,color:C.ts,fontFamily:FONT_BODY}}>{totalDeployed} active drones · ◈ {fmt(gold)} credits</div>
+                </div>
+                <div style={{fontSize:10,color:C.ts,marginBottom:14,fontFamily:FONT_BODY}}>
+                  Deploy drones to automate gathering, mining, fishing, and combat. Each drone runs passively in the background regardless of your active page.
+                  Craft <strong style={{color:C.acc}}>Drone Processors</strong> via Artifact Research to unlock deployments.
+                </div>
+
+                {/* Fleet overview bar */}
+                {totalDeployed>0&&(
+                  <div style={{marginBottom:16,padding:"10px 14px",borderRadius:8,background:C.card,border:"1px solid "+C.acc+"40",display:"flex",gap:12,flexWrap:"wrap"}}>
+                    <div style={{fontSize:9,fontWeight:700,color:C.acc,letterSpacing:2,width:"100%",marginBottom:4}}>ACTIVE FLEET</div>
+                    {DRONE_TYPES.filter(dt=>(drones[dt.id]||0)>0).map(dt=>(
+                      <div key={dt.id} style={{display:"flex",alignItems:"center",gap:6,padding:"4px 10px",borderRadius:6,background:dt.color+"18",border:"1px solid "+dt.color+"40"}}>
+                        <span style={{fontSize:14,filter:"drop-shadow(0 0 4px "+dt.color+")"}}>{dt.icon}</span>
+                        <span style={{fontSize:11,color:dt.color,fontWeight:700,fontFamily:FONT}}>{drones[dt.id]}</span>
+                        <span style={{fontSize:9,color:C.ts,fontFamily:FONT_BODY}}>{dt.name}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {/* Drone cards */}
+                <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginBottom:16}}>
+                  {DRONE_TYPES.map(dt=>{
+                    const deployed=drones[dt.id]||0;
+                    const maxed=deployed>=dt.maxDeployed;
+                    const cost=dt.deployCost;
+                    const itemKeys=Object.keys(cost).filter(k=>k!=="gold");
+                    const hasItems=itemKeys.every(k=>(inv[k]||0)>=cost[k]);
+                    const goldOk=(cost.gold||0)<=gold;
+                    const canDeploy=hasItems&&goldOk&&!maxed;
+                    const canRecall=deployed>0;
+                    const col=dt.color;
+                    // Compute what this drone produces per minute
+                    const cyclesPerMin=60000/dt.interval;
+                    return(
+                      <div key={dt.id} style={{padding:"16px",borderRadius:10,background:deployed>0?"linear-gradient(135deg,"+col+"18,"+C.card+")":C.card,border:"2px solid "+(deployed>0?col+"60":C.border),boxShadow:deployed>0?"0 0 16px "+col+"30":"none",transition:"all 0.2s"}}>
+                        {/* Header */}
+                        <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:10}}>
+                          <span style={{fontSize:28,filter:deployed>0?"drop-shadow(0 0 8px "+col+")":"none",animation:deployed>0?"pulse 2s infinite":"none"}}>{dt.icon}</span>
+                          <div style={{flex:1}}>
+                            <div style={{fontSize:12,fontWeight:700,color:deployed>0?col:C.white,fontFamily:FONT,letterSpacing:1}}>{dt.name.toUpperCase()}</div>
+                            <div style={{fontSize:10,color:C.ts,fontFamily:FONT_BODY,marginTop:1}}>{dt.desc}</div>
+                          </div>
+                          {/* Deployed counter */}
+                          <div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:2,flexShrink:0}}>
+                            {[...Array(dt.maxDeployed)].map((_,i)=>(
+                              <div key={i} style={{width:8,height:8,borderRadius:"50%",background:i<deployed?col:C.bg,border:"1px solid "+(i<deployed?col:C.border),boxShadow:i<deployed?"0 0 4px "+col:"none",transition:"all 0.3s"}}/>
+                            ))}
+                            <div style={{fontSize:8,color:deployed>0?col:C.td,fontFamily:FONT_BODY,marginTop:2}}>{deployed}/{dt.maxDeployed}</div>
+                          </div>
+                        </div>
+
+                        {/* Output preview */}
+                        <div style={{padding:"6px 10px",borderRadius:6,background:C.bg,border:"1px solid "+C.border,marginBottom:10}}>
+                          <div style={{fontSize:8,color:C.td,fontWeight:700,letterSpacing:1,marginBottom:4}}>OUTPUT / CYCLE ({(dt.interval/1000).toFixed(0)}s)</div>
+                          <div style={{display:"flex",gap:6,flexWrap:"wrap"}}>
+                            {dt.action==="combat"&&(
+                              <span style={{fontSize:10,color:C.gold,fontFamily:FONT_BODY}}>◈ {Math.floor(dt.goldPerKill*(1+(bonuses.gold_pct||0)))} · +{Math.floor(dt.xpAmt*(1+(bonuses.combat_xp||0)))} XP</span>
+                            )}
+                            {(dt.action==="gather"||dt.action==="explore")&&dt.outputs.filter(o=>o.id).map(o=>(
+                              <span key={o.id} style={{fontSize:10,color:C.text,fontFamily:FONT_BODY}}>
+                                {ITEMS[o.id]?ITEMS[o.id].i:""} {o.chance!==undefined?"~"+(o.chance*100).toFixed(0)+"%":""} {o.q}×
+                              </span>
+                            ))}
+                            <span style={{fontSize:10,color:C.ts,fontFamily:FONT_BODY}}>+{dt.xpAmt} XP</span>
+                            {deployed>0&&<span style={{fontSize:10,color:col,fontFamily:FONT_BODY}}>×{deployed} drones</span>}
+                          </div>
+                        </div>
+
+                        {/* Deploy cost */}
+                        <div style={{marginBottom:10}}>
+                          <div style={{fontSize:9,color:C.td,marginBottom:4,letterSpacing:1,fontWeight:700}}>DEPLOY COST (per unit):</div>
+                          <div style={{display:"flex",flexWrap:"wrap",gap:4}}>
+                            {(cost.gold||0)>0&&(
+                              <span style={{padding:"2px 8px",borderRadius:4,background:goldOk?C.gold+"20":C.bad+"20",border:"1px solid "+(goldOk?C.gold+"40":C.bad+"40"),fontSize:10,color:goldOk?C.gold:C.bad,fontFamily:FONT_BODY}}>◈ {fmt(cost.gold)}</span>
+                            )}
+                            {itemKeys.map(k=>{const have=(inv[k]||0)>=cost[k];return(
+                              <span key={k} style={{padding:"2px 8px",borderRadius:4,background:have?C.ok+"15":C.bad+"15",border:"1px solid "+(have?C.ok+"35":C.bad+"35"),fontSize:10,color:have?C.ok:C.bad,fontFamily:FONT_BODY}}>{ITEMS[k]?ITEMS[k].i:k} {cost[k]}<span style={{opacity:0.6}}> / {inv[k]||0}</span></span>
+                            );})}
+                          </div>
+                        </div>
+
+                        {/* Action buttons */}
+                        <div style={{display:"flex",gap:6}}>
+                          <div onClick={()=>canDeploy&&deployDrone(dt)} style={{flex:1,padding:"7px 0",borderRadius:6,background:canDeploy?"linear-gradient(90deg,"+col+"cc,"+col+")":C.bg,color:canDeploy?C.bg:C.td,fontSize:10,fontWeight:700,textAlign:"center",cursor:canDeploy?"pointer":"default",letterSpacing:1,fontFamily:FONT,border:"1px solid "+(canDeploy?col:C.border),boxShadow:canDeploy?"0 0 10px "+col+"55":"none",transition:"all 0.15s"}}>
+                            {maxed?"MAX DEPLOYED":canDeploy?"DEPLOY":"INSUFFICIENT"}
+                          </div>
+                          {canRecall&&(
+                            <div onClick={()=>recallDrone(dt)} style={{padding:"7px 12px",borderRadius:6,background:C.bad+"20",border:"1px solid "+C.bad+"50",color:C.bad,fontSize:10,fontWeight:700,cursor:"pointer",letterSpacing:1,fontFamily:FONT,transition:"all 0.15s"}}>◄</div>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                {/* Drone activity log */}
+                {droneLogs.length>0&&(
+                  <div style={{padding:"12px 16px",borderRadius:8,background:C.card,border:"1px solid "+C.border,maxHeight:160,overflow:"auto"}}>
+                    <div style={{fontSize:9,fontWeight:700,color:C.ts,marginBottom:6,letterSpacing:2}}>DRONE LOG</div>
+                    {droneLogs.slice(-12).reverse().map((l,i)=>(
+                      <div key={i} style={{fontSize:10,color:C.ts,padding:"2px 0",borderBottom:"1px solid "+C.bg,opacity:1-i*0.07,fontFamily:FONT_BODY}}>{l}</div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            );})()}
+
+            {/* ===== PRESTIGE / ASCENSION PAGE ===== */}
+            {page==="prestige"&&(()=>{
+              const nextThr=ASCENSION_THRESHOLDS[ascensionLevel]||null;
+              const prevThr=ascensionLevel>0?ASCENSION_THRESHOLDS[ascensionLevel-1]:0;
+              const progress=nextThr?Math.min(1,(totalSkillLevel-prevThr)/Math.max(1,nextThr-prevThr)):1;
+              return(
+              <div style={{maxWidth:760}}>
+                {/* Header */}
+                <div style={{display:"flex",alignItems:"center",gap:16,marginBottom:20,padding:"18px 20px",borderRadius:12,background:"linear-gradient(135deg,"+C.purp+"18,"+C.card+")",border:"2px solid "+C.purp+"50",boxShadow:"0 0 20px "+C.purp+"30"}}>
+                  <div style={{fontSize:48,filter:"drop-shadow(0 0 12px "+C.purp+")"}}>🌊</div>
+                  <div style={{flex:1}}>
+                    <div style={{fontSize:16,fontWeight:700,color:C.white,letterSpacing:3,marginBottom:4}}>ASCENSION PROTOCOL</div>
+                    <div style={{fontSize:11,color:C.ts,fontFamily:FONT_BODY,marginBottom:8}}>
+                      Ascension {ascensionLevel} · Total Skill Level: <span style={{color:C.acc,fontWeight:700}}>{totalSkillLevel}</span>
+                    </div>
+                    {nextThr?(
+                      <>
+                        <div style={{fontSize:10,color:C.td,fontFamily:FONT_BODY,marginBottom:6}}>
+                          Next Ascension at level <span style={{color:canAscend?C.gold:C.warn,fontWeight:700}}>{nextThr}</span>
+                          {canAscend&&<span style={{color:C.gold,fontWeight:700,marginLeft:8}}>✦ READY!</span>}
+                        </div>
+                        <div style={{height:6,borderRadius:3,background:C.bg,overflow:"hidden",border:"1px solid "+C.border}}>
+                          <div style={{width:progress*100+"%",height:"100%",borderRadius:3,background:canAscend?"linear-gradient(90deg,"+C.gold+","+C.warn+")":"linear-gradient(90deg,"+C.purp+","+C.acc+")",transition:"width 0.5s",boxShadow:canAscend?"0 0 8px "+C.gold:"0 0 6px "+C.purp}}/>
+                        </div>
+                      </>
+                    ):(
+                      <div style={{fontSize:11,color:C.gold,fontWeight:700,fontFamily:FONT}}>✦ MAX ASCENSION REACHED</div>
+                    )}
+                  </div>
+                  <div style={{textAlign:"center",flexShrink:0}}>
+                    <div style={{fontSize:32,filter:"drop-shadow(0 0 8px "+C.gold+")"}}>{dataCores}</div>
+                    <div style={{fontSize:9,color:C.gold,fontWeight:700,letterSpacing:2}}>DATA CORES</div>
+                  </div>
+                </div>
+
+                {/* Ascend button */}
+                {canAscend&&(
+                  <div style={{marginBottom:20}}>
+                    {!showAscendConfirm?(
+                      <div onClick={()=>setShowAscendConfirm(true)} style={{padding:"14px 0",borderRadius:10,background:"linear-gradient(90deg,"+C.purp+"cc,"+C.gold+")",color:C.bg,fontSize:14,fontWeight:700,textAlign:"center",cursor:"pointer",letterSpacing:3,fontFamily:FONT,boxShadow:"0 0 24px "+C.gold+"60",animation:"pulse 1.5s infinite"}}>
+                        ⬆ INITIATE ASCENSION ⬆
+                      </div>
+                    ):(
+                      <div style={{padding:"16px 20px",borderRadius:10,background:C.bad+"15",border:"2px solid "+C.bad+"60",boxShadow:"0 0 20px "+C.bad+"30"}}>
+                        <div style={{fontSize:13,fontWeight:700,color:C.bad,letterSpacing:2,marginBottom:10,textAlign:"center"}}>⚠ CONFIRM ASCENSION</div>
+                        <div style={{fontSize:11,color:C.ts,fontFamily:FONT_BODY,marginBottom:6}}>This will permanently reset:</div>
+                        <div style={{fontSize:11,color:C.bad,fontFamily:FONT_BODY,marginBottom:6,paddingLeft:8}}>
+                          • All inventory & equipment<br/>
+                          • All structures & drones<br/>
+                          • All crafted items & gold<br/>
+                          • Research tree progress<br/>
+                          • Skill XP (halved, levels preserved)
+                        </div>
+                        <div style={{fontSize:11,color:C.ok,fontFamily:FONT_BODY,marginBottom:12,paddingLeft:8}}>
+                          ✓ You will earn <strong style={{color:C.gold}}>{coresOnAscend} Ancient Data Core{coresOnAscend>1?"s":""}</strong><br/>
+                          ✓ Prestige upgrades are permanent<br/>
+                          ✓ Ascension level permanently increases
+                        </div>
+                        <div style={{display:"flex",gap:10}}>
+                          <div onClick={doAscend} style={{flex:1,padding:"10px 0",borderRadius:6,background:"linear-gradient(90deg,"+C.bad+"cc,"+C.bad+")",color:C.white,fontSize:11,fontWeight:700,textAlign:"center",cursor:"pointer",letterSpacing:2,fontFamily:FONT}}>CONFIRM ASCEND</div>
+                          <div onClick={()=>setShowAscendConfirm(false)} style={{flex:1,padding:"10px 0",borderRadius:6,background:C.card,border:"1px solid "+C.border,color:C.ts,fontSize:11,fontWeight:700,textAlign:"center",cursor:"pointer",letterSpacing:2,fontFamily:FONT}}>CANCEL</div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* What Ascension does */}
+                <div style={{marginBottom:20,padding:"12px 16px",borderRadius:8,background:C.card,border:"1px solid "+C.border}}>
+                  <div style={{fontSize:9,fontWeight:700,color:C.acc,letterSpacing:2,marginBottom:8}}>ASCENSION REWARDS</div>
+                  <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:6}}>
+                    {ASCENSION_THRESHOLDS.map((thr,i)=>{
+                      const done=ascensionLevel>i;const current=ascensionLevel===i;
+                      return(
+                        <div key={i} style={{padding:"8px 10px",borderRadius:6,background:done?"linear-gradient(90deg,"+C.purp+"20,"+C.card+")":current?C.gold+"12":C.bg,border:"1px solid "+(done?C.purp+"50":current?C.gold+"50":C.border),opacity:done||current?1:0.5}}>
+                          <div style={{display:"flex",justifyContent:"space-between",marginBottom:3}}>
+                            <span style={{fontSize:10,color:done?C.purp:current?C.gold:C.ts,fontWeight:700,fontFamily:FONT}}>Ascension {i+1}</span>
+                            <span style={{fontSize:9,color:C.td,fontFamily:FONT_BODY}}>{done?"✓ Done":current?"← Current":"Lv "+thr}</span>
+                          </div>
+                          <div style={{fontSize:9,color:C.ts,fontFamily:FONT_BODY}}>+{i+1} Data Core{i>0?"s":""} · Skill XP preserved</div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Prestige upgrade shop */}
+                <div style={{fontSize:12,fontWeight:700,color:C.white,letterSpacing:2,marginBottom:4}}>PERMANENT UPGRADES</div>
+                <div style={{fontSize:10,color:C.ts,marginBottom:14,fontFamily:FONT_BODY}}>
+                  Spend Ancient Data Cores on permanent bonuses. These survive all ascensions.
+                  <span style={{color:C.gold,fontWeight:700}}> {dataCores} cores available.</span>
+                </div>
+                <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
+                  {PRESTIGE_UPGRADES.map(pu=>{
+                    const lv=prestigeUpgrades[pu.id]||0;
+                    const maxed=lv>=pu.maxLevel;
+                    const nextCost=maxed?0:pu.costPerLevel*(lv+1);
+                    const canBuy=!maxed&&dataCores>=nextCost;
+                    const col=pu.color;
+                    return(
+                      <div key={pu.id} style={{padding:"14px",borderRadius:10,background:lv>0?"linear-gradient(135deg,"+col+"15,"+C.card+")":C.card,border:"2px solid "+(lv>0?col+"50":C.border),boxShadow:lv>0?"0 0 12px "+col+"25":"none"}}>
+                        <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:8}}>
+                          <span style={{fontSize:22,filter:lv>0?"drop-shadow(0 0 6px "+col+")":"none"}}>{pu.icon}</span>
+                          <div style={{flex:1}}>
+                            <div style={{fontSize:11,fontWeight:700,color:lv>0?col:C.white,fontFamily:FONT,letterSpacing:1}}>{pu.name}</div>
+                            <div style={{fontSize:9,color:C.ts,fontFamily:FONT_BODY,marginTop:1}}>{pu.desc}</div>
+                          </div>
+                          <div style={{fontSize:10,fontWeight:700,color:lv>0?col:C.td,fontFamily:FONT}}>{lv}/{pu.maxLevel}</div>
+                        </div>
+                        {/* Level progress bar */}
+                        <div style={{display:"flex",gap:2,marginBottom:8}}>
+                          {[...Array(pu.maxLevel)].map((_,i)=>(
+                            <div key={i} style={{flex:1,height:3,borderRadius:2,background:i<lv?col:C.bg,border:"1px solid "+(i<lv?col:C.border),transition:"all 0.3s"}}/>
+                          ))}
+                        </div>
+                        {lv>0&&(
+                          <div style={{padding:"4px 8px",borderRadius:4,background:col+"12",border:"1px solid "+col+"25",marginBottom:8}}>
+                            <div style={{fontSize:9,color:col,fontFamily:FONT_BODY}}>{pu.effectDesc(lv)}</div>
+                          </div>
+                        )}
+                        {maxed?(
+                          <div style={{padding:"6px 0",borderRadius:5,background:col+"20",border:"1px solid "+col+"40",color:col,fontSize:9,fontWeight:700,textAlign:"center",letterSpacing:1,fontFamily:FONT}}>✦ MAXED</div>
+                        ):(
+                          <div onClick={()=>canBuy&&doBuyPrestige(pu)} style={{padding:"6px 0",borderRadius:5,background:canBuy?"linear-gradient(90deg,"+col+"cc,"+col+")":C.bg,color:canBuy?C.bg:C.td,fontSize:9,fontWeight:700,textAlign:"center",cursor:canBuy?"pointer":"default",letterSpacing:1,fontFamily:FONT,border:"1px solid "+(canBuy?col:C.border),boxShadow:canBuy?"0 0 8px "+col+"55":"none",transition:"all 0.15s"}}>
+                            {canBuy?"UPGRADE ("+nextCost+" core"+(nextCost>1?"s":"")+")":" NEED "+nextCost+" CORE"+(nextCost>1?"S":"")}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            );})()}
+
+            {/* ===== MARKETPLACE PAGE ===== */}
+            {page==="market"&&(()=>{
+              // Load market on page open
+              const tradableItems=Object.entries(inv).filter(([id])=>ITEMS[id]&&ITEMS[id].s);
+              return(
+              <div style={{maxWidth:760}}>
+                <div style={{display:"flex",alignItems:"baseline",gap:16,marginBottom:6}}>
+                  <div style={{fontSize:14,fontWeight:700,color:C.white,letterSpacing:2}}>MARKETPLACE</div>
+                  <div style={{fontSize:11,color:C.ts,fontFamily:FONT_BODY}}>Player-to-player trading · ◈ {fmt(gold)} credits</div>
+                  <div onClick={loadMarket} style={{marginLeft:"auto",padding:"4px 12px",borderRadius:6,background:C.card,border:"1px solid "+C.border,fontSize:9,color:C.acc,cursor:"pointer",fontWeight:700,letterSpacing:1,fontFamily:FONT}}>{marketLoading?"LOADING...":"↻ REFRESH"}</div>
+                </div>
+                <div style={{fontSize:10,color:C.ts,marginBottom:14,fontFamily:FONT_BODY}}>
+                  Buy resources from other players or list your own for sale. Transactions are live across all players.
+                </div>
+
+                {/* Tabs */}
+                <div style={{display:"flex",gap:6,marginBottom:16}}>
+                  {[["browse","🛒 Browse Listings"],["sell","📦 List Item"],["mine","📋 My Listings"]].map(([t,l])=>(
+                    <div key={t} onClick={()=>{setMarketTab(t);if(t==="browse"||t==="mine")loadMarket()}} style={{padding:"6px 16px",borderRadius:6,cursor:"pointer",background:marketTab===t?C.acc+"25":C.card,border:"2px solid "+(marketTab===t?C.acc+"80":C.border),color:marketTab===t?C.acc:C.ts,fontSize:10,fontWeight:700,letterSpacing:1,fontFamily:FONT,transition:"all 0.15s"}}>{l}</div>
+                  ))}
+                </div>
+
+                {/* BROWSE tab */}
+                {marketTab==="browse"&&(
+                  <div>
+                    {marketLoading&&<div style={{color:C.ts,fontFamily:FONT_BODY,fontSize:11,padding:20,textAlign:"center"}}>Loading market orders...</div>}
+                    {!marketLoading&&marketOrders.length===0&&(
+                      <div style={{padding:"24px",borderRadius:8,background:C.card,border:"1px solid "+C.border,textAlign:"center"}}>
+                        <div style={{fontSize:24,marginBottom:8}}>🏪</div>
+                        <div style={{fontSize:12,color:C.td,fontFamily:FONT_BODY}}>No listings yet. Be the first to sell something!</div>
+                        <div style={{fontSize:10,color:C.ts,marginTop:6,fontFamily:FONT_BODY}}>Click Refresh to check for new listings.</div>
+                      </div>
+                    )}
+                    <div style={{display:"flex",flexDirection:"column",gap:8}}>
+                      {marketOrders.map(order=>{
+                        const it=ITEMS[order.itemId];
+                        const canBuy=gold>=order.price;
+                        return(
+                          <div key={order.id} style={{display:"flex",alignItems:"center",gap:12,padding:"12px 16px",borderRadius:8,background:C.card,border:"1px solid "+(canBuy?C.border:C.bad+"30")}}>
+                            <span style={{fontSize:20}}>{it?it.i:"📦"}</span>
+                            <div style={{flex:1}}>
+                              <div style={{fontSize:12,fontWeight:700,color:C.white,fontFamily:FONT}}>{it?it.n:order.itemId} <span style={{color:C.ts,fontWeight:400,fontSize:10}}>×{order.qty}</span></div>
+                              <div style={{fontSize:10,color:C.td,fontFamily:FONT_BODY}}>from <span style={{color:C.acc}}>{order.sellerName||"Unknown"}</span></div>
+                            </div>
+                            <div style={{textAlign:"right",flexShrink:0}}>
+                              <div style={{fontSize:13,fontWeight:700,color:C.gold,fontFamily:FONT}}>◈ {fmt(order.price)}</div>
+                              <div style={{fontSize:9,color:C.ts,fontFamily:FONT_BODY}}>per {order.qty}</div>
+                            </div>
+                            <div onClick={()=>canBuy&&buyItem(order)} style={{padding:"7px 16px",borderRadius:6,background:canBuy?"linear-gradient(90deg,"+C.accD+","+C.acc+")":C.card,color:canBuy?C.bg:C.td,fontSize:10,fontWeight:700,cursor:canBuy?"pointer":"default",letterSpacing:1,fontFamily:FONT,border:"1px solid "+(canBuy?C.acc:C.border),boxShadow:canBuy?GLOW_STYLE:"none",flexShrink:0}}>
+                              {canBuy?"BUY":"NO CREDITS"}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+
+                {/* SELL tab */}
+                {marketTab==="sell"&&(
+                  <div style={{maxWidth:500}}>
+                    <div style={{padding:"18px 20px",borderRadius:10,background:C.card,border:"1px solid "+C.border}}>
+                      <div style={{fontSize:10,fontWeight:700,color:C.acc,letterSpacing:2,marginBottom:14}}>CREATE LISTING</div>
+
+                      <div style={{marginBottom:12}}>
+                        <div style={{fontSize:9,color:C.td,marginBottom:6,letterSpacing:1}}>SELECT ITEM</div>
+                        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:6,maxHeight:200,overflow:"auto"}}>
+                          {tradableItems.map(([id,qty])=>{
+                            const it=ITEMS[id];
+                            return(
+                              <div key={id} onClick={()=>setSellItem(id)} style={{padding:"8px 10px",borderRadius:6,background:sellItem===id?C.acc+"20":C.bg,border:"1px solid "+(sellItem===id?C.acc+"60":C.border),cursor:"pointer",transition:"all 0.15s"}}>
+                                <div style={{fontSize:14}}>{it?it.i:"📦"}</div>
+                                <div style={{fontSize:9,color:sellItem===id?C.acc:C.ts,fontFamily:FONT_BODY,marginTop:2}}>{it?it.n:id}</div>
+                                <div style={{fontSize:9,color:C.td,fontFamily:FONT_BODY}}>×{qty}</div>
+                              </div>
+                            );
+                          })}
+                          {tradableItems.length===0&&<div style={{gridColumn:"1/-1",fontSize:11,color:C.td,fontFamily:FONT_BODY,padding:8}}>No tradable resources. Gather some first!</div>}
+                        </div>
+                      </div>
+
+                      {sellItem&&(
+                        <>
+                          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:14}}>
+                            <div>
+                              <div style={{fontSize:9,color:C.td,marginBottom:4,letterSpacing:1}}>QUANTITY (have: {inv[sellItem]||0})</div>
+                              <input type="number" min="1" max={inv[sellItem]||1} value={sellQty}
+                                onChange={e=>setSellQty(Math.max(1,Math.min(inv[sellItem]||1,parseInt(e.target.value)||1)))}
+                                style={{width:"100%",padding:"8px 10px",borderRadius:6,background:C.bg,border:"1px solid "+C.border,color:C.white,fontSize:12,fontFamily:FONT_BODY,outline:"none"}}/>
+                            </div>
+                            <div>
+                              <div style={{fontSize:9,color:C.td,marginBottom:4,letterSpacing:1}}>PRICE (◈ credits)</div>
+                              <input type="number" min="1" value={sellPrice}
+                                onChange={e=>setSellPrice(Math.max(1,parseInt(e.target.value)||1))}
+                                style={{width:"100%",padding:"8px 10px",borderRadius:6,background:C.bg,border:"1px solid "+C.border,color:C.white,fontSize:12,fontFamily:FONT_BODY,outline:"none"}}/>
+                            </div>
+                          </div>
+                          <div style={{padding:"10px 14px",borderRadius:6,background:C.acc+"12",border:"1px solid "+C.acc+"30",marginBottom:14}}>
+                            <div style={{fontSize:10,color:C.ts,fontFamily:FONT_BODY}}>
+                              Listing: <span style={{color:C.white,fontWeight:700}}>{ITEMS[sellItem]?ITEMS[sellItem].n:sellItem} ×{sellQty}</span>
+                              {" "}for <span style={{color:C.gold,fontWeight:700}}>◈ {sellPrice}</span>
+                            </div>
+                          </div>
+                          <div onClick={listItem} style={{padding:"10px 0",borderRadius:6,background:"linear-gradient(90deg,"+C.accD+","+C.acc+")",color:C.bg,fontSize:11,fontWeight:700,textAlign:"center",cursor:"pointer",letterSpacing:2,fontFamily:FONT,boxShadow:GLOW_STYLE}}>
+                            LIST FOR SALE
+                          </div>
+                        </>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {/* MY LISTINGS tab */}
+                {marketTab==="mine"&&(
+                  <div>
+                    {myListings.length===0&&(
+                      <div style={{padding:"24px",borderRadius:8,background:C.card,border:"1px solid "+C.border,textAlign:"center"}}>
+                        <div style={{fontSize:12,color:C.td,fontFamily:FONT_BODY}}>You have no active listings.</div>
+                      </div>
+                    )}
+                    <div style={{display:"flex",flexDirection:"column",gap:8}}>
+                      {myListings.map(order=>{
+                        const it=ITEMS[order.itemId];
+                        return(
+                          <div key={order.id} style={{display:"flex",alignItems:"center",gap:12,padding:"12px 16px",borderRadius:8,background:C.card,border:"1px solid "+C.acc+"30"}}>
+                            <span style={{fontSize:20}}>{it?it.i:"📦"}</span>
+                            <div style={{flex:1}}>
+                              <div style={{fontSize:12,fontWeight:700,color:C.white,fontFamily:FONT}}>{it?it.n:order.itemId} <span style={{color:C.ts,fontWeight:400,fontSize:10}}>×{order.qty}</span></div>
+                              <div style={{fontSize:10,color:C.gold,fontFamily:FONT_BODY}}>◈ {fmt(order.price)} · Listed</div>
+                            </div>
+                            <div onClick={()=>cancelListing(order)} style={{padding:"6px 14px",borderRadius:6,background:C.bad+"20",border:"1px solid "+C.bad+"50",color:C.bad,fontSize:9,fontWeight:700,cursor:"pointer",letterSpacing:1,fontFamily:FONT}}>
+                              CANCEL
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+              </div>
+            );})()}
+
+            {/* ===== ACHIEVEMENTS PAGE ===== */}
+            {page==="achievements"&&(()=>{
+              const unlocked=ACHIEVEMENTS.filter(a=>achievements[a.id]).length;
+              const cats=Object.keys(ACHIEVEMENT_CATS);
+              const filteredAchs=ACHIEVEMENTS.filter(a=>a.cat===achCat);
+              return(
+              <div style={{maxWidth:800}}>
+                {/* Header */}
+                <div style={{display:"flex",alignItems:"center",gap:16,marginBottom:16}}>
+                  <div>
+                    <div style={{fontSize:14,fontWeight:700,color:C.white,letterSpacing:2}}>ACHIEVEMENTS</div>
+                    <div style={{fontSize:11,color:C.ts,fontFamily:FONT_BODY,marginTop:2}}>
+                      <span style={{color:C.gold,fontWeight:700}}>{unlocked}</span> / {ACHIEVEMENTS.length} unlocked
+                    </div>
+                  </div>
+                  {/* Overall progress bar */}
+                  <div style={{flex:1,height:8,borderRadius:4,background:C.bg,overflow:"hidden",border:"1px solid "+C.border}}>
+                    <div style={{width:(unlocked/ACHIEVEMENTS.length*100)+"%",height:"100%",background:"linear-gradient(90deg,"+C.gold+","+C.warn+")",borderRadius:4,transition:"width 0.5s",boxShadow:"0 0 6px "+C.gold}}/>
+                  </div>
+                  <div style={{fontSize:12,fontWeight:700,color:C.gold,fontFamily:FONT,flexShrink:0}}>{Math.round(unlocked/ACHIEVEMENTS.length*100)}%</div>
+                </div>
+
+                {/* Category tabs */}
+                <div style={{display:"flex",gap:6,flexWrap:"wrap",marginBottom:16}}>
+                  {cats.map(cat=>{
+                    const meta=ACHIEVEMENT_CATS[cat];
+                    const catTotal=ACHIEVEMENTS.filter(a=>a.cat===cat).length;
+                    const catDone=ACHIEVEMENTS.filter(a=>a.cat===cat&&achievements[a.id]).length;
+                    const active=achCat===cat;
+                    return(
+                      <div key={cat} onClick={()=>setAchCat(cat)} style={{padding:"5px 12px",borderRadius:6,cursor:"pointer",background:active?meta.color+"25":C.card,border:"2px solid "+(active?meta.color+"80":C.border),transition:"all 0.15s"}}>
+                        <div style={{fontSize:9,fontWeight:700,color:active?meta.color:C.ts,letterSpacing:1}}>{meta.label}</div>
+                        <div style={{fontSize:9,color:active?meta.color:C.td,fontFamily:FONT_BODY}}>{catDone}/{catTotal}</div>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                {/* Achievement cards */}
+                <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
+                  {filteredAchs.map(ach=>{
+                    const done=!!achievements[ach.id];
+                    const meta=ACHIEVEMENT_CATS[ach.cat];
+                    return(
+                      <div key={ach.id} style={{padding:"14px 16px",borderRadius:10,background:done?"linear-gradient(135deg,"+meta.color+"15,"+C.card+")":C.card,border:"2px solid "+(done?meta.color+"50":C.border),opacity:done?1:0.6,transition:"all 0.2s",boxShadow:done?"0 0 12px "+meta.color+"25":"none"}}>
+                        <div style={{display:"flex",alignItems:"flex-start",gap:10}}>
+                          <span style={{fontSize:24,filter:done?"drop-shadow(0 0 6px "+meta.color+")":"grayscale(1)",flexShrink:0}}>{ach.icon}</span>
+                          <div style={{flex:1}}>
+                            <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:3}}>
+                              <div style={{fontSize:11,fontWeight:700,color:done?meta.color:C.td,fontFamily:FONT,letterSpacing:0.5}}>{ach.name}</div>
+                              {done&&<div style={{fontSize:8,color:meta.color,fontWeight:700,padding:"1px 6px",borderRadius:8,background:meta.color+"20",border:"1px solid "+meta.color+"40"}}>✓</div>}
+                            </div>
+                            <div style={{fontSize:10,color:C.ts,fontFamily:FONT_BODY,lineHeight:1.4,marginBottom:6}}>{ach.desc}</div>
+                            <div style={{display:"flex",gap:4,flexWrap:"wrap"}}>
+                              {ach.reward.rp&&<span style={{fontSize:9,color:C.acc,padding:"1px 7px",borderRadius:4,background:C.acc+"12",border:"1px solid "+C.acc+"25"}}>🔬 +{ach.reward.rp} RP</span>}
+                              {ach.reward.gold&&<span style={{fontSize:9,color:C.gold,padding:"1px 7px",borderRadius:4,background:C.gold+"12",border:"1px solid "+C.gold+"25"}}>◈ +{ach.reward.gold}</span>}
+                              {ach.reward.dataCores&&<span style={{fontSize:9,color:C.purp,padding:"1px 7px",borderRadius:4,background:C.purp+"12",border:"1px solid "+C.purp+"25"}}>✦ +{ach.reward.dataCores} Core</span>}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            );})()}
+
+            {/* ===== STATS PAGE ===== */}
+            {page==="stats"&&(()=>{
+              const allSkillIds=[...SKILLS.map(s=>s.id),...CSUBS.map(c=>c.id),"enhancing"];
+              const topSkills=[...allSkillIds].map(id=>({id,lv:sl(id).lv,name:SKILLS.find(s=>s.id===id)?.name||CSUBS.find(c=>c.id===id)?.name||"Enhancing"})).sort((a,b)=>b.lv-a.lv).slice(0,6);
+              const totalDrones=Object.values(drones).reduce((s,v)=>s+(v||0),0);
+              const totalStructures=Object.values(structures).filter(v=>v>0).length;
+              return(
+              <div style={{maxWidth:760}}>
+                <div style={{fontSize:14,fontWeight:700,color:C.white,letterSpacing:2,marginBottom:16}}>STATS & PROFILE</div>
+
+                {/* Player card */}
+                <div style={{padding:"18px 20px",borderRadius:12,background:"linear-gradient(135deg,"+C.acc+"12,"+C.card+")",border:"2px solid "+C.acc+"40",marginBottom:16,boxShadow:"0 0 16px "+C.acc+"20"}}>
+                  <div style={{display:"flex",alignItems:"center",gap:16}}>
+                    <div style={{fontSize:48,filter:"drop-shadow(0 0 12px "+C.acc+")"}}>🌊</div>
+                    <div style={{flex:1}}>
+                      <div style={{fontSize:16,fontWeight:700,color:C.white,fontFamily:FONT,letterSpacing:2}}>{account.displayName||"Deep Diver"}</div>
+                      <div style={{fontSize:11,color:C.ts,fontFamily:FONT_BODY,marginTop:2}}>{account.email}</div>
+                      <div style={{display:"flex",gap:8,marginTop:6,flexWrap:"wrap"}}>
+                        {ascensionLevel>0&&<span style={{fontSize:10,color:C.purp,fontWeight:700,padding:"2px 8px",borderRadius:8,background:C.purp+"18",border:"1px solid "+C.purp+"40"}}>✦ Ascension {ascensionLevel}</span>}
+                        <span style={{fontSize:10,color:C.acc,fontWeight:700,padding:"2px 8px",borderRadius:8,background:C.acc+"18",border:"1px solid "+C.acc+"40"}}>⭐ Skill Lv {totalSkillLevel}</span>
+                        <span style={{fontSize:10,color:C.gold,fontWeight:700,padding:"2px 8px",borderRadius:8,background:C.gold+"18",border:"1px solid "+C.gold+"40"}}>🏆 {Object.keys(achievements).length} Achievements</span>
+                      </div>
+                    </div>
+                    <div style={{textAlign:"center",flexShrink:0}}>
+                      <div style={{fontSize:28,fontWeight:700,color:C.gold,fontFamily:FONT}}>{dataCores}</div>
+                      <div style={{fontSize:9,color:C.gold,letterSpacing:2}}>DATA CORES</div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Stats grid */}
+                <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:10,marginBottom:16}}>
+                  {[
+                    {label:"Total Gathered",value:fmt(lifeStats.totalGathered||0),icon:"🌿",color:C.ok},
+                    {label:"Enemies Slain",value:fmt(lifeStats.kills||0),icon:"⚔️",color:C.bad},
+                    {label:"Bosses Killed",value:fmt(lifeStats.bossKills||0),icon:"👑",color:C.warn},
+                    {label:"Credits Earned",value:"◈"+fmt(lifeStats.totalGold||0),icon:"💰",color:C.gold},
+                    {label:"Items Crafted",value:fmt(lifeStats.crafts||0),icon:"🔧",color:C.purp},
+                    {label:"Discoveries",value:fmt(lifeStats.discoveries||0),icon:"🔭",color:C.acc},
+                    {label:"Active Drones",value:totalDrones,icon:"🤖",color:"#ff006e"},
+                    {label:"Structures Built",value:totalStructures+"/8",icon:"🏗️",color:"#00ffb3"},
+                    {label:"Research Pts",value:fmt(researchPts),icon:"🔬",color:"#7b61ff"},
+                  ].map(s=>(
+                    <div key={s.label} style={{padding:"12px",borderRadius:8,background:C.card,border:"1px solid "+s.color+"30",textAlign:"center"}}>
+                      <div style={{fontSize:20,marginBottom:4}}>{s.icon}</div>
+                      <div style={{fontSize:13,fontWeight:700,color:s.color,fontFamily:FONT}}>{s.value}</div>
+                      <div style={{fontSize:9,color:C.td,fontFamily:FONT_BODY,marginTop:2}}>{s.label}</div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Top skills */}
+                <div style={{padding:"14px 16px",borderRadius:10,background:C.card,border:"1px solid "+C.border,marginBottom:16}}>
+                  <div style={{fontSize:9,fontWeight:700,color:C.acc,letterSpacing:2,marginBottom:12}}>TOP SKILLS</div>
+                  <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
+                    {topSkills.map(sk=>{
+                      const meta=SKILLS.find(s=>s.id===sk.id)||CSUBS.find(c=>c.id===sk.id)||{icon:"⭐",color:C.acc};
+                      const pct=Math.min(100,(sl(sk.id).xp/(sl(sk.id).need||1))*100);
+                      return(
+                        <div key={sk.id} style={{display:"flex",alignItems:"center",gap:8}}>
+                          <span style={{fontSize:16,flexShrink:0}}>{meta.icon}</span>
+                          <div style={{flex:1}}>
+                            <div style={{display:"flex",justifyContent:"space-between",marginBottom:3}}>
+                              <span style={{fontSize:10,color:C.text,fontFamily:FONT_BODY}}>{sk.name}</span>
+                              <span style={{fontSize:10,color:meta.color||C.acc,fontWeight:700,fontFamily:FONT}}>Lv {sk.lv}</span>
+                            </div>
+                            <div style={{height:3,borderRadius:2,background:C.bg}}>
+                              <div style={{width:pct+"%",height:"100%",borderRadius:2,background:meta.color||C.acc}}/>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Active bonuses summary */}
+                {activeBonusList.length>0&&(
+                  <div style={{padding:"14px 16px",borderRadius:10,background:C.card,border:"1px solid "+C.border}}>
+                    <div style={{fontSize:9,fontWeight:700,color:C.ok,letterSpacing:2,marginBottom:10}}>ALL ACTIVE BONUSES</div>
+                    <div style={{display:"flex",flexWrap:"wrap",gap:6}}>
+                      {activeBonusList.map(b=>(
+                        <span key={b} style={{padding:"3px 10px",borderRadius:10,background:C.ok+"18",border:"1px solid "+C.ok+"40",fontSize:9,color:C.ok,fontFamily:FONT_BODY}}>{b}</span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            );})()}
+
             {/* COMBAT PAGE */}
             {page==="combat"&&(
               <div style={{maxWidth:700}}>
@@ -740,6 +2216,14 @@ function GameUI({account,onLogout}){
             {Object.entries(inv).filter(e=>ITEMS[e[0]]&&ITEMS[e[0]].s).map(e=>{const id=e[0],qty=e[1];return(<div key={id} style={{display:"flex",justifyContent:"space-between",padding:"2px 0",fontSize:10}}><span style={{color:C.ts,fontFamily:FONT_BODY}}>{ITEMS[id].i} {ITEMS[id].n}</span><span style={{color:C.text,fontWeight:700,fontFamily:FONT}}>{fmt(qty)}</span></div>)})}
             {!Object.entries(inv).some(e=>ITEMS[e[0]]&&ITEMS[e[0]].s)&&<div style={{fontSize:10,color:C.td,fontFamily:FONT_BODY}}>—</div>}
           </div>
+          {discoveryLog.length>0&&(
+            <div style={{padding:10,borderRadius:8,background:C.card,border:"1px solid "+C.gold+"40"}}>
+              <div style={{fontSize:8,fontWeight:700,color:C.gold,marginBottom:6,letterSpacing:2}}>DISCOVERIES</div>
+              {discoveryLog.slice(-5).reverse().map((l,i)=>(
+                <div key={i} style={{fontSize:9,color:C.ts,padding:"2px 0",opacity:1-i*0.15,fontFamily:FONT_BODY,borderBottom:"1px solid "+C.bg,lineHeight:1.4}}>{l}</div>
+              ))}
+            </div>
+          )}
         </div>
 
       </div>
@@ -750,6 +2234,8 @@ function GameUI({account,onLogout}){
         ::-webkit-scrollbar{width:4px}::-webkit-scrollbar-track{background:transparent}
         ::-webkit-scrollbar-thumb{background:${C.border};border-radius:3px}
         ::selection{background:${C.acc}40}
+        @keyframes pulse{0%,100%{opacity:1}50%{opacity:0.6}}
+        @keyframes slideIn{from{transform:scale(0.85);opacity:0}to{transform:scale(1);opacity:1}}
       `}</style>
     </div>
   );

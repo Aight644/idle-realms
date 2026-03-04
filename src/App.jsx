@@ -558,8 +558,8 @@ const SKILLS=[
   // ── Kelp Cultivation: kelp → soft_coral → sea_mushrooms → tide_sap → kelp_spores → void_kelp ──
   {id:"kelp_farming",name:"Kelp Cultivation",icon:"🌿",color:"#00c285",cat:"gather",acts:[
     {id:"kf1",name:"Reef Kelp Bed",      lv:1, xp:10, t:3, out:[{id:"kelp",q:1}]},
-    {id:"kf2",name:"Coral Fronds",       lv:8, xp:22, t:4, out:[{id:"soft_coral",q:1}]},
-    {id:"kf3",name:"Mushroom Patch",     lv:18,xp:48, t:5, out:[{id:"sea_mushrooms",q:1}]},
+    {id:"kf2",name:"Coral Fronds",       lv:5, xp:22, t:4, out:[{id:"soft_coral",q:1}]},
+    {id:"kf3",name:"Mushroom Patch",     lv:15,xp:48, t:5, out:[{id:"sea_mushrooms",q:1}]},
     {id:"kf4",name:"Tidal Sap Harvest",  lv:30,xp:90, t:5, out:[{id:"tide_sap",q:1}]},
     {id:"kf5",name:"Spore Bed",          lv:50,xp:160,t:6, out:[{id:"kelp_spores",q:1}]},
     {id:"kf6",name:"Void Kelp Abyss",    lv:75,xp:280,t:7, out:[{id:"void_kelp",q:1}]}]},
@@ -567,8 +567,8 @@ const SKILLS=[
   // ── Deep Mining: trench_stone → shell_fragments → salt_crystals → thermal_ore → magma_shard → obsidian_ore ──
   {id:"deep_mining",name:"Deep Mining",icon:"⛏️",color:"#7b61ff",cat:"gather",acts:[
     {id:"dm1",name:"Reef Sandstone",     lv:1, xp:10, t:3, out:[{id:"trench_stone",q:1}]},
-    {id:"dm2",name:"Shell Bed",          lv:8, xp:22, t:4, out:[{id:"shell_fragments",q:1}]},
-    {id:"dm3",name:"Salt Crystal Vein",  lv:18,xp:48, t:5, out:[{id:"salt_crystals",q:1}]},
+    {id:"dm2",name:"Shell Bed",          lv:5, xp:22, t:4, out:[{id:"shell_fragments",q:1}]},
+    {id:"dm3",name:"Salt Crystal Vein",  lv:15,xp:48, t:5, out:[{id:"salt_crystals",q:1}]},
     {id:"dm4",name:"Thermal Ore Seam",   lv:30,xp:90, t:5, out:[{id:"thermal_ore",q:1}]},
     {id:"dm5",name:"Magma Shard Seam",   lv:50,xp:160,t:6, out:[{id:"magma_shard",q:1}]},
     {id:"dm6",name:"Obsidian Depths",    lv:75,xp:280,t:7, out:[{id:"obsidian_ore",q:1}]}]},
@@ -576,29 +576,29 @@ const SKILLS=[
   // ── Bioluminescent Fishing: glowfish → phosphor_scales → deepsea_roe → ocean_fiber → void_fin → alien_bio_tissue ──
   {id:"bioluminescent_fishing",name:"Bioluminescent Fishing",icon:"🎣",color:"#00d4ff",cat:"gather",acts:[
     {id:"bf1",name:"Reef Pool Fishing",  lv:1, xp:10, t:3, out:[{id:"glowfish",q:1}]},
-    {id:"bf2",name:"Scale Harvest",      lv:8, xp:22, t:4, out:[{id:"phosphor_scales",q:1}]},
-    {id:"bf3",name:"Roe Collection",     lv:18,xp:48, t:5, out:[{id:"deepsea_roe",q:1}]},
+    {id:"bf2",name:"Scale Harvest",      lv:5, xp:22, t:4, out:[{id:"phosphor_scales",q:1}]},
+    {id:"bf3",name:"Roe Collection",     lv:15,xp:48, t:5, out:[{id:"deepsea_roe",q:1}]},
     {id:"bf4",name:"Fiber Net Trawl",    lv:30,xp:90, t:5, out:[{id:"ocean_fiber",q:1}]},
     {id:"bf5",name:"Void Fin Hunt",      lv:50,xp:160,t:6, out:[{id:"void_fin",q:1}]},
     {id:"bf6",name:"Abyss Trawling",     lv:75,xp:280,t:7, out:[{id:"alien_bio_tissue",q:1}]}]},
 
   // ── Crystal Diving: abyss_crystal → raw_quartz → silt_crystal → ether_dust → void_pearl → void_essence ──
   {id:"crystal_diving",name:"Crystal Diving",icon:"💎",color:"#a78bfa",cat:"gather",acts:[
-    {id:"cd1",name:"Shallows Crystals",  lv:15,xp:30, t:5, out:[{id:"abyss_crystal",q:1}]},
-    {id:"cd2",name:"Quartz Shelf",       lv:25,xp:60, t:5, out:[{id:"raw_quartz",q:1}]},
-    {id:"cd3",name:"Silt Crystal Cave",  lv:38,xp:110,t:6, out:[{id:"silt_crystal",q:1}]},
-    {id:"cd4",name:"Ether Dust Pocket",  lv:52,xp:180,t:7, out:[{id:"ether_dust",q:1}]},
-    {id:"cd5",name:"Void Pearl Dive",    lv:68,xp:270,t:7, out:[{id:"void_pearl",q:1}]},
-    {id:"cd6",name:"Void Crystal Core",  lv:88,xp:400,t:9, out:[{id:"void_essence",q:1}]}]},
+    {id:"cd1",name:"Shallows Crystals",  lv:1, xp:15, t:4, out:[{id:"abyss_crystal",q:1}]},
+    {id:"cd2",name:"Quartz Shelf",       lv:10,xp:35, t:5, out:[{id:"raw_quartz",q:1}]},
+    {id:"cd3",name:"Silt Crystal Cave",  lv:25,xp:75, t:6, out:[{id:"silt_crystal",q:1}]},
+    {id:"cd4",name:"Ether Dust Pocket",  lv:40,xp:130,t:7, out:[{id:"ether_dust",q:1}]},
+    {id:"cd5",name:"Void Pearl Dive",    lv:60,xp:220,t:7, out:[{id:"void_pearl",q:1}]},
+    {id:"cd6",name:"Void Crystal Core",  lv:80,xp:360,t:9, out:[{id:"void_essence",q:1}]}]},
 
   // ── Trench Exploration: ocean_fiber → deep_moss → sediment_core → ancient_fragment → abyss_silt → ancient_relic ──
   {id:"trench_exploration",name:"Trench Exploration",icon:"🗺️",color:"#38bdf8",cat:"gather",acts:[
     {id:"te1",name:"Shallow Survey",     lv:1, xp:12, t:4, out:[{id:"ocean_fiber",q:1}]},
-    {id:"te2",name:"Deep Moss Bed",      lv:12,xp:30, t:4, out:[{id:"deep_moss",q:1}]},
+    {id:"te2",name:"Deep Moss Bed",      lv:10,xp:28, t:4, out:[{id:"deep_moss",q:1}]},
     {id:"te3",name:"Sediment Core",      lv:25,xp:65, t:5, out:[{id:"sediment_core",q:1}]},
     {id:"te4",name:"Ancient Ruin Dig",   lv:40,xp:120,t:6, out:[{id:"ancient_fragment",q:1}]},
     {id:"te5",name:"Abyss Silt Trench",  lv:60,xp:200,t:7, out:[{id:"abyss_silt",q:1}]},
-    {id:"te6",name:"Lost Relic Vault",   lv:85,xp:360,t:8, out:[{id:"ancient_relic",q:1}]}]},
+    {id:"te6",name:"Lost Relic Vault",   lv:80,xp:340,t:8, out:[{id:"ancient_relic",q:1}]}]},
   {id:"coral_engineering",name:"Coral Engineering",icon:"🔧",color:"#ffd60a",cat:"prod",acts:[
     {id:"ce1",name:"Coral Blocks",lv:1,xp:15,t:4,inp:[{id:"soft_coral",q:3}],out:[{id:"coral_blocks",q:1}]},
     {id:"ce2",name:"Reinforced Alloy",lv:10,xp:35,t:5,inp:[{id:"shell_fragments",q:5},{id:"trench_stone",q:3}],out:[{id:"reinforced_alloy",q:1}]},

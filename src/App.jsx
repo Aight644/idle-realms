@@ -931,6 +931,9 @@ function GameUI({account,onLogout}){
   const[enh,setEnh]=useState({});
   const[curAct,setCurAct]=useState(null);
   const[actProg,setActProg]=useState(0);
+  const[pinnedSkill,setPinnedSkill]=useState(null);
+  const[gatherCounts,setGatherCounts]=useState({});
+  const[lastActMap,setLastActMap]=useState({});
   const[zoneId,setZoneId]=useState(null);
   const[cbt,setCbt]=useState(null);
   const[clog,setClog]=useState([]);
@@ -1183,6 +1186,8 @@ function GameUI({account,onLogout}){
           // Track lifetime gathered items
           if(sk.cat==="gather")setLifeStats(p=>({...p,totalGathered:(p.totalGathered||0)+qty,[i.id]:(p[i.id]||0)+qty}));
         });
+        // Track session gather counts per action
+        if(sk.cat==="gather")setGatherCounts(p=>({...p,[act.id]:(p[act.id]||0)+1}));
         if(sk.cat==="prod")setLifeStats(p=>({...p,crafts:(p.crafts||0)+1}));
         // Utility skill bonus effects
         if(sk.cat==="utility"&&act.util){
@@ -1211,6 +1216,7 @@ function GameUI({account,onLogout}){
           });
         }
         start=Date.now();setActProg(0);
+        // Auto-restart: curAct stays set, loop continues automatically
       }
     },100);
     return()=>clearInterval(tick);
@@ -1293,7 +1299,7 @@ function GameUI({account,onLogout}){
     return()=>clearInterval(tick);
   },[zoneId,cbt,pStats,gainXp,food,remIt,bonuses]);
 
-  const startAct=useCallback((skId,actId)=>{setZoneId(null);setCbt(null);setCurAct({sk:skId,act:actId});setActProg(0);setActSkill(skId)},[]);
+  const startAct=useCallback((skId,actId)=>{setZoneId(null);setCbt(null);setCurAct({sk:skId,act:actId});setActProg(0);setActSkill(skId);setLastActMap(p=>({...p,[skId]:actId}));},[]);
   const startZone=useCallback((zid)=>{const z=ZONES.find(x=>x.id===zid);if(!z)return;setCurAct(null);setZoneId(zid);const m=z.mobs[0];setCbt({mob:m,mhp:m.hp,php:pStats.hp,mxhp:pStats.hp,kills:0,boss:false});setClog(["📡 Entered "+z.name+"...","⚠️ "+z.mobs.length+" mob types · "+(z.elites||[]).length+" elites · 2 bosses"])},[pStats]);
   const stopZone=useCallback(()=>{setZoneId(null);setCbt(null)},[]);
   const equipIt=useCallback((iid)=>{const it=ITEMS[iid];if(!it||!it.eq||(inv[iid]||0)<=0)return;const cur=eq[it.eq];if(cur)addIt(cur,1);remIt(iid,1);setEq(p=>({...p,[it.eq]:iid}))},[inv,eq,addIt,remIt]);
@@ -1991,54 +1997,87 @@ function GameUI({account,onLogout}){
               {mobileTab==="skills"&&(
                 <div style={{height:"100%",overflowY:"auto",padding:"12px"}}>
                   <div style={{display:"flex",flexDirection:"column",gap:4}}>
-                    {SKILLS.map(sk=>{
-                      const s=sl(sk.id);
-                      const pct=s.need>0?(s.xp/s.need)*100:0;
-                      const running=curAct?.sk===sk.id;
-                      const isActive=actSkill===sk.id;
-                      return(
-                        <div key={sk.id}>
-                          {/* Skill row */}
-                          <div onPointerDown={(e)=>{e.preventDefault();setActSkill(isActive?null:sk.id);}} style={{display:"flex",alignItems:"center",gap:10,padding:"12px 14px",borderRadius:isActive?"8px 8px 0 0":8,background:isActive?"linear-gradient(90deg,"+sk.color+"25,"+C.card+")":C.card,border:"1px solid "+(isActive?sk.color+"60":C.border),cursor:"pointer",borderBottom:isActive?"none":"1px solid "+(C.border)}}>
-                            <span style={{fontSize:18,flexShrink:0,filter:running?"drop-shadow(0 0 5px "+sk.color+")":s.mastered?"drop-shadow(0 0 5px "+C.gold+")":"none"}}>{sk.icon}</span>
-                            <div style={{flex:1,minWidth:0}}>
-                              <div style={{display:"flex",justifyContent:"space-between",marginBottom:4}}>
-                                <span style={{fontSize:13,color:isActive?sk.color:C.text,fontWeight:600,fontFamily:FONT_BODY}}>{sk.name}</span>
-                                <span style={{fontSize:12,color:s.mastered?C.gold:C.ts,fontWeight:700,fontFamily:FONT}}>{s.mastered?"★":pct.toFixed(1)+"% "+s.lv}</span>
-                              </div>
-                              <div style={{height:3,borderRadius:2,background:C.bg,overflow:"hidden"}}>
-                                <div style={{width:pct+"%",height:"100%",background:s.mastered?C.gold:running?C.ok:sk.color,borderRadius:2,transition:"width 0.3s"}}/>
-                              </div>
-                            </div>
-                            <span style={{fontSize:12,color:isActive?sk.color:C.td,flexShrink:0,marginLeft:4}}>{isActive?"▾":"▸"}</span>
-                            {running&&<span style={{fontSize:11,color:C.ok,fontWeight:700,flexShrink:0}}>▶</span>}
-                          </div>
-                          {/* Actions — expand inline directly under this skill */}
-                          {isActive&&(
-                            <div style={{background:C.bg,border:"1px solid "+sk.color+"40",borderTop:"none",borderRadius:"0 0 8px 8px",padding:"8px",display:"flex",flexDirection:"column",gap:6,marginBottom:4}}>
-                              {sk.acts.map(act=>{
-                                const canDo=s.lv>=act.lv;
-                                const isAct=curAct?.sk===sk.id&&curAct?.act===act.id;
-                                return(
-                                  <div key={act.id} style={{padding:"10px 12px",borderRadius:7,background:isAct?"linear-gradient(135deg,"+C.acc+"20,"+C.card+")":C.card,border:"1px solid "+(isAct?C.acc+"70":canDo?C.border:C.border+"40"),opacity:canDo?1:0.45,display:"flex",justifyContent:"space-between",alignItems:"center",gap:10}}>
-                                    <div style={{flex:1,minWidth:0}}>
-                                      <div style={{fontSize:13,color:isAct?C.acc:canDo?C.text:C.td,fontWeight:700,fontFamily:FONT_BODY,marginBottom:2}}>{act.name}</div>
-                                      <div style={{fontSize:11,color:C.ts,fontFamily:FONT_BODY}}>+{act.xp} XP · {act.t}s → {act.out.map(o=>(ITEMS[o.id]?.i||"📦")+" "+(ITEMS[o.id]?.n||o.id)).join(", ")}</div>
-                                      {!canDo&&<div style={{fontSize:11,color:C.bad,marginTop:2,fontFamily:FONT_BODY}}>Requires Lv {act.lv}</div>}
-                                    </div>
-                                    {canDo&&(
-                                      <div onPointerDown={e=>{e.preventDefault();e.stopPropagation();isAct?(setCurAct(null),setActProg(0)):startAct(sk.id,act.id)}} style={{padding:"9px 18px",borderRadius:7,background:isAct?"linear-gradient(90deg,"+C.bad+"cc,"+C.bad+")":"linear-gradient(90deg,"+C.accD+","+C.acc+")",color:C.bg,fontSize:12,fontWeight:700,cursor:"pointer",flexShrink:0,fontFamily:FONT,whiteSpace:"nowrap",userSelect:"none",WebkitUserSelect:"none"}}>
-                                        {isAct?"STOP":"START"}
-                                      </div>
-                                    )}
+                    {(()=>{
+                      const gSkills=SKILLS.filter(sk=>sk.cat==="gather");
+                      const oSkills=SKILLS.filter(sk=>sk.cat!=="gather");
+                      const sorted=[
+                        ...gSkills.filter(sk=>sk.id===pinnedSkill),
+                        ...gSkills.filter(sk=>sk.id!==pinnedSkill&&curAct?.sk===sk.id),
+                        ...gSkills.filter(sk=>sk.id!==pinnedSkill&&curAct?.sk!==sk.id),
+                        ...oSkills,
+                      ];
+                      return sorted.map(sk=>{
+                        const s=sl(sk.id);
+                        const pct=s.need>0?(s.xp/s.need)*100:0;
+                        const running=curAct?.sk===sk.id;
+                        const isActive=actSkill===sk.id;
+                        const isPinned=pinnedSkill===sk.id;
+                        const isGather=sk.cat==="gather";
+                        return(
+                          <div key={sk.id}>
+                            <div onPointerDown={(e)=>{e.preventDefault();setActSkill(isActive?null:sk.id);}} style={{display:"flex",alignItems:"center",gap:10,padding:"12px 14px",borderRadius:isActive?"8px 8px 0 0":8,background:isActive?"linear-gradient(90deg,"+sk.color+"25,"+C.card+")":C.card,border:"1px solid "+(isActive?sk.color+"60":isPinned?sk.color+"40":C.border),cursor:"pointer",borderBottom:isActive?"none":"1px solid "+(isPinned?sk.color+"40":C.border),userSelect:"none",WebkitUserSelect:"none"}}>
+                              <span style={{fontSize:18,flexShrink:0,filter:running?"drop-shadow(0 0 5px "+sk.color+")":s.mastered?"drop-shadow(0 0 5px "+C.gold+")":"none"}}>{sk.icon}</span>
+                              <div style={{flex:1,minWidth:0}}>
+                                <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:4}}>
+                                  <div style={{display:"flex",alignItems:"center",gap:5}}>
+                                    <span style={{fontSize:13,color:isActive?sk.color:C.text,fontWeight:600,fontFamily:FONT_BODY}}>{sk.name}</span>
+                                    {isPinned&&<span style={{fontSize:9,color:sk.color,pointerEvents:"none"}}>📌</span>}
                                   </div>
-                                );
-                              })}
+                                  <span style={{fontSize:11,color:s.mastered?C.gold:C.ts,fontWeight:700,fontFamily:FONT,pointerEvents:"none"}}>
+                                    {s.mastered?"★ MAX":"Lv "+s.lv+" · "+s.xp+"/"+s.need}
+                                  </span>
+                                </div>
+                                <div style={{height:3,borderRadius:2,background:C.bg,overflow:"hidden"}}>
+                                  <div style={{width:pct+"%",height:"100%",background:s.mastered?C.gold:running?C.ok:sk.color,borderRadius:2,transition:"width 0.3s"}}/>
+                                </div>
+                              </div>
+                              <span style={{fontSize:12,color:isActive?sk.color:C.td,flexShrink:0,marginLeft:4,pointerEvents:"none"}}>{isActive?"▾":"▸"}</span>
+                              {running&&<span style={{fontSize:11,color:C.ok,fontWeight:700,flexShrink:0,pointerEvents:"none"}}>▶</span>}
                             </div>
-                          )}
-                        </div>
-                      );
-                    })}
+                            {isActive&&(
+                              <div style={{background:C.bg,border:"1px solid "+sk.color+"40",borderTop:"none",borderRadius:"0 0 8px 8px",padding:"8px",display:"flex",flexDirection:"column",gap:6,marginBottom:4}}>
+                                {isGather&&(
+                                  <div onPointerDown={e=>{e.preventDefault();e.stopPropagation();setPinnedSkill(p=>p===sk.id?null:sk.id);}} style={{padding:"5px 10px",borderRadius:6,background:isPinned?sk.color+"25":C.card,border:"1px solid "+(isPinned?sk.color:C.border),fontSize:10,fontWeight:700,color:isPinned?sk.color:C.td,fontFamily:FONT,letterSpacing:1,textAlign:"center",cursor:"pointer",userSelect:"none",marginBottom:2}}>
+                                    {isPinned?"📌 PINNED — TAP TO UNPIN":"📌 PIN TO TOP"}
+                                  </div>
+                                )}
+                                {sk.acts.map(act=>{
+                                  const canDo=s.lv>=act.lv;
+                                  const isAct=curAct?.sk===sk.id&&curAct?.act===act.id;
+                                  const isLast=lastActMap[sk.id]===act.id&&!isAct&&!running;
+                                  const count=gatherCounts[act.id]||0;
+                                  return(
+                                    <div key={act.id} style={{padding:"10px 12px",borderRadius:7,background:isAct?"linear-gradient(135deg,"+C.acc+"20,"+C.card+")":isLast?sk.color+"10":C.card,border:"1px solid "+(isAct?C.acc+"70":isLast?sk.color+"50":canDo?C.border:C.border+"30"),opacity:canDo?1:0.5,display:"flex",justifyContent:"space-between",alignItems:"center",gap:10}}>
+                                      <div style={{flex:1,minWidth:0}}>
+                                        <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:2}}>
+                                          <span style={{fontSize:13,color:isAct?C.acc:canDo?C.text:C.td,fontWeight:700,fontFamily:FONT_BODY}}>{act.name}</span>
+                                          {isLast&&<span style={{fontSize:9,color:sk.color,fontWeight:700,fontFamily:FONT,letterSpacing:1}}>LAST</span>}
+                                        </div>
+                                        {canDo?(
+                                          <div style={{fontSize:11,color:C.ts,fontFamily:FONT_BODY,display:"flex",alignItems:"center",gap:4,flexWrap:"wrap"}}>
+                                            <span>+{act.xp} XP · {act.t}s · {act.out.map(o=>(ITEMS[o.id]?.i||"📦")+" "+(ITEMS[o.id]?.n||o.id)).join(", ")}</span>
+                                            {count>0&&<span style={{color:sk.color,fontWeight:700}}>· ×{count}</span>}
+                                          </div>
+                                        ):(
+                                          <div style={{fontSize:11,color:C.td,fontFamily:FONT_BODY}}>
+                                            🔒 Lv {act.lv} · {act.out.map(o=>(ITEMS[o.id]?.i||"📦")+" "+(ITEMS[o.id]?.n||o.id)).join(", ")}
+                                          </div>
+                                        )}
+                                      </div>
+                                      {canDo&&(
+                                        <div onPointerDown={e=>{e.preventDefault();e.stopPropagation();isAct?(setCurAct(null),setActProg(0)):startAct(sk.id,act.id)}} style={{padding:"9px 18px",borderRadius:7,background:isAct?"linear-gradient(90deg,"+C.bad+"cc,"+C.bad+")":"linear-gradient(90deg,"+C.accD+","+C.acc+")",color:C.bg,fontSize:12,fontWeight:700,cursor:"pointer",flexShrink:0,fontFamily:FONT,whiteSpace:"nowrap",userSelect:"none",WebkitUserSelect:"none"}}>
+                                          {isAct?"STOP":"START"}
+                                        </div>
+                                      )}
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            )}
+                          </div>
+                        );
+                      });
+                    })()}
                   </div>
                 </div>
               )}

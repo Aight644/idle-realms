@@ -1074,7 +1074,6 @@ function GameUI({account,onLogout}){
   const[leaderboard,setLeaderboard]=useState([]);
   const[lbLoading,setLbLoading]=useState(false);
   const[showLogoutConfirm,setShowLogoutConfirm]=useState(false);
-  const[rightTab,setRightTab]=useState("inventory"); // right panel tab
   const[chatOpen,setChatOpen]=useState(true);         // bottom chat bar
   // ── Social ──
   const chatEndRef=useRef(null);
@@ -1922,7 +1921,7 @@ function GameUI({account,onLogout}){
               </div>
               <div style={{textAlign:"center",marginBottom:20}}>
                 <div style={{fontSize:40,marginBottom:10,filter:"drop-shadow(0 0 12px "+C.acc+")"}}>{step.icon}</div>
-                <div style={{fontSize:14,fontWeight:700,color:C.white,letterSpacing:2,marginBottom:10,fontFamily:FONT}}>{step.title}</div>
+                <div style={{fontSize:20,fontWeight:700,color:C.white,letterSpacing:2,marginBottom:10,fontFamily:FONT}}>{step.title}</div>
                 <div style={{fontSize:12,color:C.ts,fontFamily:FONT_BODY,lineHeight:1.7}}>{step.body}</div>
               </div>
               <div style={{display:"flex",gap:10}}>
@@ -2003,7 +2002,7 @@ function GameUI({account,onLogout}){
         <div style={{position:"fixed",bottom:24,right:24,zIndex:997,maxWidth:320,padding:"14px 18px",borderRadius:12,background:"linear-gradient(135deg,"+C.panel+","+C.card+")",border:"2px solid "+C.gold+"70",boxShadow:"0 0 30px "+C.gold+"40",animation:"slideIn 0.3s ease-out",display:"flex",alignItems:"center",gap:12}}>
           <span style={{fontSize:28,filter:"drop-shadow(0 0 8px "+C.gold+")",flexShrink:0}}>{newAch.icon}</span>
           <div>
-            <div style={{fontSize:9,fontWeight:700,color:C.gold,letterSpacing:2,marginBottom:2}}>ACHIEVEMENT UNLOCKED</div>
+            <div style={{fontSize:11,fontWeight:700,color:C.gold,letterSpacing:2,marginBottom:2}}>ACHIEVEMENT UNLOCKED</div>
             <div style={{fontSize:12,fontWeight:700,color:C.white,fontFamily:FONT,marginBottom:2}}>{newAch.name}</div>
             <div style={{fontSize:10,color:C.ts,fontFamily:FONT_BODY}}>{newAch.desc}</div>
             <div style={{fontSize:9,color:C.ok,marginTop:4,fontFamily:FONT_BODY}}>
@@ -2276,7 +2275,7 @@ function GameUI({account,onLogout}){
             );
           })()}
 
-          <div style={{flex:1,overflow:"auto",padding:20}}>
+          <div style={{flex:1,overflow:"auto",padding:"24px 28px"}}>
 
             {/* SKILLS PAGE */}
             {page==="skills"&&skData&&(()=>{const s=sl(skData.id);const pct=s.mastered?100:s.need>0?(s.xp/s.need)*100:0;
@@ -2284,12 +2283,12 @@ function GameUI({account,onLogout}){
               const unlockedBps=BLUEPRINTS.filter(bp=>bp.skillId===skData.id&&blueprints.includes(bp.id));
               const availBps=BLUEPRINTS.filter(bp=>bp.skillId===skData.id&&!blueprints.includes(bp.id));
               return(
-              <div style={{maxWidth:700}}>
+              <div style={{}}>
                 <div style={{display:"flex",alignItems:"center",gap:14,marginBottom:16}}>
                   <span style={{fontSize:36,filter:"drop-shadow(0 0 10px "+skData.color+")"}}>{skData.icon}</span>
                   <div style={{flex:1}}>
                     <div style={{display:"flex",alignItems:"center",gap:10}}>
-                      <div style={{fontSize:16,fontWeight:700,color:C.white,letterSpacing:2}}>{skData.name.toUpperCase()}</div>
+                      <div style={{fontSize:20,fontWeight:700,color:C.white,letterSpacing:2}}>{skData.name.toUpperCase()}</div>
                       {s.mastered&&<div style={{fontSize:9,fontWeight:700,padding:"3px 10px",borderRadius:10,background:"linear-gradient(90deg,"+C.gold+","+C.warn+")",color:C.bg,letterSpacing:2}}>★ MASTERED</div>}
                     </div>
                     <div style={{fontSize:11,color:C.ts,marginTop:2,fontFamily:FONT_BODY}}>
@@ -2309,7 +2308,7 @@ function GameUI({account,onLogout}){
                     boxShadow:"0 0 8px "+(s.mastered?C.gold:skData.color)}}/>
                 </div>
                 {s.mastered&&<div style={{fontSize:10,color:C.gold,fontFamily:FONT_BODY,marginBottom:20,textAlign:"center",letterSpacing:1}}>★ This skill is fully mastered. All operations are available.</div>}
-                <div style={{fontSize:10,fontWeight:700,color:C.td,marginBottom:10,letterSpacing:2}}>AVAILABLE OPERATIONS</div>
+                <div style={{fontSize:11,fontWeight:700,color:C.td,marginBottom:12,letterSpacing:2}}>AVAILABLE OPERATIONS</div>
                 {allActs.map(act=>{
                   const locked=s.lv<act.lv&&!s.mastered;
                   const canDo=!locked&&(!act.inp||act.inp.every(i=>(inv[i.id]||0)>=i.q));
@@ -2318,31 +2317,31 @@ function GameUI({account,onLogout}){
                   const bpMeta=isBp?BLUEPRINTS.find(b=>b.id===act._blueprint):null;
                   const bpColor=bpMeta?BP_RARITY_COLOR[bpMeta.rarity]:C.gold;
                   return(
-                  <div key={act.id} style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"12px 16px",borderRadius:8,
+                  <div key={act.id} style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"14px 18px",borderRadius:10,
                     background:isAct?"linear-gradient(90deg,"+C.ok+"12,"+C.card+")":isBp?"linear-gradient(135deg,"+bpColor+"10,"+C.card+")":C.card,
                     border:"2px solid "+(isAct?C.ok+"50":isBp?bpColor+"50":C.border),
-                    marginBottom:8,opacity:locked?0.35:1,transition:"all 0.2s",
+                    marginBottom:10,opacity:locked?0.35:1,transition:"all 0.2s",
                     boxShadow:isBp?"0 0 12px "+bpColor+"20":"none"}}>
                     <div style={{flex:1}}>
-                      <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:2}}>
-                        <div style={{fontSize:12,fontWeight:700,color:isAct?C.ok:isBp?bpColor:C.white,fontFamily:FONT,letterSpacing:1}}>{act.name.toUpperCase()}</div>
-                        {isBp&&<div style={{fontSize:8,padding:"2px 7px",borderRadius:6,background:bpColor+"25",border:"1px solid "+bpColor+"60",color:bpColor,fontWeight:700,letterSpacing:1}}>📘 BLUEPRINT</div>}
+                      <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:4}}>
+                        <div style={{fontSize:14,fontWeight:700,color:isAct?C.ok:isBp?bpColor:C.white,fontFamily:FONT,letterSpacing:1}}>{act.name.toUpperCase()}</div>
+                        {isBp&&<div style={{fontSize:9,padding:"2px 7px",borderRadius:6,background:bpColor+"25",border:"1px solid "+bpColor+"60",color:bpColor,fontWeight:700,letterSpacing:1}}>📘 BLUEPRINT</div>}
                       </div>
-                      <div style={{fontSize:10,color:C.ts,fontFamily:FONT_BODY}}>+{act.xp} XP · {act.t}s{act.inp?" · Needs: "+act.inp.map(i=>(ITEMS[i.id]?ITEMS[i.id].i:"")+i.q).join(" "):""}  {act.out?" → "+act.out.map(i=>(ITEMS[i.id]?ITEMS[i.id].i:"")+" "+(ITEMS[i.id]?ITEMS[i.id].n:"")).join(", "):""}</div>
-                      {act.util&&<div style={{fontSize:9,color:"#38bdf8",marginTop:3,fontFamily:FONT_BODY}}>{act.desc||"Utility effect active"}</div>}
-                      {act.out&&act.out.some(o=>ITEMS[o.id]&&ITEMS[o.id].rare)&&<div style={{fontSize:9,color:C.gold,marginTop:2,fontFamily:FONT_BODY}}>✨ Produces rare material</div>}
-                      {locked&&<div style={{fontSize:9,color:C.bad,marginTop:2,fontFamily:FONT_BODY}}>Requires Level {act.lv}</div>}
+                      <div style={{fontSize:12,color:C.ts,fontFamily:FONT_BODY}}>+{act.xp} XP · {act.t}s{act.inp?" · Needs: "+act.inp.map(i=>(ITEMS[i.id]?ITEMS[i.id].i:"")+i.q).join(" "):""}  {act.out?" → "+act.out.map(i=>(ITEMS[i.id]?ITEMS[i.id].i:"")+" "+(ITEMS[i.id]?ITEMS[i.id].n:"")).join(", "):""}</div>
+                      {act.util&&<div style={{fontSize:11,color:"#38bdf8",marginTop:3,fontFamily:FONT_BODY}}>{act.desc||"Utility effect active"}</div>}
+                      {act.out&&act.out.some(o=>ITEMS[o.id]&&ITEMS[o.id].rare)&&<div style={{fontSize:11,color:C.gold,marginTop:2,fontFamily:FONT_BODY}}>✨ Produces rare material</div>}
+                      {locked&&<div style={{fontSize:11,color:C.bad,marginTop:2,fontFamily:FONT_BODY}}>Requires Level {act.lv}</div>}
                     </div>
-                    {!locked&&<div onClick={()=>{if(canDo)startAct(skData.id,act.id)}} style={{padding:"7px 18px",borderRadius:6,marginLeft:12,flexShrink:0,
+                    {!locked&&<div onClick={()=>{if(canDo)startAct(skData.id,act.id)}} style={{padding:"10px 22px",borderRadius:8,marginLeft:14,flexShrink:0,
                       background:isAct?"linear-gradient(90deg,"+C.okD+","+C.ok+")":canDo?"linear-gradient(90deg,"+C.accD+","+C.acc+")":C.card,
-                      color:C.bg,fontSize:10,fontWeight:700,cursor:canDo?"pointer":"default",opacity:canDo?1:0.35,letterSpacing:1,fontFamily:FONT,
+                      color:C.bg,fontSize:12,fontWeight:700,cursor:canDo?"pointer":"default",opacity:canDo?1:0.35,letterSpacing:1,fontFamily:FONT,
                       boxShadow:isAct?GLOW_OK:canDo?GLOW_STYLE:"none"}}>{isAct?"ACTIVE":"START"}</div>}
                   </div>
                 );})}
                 {/* Blueprint teaser — locked blueprints for this skill */}
                 {availBps.length>0&&(
                   <div style={{marginTop:20}}>
-                    <div style={{fontSize:9,fontWeight:700,color:C.td,letterSpacing:2,marginBottom:8}}>🔒 LOCKED BLUEPRINTS ({availBps.length})</div>
+                    <div style={{fontSize:11,fontWeight:700,color:C.td,letterSpacing:2,marginBottom:8}}>🔒 LOCKED BLUEPRINTS ({availBps.length})</div>
                     {availBps.map(bp=>{
                       const col=BP_RARITY_COLOR[bp.rarity];
                       return(
@@ -2364,9 +2363,9 @@ function GameUI({account,onLogout}){
 
             {/* ===== RESEARCH PAGE ===== */}
             {page==="research"&&(
-              <div style={{maxWidth:860}}>
+              <div style={{}}>
                 <div style={{display:"flex",alignItems:"baseline",gap:16,marginBottom:6}}>
-                  <div style={{fontSize:14,fontWeight:700,color:C.white,letterSpacing:2}}>RESEARCH TREE</div>
+                  <div style={{fontSize:20,fontWeight:700,color:C.white,letterSpacing:2}}>RESEARCH TREE</div>
                   <div style={{fontSize:11,color:C.acc,fontFamily:FONT_BODY}}>🔬 {fmt(researchPts)} RP available</div>
                 </div>
                 <div style={{fontSize:10,color:C.ts,marginBottom:14,fontFamily:FONT_BODY}}>RP trickles every 10s from production levels. Bonus RP from kills.</div>
@@ -2436,9 +2435,9 @@ function GameUI({account,onLogout}){
             {page==="structures"&&(()=>{
               const totalBuilt=STRUCTURES.reduce((s,st)=>s+(structures[st.id]>0?1:0),0);
               return(
-              <div style={{maxWidth:860}}>
+              <div style={{}}>
                 <div style={{display:"flex",alignItems:"baseline",gap:16,marginBottom:6}}>
-                  <div style={{fontSize:14,fontWeight:700,color:C.white,letterSpacing:2}}>STRUCTURES</div>
+                  <div style={{fontSize:20,fontWeight:700,color:C.white,letterSpacing:2}}>STRUCTURES</div>
                   <div style={{fontSize:11,color:C.ts,fontFamily:FONT_BODY}}>{totalBuilt}/{STRUCTURES.length} built · ◈ {fmt(gold)} credits</div>
                 </div>
                 <div style={{fontSize:10,color:C.ts,marginBottom:14,fontFamily:FONT_BODY}}>Build structures to passively generate resources and unlock powerful bonuses. Each structure can be upgraded up to level 5.</div>
@@ -2546,9 +2545,9 @@ function GameUI({account,onLogout}){
             {page==="drones"&&(()=>{
               const totalDeployed=DRONE_TYPES.reduce((s,dt)=>s+(drones[dt.id]||0),0);
               return(
-              <div style={{maxWidth:860}}>
+              <div style={{}}>
                 <div style={{display:"flex",alignItems:"baseline",gap:16,marginBottom:6}}>
-                  <div style={{fontSize:14,fontWeight:700,color:C.white,letterSpacing:2}}>DRONE FLEET</div>
+                  <div style={{fontSize:20,fontWeight:700,color:C.white,letterSpacing:2}}>DRONE FLEET</div>
                   <div style={{fontSize:11,color:C.ts,fontFamily:FONT_BODY}}>{totalDeployed} active drones · ◈ {fmt(gold)} credits</div>
                 </div>
                 <div style={{fontSize:10,color:C.ts,marginBottom:14,fontFamily:FONT_BODY}}>
@@ -2559,7 +2558,7 @@ function GameUI({account,onLogout}){
                 {/* Fleet overview bar */}
                 {totalDeployed>0&&(
                   <div style={{marginBottom:16,padding:"10px 14px",borderRadius:8,background:C.card,border:"1px solid "+C.acc+"40",display:"flex",gap:12,flexWrap:"wrap"}}>
-                    <div style={{fontSize:9,fontWeight:700,color:C.acc,letterSpacing:2,width:"100%",marginBottom:4}}>ACTIVE FLEET</div>
+                    <div style={{fontSize:11,fontWeight:700,color:C.acc,letterSpacing:2,width:"100%",marginBottom:4}}>ACTIVE FLEET</div>
                     {DRONE_TYPES.filter(dt=>(drones[dt.id]||0)>0).map(dt=>(
                       <div key={dt.id} style={{display:"flex",alignItems:"center",gap:6,padding:"4px 10px",borderRadius:6,background:dt.color+"18",border:"1px solid "+dt.color+"40"}}>
                         <span style={{fontSize:14,filter:"drop-shadow(0 0 4px "+dt.color+")"}}>{dt.icon}</span>
@@ -2727,7 +2726,7 @@ function GameUI({account,onLogout}){
 
                 {/* What Ascension does */}
                 <div style={{marginBottom:20,padding:"12px 16px",borderRadius:8,background:C.card,border:"1px solid "+C.border}}>
-                  <div style={{fontSize:9,fontWeight:700,color:C.acc,letterSpacing:2,marginBottom:8}}>ASCENSION REWARDS</div>
+                  <div style={{fontSize:11,fontWeight:700,color:C.acc,letterSpacing:2,marginBottom:8}}>ASCENSION REWARDS</div>
                   <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:6}}>
                     {ASCENSION_THRESHOLDS.map((thr,i)=>{
                       const done=ascensionLevel>i;const current=ascensionLevel===i;
@@ -2799,7 +2798,7 @@ function GameUI({account,onLogout}){
               return(
               <div style={{maxWidth:760}}>
                 <div style={{display:"flex",alignItems:"baseline",gap:16,marginBottom:6}}>
-                  <div style={{fontSize:14,fontWeight:700,color:C.white,letterSpacing:2}}>MARKETPLACE</div>
+                  <div style={{fontSize:20,fontWeight:700,color:C.white,letterSpacing:2}}>MARKETPLACE</div>
                   <div style={{fontSize:11,color:C.ts,fontFamily:FONT_BODY}}>Player-to-player trading · ◈ {fmt(gold)} credits</div>
                   <div onClick={loadMarket} style={{marginLeft:"auto",padding:"4px 12px",borderRadius:6,background:C.card,border:"1px solid "+C.border,fontSize:9,color:C.acc,cursor:"pointer",fontWeight:700,letterSpacing:1,fontFamily:FONT}}>{marketLoading?"LOADING...":"↻ REFRESH"}</div>
                 </div>
@@ -2940,11 +2939,11 @@ function GameUI({account,onLogout}){
               const cats=Object.keys(ACHIEVEMENT_CATS);
               const filteredAchs=ACHIEVEMENTS.filter(a=>a.cat===achCat);
               return(
-              <div style={{maxWidth:800}}>
+              <div style={{}}>
                 {/* Header */}
                 <div style={{display:"flex",alignItems:"center",gap:16,marginBottom:16}}>
                   <div>
-                    <div style={{fontSize:14,fontWeight:700,color:C.white,letterSpacing:2}}>ACHIEVEMENTS</div>
+                    <div style={{fontSize:20,fontWeight:700,color:C.white,letterSpacing:2}}>ACHIEVEMENTS</div>
                     <div style={{fontSize:11,color:C.ts,fontFamily:FONT_BODY,marginTop:2}}>
                       <span style={{color:C.gold,fontWeight:700}}>{unlocked}</span> / {ACHIEVEMENTS.length} unlocked
                     </div>
@@ -3008,11 +3007,11 @@ function GameUI({account,onLogout}){
               const cats=["gather","prod","utility"];
               const catLabels={gather:"Gathering",prod:"Production",utility:"Utility"};
               return(
-              <div style={{maxWidth:800}}>
+              <div style={{}}>
                 {/* Header */}
                 <div style={{display:"flex",alignItems:"center",gap:16,marginBottom:6}}>
                   <div>
-                    <div style={{fontSize:14,fontWeight:700,color:C.white,letterSpacing:2}}>BLUEPRINTS</div>
+                    <div style={{fontSize:20,fontWeight:700,color:C.white,letterSpacing:2}}>BLUEPRINTS</div>
                     <div style={{fontSize:11,color:C.ts,fontFamily:FONT_BODY,marginTop:2}}>
                       Hidden recipes discovered through exploration
                     </div>
@@ -3041,7 +3040,7 @@ function GameUI({account,onLogout}){
                   if(!catBps.length)return null;
                   return(
                     <div key={cat} style={{marginBottom:20}}>
-                      <div style={{fontSize:9,fontWeight:700,color:C.td,letterSpacing:2,marginBottom:10,marginTop:12}}>{catLabels[cat]||cat} BLUEPRINTS</div>
+                      <div style={{fontSize:11,fontWeight:700,color:C.td,letterSpacing:2,marginBottom:10,marginTop:12}}>{catLabels[cat]||cat} BLUEPRINTS</div>
                       <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
                         {catBps.map(bp=>{
                           const unlocked=blueprints.includes(bp.id);
@@ -3094,7 +3093,7 @@ function GameUI({account,onLogout}){
 
                 {/* Discovery reminder */}
                 <div style={{padding:"12px 16px",borderRadius:8,background:C.card,border:"1px solid "+C.border,marginTop:8}}>
-                  <div style={{fontSize:9,fontWeight:700,color:C.acc,letterSpacing:2,marginBottom:6}}>HOW TO UNLOCK</div>
+                  <div style={{fontSize:11,fontWeight:700,color:C.acc,letterSpacing:2,marginBottom:6}}>HOW TO UNLOCK</div>
                   <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:6}}>
                     {[
                       {disc:"🚢 Ancient Submarine Wreck",bps:"Void Kelp, Leviathan Scale, Deep Scan, Supply Mastery"},
@@ -3138,7 +3137,7 @@ function GameUI({account,onLogout}){
               );
 
               return(
-              <div style={{maxWidth:720,display:"flex",flexDirection:"column",height:"calc(100vh - 130px)"}}>
+              <div style={{display:"flex",flexDirection:"column",minHeight:0,flex:1}}>
                 {/* Tabs */}
                 <div style={{display:"flex",gap:4,marginBottom:12,flexShrink:0}}>
                   {tabs.map(t=>(
@@ -3168,7 +3167,7 @@ function GameUI({account,onLogout}){
                   <div style={{flex:1,overflowY:"auto",display:"flex",flexDirection:"column",gap:12}}>
                     {/* Add friend */}
                     <div style={{padding:"14px",borderRadius:10,background:C.card,border:"1px solid "+C.border}}>
-                      <div style={{fontSize:9,fontWeight:700,color:C.acc,letterSpacing:2,marginBottom:8}}>ADD COMMANDER</div>
+                      <div style={{fontSize:11,fontWeight:700,color:C.acc,letterSpacing:2,marginBottom:8}}>ADD COMMANDER</div>
                       <div style={{display:"flex",gap:8}}>
                         <input value={addFriendInput} onChange={e=>setAddFriendInput(e.target.value)} onKeyDown={e=>e.key==="Enter"&&sendFriendReq()} placeholder="Commander name..." style={{flex:1,padding:"8px 12px",borderRadius:8,background:C.bg,border:"1px solid "+C.border,color:C.white,fontSize:11,fontFamily:FONT_BODY,outline:"none"}}/>
                         <div onClick={sendFriendReq} style={{padding:"8px 16px",borderRadius:8,background:"linear-gradient(90deg,"+C.accD+","+C.acc+")",color:C.bg,fontSize:10,fontWeight:700,cursor:"pointer",letterSpacing:1,fontFamily:FONT,flexShrink:0}}>ADD</div>
@@ -3196,7 +3195,7 @@ function GameUI({account,onLogout}){
                     {/* Friends list */}
                     <div style={{padding:"14px",borderRadius:10,background:C.card,border:"1px solid "+C.border}}>
                       <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}>
-                        <div style={{fontSize:9,fontWeight:700,color:C.acc,letterSpacing:2}}>FRIENDS ({friends.length})</div>
+                        <div style={{fontSize:11,fontWeight:700,color:C.acc,letterSpacing:2}}>FRIENDS ({friends.length})</div>
                         <div onClick={loadFriends} style={{fontSize:9,color:C.ts,cursor:"pointer",fontFamily:FONT}}>↻ Refresh</div>
                       </div>
                       {friends.length===0&&<div style={{fontSize:11,color:C.td,fontFamily:FONT_BODY}}>No friends yet — add a commander above!</div>}
@@ -3255,7 +3254,7 @@ function GameUI({account,onLogout}){
                       <>
                         {/* Create clan */}
                         <div style={{padding:"16px",borderRadius:10,background:C.card,border:"1px solid "+C.border}}>
-                          <div style={{fontSize:9,fontWeight:700,color:C.acc,letterSpacing:2,marginBottom:10}}>FOUND A CLAN</div>
+                          <div style={{fontSize:11,fontWeight:700,color:C.acc,letterSpacing:2,marginBottom:10}}>FOUND A CLAN</div>
                           <div style={{display:"flex",gap:8,marginBottom:8}}>
                             <input value={createClanName} onChange={e=>setCreateClanName(e.target.value)} placeholder="Clan name..." style={{flex:2,padding:"8px 12px",borderRadius:8,background:C.bg,border:"1px solid "+C.border,color:C.white,fontSize:11,fontFamily:FONT_BODY,outline:"none"}}/>
                             <input value={createClanTag} onChange={e=>setCreateClanTag(e.target.value)} placeholder="TAG" maxLength={4} style={{flex:0,width:72,padding:"8px 12px",borderRadius:8,background:C.bg,border:"1px solid "+C.border,color:C.gold,fontSize:11,fontFamily:FONT,outline:"none",textTransform:"uppercase",textAlign:"center"}}/>
@@ -3264,7 +3263,7 @@ function GameUI({account,onLogout}){
                         </div>
                         {/* Search clans */}
                         <div style={{padding:"16px",borderRadius:10,background:C.card,border:"1px solid "+C.border}}>
-                          <div style={{fontSize:9,fontWeight:700,color:C.acc,letterSpacing:2,marginBottom:10}}>FIND A CLAN</div>
+                          <div style={{fontSize:11,fontWeight:700,color:C.acc,letterSpacing:2,marginBottom:10}}>FIND A CLAN</div>
                           <div style={{display:"flex",gap:8,marginBottom:10}}>
                             <input value={clanSearchInput} onChange={e=>setClanSearchInput(e.target.value)} onKeyDown={e=>e.key==="Enter"&&searchClans()} placeholder="Search by name or tag..." style={{flex:1,padding:"8px 12px",borderRadius:8,background:C.bg,border:"1px solid "+C.border,color:C.white,fontSize:11,fontFamily:FONT_BODY,outline:"none"}}/>
                             <div onClick={searchClans} style={{padding:"8px 14px",borderRadius:8,background:C.card,border:"1px solid "+C.border,color:C.acc,fontSize:10,fontWeight:700,cursor:"pointer",fontFamily:FONT,flexShrink:0}}>🔍</div>
@@ -3298,7 +3297,7 @@ function GameUI({account,onLogout}){
                             <div onClick={leaveClan} style={{marginLeft:"auto",padding:"6px 12px",borderRadius:6,background:C.bad+"15",border:"1px solid "+C.bad+"30",color:C.bad,fontSize:9,fontWeight:700,cursor:"pointer",fontFamily:FONT,flexShrink:0}}>LEAVE</div>
                           </div>
                           {/* Members */}
-                          <div style={{fontSize:9,fontWeight:700,color:C.td,letterSpacing:2,marginBottom:6}}>MEMBERS</div>
+                          <div style={{fontSize:11,fontWeight:700,color:C.td,letterSpacing:2,marginBottom:6}}>MEMBERS</div>
                           <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:4}}>
                             {clanMembers.map(m=>(
                               <div key={m.uid} style={{display:"flex",alignItems:"center",gap:8,padding:"6px 8px",borderRadius:6,background:C.bg,border:"1px solid "+(m.role==="leader"?C.gold+"50":C.border)}}>
@@ -3313,7 +3312,7 @@ function GameUI({account,onLogout}){
                         </div>
                         {/* Clan chat */}
                         <div style={{display:"flex",flexDirection:"column",flex:1,minHeight:200,padding:"14px",borderRadius:10,background:C.card,border:"1px solid "+C.border}}>
-                          <div style={{fontSize:9,fontWeight:700,color:C.acc,letterSpacing:2,marginBottom:8,flexShrink:0}}>CLAN CHAT</div>
+                          <div style={{fontSize:11,fontWeight:700,color:C.acc,letterSpacing:2,marginBottom:8,flexShrink:0}}>CLAN CHAT</div>
                           <div style={{flex:1,overflowY:"auto",display:"flex",flexDirection:"column",gap:2,marginBottom:10}}>
                             {clanChat.map((m,i)=><ChatMsg key={i} m={m} mine={m.uid===account.uid}/>)}
                             <div ref={chatEndRef}/>
@@ -3332,10 +3331,10 @@ function GameUI({account,onLogout}){
 
             {/* ===== LEADERBOARD PAGE ===== */}
             {page==="leaderboard"&&(
-              <div style={{maxWidth:680}}>
+              <div style={{}}>
                 <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:16}}>
                   <div>
-                    <div style={{fontSize:14,fontWeight:700,color:C.white,letterSpacing:2}}>🏅 LEADERBOARD</div>
+                    <div style={{fontSize:20,fontWeight:700,color:C.white,letterSpacing:2}}>🏅 LEADERBOARD</div>
                     <div style={{fontSize:11,color:C.ts,fontFamily:FONT_BODY,marginTop:2}}>Top commanders by total skill level</div>
                   </div>
                   <div onClick={loadLeaderboard} style={{padding:"8px 16px",borderRadius:8,background:C.card,border:"1px solid "+C.border,color:C.acc,fontSize:10,fontWeight:700,cursor:"pointer",letterSpacing:1,fontFamily:FONT}}>
@@ -3409,7 +3408,7 @@ function GameUI({account,onLogout}){
               const totalStructures=Object.values(structures).filter(v=>v>0).length;
               return(
               <div style={{maxWidth:760}}>
-                <div style={{fontSize:14,fontWeight:700,color:C.white,letterSpacing:2,marginBottom:16}}>STATS & PROFILE</div>
+                <div style={{fontSize:20,fontWeight:700,color:C.white,letterSpacing:2,marginBottom:16}}>STATS & PROFILE</div>
 
                 {/* Player card */}
                 <div style={{padding:"18px 20px",borderRadius:12,background:"linear-gradient(135deg,"+C.acc+"12,"+C.card+")",border:"2px solid "+C.acc+"40",marginBottom:16,boxShadow:"0 0 16px "+C.acc+"20"}}>
@@ -3454,7 +3453,7 @@ function GameUI({account,onLogout}){
 
                 {/* Top skills */}
                 <div style={{padding:"14px 16px",borderRadius:10,background:C.card,border:"1px solid "+C.border,marginBottom:16}}>
-                  <div style={{fontSize:9,fontWeight:700,color:C.acc,letterSpacing:2,marginBottom:12}}>TOP SKILLS</div>
+                  <div style={{fontSize:11,fontWeight:700,color:C.acc,letterSpacing:2,marginBottom:12}}>TOP SKILLS</div>
                   <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
                     {topSkills.map(sk=>{
                       const meta=SKILLS.find(s=>s.id===sk.id)||CSUBS.find(c=>c.id===sk.id)||{icon:"⭐",color:C.acc};
@@ -3480,7 +3479,7 @@ function GameUI({account,onLogout}){
                 {/* Active bonuses summary */}
                 {activeBonusList.length>0&&(
                   <div style={{padding:"14px 16px",borderRadius:10,background:C.card,border:"1px solid "+C.border}}>
-                    <div style={{fontSize:9,fontWeight:700,color:C.ok,letterSpacing:2,marginBottom:10}}>ALL ACTIVE BONUSES</div>
+                    <div style={{fontSize:11,fontWeight:700,color:C.ok,letterSpacing:2,marginBottom:10}}>ALL ACTIVE BONUSES</div>
                     <div style={{display:"flex",flexWrap:"wrap",gap:6}}>
                       {activeBonusList.map(b=>(
                         <span key={b} style={{padding:"3px 10px",borderRadius:10,background:C.ok+"18",border:"1px solid "+C.ok+"40",fontSize:9,color:C.ok,fontFamily:FONT_BODY}}>{b}</span>
@@ -3493,50 +3492,102 @@ function GameUI({account,onLogout}){
 
             {/* COMBAT PAGE */}
             {page==="combat"&&(
-              <div style={{maxWidth:700}}>
-                <div style={{fontSize:14,fontWeight:700,color:C.white,marginBottom:4,letterSpacing:2}}>COMBAT ZONES</div>
-                <div style={{fontSize:11,color:C.ts,marginBottom:16,fontFamily:FONT_BODY}}>HP: {pStats.hp} · ATK: {pStats.atk} · DEF: {pStats.def} · Depth Rank: {combatLv}</div>
-                <div style={{marginBottom:16,padding:"12px 16px",borderRadius:8,background:C.card,border:"1px solid "+C.border}}>
-                  <div style={{fontSize:9,fontWeight:700,color:C.ts,marginBottom:8,letterSpacing:2}}>EMERGENCY RATIONS (auto below 40% HP)</div>
-                  <div style={{display:"flex",gap:6,flexWrap:"wrap"}}>
-                    {Object.entries(inv).filter(e=>ITEMS[e[0]]&&ITEMS[e[0]].food).map(e=>{const id=e[0],qty=e[1];return(<div key={id} onClick={()=>setFood(id)} style={{padding:"5px 12px",borderRadius:4,background:food===id?C.ok+"20":C.bg,border:"1px solid "+(food===id?C.ok+"60":C.border),cursor:"pointer",fontSize:11,color:C.text,fontFamily:FONT_BODY,boxShadow:food===id?GLOW_OK:"none"}}>{ITEMS[id].i} {ITEMS[id].n} x{qty}{food===id?" ✓":""}</div>)})}
-                    {!Object.entries(inv).some(e=>ITEMS[e[0]]&&ITEMS[e[0]].food)&&<span style={{fontSize:11,color:C.td,fontFamily:FONT_BODY}}>No rations. Synthesize some first.</span>}
+              <div>
+                {/* Header */}
+                <div style={{marginBottom:20}}>
+                  <div style={{fontSize:22,fontWeight:700,color:C.white,letterSpacing:2,marginBottom:6}}>⚔️ COMBAT ZONES</div>
+                  <div style={{display:"flex",gap:16,flexWrap:"wrap"}}>
+                    {[
+                      {l:"Hull HP", v:pStats.hp, c:C.ok},
+                      {l:"Attack",  v:pStats.atk, c:C.bad},
+                      {l:"Defense", v:pStats.def, c:C.acc},
+                      {l:"Depth Rank", v:combatLv, c:C.gold},
+                    ].map(s=>(
+                      <div key={s.l} style={{padding:"8px 16px",borderRadius:8,background:C.card,border:"1px solid "+C.border}}>
+                        <div style={{fontSize:10,color:C.td,letterSpacing:1,marginBottom:2,fontFamily:FONT_BODY}}>{s.l}</div>
+                        <div style={{fontSize:18,fontWeight:700,color:s.c,fontFamily:FONT}}>{s.v}</div>
+                      </div>
+                    ))}
                   </div>
                 </div>
-                <div style={{fontSize:9,fontWeight:700,color:C.td,marginBottom:10,letterSpacing:2}}>OCEAN ZONES</div>
-                {ZONES.map(zone=>{const lk=combatLv<zone.lv;const isAct=zoneId===zone.id;return(
-                  <div key={zone.id} style={{padding:"12px 16px",borderRadius:8,background:isAct?"linear-gradient(90deg,"+C.bad+"15,"+C.card+")":C.card,border:"1px solid "+(isAct?C.bad+"50":C.border),marginBottom:8,opacity:lk?0.35:1}}>
-                    <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:6}}>
-                      <div>
-                        <div style={{fontSize:13,fontWeight:700,color:isAct?C.bad:C.white,fontFamily:FONT,letterSpacing:1}}>{zone.icon} {zone.name.toUpperCase()}</div>
-                        <div style={{fontSize:10,color:C.ts,marginTop:2,fontFamily:FONT_BODY}}>Depth Rank {zone.lv}+ · {zone.mobs.length} mobs · {(zone.elites||[]).length} elites · 2 bosses</div>
+
+                {/* Emergency rations */}
+                <div style={{marginBottom:20,padding:"16px 20px",borderRadius:10,background:C.card,border:"1px solid "+C.border}}>
+                  <div style={{fontSize:11,fontWeight:700,color:C.ts,marginBottom:10,letterSpacing:2}}>🍖 EMERGENCY RATIONS — auto-use below 40% HP</div>
+                  <div style={{display:"flex",gap:8,flexWrap:"wrap"}}>
+                    {Object.entries(inv).filter(e=>ITEMS[e[0]]&&ITEMS[e[0]].food).map(e=>{const id=e[0],qty=e[1];return(
+                      <div key={id} onClick={()=>setFood(id)} style={{padding:"8px 16px",borderRadius:8,background:food===id?C.ok+"20":C.bg,border:"2px solid "+(food===id?C.ok:C.border),cursor:"pointer",fontSize:13,color:C.text,fontFamily:FONT_BODY,boxShadow:food===id?GLOW_OK:"none",display:"flex",alignItems:"center",gap:6}}>
+                        <span style={{fontSize:18}}>{ITEMS[id].i}</span>
+                        <span>{ITEMS[id].n}</span>
+                        <span style={{color:C.td}}>×{qty}</span>
+                        {food===id&&<span style={{color:C.ok,fontWeight:700}}>✓</span>}
                       </div>
-                      {!lk&&<div onClick={()=>{if(isAct)stopZone();else startZone(zone.id)}} style={{padding:"7px 18px",borderRadius:6,background:isAct?"linear-gradient(90deg,"+C.badD+","+C.bad+")":"linear-gradient(90deg,"+C.accD+","+C.acc+")",color:C.bg,fontSize:10,fontWeight:700,cursor:"pointer",letterSpacing:1,fontFamily:FONT,boxShadow:isAct?GLOW_BAD:GLOW_STYLE,flexShrink:0}}>{isAct?"RETREAT":"DIVE IN"}</div>}
-                      {lk&&<span style={{fontSize:10,color:C.bad,fontFamily:FONT,flexShrink:0}}>LV {zone.lv}</span>}
-                    </div>
-                    {/* Creature preview row */}
-                    <div style={{display:"flex",gap:4,flexWrap:"wrap",marginBottom:4}}>
-                      {zone.mobs.map((m,i)=>(
-                        <span key={i} title={m.n+" (HP:"+m.hp+" ATK:"+m.atk+")"} style={{fontSize:16,cursor:"default",filter:"drop-shadow(0 0 3px #00d4ff22)"}}>{m.i||"👾"}</span>
-                      ))}
-                      <span style={{fontSize:10,color:C.td,alignSelf:"center",marginLeft:2}}>+</span>
-                      {(zone.elites||[]).map((m,i)=>(
-                        <span key={i} title={"💠 ELITE: "+m.n+" (HP:"+m.hp+")"} style={{fontSize:16,cursor:"default",filter:"drop-shadow(0 0 5px "+C.purp+")"}}>{m.i||"⚡"}</span>
-                      ))}
-                      <span style={{fontSize:10,color:C.td,alignSelf:"center",marginLeft:2}}>bosses:</span>
-                      <span title={"👑 "+zone.boss.n} style={{fontSize:16,cursor:"default",filter:"drop-shadow(0 0 5px "+C.bad+")"}}>{zone.boss.i||"💀"}</span>
-                      <span title={"⚜️ "+zone.boss2.n} style={{fontSize:16,cursor:"default",filter:"drop-shadow(0 0 6px "+C.gold+")"}}>{zone.boss2.i||"👑"}</span>
-                    </div>
-                    <div style={{fontSize:9,color:C.td,fontFamily:FONT_BODY}}>{zone.mobs.map(m=>m.n).slice(0,4).join(" · ")}{zone.mobs.length>4?" · ...":""}</div>
+                    )})}
+                    {!Object.entries(inv).some(e=>ITEMS[e[0]]&&ITEMS[e[0]].food)&&(
+                      <span style={{fontSize:13,color:C.td,fontFamily:FONT_BODY}}>No rations — synthesize food first.</span>
+                    )}
                   </div>
-                );})}
-                {clog.length>0&&(<div style={{marginTop:16,padding:"12px 16px",borderRadius:8,background:C.card,border:"1px solid "+C.border,maxHeight:160,overflow:"auto"}}><div style={{fontSize:9,fontWeight:700,color:C.ts,marginBottom:6,letterSpacing:2}}>COMBAT LOG</div>{clog.slice(-10).reverse().map((l,i)=>(<div key={i} style={{fontSize:10,color:C.ts,padding:"2px 0",borderBottom:"1px solid "+C.bg,opacity:1-i*0.08,fontFamily:FONT_BODY}}>{l}</div>))}</div>)}
+                </div>
+
+                {/* Zone list */}
+                <div style={{fontSize:11,fontWeight:700,color:C.td,marginBottom:12,letterSpacing:2}}>OCEAN ZONES</div>
+                {ZONES.map(zone=>{
+                  const lk=combatLv<zone.lv;
+                  const isAct=zoneId===zone.id;
+                  return(
+                    <div key={zone.id} style={{padding:"18px 20px",borderRadius:12,background:isAct?"linear-gradient(120deg,"+C.bad+"18,"+C.card+")":C.card,border:"2px solid "+(isAct?C.bad+"80":lk?C.border+"60":C.border),marginBottom:12,opacity:lk?0.4:1,transition:"border-color 0.2s"}}>
+                      {/* Zone header */}
+                      <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:10}}>
+                        <div>
+                          <div style={{fontSize:18,fontWeight:700,color:isAct?C.bad:C.white,fontFamily:FONT,letterSpacing:1,marginBottom:3}}>
+                            {zone.icon} {zone.name.toUpperCase()}
+                          </div>
+                          <div style={{fontSize:12,color:C.ts,fontFamily:FONT_BODY}}>
+                            Depth Rank {zone.lv}+ · {zone.mobs.length} mobs · {(zone.elites||[]).length} elites · 2 bosses
+                          </div>
+                        </div>
+                        {!lk&&(
+                          <div onClick={()=>isAct?stopZone():startZone(zone.id)} style={{padding:"10px 24px",borderRadius:8,background:isAct?"linear-gradient(90deg,"+C.badD+","+C.bad+")":"linear-gradient(90deg,"+C.accD+","+C.acc+")",color:C.bg,fontSize:13,fontWeight:700,cursor:"pointer",letterSpacing:1,fontFamily:FONT,boxShadow:isAct?GLOW_BAD:GLOW_STYLE,flexShrink:0,whiteSpace:"nowrap"}}>
+                            {isAct?"◄ RETREAT":"DIVE IN ►"}
+                          </div>
+                        )}
+                        {lk&&<span style={{fontSize:13,color:C.bad,fontFamily:FONT,flexShrink:0,padding:"6px 14px",borderRadius:8,background:C.bad+"15",border:"1px solid "+C.bad+"40"}}>🔒 LV {zone.lv}</span>}
+                      </div>
+                      {/* Creature icons */}
+                      <div style={{display:"flex",gap:6,flexWrap:"wrap",alignItems:"center",marginBottom:6}}>
+                        {zone.mobs.map((m,i)=>(
+                          <span key={i} title={m.n+" — HP:"+m.hp+" ATK:"+m.atk} style={{fontSize:22,cursor:"default",filter:"drop-shadow(0 0 3px #00d4ff22)"}}>{m.i||"👾"}</span>
+                        ))}
+                        <span style={{fontSize:11,color:C.td,margin:"0 4px"}}>·</span>
+                        {(zone.elites||[]).map((m,i)=>(
+                          <span key={i} title={"💠 ELITE: "+m.n+" HP:"+m.hp} style={{fontSize:22,cursor:"default",filter:"drop-shadow(0 0 6px "+C.purp+")"}}>{m.i||"⚡"}</span>
+                        ))}
+                        <span style={{fontSize:11,color:C.td,margin:"0 4px"}}>· bosses:</span>
+                        <span title={"👑 "+zone.boss.n} style={{fontSize:22,filter:"drop-shadow(0 0 6px "+C.bad+")"}}>{zone.boss.i||"💀"}</span>
+                        <span title={"⚜️ "+zone.boss2.n} style={{fontSize:22,filter:"drop-shadow(0 0 8px "+C.gold+")"}}>{zone.boss2.i||"👑"}</span>
+                      </div>
+                      <div style={{fontSize:11,color:C.td,fontFamily:FONT_BODY}}>
+                        {zone.mobs.map(m=>m.n).slice(0,5).join(" · ")}{zone.mobs.length>5?" · …":""}
+                      </div>
+                    </div>
+                  );
+                })}
+
+                {/* Combat log */}
+                {clog.length>0&&(
+                  <div style={{marginTop:8,padding:"16px 20px",borderRadius:10,background:C.card,border:"1px solid "+C.border}}>
+                    <div style={{fontSize:11,fontWeight:700,color:C.ts,marginBottom:10,letterSpacing:2}}>COMBAT LOG</div>
+                    {clog.slice(-12).reverse().map((l,i)=>(
+                      <div key={i} style={{fontSize:12,color:C.ts,padding:"3px 0",borderBottom:"1px solid "+C.bg,opacity:1-i*0.07,fontFamily:FONT_BODY}}>{l}</div>
+                    ))}
+                  </div>
+                )}
               </div>
             )}
 
             {/* EQUIPMENT PAGE */}
             {page==="equipment"&&(
-              <div style={{maxWidth:700}}>
+              <div style={{}}>
                 <div style={{fontSize:14,fontWeight:700,color:C.white,marginBottom:16,letterSpacing:2}}>EQUIPMENT LOADOUT</div>
                 <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
                   {ESLOTS.map(slot=>{const iid=eq[slot.id];const it=iid?ITEMS[iid]:null;const el=iid?(enh[iid]||0):0;return(
@@ -3551,7 +3602,7 @@ function GameUI({account,onLogout}){
 
             {/* ENHANCING PAGE */}
             {page==="enhancing"&&(
-              <div style={{maxWidth:700}}>
+              <div style={{}}>
                 <div style={{fontSize:14,fontWeight:700,color:C.white,marginBottom:4,letterSpacing:2}}>EQUIPMENT UPGRADE LAB</div>
                 <div style={{fontSize:11,color:C.ts,marginBottom:4,fontFamily:FONT_BODY}}>Level {sl("enhancing").lv} — {fmt(sl("enhancing").xp)} / {fmt(sl("enhancing").need)} XP</div>
                 <div style={{height:6,borderRadius:3,background:C.card,overflow:"hidden",marginBottom:16}}><div style={{width:(sl("enhancing").xp/sl("enhancing").need)*100+"%",height:"100%",borderRadius:3,background:C.warn,boxShadow:"0 0 6px "+C.warn}}/></div>
@@ -3575,7 +3626,7 @@ function GameUI({account,onLogout}){
                 {/* Rare items section */}
                 {Object.entries(inv).some(([id])=>ITEMS[id]&&ITEMS[id].rare)&&(
                   <div style={{marginBottom:16}}>
-                    <div style={{fontSize:9,fontWeight:700,color:C.gold,letterSpacing:2,marginBottom:8}}>✨ RARE MATERIALS</div>
+                    <div style={{fontSize:11,fontWeight:700,color:C.gold,letterSpacing:2,marginBottom:8}}>✨ RARE MATERIALS</div>
                     <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr 1fr",gap:6}}>
                       {Object.entries(inv).filter(([id])=>ITEMS[id]&&ITEMS[id].rare).map(([id,qty])=>{const it=ITEMS[id];return(
                         <div key={id} style={{padding:"10px 12px",borderRadius:8,background:"linear-gradient(135deg,"+C.gold+"18,"+C.card+")",border:"2px solid "+C.gold+"50",boxShadow:"0 0 10px "+C.gold+"25",textAlign:"center"}}>
@@ -3591,7 +3642,7 @@ function GameUI({account,onLogout}){
                 {/* Equipment section */}
                 {Object.entries(inv).some(([id])=>ITEMS[id]&&ITEMS[id].eq)&&(
                   <div style={{marginBottom:16}}>
-                    <div style={{fontSize:9,fontWeight:700,color:C.acc,letterSpacing:2,marginBottom:8}}>🗡️ EQUIPMENT</div>
+                    <div style={{fontSize:11,fontWeight:700,color:C.acc,letterSpacing:2,marginBottom:8}}>🗡️ EQUIPMENT</div>
                     <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:6}}>
                       {Object.entries(inv).filter(([id])=>ITEMS[id]&&ITEMS[id].eq).map(([id,qty])=>{const it=ITEMS[id];return(
                         <div key={id} style={{padding:"10px 12px",borderRadius:6,background:C.card,border:"1px solid "+C.acc+"30",boxShadow:GLOW_STYLE}}>
@@ -3608,7 +3659,7 @@ function GameUI({account,onLogout}){
                 {/* Consumables */}
                 {Object.entries(inv).some(([id])=>ITEMS[id]&&ITEMS[id].food)&&(
                   <div style={{marginBottom:16}}>
-                    <div style={{fontSize:9,fontWeight:700,color:C.ok,letterSpacing:2,marginBottom:8}}>💉 CONSUMABLES</div>
+                    <div style={{fontSize:11,fontWeight:700,color:C.ok,letterSpacing:2,marginBottom:8}}>💉 CONSUMABLES</div>
                     <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:6}}>
                       {Object.entries(inv).filter(([id])=>ITEMS[id]&&ITEMS[id].food).map(([id,qty])=>{const it=ITEMS[id];return(
                         <div key={id} style={{padding:"10px 12px",borderRadius:6,background:C.card,border:"1px solid "+C.ok+"30"}}>
@@ -3622,7 +3673,7 @@ function GameUI({account,onLogout}){
 
                 {/* Materials */}
                 <div>
-                  <div style={{fontSize:9,fontWeight:700,color:C.ts,letterSpacing:2,marginBottom:8}}>🪨 MATERIALS</div>
+                  <div style={{fontSize:11,fontWeight:700,color:C.ts,letterSpacing:2,marginBottom:8}}>🪨 MATERIALS</div>
                   <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:6}}>
                     {Object.entries(inv).filter(([id,qty])=>ITEMS[id]&&ITEMS[id].s&&!ITEMS[id].rare&&!ITEMS[id].eq&&!ITEMS[id].food&&qty>0).map(([id,qty])=>{const it=ITEMS[id];return(
                       <div key={id} style={{padding:"8px 12px",borderRadius:6,background:C.card,border:"1px solid "+C.border,display:"flex",alignItems:"center",gap:8}}>
@@ -3641,149 +3692,128 @@ function GameUI({account,onLogout}){
           </div>
         </div>
 
-        {/* RIGHT PANEL — tabbed like Milky Way Idle */}
-        {(()=>{
-          const RIGHT_TABS=[
-            {id:"inventory", label:"Inventory", icon:"🎒"},
-            {id:"equipment", label:"Equipment", icon:"⚔️"},
-            {id:"stats",     label:"Stats",     icon:"📊"},
-          ];
-          return(
-          <div style={{width:260,flexShrink:0,display:"flex",flexDirection:"column",background:C.panel,borderLeft:"1px solid "+C.border,overflow:"hidden"}}>
+        {/* RIGHT PANEL — scrollable sidebar, no duplicate nav pages */}
+        <div style={{width:280,flexShrink:0,display:"flex",flexDirection:"column",background:C.panel,borderLeft:"1px solid "+C.border,overflowY:"auto"}}>
 
-            {/* Tab bar */}
-            <div style={{display:"flex",borderBottom:"1px solid "+C.border,flexShrink:0,background:C.bg}}>
-              {RIGHT_TABS.map(t=>(
-                <div key={t.id} onClick={()=>setRightTab(t.id)} title={t.label} style={{flex:1,padding:"8px 4px",display:"flex",flexDirection:"column",alignItems:"center",gap:2,cursor:"pointer",background:rightTab===t.id?"linear-gradient(180deg,"+C.panel+","+C.card+")":C.bg,borderBottom:rightTab===t.id?"2px solid "+C.acc:"2px solid transparent",transition:"all 0.15s"}}>
-                  <span style={{fontSize:14}}>{t.icon}</span>
-                  <span style={{fontSize:7,color:rightTab===t.id?C.acc:C.td,fontWeight:700,letterSpacing:1,fontFamily:FONT}}>{t.label.toUpperCase()}</span>
+          {/* ── ACTIVE TASK ── */}
+          <div style={{padding:"10px 12px",borderBottom:"1px solid "+C.border,background:C.bg}}>
+            <div style={{fontSize:11,fontWeight:700,color:C.acc,letterSpacing:2,marginBottom:6}}>ACTIVE</div>
+            {curAct?(()=>{
+              const sk=SKILLS.find(s=>s.id===curAct.sk);
+              const act=sk?.acts.find(a=>a.id===curAct.act);
+              return(
+                <div>
+                  <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:5}}>
+                    <span style={{fontSize:12,color:C.white,fontFamily:FONT_BODY,fontWeight:600}}>{sk?.icon} {sk?.name}</span>
+                    <span style={{fontSize:10,color:C.ts,fontFamily:FONT_BODY}}>{act?.name}</span>
+                  </div>
+                  <div style={{height:5,borderRadius:3,background:C.card,overflow:"hidden"}}>
+                    <div style={{width:actProg*100+"%",height:"100%",borderRadius:3,background:"linear-gradient(90deg,"+C.accD+","+C.acc+")",transition:"width 0.1s linear"}}/>
+                  </div>
+                </div>
+              );
+            })()
+            :(zoneId?(()=>{
+              const zone=ZONES.find(z=>z.id===zoneId);
+              const mob=cbt?.mob;
+              return mob?(
+                <div>
+                  <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:5}}>
+                    <span style={{fontSize:12,color:C.bad,fontFamily:FONT_BODY,fontWeight:600}}>{mob.i||"⚔️"} {mob.n}</span>
+                    <span style={{fontSize:10,color:C.ts}}>{zone?.name}</span>
+                  </div>
+                  <div style={{display:"flex",gap:6}}>
+                    <div style={{flex:1}}>
+                      <div style={{fontSize:8,color:C.td,marginBottom:2}}>You</div>
+                      <div style={{height:5,borderRadius:3,background:C.card,overflow:"hidden"}}><div style={{width:cbt?(cbt.php/cbt.mxhp)*100+"%":"100%",height:"100%",background:C.ok,borderRadius:3,transition:"width 0.2s"}}/></div>
+                    </div>
+                    <div style={{flex:1}}>
+                      <div style={{fontSize:8,color:C.td,marginBottom:2}}>{mob.n}</div>
+                      <div style={{height:5,borderRadius:3,background:C.card,overflow:"hidden"}}><div style={{width:cbt?Math.max(0,(cbt.mhp/mob.hp)*100)+"%":"100%",height:"100%",background:C.bad,borderRadius:3,transition:"width 0.2s"}}/></div>
+                    </div>
+                  </div>
+                </div>
+              ):null;
+            })()
+            ):<div style={{fontSize:11,color:C.td,fontFamily:FONT_BODY}}>— idle —</div>)}
+          </div>
+
+          {/* ── LOADOUT ── */}
+          <div style={{padding:"10px 12px",borderBottom:"1px solid "+C.border}}>
+            <div style={{fontSize:11,fontWeight:700,color:C.acc,letterSpacing:2,marginBottom:8}}>LOADOUT</div>
+            {ESLOTS.map(slot=>{
+              const iid=eq[slot.id];const it=iid?ITEMS[iid]:null;const el=iid?(enh[iid]||0):0;
+              return(
+                <div key={slot.id} style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"4px 0",borderBottom:"1px solid "+C.bg}}>
+                  <span style={{fontSize:10,color:C.td,fontFamily:FONT_BODY,flexShrink:0,width:70}}>{slot.i} {slot.n}</span>
+                  <span style={{fontSize:10,color:it?C.white:C.td,fontWeight:it?600:400,fontFamily:FONT_BODY,textAlign:"right"}}>
+                    {it?(it.i+" "+it.n+(el>0?" +"+el:"")):"—"}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* ── COMBAT STATS ── */}
+          <div style={{padding:"10px 12px",borderBottom:"1px solid "+C.border}}>
+            <div style={{fontSize:11,fontWeight:700,color:C.acc,letterSpacing:2,marginBottom:8}}>SYSTEMS</div>
+            {[
+              {l:"Hull HP",   v:pStats.hp,  c:C.ok,   i:"❤️"},
+              {l:"Attack",    v:pStats.atk, c:C.bad,  i:"⚔️"},
+              {l:"Defense",   v:pStats.def, c:C.acc,  i:"🛡️"},
+              {l:"Sonic",     v:pStats.rng, c:C.okD,  i:"🔊"},
+              {l:"Leviathan", v:pStats.mag, c:C.purp, i:"🌀"},
+            ].map(s=>(
+              <div key={s.l} style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"3px 0",borderBottom:"1px solid "+C.bg}}>
+                <span style={{fontSize:11,color:C.ts,fontFamily:FONT_BODY}}>{s.i} {s.l}</span>
+                <span style={{fontSize:12,color:s.c,fontWeight:700,fontFamily:FONT}}>{s.v}</span>
+              </div>
+            ))}
+          </div>
+
+          {/* ── RESOURCES ── */}
+          <div style={{padding:"10px 12px",borderBottom:"1px solid "+C.border}}>
+            <div style={{fontSize:11,fontWeight:700,color:C.acc,letterSpacing:2,marginBottom:8}}>RESOURCES</div>
+            <div style={{display:"flex",flexWrap:"wrap",gap:4}}>
+              {Object.entries(inv).filter(([id,qty])=>qty>0&&ITEMS[id]).map(([id,qty])=>{
+                const it=ITEMS[id];
+                const rareColor=it.rarity==="rare"?C.gold:it.rarity==="uncommon"?C.purp:null;
+                return(
+                  <div key={id} title={it.n+" ×"+fmt(qty)} style={{position:"relative",width:48,height:48,borderRadius:7,background:rareColor?rareColor+"18":C.card,border:"1px solid "+(rareColor?rareColor+"50":C.border),display:"flex",alignItems:"center",justifyContent:"center",flexDirection:"column",flexShrink:0}}>
+                    <span style={{fontSize:20,lineHeight:1}}>{it.i||"📦"}</span>
+                    <span style={{fontSize:9,color:rareColor||C.ts,fontWeight:700,fontFamily:FONT,marginTop:1}}>{qty>=1000?Math.floor(qty/1000)+"k":qty}</span>
+                    {rareColor&&<div style={{position:"absolute",top:0,left:0,right:0,height:2,background:rareColor,borderRadius:"7px 7px 0 0"}}/>}
+                  </div>
+                );
+              })}
+              {Object.keys(inv).length===0&&<div style={{fontSize:11,color:C.td,fontFamily:FONT_BODY}}>Empty</div>}
+            </div>
+          </div>
+
+          {/* ── DRONES ── */}
+          {Object.values(drones).some(Boolean)&&(
+            <div style={{padding:"10px 12px",borderBottom:"1px solid "+C.border}}>
+              <div style={{fontSize:11,fontWeight:700,color:C.acc,letterSpacing:2,marginBottom:8}}>DRONES ACTIVE</div>
+              {DRONE_TYPES.filter(dt=>drones[dt.id]>0).map(dt=>(
+                <div key={dt.id} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"3px 0",borderBottom:"1px solid "+C.bg}}>
+                  <span style={{fontSize:11,color:C.ts,fontFamily:FONT_BODY}}>{dt.icon} {dt.name}</span>
+                  <span style={{fontSize:12,color:C.acc,fontWeight:700,fontFamily:FONT}}>×{drones[dt.id]}</span>
                 </div>
               ))}
             </div>
+          )}
 
-            {/* ── INVENTORY TAB ── */}
-            {rightTab==="inventory"&&(
-              <div style={{flex:1,overflowY:"auto",padding:"8px 6px"}}>
-                {/* Key stats bar */}
-                <div style={{display:"flex",gap:4,marginBottom:8,flexWrap:"wrap"}}>
-                  {[
-                    {l:"◈",v:fmt(gold),c:C.gold},
-                    {l:"🔬",v:fmt(researchPts),c:C.acc},
-                    {l:"⚡",v:energy+"/"+maxEnergy,c:C.ok},
-                    {l:"🌊",v:fmt(pressure)+"%",c:C.bad},
-                  ].map(s=>(
-                    <div key={s.l} style={{flex:1,minWidth:52,padding:"4px 6px",borderRadius:6,background:C.card,border:"1px solid "+C.border,textAlign:"center"}}>
-                      <div style={{fontSize:9,color:C.td,fontFamily:FONT_BODY}}>{s.l}</div>
-                      <div style={{fontSize:10,color:s.c,fontWeight:700,fontFamily:FONT}}>{s.v}</div>
-                    </div>
-                  ))}
-                </div>
-                {/* Item categories */}
-                {[
-                  {label:"GATHERED",   filter:i=>i.s&&!i.food&&!i.eq&&!i.rarity},
-                  {label:"RARE MATS",  filter:i=>i.rarity==="rare"||i.rarity==="uncommon"},
-                  {label:"FOOD",       filter:i=>i.food},
-                  {label:"CRAFTED",    filter:i=>i.eq||i.type==="component"},
-                ].map(cat=>{
-                  const items=Object.entries(inv).filter(([id,qty])=>qty>0&&ITEMS[id]&&cat.filter(ITEMS[id]));
-                  if(!items.length)return null;
-                  return(
-                    <div key={cat.label} style={{marginBottom:10}}>
-                      <div style={{fontSize:8,fontWeight:700,color:C.td,letterSpacing:2,marginBottom:5,paddingLeft:2}}>{cat.label}</div>
-                      <div style={{display:"flex",flexWrap:"wrap",gap:3}}>
-                        {items.map(([id,qty])=><ItemCell key={id} id={id} qty={qty}/>)}
-                      </div>
-                    </div>
-                  );
-                })}
-                {Object.keys(inv).length===0&&<div style={{fontSize:11,color:C.td,fontFamily:FONT_BODY,padding:"20px 0",textAlign:"center"}}>Cargo hold empty</div>}
-              </div>
-            )}
+          {/* ── DISCOVERIES ── */}
+          {discoveryLog.length>0&&(
+            <div style={{padding:"10px 12px"}}>
+              <div style={{fontSize:11,fontWeight:700,color:C.gold,letterSpacing:2,marginBottom:8}}>DISCOVERIES</div>
+              {discoveryLog.slice(-6).reverse().map((l,i)=>(
+                <div key={i} style={{fontSize:10,color:C.ts,padding:"3px 0",borderBottom:"1px solid "+C.bg,opacity:1-i*0.14,fontFamily:FONT_BODY,lineHeight:1.4}}>{l}</div>
+              ))}
+            </div>
+          )}
 
-            {/* ── EQUIPMENT TAB ── */}
-            {rightTab==="equipment"&&(
-              <div style={{flex:1,overflowY:"auto",padding:"8px 8px"}}>
-                <div style={{fontSize:8,fontWeight:700,color:C.td,letterSpacing:2,marginBottom:8}}>LOADOUT</div>
-                <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:5,marginBottom:14}}>
-                  {ESLOTS.map(slot=>{
-                    const iid=eq[slot.id];const it=iid?ITEMS[iid]:null;const el=iid?(enh[iid]||0):0;
-                    return(
-                      <div key={slot.id} onClick={()=>{if(it){setPage("equipment")}}} style={{padding:"7px 8px",borderRadius:8,background:it?"linear-gradient(135deg,"+C.card+","+C.acc+"08)":C.card,border:"1px solid "+(it?C.acc+"50":C.border),cursor:it?"pointer":"default",minHeight:56}}>
-                        <div style={{fontSize:8,color:C.td,fontFamily:FONT_BODY,marginBottom:3}}>{slot.i} {slot.n}</div>
-                        {it?(
-                          <>
-                            <div style={{fontSize:11,color:C.white,fontWeight:700,fontFamily:FONT_BODY,lineHeight:1.2}}>{it.i} {it.n}{el>0?<span style={{color:C.gold}}> +{el}</span>:""}</div>
-                            {it.st&&<div style={{fontSize:8,color:C.ts,marginTop:2,fontFamily:FONT_BODY}}>{Object.entries(it.st).map(([k,v])=>k.toUpperCase()+":+"+Math.floor(v*(1+el*0.08))).join(" ")}</div>}
-                          </>
-                        ):(
-                          <div style={{fontSize:9,color:C.td,fontFamily:FONT_BODY}}>— empty —</div>
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
-                {/* Discoveries */}
-                {discoveryLog.length>0&&(
-                  <div style={{padding:"8px",borderRadius:8,background:C.card,border:"1px solid "+C.gold+"40",marginBottom:8}}>
-                    <div style={{fontSize:8,fontWeight:700,color:C.gold,marginBottom:5,letterSpacing:2}}>DISCOVERIES</div>
-                    {discoveryLog.slice(-4).reverse().map((l,i)=>(
-                      <div key={i} style={{fontSize:9,color:C.ts,padding:"2px 0",opacity:1-i*0.2,fontFamily:FONT_BODY,lineHeight:1.4}}>{l}</div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            )}
-
-            {/* ── STATS TAB ── */}
-            {rightTab==="stats"&&(
-              <div style={{flex:1,overflowY:"auto",padding:"8px 8px"}}>
-                {/* Combat stats */}
-                <div style={{marginBottom:10}}>
-                  <div style={{fontSize:8,fontWeight:700,color:C.td,letterSpacing:2,marginBottom:6}}>COMBAT SYSTEMS</div>
-                  {[
-                    {l:"Hull HP",    v:pStats.hp,  c:C.ok,   icon:"❤️"},
-                    {l:"Attack",     v:pStats.atk, c:C.bad,  icon:"⚔️"},
-                    {l:"Defense",    v:pStats.def, c:C.acc,  icon:"🛡️"},
-                    {l:"Sonic",      v:pStats.rng, c:C.okD,  icon:"🔊"},
-                    {l:"Leviathan",  v:pStats.mag, c:C.purp, icon:"🌀"},
-                  ].map(s=>(
-                    <div key={s.l} style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"5px 8px",borderRadius:6,background:C.card,border:"1px solid "+C.border,marginBottom:3}}>
-                      <span style={{fontSize:10,color:C.ts,fontFamily:FONT_BODY}}>{s.icon} {s.l}</span>
-                      <span style={{fontSize:11,color:s.c,fontWeight:700,fontFamily:FONT}}>{s.v}</span>
-                    </div>
-                  ))}
-                </div>
-                {/* Resources summary */}
-                <div style={{marginBottom:10}}>
-                  <div style={{fontSize:8,fontWeight:700,color:C.td,letterSpacing:2,marginBottom:6}}>RESOURCES</div>
-                  {Object.entries(inv).filter(([id,qty])=>qty>0&&ITEMS[id]?.s).slice(0,10).map(([id,qty])=>(
-                    <div key={id} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"3px 0",borderBottom:"1px solid "+C.bg}}>
-                      <span style={{fontSize:10,color:C.ts,fontFamily:FONT_BODY}}>{ITEMS[id].i} {ITEMS[id].n}</span>
-                      <span style={{fontSize:10,color:C.text,fontWeight:700,fontFamily:FONT}}>{fmt(qty)}</span>
-                    </div>
-                  ))}
-                  {!Object.entries(inv).some(([id,qty])=>qty>0&&ITEMS[id]?.s)&&<div style={{fontSize:10,color:C.td,fontFamily:FONT_BODY}}>—</div>}
-                </div>
-                {/* Drones active */}
-                {Object.values(drones).some(Boolean)&&(
-                  <div>
-                    <div style={{fontSize:8,fontWeight:700,color:C.td,letterSpacing:2,marginBottom:6}}>ACTIVE DRONES</div>
-                    {DRONE_TYPES.filter(dt=>drones[dt.id]>0).map(dt=>(
-                      <div key={dt.id} style={{display:"flex",justifyContent:"space-between",padding:"3px 0",borderBottom:"1px solid "+C.bg}}>
-                        <span style={{fontSize:10,color:C.ts,fontFamily:FONT_BODY}}>{dt.icon} {dt.name}</span>
-                        <span style={{fontSize:10,color:C.acc,fontWeight:700,fontFamily:FONT}}>×{drones[dt.id]}</span>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            )}
-
-            {/* ── CHAT TAB REMOVED — chat is now in bottom bar ── */}
-
-          </div>
-          );
-        })()}
+        </div>
 
         </div>{/* end middle row */}
 

@@ -1074,6 +1074,7 @@ function GameUI({account,onLogout}){
   const[leaderboard,setLeaderboard]=useState([]);
   const[lbLoading,setLbLoading]=useState(false);
   const[showLogoutConfirm,setShowLogoutConfirm]=useState(false);
+  const[rightTab,setRightTab]=useState("inventory"); // right panel tab
   // ── Social ──
   const chatEndRef=useRef(null);
   const[chatMessages,setChatMessages]=useState([]);  // global chat
@@ -1883,6 +1884,18 @@ function GameUI({account,onLogout}){
     </div>);
   };
 
+  // Item grid cell for right panel inventory
+  const ItemCell=({id,qty})=>{
+    const it=ITEMS[id];if(!it||!qty)return null;
+    const rareColor=it.rarity==="rare"?C.gold:it.rarity==="uncommon"?C.purp:null;
+    return(
+      <div title={it.n+" ×"+fmt(qty)} style={{position:"relative",width:44,height:44,borderRadius:6,background:rareColor?rareColor+"18":C.bg,border:"1px solid "+(rareColor?rareColor+"60":C.border),display:"flex",alignItems:"center",justifyContent:"center",flexDirection:"column",cursor:"default",overflow:"hidden",flexShrink:0}}>
+        <span style={{fontSize:18,lineHeight:1}}>{it.i||"📦"}</span>
+        <span style={{fontSize:8,color:rareColor||C.ts,fontWeight:700,fontFamily:FONT,lineHeight:1,marginTop:1}}>{qty>=1000?Math.floor(qty/1000)+"k":qty}</span>
+        {rareColor&&<div style={{position:"absolute",top:0,left:0,right:0,height:2,background:rareColor,opacity:0.7,borderRadius:"6px 6px 0 0"}}/>}
+      </div>
+    );
+  };
   const NavItem=({id,icon,label})=>{const act=page===id;return(
     <div onClick={()=>setPage(id)} style={{display:"flex",alignItems:"center",gap:8,padding:"6px 12px",cursor:"pointer",background:act?"linear-gradient(90deg,"+C.acc+"15,transparent)":"transparent",borderLeft:act?"3px solid "+C.acc:"3px solid transparent",transition:"all 0.15s"}}>
       <span style={{fontSize:14,width:20,textAlign:"center"}}>{icon}</span>
@@ -3624,30 +3637,244 @@ function GameUI({account,onLogout}){
           </div>
         </div>
 
-        {/* RIGHT PANEL */}
-        <div style={{width:220,flexShrink:0,display:"flex",flexDirection:"column",background:C.panel,borderLeft:"1px solid "+C.border,overflow:"auto",padding:10,gap:10}}>
-          <div style={{padding:10,borderRadius:8,background:C.card,border:"1px solid "+C.border}}>
-            <div style={{fontSize:8,fontWeight:700,color:C.acc,marginBottom:8,letterSpacing:2}}>LOADOUT</div>
-            {ESLOTS.map(slot=>{const iid=eq[slot.id];const it=iid?ITEMS[iid]:null;const el=iid?(enh[iid]||0):0;return(<div key={slot.id} style={{display:"flex",justifyContent:"space-between",padding:"3px 0",fontSize:10}}><span style={{color:C.td,fontFamily:FONT_BODY}}>{slot.i} {slot.n}</span><span style={{color:it?C.text:C.td,fontWeight:it?600:400,fontFamily:FONT_BODY}}>{it?it.n+(el>0?" +"+el:""):"—"}</span></div>)})}
-          </div>
-          <div style={{padding:10,borderRadius:8,background:C.card,border:"1px solid "+C.border}}>
-            <div style={{fontSize:8,fontWeight:700,color:C.acc,marginBottom:8,letterSpacing:2}}>SYSTEMS</div>
-            {[{l:"Hull HP",v:pStats.hp,c:C.ok},{l:"Attack",v:pStats.atk,c:C.bad},{l:"Defense",v:pStats.def,c:C.acc},{l:"Sonic",v:pStats.rng,c:C.okD},{l:"Leviathan",v:pStats.mag,c:C.purp}].map(s=>(<div key={s.l} style={{display:"flex",justifyContent:"space-between",padding:"2px 0",fontSize:10}}><span style={{color:C.ts,fontFamily:FONT_BODY}}>{s.l}</span><span style={{color:s.c,fontWeight:700,fontFamily:FONT}}>{s.v}</span></div>))}
-          </div>
-          <div style={{padding:10,borderRadius:8,background:C.card,border:"1px solid "+C.border}}>
-            <div style={{fontSize:8,fontWeight:700,color:C.acc,marginBottom:8,letterSpacing:2}}>RESOURCES</div>
-            {Object.entries(inv).filter(e=>ITEMS[e[0]]&&ITEMS[e[0]].s).map(e=>{const id=e[0],qty=e[1];return(<div key={id} style={{display:"flex",justifyContent:"space-between",padding:"2px 0",fontSize:10}}><span style={{color:C.ts,fontFamily:FONT_BODY}}>{ITEMS[id].i} {ITEMS[id].n}</span><span style={{color:C.text,fontWeight:700,fontFamily:FONT}}>{fmt(qty)}</span></div>)})}
-            {!Object.entries(inv).some(e=>ITEMS[e[0]]&&ITEMS[e[0]].s)&&<div style={{fontSize:10,color:C.td,fontFamily:FONT_BODY}}>—</div>}
-          </div>
-          {discoveryLog.length>0&&(
-            <div style={{padding:10,borderRadius:8,background:C.card,border:"1px solid "+C.gold+"40"}}>
-              <div style={{fontSize:8,fontWeight:700,color:C.gold,marginBottom:6,letterSpacing:2}}>DISCOVERIES</div>
-              {discoveryLog.slice(-5).reverse().map((l,i)=>(
-                <div key={i} style={{fontSize:9,color:C.ts,padding:"2px 0",opacity:1-i*0.15,fontFamily:FONT_BODY,borderBottom:"1px solid "+C.bg,lineHeight:1.4}}>{l}</div>
+        {/* RIGHT PANEL — tabbed like Milky Way Idle */}
+        {(()=>{
+          const RIGHT_TABS=[
+            {id:"inventory", label:"Inventory", icon:"🎒"},
+            {id:"equipment", label:"Equipment", icon:"⚔️"},
+            {id:"stats",     label:"Stats",     icon:"📊"},
+            {id:"chat",      label:"Chat",      icon:"💬"},
+          ];
+          return(
+          <div style={{width:260,flexShrink:0,display:"flex",flexDirection:"column",background:C.panel,borderLeft:"1px solid "+C.border,overflow:"hidden"}}>
+
+            {/* Tab bar */}
+            <div style={{display:"flex",borderBottom:"1px solid "+C.border,flexShrink:0,background:C.bg}}>
+              {RIGHT_TABS.map(t=>(
+                <div key={t.id} onClick={()=>setRightTab(t.id)} title={t.label} style={{flex:1,padding:"8px 4px",display:"flex",flexDirection:"column",alignItems:"center",gap:2,cursor:"pointer",background:rightTab===t.id?"linear-gradient(180deg,"+C.panel+","+C.card+")":C.bg,borderBottom:rightTab===t.id?"2px solid "+C.acc:"2px solid transparent",transition:"all 0.15s"}}>
+                  <span style={{fontSize:14}}>{t.icon}</span>
+                  <span style={{fontSize:7,color:rightTab===t.id?C.acc:C.td,fontWeight:700,letterSpacing:1,fontFamily:FONT}}>{t.label.toUpperCase()}</span>
+                </div>
               ))}
             </div>
-          )}
-        </div>
+
+            {/* ── INVENTORY TAB ── */}
+            {rightTab==="inventory"&&(
+              <div style={{flex:1,overflowY:"auto",padding:"8px 6px"}}>
+                {/* Key stats bar */}
+                <div style={{display:"flex",gap:4,marginBottom:8,flexWrap:"wrap"}}>
+                  {[
+                    {l:"◈",v:fmt(gold),c:C.gold},
+                    {l:"🔬",v:fmt(researchPts),c:C.acc},
+                    {l:"⚡",v:energy+"/"+maxEnergy,c:C.ok},
+                    {l:"🌊",v:fmt(pressure)+"%",c:C.bad},
+                  ].map(s=>(
+                    <div key={s.l} style={{flex:1,minWidth:52,padding:"4px 6px",borderRadius:6,background:C.card,border:"1px solid "+C.border,textAlign:"center"}}>
+                      <div style={{fontSize:9,color:C.td,fontFamily:FONT_BODY}}>{s.l}</div>
+                      <div style={{fontSize:10,color:s.c,fontWeight:700,fontFamily:FONT}}>{s.v}</div>
+                    </div>
+                  ))}
+                </div>
+                {/* Item categories */}
+                {[
+                  {label:"GATHERED",   filter:i=>i.s&&!i.food&&!i.eq&&!i.rarity},
+                  {label:"RARE MATS",  filter:i=>i.rarity==="rare"||i.rarity==="uncommon"},
+                  {label:"FOOD",       filter:i=>i.food},
+                  {label:"CRAFTED",    filter:i=>i.eq||i.type==="component"},
+                ].map(cat=>{
+                  const items=Object.entries(inv).filter(([id,qty])=>qty>0&&ITEMS[id]&&cat.filter(ITEMS[id]));
+                  if(!items.length)return null;
+                  return(
+                    <div key={cat.label} style={{marginBottom:10}}>
+                      <div style={{fontSize:8,fontWeight:700,color:C.td,letterSpacing:2,marginBottom:5,paddingLeft:2}}>{cat.label}</div>
+                      <div style={{display:"flex",flexWrap:"wrap",gap:3}}>
+                        {items.map(([id,qty])=><ItemCell key={id} id={id} qty={qty}/>)}
+                      </div>
+                    </div>
+                  );
+                })}
+                {Object.keys(inv).length===0&&<div style={{fontSize:11,color:C.td,fontFamily:FONT_BODY,padding:"20px 0",textAlign:"center"}}>Cargo hold empty</div>}
+              </div>
+            )}
+
+            {/* ── EQUIPMENT TAB ── */}
+            {rightTab==="equipment"&&(
+              <div style={{flex:1,overflowY:"auto",padding:"8px 8px"}}>
+                <div style={{fontSize:8,fontWeight:700,color:C.td,letterSpacing:2,marginBottom:8}}>LOADOUT</div>
+                <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:5,marginBottom:14}}>
+                  {ESLOTS.map(slot=>{
+                    const iid=eq[slot.id];const it=iid?ITEMS[iid]:null;const el=iid?(enh[iid]||0):0;
+                    return(
+                      <div key={slot.id} onClick={()=>{if(it){setPage("equipment")}}} style={{padding:"7px 8px",borderRadius:8,background:it?"linear-gradient(135deg,"+C.card+","+C.acc+"08)":C.card,border:"1px solid "+(it?C.acc+"50":C.border),cursor:it?"pointer":"default",minHeight:56}}>
+                        <div style={{fontSize:8,color:C.td,fontFamily:FONT_BODY,marginBottom:3}}>{slot.i} {slot.n}</div>
+                        {it?(
+                          <>
+                            <div style={{fontSize:11,color:C.white,fontWeight:700,fontFamily:FONT_BODY,lineHeight:1.2}}>{it.i} {it.n}{el>0?<span style={{color:C.gold}}> +{el}</span>:""}</div>
+                            {it.st&&<div style={{fontSize:8,color:C.ts,marginTop:2,fontFamily:FONT_BODY}}>{Object.entries(it.st).map(([k,v])=>k.toUpperCase()+":+"+Math.floor(v*(1+el*0.08))).join(" ")}</div>}
+                          </>
+                        ):(
+                          <div style={{fontSize:9,color:C.td,fontFamily:FONT_BODY}}>— empty —</div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+                {/* Discoveries */}
+                {discoveryLog.length>0&&(
+                  <div style={{padding:"8px",borderRadius:8,background:C.card,border:"1px solid "+C.gold+"40",marginBottom:8}}>
+                    <div style={{fontSize:8,fontWeight:700,color:C.gold,marginBottom:5,letterSpacing:2}}>DISCOVERIES</div>
+                    {discoveryLog.slice(-4).reverse().map((l,i)=>(
+                      <div key={i} style={{fontSize:9,color:C.ts,padding:"2px 0",opacity:1-i*0.2,fontFamily:FONT_BODY,lineHeight:1.4}}>{l}</div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* ── STATS TAB ── */}
+            {rightTab==="stats"&&(
+              <div style={{flex:1,overflowY:"auto",padding:"8px 8px"}}>
+                {/* Combat stats */}
+                <div style={{marginBottom:10}}>
+                  <div style={{fontSize:8,fontWeight:700,color:C.td,letterSpacing:2,marginBottom:6}}>COMBAT SYSTEMS</div>
+                  {[
+                    {l:"Hull HP",    v:pStats.hp,  c:C.ok,   icon:"❤️"},
+                    {l:"Attack",     v:pStats.atk, c:C.bad,  icon:"⚔️"},
+                    {l:"Defense",    v:pStats.def, c:C.acc,  icon:"🛡️"},
+                    {l:"Sonic",      v:pStats.rng, c:C.okD,  icon:"🔊"},
+                    {l:"Leviathan",  v:pStats.mag, c:C.purp, icon:"🌀"},
+                  ].map(s=>(
+                    <div key={s.l} style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"5px 8px",borderRadius:6,background:C.card,border:"1px solid "+C.border,marginBottom:3}}>
+                      <span style={{fontSize:10,color:C.ts,fontFamily:FONT_BODY}}>{s.icon} {s.l}</span>
+                      <span style={{fontSize:11,color:s.c,fontWeight:700,fontFamily:FONT}}>{s.v}</span>
+                    </div>
+                  ))}
+                </div>
+                {/* Resources summary */}
+                <div style={{marginBottom:10}}>
+                  <div style={{fontSize:8,fontWeight:700,color:C.td,letterSpacing:2,marginBottom:6}}>RESOURCES</div>
+                  {Object.entries(inv).filter(([id,qty])=>qty>0&&ITEMS[id]?.s).slice(0,10).map(([id,qty])=>(
+                    <div key={id} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"3px 0",borderBottom:"1px solid "+C.bg}}>
+                      <span style={{fontSize:10,color:C.ts,fontFamily:FONT_BODY}}>{ITEMS[id].i} {ITEMS[id].n}</span>
+                      <span style={{fontSize:10,color:C.text,fontWeight:700,fontFamily:FONT}}>{fmt(qty)}</span>
+                    </div>
+                  ))}
+                  {!Object.entries(inv).some(([id,qty])=>qty>0&&ITEMS[id]?.s)&&<div style={{fontSize:10,color:C.td,fontFamily:FONT_BODY}}>—</div>}
+                </div>
+                {/* Drones active */}
+                {Object.values(drones).some(Boolean)&&(
+                  <div>
+                    <div style={{fontSize:8,fontWeight:700,color:C.td,letterSpacing:2,marginBottom:6}}>ACTIVE DRONES</div>
+                    {DRONE_TYPES.filter(dt=>drones[dt.id]>0).map(dt=>(
+                      <div key={dt.id} style={{display:"flex",justifyContent:"space-between",padding:"3px 0",borderBottom:"1px solid "+C.bg}}>
+                        <span style={{fontSize:10,color:C.ts,fontFamily:FONT_BODY}}>{dt.icon} {dt.name}</span>
+                        <span style={{fontSize:10,color:C.acc,fontWeight:700,fontFamily:FONT}}>×{drones[dt.id]}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* ── CHAT TAB ── */}
+            {rightTab==="chat"&&(
+              <div style={{flex:1,display:"flex",flexDirection:"column",minHeight:0}}>
+                {/* Chat type tabs */}
+                <div style={{display:"flex",borderBottom:"1px solid "+C.border,flexShrink:0}}>
+                  {[{id:"global",l:"🌊 Global"},{id:"clan",l:"⚔️ Clan"},{id:"dm",l:"✉️ DM"}].map(t=>(
+                    <div key={t.id} onClick={()=>setChatTab(t.id)} style={{flex:1,padding:"5px 2px",textAlign:"center",fontSize:8,fontWeight:700,color:chatTab===t.id?C.acc:C.td,fontFamily:FONT,letterSpacing:1,cursor:"pointer",borderBottom:chatTab===t.id?"2px solid "+C.acc:"2px solid transparent",background:"transparent"}}>
+                      {t.l}
+                    </div>
+                  ))}
+                </div>
+                {/* Messages */}
+                <div style={{flex:1,overflowY:"auto",padding:"6px 8px",display:"flex",flexDirection:"column",gap:2}}>
+                  {chatTab==="global"&&chatMessages.map(m=>{
+                    const mine=m.uid===account.uid;
+                    return(
+                      <div key={m.id||m.ts} style={{display:"flex",gap:5,alignItems:"flex-start",flexDirection:mine?"row-reverse":"row",marginBottom:1}}>
+                        <div style={{width:20,height:20,borderRadius:10,background:mine?"linear-gradient(135deg,"+C.acc+","+C.purp+")":"linear-gradient(135deg,"+C.td+","+C.border+")",display:"flex",alignItems:"center",justifyContent:"center",fontSize:9,fontWeight:700,color:C.bg,flexShrink:0}}>
+                          {(m.name||"?")[0].toUpperCase()}
+                        </div>
+                        <div style={{maxWidth:"80%"}}>
+                          <div style={{fontSize:8,color:mine?C.acc:C.ts,marginBottom:1,fontFamily:FONT_BODY,textAlign:mine?"right":"left"}}>{mine?"You":m.name}</div>
+                          <div style={{padding:"4px 8px",borderRadius:mine?"8px 2px 8px 8px":"2px 8px 8px 8px",background:mine?"linear-gradient(135deg,"+C.acc+"28,"+C.acc+"12)":C.card,border:"1px solid "+(mine?C.acc+"35":C.border),fontSize:10,color:C.white,fontFamily:FONT_BODY,lineHeight:1.4,wordBreak:"break-word"}}>
+                            {m.text}
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                  {chatTab==="clan"&&(
+                    clan?clanChat.map((m,i)=>{
+                      const mine=m.uid===account.uid;
+                      return(
+                        <div key={i} style={{display:"flex",gap:5,alignItems:"flex-start",flexDirection:mine?"row-reverse":"row",marginBottom:1}}>
+                          <div style={{width:20,height:20,borderRadius:10,background:mine?"linear-gradient(135deg,"+C.gold+","+C.warn+")":"linear-gradient(135deg,"+C.td+","+C.border+")",display:"flex",alignItems:"center",justifyContent:"center",fontSize:9,fontWeight:700,color:C.bg,flexShrink:0}}>
+                            {(m.name||"?")[0].toUpperCase()}
+                          </div>
+                          <div style={{maxWidth:"80%"}}>
+                            <div style={{fontSize:8,color:mine?C.gold:C.ts,marginBottom:1,fontFamily:FONT_BODY}}>{mine?"You":m.name}</div>
+                            <div style={{padding:"4px 8px",borderRadius:mine?"8px 2px 8px 8px":"2px 8px 8px 8px",background:mine?"linear-gradient(135deg,"+C.gold+"20,"+C.gold+"08)":C.card,border:"1px solid "+(mine?C.gold+"40":C.border),fontSize:10,color:C.white,fontFamily:FONT_BODY,lineHeight:1.4,wordBreak:"break-word"}}>
+                              {m.text}
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    }):<div style={{padding:20,textAlign:"center",color:C.td,fontSize:10,fontFamily:FONT_BODY}}>Not in a clan. Join one via Social page.</div>
+                  )}
+                  {chatTab==="dm"&&(
+                    dmTarget?dmMessages.map((m,i)=>{
+                      const mine=m.uid===account.uid;
+                      return(
+                        <div key={i} style={{display:"flex",gap:5,alignItems:"flex-start",flexDirection:mine?"row-reverse":"row",marginBottom:1}}>
+                          <div style={{width:20,height:20,borderRadius:10,background:mine?"linear-gradient(135deg,"+C.acc+","+C.purp+")":"linear-gradient(135deg,"+C.td+","+C.border+")",display:"flex",alignItems:"center",justifyContent:"center",fontSize:9,fontWeight:700,color:C.bg,flexShrink:0}}>
+                            {(m.name||"?")[0].toUpperCase()}
+                          </div>
+                          <div style={{maxWidth:"80%"}}>
+                            <div style={{fontSize:8,color:mine?C.acc:C.ts,marginBottom:1,fontFamily:FONT_BODY}}>{mine?"You":dmTarget.name}</div>
+                            <div style={{padding:"4px 8px",borderRadius:mine?"8px 2px 8px 8px":"2px 8px 8px 8px",background:mine?"linear-gradient(135deg,"+C.acc+"28,"+C.acc+"12)":C.card,border:"1px solid "+(mine?C.acc+"35":C.border),fontSize:10,color:C.white,fontFamily:FONT_BODY,lineHeight:1.4,wordBreak:"break-word"}}>
+                              {m.text}
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    }):<div style={{padding:20,textAlign:"center",color:C.td,fontSize:10,fontFamily:FONT_BODY}}>No DM open. Click DM on a friend in Social page.</div>
+                  )}
+                  <div ref={chatEndRef}/>
+                </div>
+                {/* Input */}
+                <div style={{flexShrink:0,padding:"6px 8px",borderTop:"1px solid "+C.border,display:"flex",gap:6}}>
+                  <input
+                    value={chatTab==="global"?chatInput:chatTab==="clan"?clanChatInput:dmInput}
+                    onChange={e=>{
+                      if(chatTab==="global")setChatInput(e.target.value);
+                      else if(chatTab==="clan")setClanChatInput(e.target.value);
+                      else setDmInput(e.target.value);
+                    }}
+                    onKeyDown={e=>{
+                      if(e.key!=="Enter")return;
+                      if(chatTab==="global")sendChat();
+                      else if(chatTab==="clan")sendClanChat();
+                      else sendDm();
+                    }}
+                    placeholder={chatTab==="dm"&&dmTarget?"Message "+dmTarget.name+"...":chatTab==="clan"&&clan?"Clan chat...":"Global chat..."}
+                    style={{flex:1,padding:"6px 8px",borderRadius:6,background:C.card,border:"1px solid "+C.border,color:C.white,fontSize:10,fontFamily:FONT_BODY,outline:"none",minWidth:0}}
+                  />
+                  <div onClick={()=>{
+                    if(chatTab==="global")sendChat();
+                    else if(chatTab==="clan")sendClanChat();
+                    else sendDm();
+                  }} style={{width:28,height:28,borderRadius:6,background:"linear-gradient(135deg,"+C.accD+","+C.acc+")",display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",flexShrink:0,fontSize:12}}>
+                    ➤
+                  </div>
+                </div>
+              </div>
+            )}
+
+          </div>
+          );
+        })()}
 
       </div>
 

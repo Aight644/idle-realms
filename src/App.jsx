@@ -1075,6 +1075,7 @@ function GameUI({account,onLogout}){
   const[lbLoading,setLbLoading]=useState(false);
   const[showLogoutConfirm,setShowLogoutConfirm]=useState(false);
   const[rightTab,setRightTab]=useState("inventory"); // right panel tab
+  const[chatOpen,setChatOpen]=useState(true);         // bottom chat bar
   // ── Social ──
   const chatEndRef=useRef(null);
   const[chatMessages,setChatMessages]=useState([]);  // global chat
@@ -2122,7 +2123,10 @@ function GameUI({account,onLogout}){
       </div>
 
       {/* ===== BODY ===== */}
-      <div style={{flex:1,display:"flex",overflow:"hidden"}}>
+      <div style={{flex:1,display:"flex",flexDirection:"column",overflow:"hidden"}}>
+
+        {/* ── Middle row: nav + center + right panel ── */}
+        <div style={{flex:1,display:"flex",overflow:"hidden"}}>
 
         {/* LEFT NAV */}
         <div style={{width:navCollapsed?52:210,flexShrink:0,display:"flex",flexDirection:"column",background:C.panel,borderRight:"1px solid "+C.border,overflowY:"auto",transition:"width 0.2s ease"}}>
@@ -3643,7 +3647,6 @@ function GameUI({account,onLogout}){
             {id:"inventory", label:"Inventory", icon:"🎒"},
             {id:"equipment", label:"Equipment", icon:"⚔️"},
             {id:"stats",     label:"Stats",     icon:"📊"},
-            {id:"chat",      label:"Chat",      icon:"💬"},
           ];
           return(
           <div style={{width:260,flexShrink:0,display:"flex",flexDirection:"column",background:C.panel,borderLeft:"1px solid "+C.border,overflow:"hidden"}}>
@@ -3776,75 +3779,76 @@ function GameUI({account,onLogout}){
               </div>
             )}
 
-            {/* ── CHAT TAB ── */}
-            {rightTab==="chat"&&(
-              <div style={{flex:1,display:"flex",flexDirection:"column",minHeight:0}}>
-                {/* Chat type tabs */}
-                <div style={{display:"flex",borderBottom:"1px solid "+C.border,flexShrink:0}}>
-                  {[{id:"global",l:"🌊 Global"},{id:"clan",l:"⚔️ Clan"},{id:"dm",l:"✉️ DM"}].map(t=>(
-                    <div key={t.id} onClick={()=>setChatTab(t.id)} style={{flex:1,padding:"5px 2px",textAlign:"center",fontSize:8,fontWeight:700,color:chatTab===t.id?C.acc:C.td,fontFamily:FONT,letterSpacing:1,cursor:"pointer",borderBottom:chatTab===t.id?"2px solid "+C.acc:"2px solid transparent",background:"transparent"}}>
-                      {t.l}
-                    </div>
-                  ))}
+            {/* ── CHAT TAB REMOVED — chat is now in bottom bar ── */}
+
+          </div>
+          );
+        })()}
+
+        </div>{/* end middle row */}
+
+        {/* ===== BOTTOM CHAT BAR ===== */}
+        {(()=>{
+          const CHAT_TABS=[
+            {id:"global", label:"Global"},
+            {id:"clan",   label:"Clan"},
+            {id:"dm",     label:"DM"},
+          ];
+          const CHAT_H=chatOpen?180:34;
+          return(
+          <div style={{flexShrink:0,height:CHAT_H,display:"flex",flexDirection:"column",background:C.panel,borderTop:"2px solid "+C.border,transition:"height 0.2s ease",overflow:"hidden"}}>
+
+            {/* Tab bar + toggle */}
+            <div style={{display:"flex",alignItems:"center",height:34,flexShrink:0,borderBottom:chatOpen?"1px solid "+C.border:"none",background:C.bg,paddingLeft:navCollapsed?52:210,gap:2,paddingRight:8}}>
+              {CHAT_TABS.map(t=>(
+                <div key={t.id} onClick={()=>{setChatTab(t.id);if(!chatOpen)setChatOpen(true);}} style={{padding:"4px 14px",fontSize:10,fontWeight:700,fontFamily:FONT,letterSpacing:1,color:chatTab===t.id?C.acc:C.td,borderBottom:chatTab===t.id?"2px solid "+C.acc:"2px solid transparent",cursor:"pointer",background:"transparent",height:34,display:"flex",alignItems:"center",transition:"color 0.15s"}}>
+                  {t.label}
+                  {t.id==="clan"&&clan&&<span style={{marginLeft:4,fontSize:8,padding:"1px 5px",borderRadius:6,background:C.gold+"20",color:C.gold,border:"1px solid "+C.gold+"40"}}>[{clan.tag}]</span>}
+                  {t.id==="dm"&&dmTarget&&<span style={{marginLeft:4,fontSize:8,color:C.ts}}>→ {dmTarget.name}</span>}
                 </div>
+              ))}
+              <div style={{marginLeft:"auto",fontSize:10,color:C.td,cursor:"pointer",padding:"4px 8px",fontFamily:FONT,userSelect:"none"}} onClick={()=>setChatOpen(p=>!p)}>
+                {chatOpen?"▼ hide":"▲ chat"}
+              </div>
+            </div>
+
+            {/* Messages + input */}
+            {chatOpen&&(
+              <div style={{flex:1,display:"flex",minHeight:0,paddingLeft:navCollapsed?52:210}}>
                 {/* Messages */}
-                <div style={{flex:1,overflowY:"auto",padding:"6px 8px",display:"flex",flexDirection:"column",gap:2}}>
+                <div style={{flex:1,overflowY:"auto",padding:"4px 12px",display:"flex",flexDirection:"column",gap:1}}>
                   {chatTab==="global"&&chatMessages.map(m=>{
                     const mine=m.uid===account.uid;
                     return(
-                      <div key={m.id||m.ts} style={{display:"flex",gap:5,alignItems:"flex-start",flexDirection:mine?"row-reverse":"row",marginBottom:1}}>
-                        <div style={{width:20,height:20,borderRadius:10,background:mine?"linear-gradient(135deg,"+C.acc+","+C.purp+")":"linear-gradient(135deg,"+C.td+","+C.border+")",display:"flex",alignItems:"center",justifyContent:"center",fontSize:9,fontWeight:700,color:C.bg,flexShrink:0}}>
-                          {(m.name||"?")[0].toUpperCase()}
-                        </div>
-                        <div style={{maxWidth:"80%"}}>
-                          <div style={{fontSize:8,color:mine?C.acc:C.ts,marginBottom:1,fontFamily:FONT_BODY,textAlign:mine?"right":"left"}}>{mine?"You":m.name}</div>
-                          <div style={{padding:"4px 8px",borderRadius:mine?"8px 2px 8px 8px":"2px 8px 8px 8px",background:mine?"linear-gradient(135deg,"+C.acc+"28,"+C.acc+"12)":C.card,border:"1px solid "+(mine?C.acc+"35":C.border),fontSize:10,color:C.white,fontFamily:FONT_BODY,lineHeight:1.4,wordBreak:"break-word"}}>
-                            {m.text}
-                          </div>
-                        </div>
+                      <div key={m.id||m.ts} style={{display:"flex",gap:6,alignItems:"baseline",padding:"1px 0"}}>
+                        <span style={{fontSize:9,color:mine?C.acc:C.ts,fontWeight:700,flexShrink:0,fontFamily:FONT}}>{mine?"You":m.name}</span>
+                        <span style={{fontSize:8,color:C.td,flexShrink:0,fontFamily:FONT_BODY}}>{new Date(m.ts).toLocaleTimeString([],{hour:"2-digit",minute:"2-digit"})}</span>
+                        <span style={{fontSize:10,color:C.white,fontFamily:FONT_BODY,lineHeight:1.4,wordBreak:"break-word"}}>{m.text}</span>
                       </div>
                     );
                   })}
-                  {chatTab==="clan"&&(
-                    clan?clanChat.map((m,i)=>{
-                      const mine=m.uid===account.uid;
-                      return(
-                        <div key={i} style={{display:"flex",gap:5,alignItems:"flex-start",flexDirection:mine?"row-reverse":"row",marginBottom:1}}>
-                          <div style={{width:20,height:20,borderRadius:10,background:mine?"linear-gradient(135deg,"+C.gold+","+C.warn+")":"linear-gradient(135deg,"+C.td+","+C.border+")",display:"flex",alignItems:"center",justifyContent:"center",fontSize:9,fontWeight:700,color:C.bg,flexShrink:0}}>
-                            {(m.name||"?")[0].toUpperCase()}
-                          </div>
-                          <div style={{maxWidth:"80%"}}>
-                            <div style={{fontSize:8,color:mine?C.gold:C.ts,marginBottom:1,fontFamily:FONT_BODY}}>{mine?"You":m.name}</div>
-                            <div style={{padding:"4px 8px",borderRadius:mine?"8px 2px 8px 8px":"2px 8px 8px 8px",background:mine?"linear-gradient(135deg,"+C.gold+"20,"+C.gold+"08)":C.card,border:"1px solid "+(mine?C.gold+"40":C.border),fontSize:10,color:C.white,fontFamily:FONT_BODY,lineHeight:1.4,wordBreak:"break-word"}}>
-                              {m.text}
-                            </div>
-                          </div>
-                        </div>
-                      );
-                    }):<div style={{padding:20,textAlign:"center",color:C.td,fontSize:10,fontFamily:FONT_BODY}}>Not in a clan. Join one via Social page.</div>
+                  {chatTab==="clan"&&(clan
+                    ?clanChat.map((m,i)=>(
+                      <div key={i} style={{display:"flex",gap:6,alignItems:"baseline",padding:"1px 0"}}>
+                        <span style={{fontSize:9,color:m.uid===account.uid?C.gold:C.ts,fontWeight:700,flexShrink:0,fontFamily:FONT}}>{m.uid===account.uid?"You":m.name}</span>
+                        <span style={{fontSize:10,color:C.white,fontFamily:FONT_BODY,wordBreak:"break-word"}}>{m.text}</span>
+                      </div>
+                    ))
+                    :<div style={{padding:"20px 12px",color:C.td,fontSize:10,fontFamily:FONT_BODY}}>Not in a clan yet — join one from the Social page.</div>
                   )}
-                  {chatTab==="dm"&&(
-                    dmTarget?dmMessages.map((m,i)=>{
-                      const mine=m.uid===account.uid;
-                      return(
-                        <div key={i} style={{display:"flex",gap:5,alignItems:"flex-start",flexDirection:mine?"row-reverse":"row",marginBottom:1}}>
-                          <div style={{width:20,height:20,borderRadius:10,background:mine?"linear-gradient(135deg,"+C.acc+","+C.purp+")":"linear-gradient(135deg,"+C.td+","+C.border+")",display:"flex",alignItems:"center",justifyContent:"center",fontSize:9,fontWeight:700,color:C.bg,flexShrink:0}}>
-                            {(m.name||"?")[0].toUpperCase()}
-                          </div>
-                          <div style={{maxWidth:"80%"}}>
-                            <div style={{fontSize:8,color:mine?C.acc:C.ts,marginBottom:1,fontFamily:FONT_BODY}}>{mine?"You":dmTarget.name}</div>
-                            <div style={{padding:"4px 8px",borderRadius:mine?"8px 2px 8px 8px":"2px 8px 8px 8px",background:mine?"linear-gradient(135deg,"+C.acc+"28,"+C.acc+"12)":C.card,border:"1px solid "+(mine?C.acc+"35":C.border),fontSize:10,color:C.white,fontFamily:FONT_BODY,lineHeight:1.4,wordBreak:"break-word"}}>
-                              {m.text}
-                            </div>
-                          </div>
-                        </div>
-                      );
-                    }):<div style={{padding:20,textAlign:"center",color:C.td,fontSize:10,fontFamily:FONT_BODY}}>No DM open. Click DM on a friend in Social page.</div>
+                  {chatTab==="dm"&&(dmTarget
+                    ?dmMessages.map((m,i)=>(
+                      <div key={i} style={{display:"flex",gap:6,alignItems:"baseline",padding:"1px 0"}}>
+                        <span style={{fontSize:9,color:m.uid===account.uid?C.acc:C.ts,fontWeight:700,flexShrink:0,fontFamily:FONT}}>{m.uid===account.uid?"You":dmTarget.name}</span>
+                        <span style={{fontSize:10,color:C.white,fontFamily:FONT_BODY,wordBreak:"break-word"}}>{m.text}</span>
+                      </div>
+                    ))
+                    :<div style={{padding:"20px 12px",color:C.td,fontSize:10,fontFamily:FONT_BODY}}>No DM open. Go to Social → Friends → DM.</div>
                   )}
                   <div ref={chatEndRef}/>
                 </div>
                 {/* Input */}
-                <div style={{flexShrink:0,padding:"6px 8px",borderTop:"1px solid "+C.border,display:"flex",gap:6}}>
+                <div style={{flexShrink:0,width:280,padding:"8px 10px",borderLeft:"1px solid "+C.border,display:"flex",gap:6,alignItems:"center"}}>
                   <input
                     value={chatTab==="global"?chatInput:chatTab==="clan"?clanChatInput:dmInput}
                     onChange={e=>{
@@ -3858,25 +3862,24 @@ function GameUI({account,onLogout}){
                       else if(chatTab==="clan")sendClanChat();
                       else sendDm();
                     }}
-                    placeholder={chatTab==="dm"&&dmTarget?"Message "+dmTarget.name+"...":chatTab==="clan"&&clan?"Clan chat...":"Global chat..."}
-                    style={{flex:1,padding:"6px 8px",borderRadius:6,background:C.card,border:"1px solid "+C.border,color:C.white,fontSize:10,fontFamily:FONT_BODY,outline:"none",minWidth:0}}
+                    placeholder={chatTab==="dm"&&dmTarget?"Message "+dmTarget.name+"...":chatTab==="clan"&&clan?"Clan chat...":"Send a message..."}
+                    style={{flex:1,padding:"7px 10px",borderRadius:6,background:C.card,border:"1px solid "+C.border,color:C.white,fontSize:11,fontFamily:FONT_BODY,outline:"none"}}
                   />
                   <div onClick={()=>{
                     if(chatTab==="global")sendChat();
                     else if(chatTab==="clan")sendClanChat();
                     else sendDm();
-                  }} style={{width:28,height:28,borderRadius:6,background:"linear-gradient(135deg,"+C.accD+","+C.acc+")",display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",flexShrink:0,fontSize:12}}>
-                    ➤
+                  }} style={{padding:"7px 14px",borderRadius:6,background:"linear-gradient(90deg,"+C.accD+","+C.acc+")",color:C.bg,fontSize:11,fontWeight:700,cursor:"pointer",letterSpacing:1,fontFamily:FONT,flexShrink:0}}>
+                    Send
                   </div>
                 </div>
               </div>
             )}
-
           </div>
           );
         })()}
 
-      </div>
+      </div>{/* end BODY column */}
 
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Inter:wght@400;500;600&display=swap');

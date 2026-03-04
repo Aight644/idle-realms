@@ -3698,44 +3698,46 @@ function GameUI({account,onLogout}){
           {/* ── ACTIVE TASK ── */}
           <div style={{padding:"10px 12px",borderBottom:"1px solid "+C.border,background:C.bg}}>
             <div style={{fontSize:11,fontWeight:700,color:C.acc,letterSpacing:2,marginBottom:6}}>ACTIVE</div>
-            {curAct?(()=>{
-              const sk=SKILLS.find(s=>s.id===curAct.sk);
-              const act=sk?.acts.find(a=>a.id===curAct.act);
-              return(
-                <div>
-                  <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:5}}>
-                    <span style={{fontSize:12,color:C.white,fontFamily:FONT_BODY,fontWeight:600}}>{sk?.icon} {sk?.name}</span>
-                    <span style={{fontSize:10,color:C.ts,fontFamily:FONT_BODY}}>{act?.name}</span>
-                  </div>
-                  <div style={{height:5,borderRadius:3,background:C.card,overflow:"hidden"}}>
-                    <div style={{width:actProg*100+"%",height:"100%",borderRadius:3,background:"linear-gradient(90deg,"+C.accD+","+C.acc+")",transition:"width 0.1s linear"}}/>
-                  </div>
-                </div>
-              );
-            })()
-            :(zoneId?(()=>{
-              const zone=ZONES.find(z=>z.id===zoneId);
-              const mob=cbt?.mob;
-              return mob?(
-                <div>
-                  <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:5}}>
-                    <span style={{fontSize:12,color:C.bad,fontFamily:FONT_BODY,fontWeight:600}}>{mob.i||"⚔️"} {mob.n}</span>
-                    <span style={{fontSize:10,color:C.ts}}>{zone?.name}</span>
-                  </div>
-                  <div style={{display:"flex",gap:6}}>
-                    <div style={{flex:1}}>
-                      <div style={{fontSize:8,color:C.td,marginBottom:2}}>You</div>
-                      <div style={{height:5,borderRadius:3,background:C.card,overflow:"hidden"}}><div style={{width:cbt?(cbt.php/cbt.mxhp)*100+"%":"100%",height:"100%",background:C.ok,borderRadius:3,transition:"width 0.2s"}}/></div>
+            {(()=>{
+              if(curAct){
+                const sk=SKILLS.find(s=>s.id===curAct.sk);
+                const act=sk?.acts.find(a=>a.id===curAct.act);
+                return(
+                  <div>
+                    <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:5}}>
+                      <span style={{fontSize:12,color:C.white,fontFamily:FONT_BODY,fontWeight:600}}>{sk?.icon} {sk?.name}</span>
+                      <span style={{fontSize:10,color:C.ts,fontFamily:FONT_BODY}}>{act?.name}</span>
                     </div>
-                    <div style={{flex:1}}>
-                      <div style={{fontSize:8,color:C.td,marginBottom:2}}>{mob.n}</div>
-                      <div style={{height:5,borderRadius:3,background:C.card,overflow:"hidden"}}><div style={{width:cbt?Math.max(0,(cbt.mhp/mob.hp)*100)+"%":"100%",height:"100%",background:C.bad,borderRadius:3,transition:"width 0.2s"}}/></div>
+                    <div style={{height:5,borderRadius:3,background:C.card,overflow:"hidden"}}>
+                      <div style={{width:actProg*100+"%",height:"100%",borderRadius:3,background:"linear-gradient(90deg,"+C.accD+","+C.acc+")",transition:"width 0.1s linear"}}/>
                     </div>
                   </div>
-                </div>
-              ):null;
-            })()
-            ):<div style={{fontSize:11,color:C.td,fontFamily:FONT_BODY}}>— idle —</div>)}
+                );
+              }
+              if(zoneId&&cbt?.mob){
+                const zone=ZONES.find(z=>z.id===zoneId);
+                const mob=cbt.mob;
+                return(
+                  <div>
+                    <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:5}}>
+                      <span style={{fontSize:12,color:C.bad,fontFamily:FONT_BODY,fontWeight:600}}>{mob.i||"⚔️"} {mob.n}</span>
+                      <span style={{fontSize:10,color:C.ts}}>{zone?.name}</span>
+                    </div>
+                    <div style={{display:"flex",gap:6}}>
+                      <div style={{flex:1}}>
+                        <div style={{fontSize:8,color:C.td,marginBottom:2}}>You</div>
+                        <div style={{height:5,borderRadius:3,background:C.card,overflow:"hidden"}}><div style={{width:(cbt.php/cbt.mxhp)*100+"%",height:"100%",background:C.ok,borderRadius:3,transition:"width 0.2s"}}/></div>
+                      </div>
+                      <div style={{flex:1}}>
+                        <div style={{fontSize:8,color:C.td,marginBottom:2}}>{mob.n}</div>
+                        <div style={{height:5,borderRadius:3,background:C.card,overflow:"hidden"}}><div style={{width:Math.max(0,(cbt.mhp/mob.hp)*100)+"%",height:"100%",background:C.bad,borderRadius:3,transition:"width 0.2s"}}/></div>
+                      </div>
+                    </div>
+                  </div>
+                );
+              }
+              return <div style={{fontSize:11,color:C.td,fontFamily:FONT_BODY}}>— idle —</div>;
+            })()}
           </div>
 
           {/* ── LOADOUT ── */}

@@ -465,6 +465,70 @@ const BLUEPRINTS = [
 
 const BP_RARITY_COLOR = {rare:"#00d4ff", epic:"#c084fc", legendary:"#ffd60a"};
 
+// ===================== TUTORIAL =====================
+const TUTORIAL_STEPS = [
+  {
+    title:"Welcome to Deep Ocean Civilization",
+    icon:"🌊",
+    body:"You're the commander of a deep-sea exploration probe. Your mission: build a thriving underwater civilization from scratch. Let's walk through the basics.",
+    highlight:null,
+  },
+  {
+    title:"Gathering Resources",
+    icon:"🌿",
+    body:"Start by clicking a Gathering skill in the left nav — try Kelp Cultivation. Select an operation and press START to begin auto-gathering. Resources appear in your inventory.",
+    highlight:"gather",
+  },
+  {
+    title:"Crafting Items",
+    icon:"🔧",
+    body:"Production skills turn raw materials into useful items. Click a Production skill, check you have the required materials (shown under each operation), then START crafting.",
+    highlight:"prod",
+  },
+  {
+    title:"Research Points",
+    icon:"🔬",
+    body:"Research Points (RP) trickle in over time. Open Research Tree to spend them on permanent upgrades — faster gathering, better combat, stronger structures.",
+    highlight:"research",
+  },
+  {
+    title:"Building Structures",
+    icon:"🏗️",
+    body:"Structures generate resources passively — even when you're offline! Open Structures and build a Kelp Farm first. Upgrade it over time for greater yields.",
+    highlight:"structures",
+  },
+  {
+    title:"Combat Zones",
+    icon:"⚔️",
+    body:"Click Combat Zones in the nav to enter battle. Defeat enemies to earn Credits and XP for your combat skills. Every 10th kill is a Boss — bosses drop rare materials!",
+    highlight:"combat",
+  },
+  {
+    title:"Drone Fleet",
+    icon:"🤖",
+    body:"Drones automate your work — they gather, mine, fish, and fight 24/7. Deploy drones from the Drone Fleet page. They even work while you're offline!",
+    highlight:"drones",
+  },
+  {
+    title:"Discoveries & Blueprints",
+    icon:"🔭",
+    body:"While gathering you'll occasionally find Random Discoveries — ancient wrecks, lost labs, crystal veins. Some discoveries unlock secret Blueprints: powerful hidden operations!",
+    highlight:null,
+  },
+  {
+    title:"Ascension",
+    icon:"✨",
+    body:"Once your total skill level is high enough, you can Ascend. This resets resources but grants permanent Ancient Data Cores used to buy powerful upgrades that carry over forever.",
+    highlight:"prestige",
+  },
+  {
+    title:"You're Ready!",
+    icon:"🚀",
+    body:"That's everything! Gather → Craft → Research → Build → Fight → Automate → Ascend. The ocean is yours to conquer. Good luck, Commander!",
+    highlight:null,
+  },
+];
+
 // ===================== MARKETPLACE =====================
 // Uses Firebase shared storage — orders visible to all players
 // ===================== ACHIEVEMENTS =====================
@@ -858,6 +922,38 @@ function GameUI({account,onLogout}){
     dronesDeployed:0, dronesConcurrent:0, ascensions:0, maxSkillLv:0,
     totalSkillLv:0, discoveries:0,
   });
+  // QoL / UI state
+  const[navCollapsed,setNavCollapsed]=useState(false);
+  const[navSearch,setNavSearch]=useState("");
+  const[showTutorial,setShowTutorial]=useState(false);
+  const[tutorialStep,setTutorialStep]=useState(0);
+  const[tutorialDone,setTutorialDone]=useState(false);
+  const[showSettings,setShowSettings]=useState(false);
+  const[leaderboard,setLeaderboard]=useState([]);
+  const[lbLoading,setLbLoading]=useState(false);
+  const[showLogoutConfirm,setShowLogoutConfirm]=useState(false);
+  // ── Social ──
+  const[chatMessages,setChatMessages]=useState([]);  // global chat
+  const[chatInput,setChatInput]=useState("");
+  const[chatTab,setChatTab]=useState("global");      // global | clan | dm
+  const[dmTarget,setDmTarget]=useState(null);        // {uid, name}
+  const[dmMessages,setDmMessages]=useState([]);
+  const[dmInput,setDmInput]=useState("");
+  const[friends,setFriends]=useState([]);            // [{uid,name,online,skills}]
+  const[friendReqs,setFriendReqs]=useState([]);      // incoming requests [{uid,name}]
+  const[addFriendInput,setAddFriendInput]=useState("");
+  const[addFriendErr,setAddFriendErr]=useState("");
+  const[clan,setClan]=useState(null);                // current clan doc or null
+  const[clanMembers,setClanMembers]=useState([]);
+  const[clanChat,setClanChat]=useState([]);
+  const[clanChatInput,setClanChatInput]=useState("");
+  const[clanSearch,setClanSearch]=useState([]);
+  const[clanSearchInput,setClanSearchInput]=useState("");
+  const[createClanName,setCreateClanName]=useState("");
+  const[createClanTag,setCreateClanTag]=useState("");
+  const[socialTab,setSocialTab]=useState("chat");    // chat | friends | clan
+  const[unreadGlobal,setUnreadGlobal]=useState(0);
+  const[unreadDm,setUnreadDm]=useState(0);
   const invRef=useRef(inv);
   invRef.current=inv;
 
@@ -911,6 +1007,7 @@ function GameUI({account,onLogout}){
   useEffect(()=>{(async()=>{try{const snap=await getDoc(doc(db,"doc_saves",account.uid));if(snap.exists()){const d=snap.data();if(d.skills)setSkills(d.skills);if(d.inv)setInv(d.inv);if(d.eq)setEq(d.eq);if(d.gold)setGold(d.gold);if(d.enh)setEnh(d.enh);if(d.researchPts)setResearchPts(d.researchPts);if(d.researched)setResearched(d.researched);if(d.structures)setStructures(d.structures);if(d.drones)setDrones(d.drones);if(d.ascensionLevel)setAscensionLevel(d.ascensionLevel);if(d.dataCores)setDataCores(d.dataCores);if(d.prestigeUpgrades)setPrestigeUpgrades(d.prestigeUpgrades);
       if(d.achievements)setAchievements(d.achievements);if(d.lifeStats)setLifeStats(p=>({...p,...d.lifeStats}));
       if(d.blueprints)setBlueprints(d.blueprints);
+      if(d.tutorialDone)setTutorialDone(true);
       // Offline progress — up to 8 hours
       if(d.ts){
         const away=Math.min(Date.now()-d.ts, 8*60*60*1000); // cap at 8h
@@ -947,9 +1044,15 @@ function GameUI({account,onLogout}){
           if(hasGains)setOfflineGains({away,gains});
         }
       }
+      // Show tutorial for new players (no prior save)
+    }else{setShowTutorial(true)}
+    // Always load social data on mount
     }}catch(e){console.error(e)}})()},[account.uid]);
+
+  // Load social on mount
+  useEffect(()=>{loadFriends();loadClan();},[account.uid]);
   // Save
-  useEffect(()=>{const t=setInterval(()=>{setDoc(doc(db,"doc_saves",account.uid),{skills,inv,eq,gold,enh,researchPts,researched,structures,drones,ascensionLevel,dataCores,prestigeUpgrades,achievements,lifeStats,blueprints,ts:Date.now()},{merge:true}).catch(()=>{})},30000);return()=>clearInterval(t)},[skills,inv,eq,gold,enh,researchPts,researched,structures,drones,ascensionLevel,dataCores,prestigeUpgrades,achievements,lifeStats,blueprints,account.uid]);
+  useEffect(()=>{const t=setInterval(()=>{setDoc(doc(db,"doc_saves",account.uid),{skills,inv,eq,gold,enh,researchPts,researched,structures,drones,ascensionLevel,dataCores,prestigeUpgrades,achievements,lifeStats,blueprints,tutorialDone,ts:Date.now()},{merge:true}).catch(()=>{})},30000);return()=>clearInterval(t)},[skills,inv,eq,gold,enh,researchPts,researched,structures,drones,ascensionLevel,dataCores,prestigeUpgrades,achievements,lifeStats,blueprints,tutorialDone,account.uid]);
 
   // Energy regen
   useEffect(()=>{const t=setInterval(()=>{setEnergy(e=>Math.min(maxEnergy,e+1*(1+(bonuses.energy_regen||0))))},1000);return()=>clearInterval(t)},[maxEnergy,bonuses.energy_regen]);
@@ -1227,10 +1330,253 @@ function GameUI({account,onLogout}){
     return allSkillIds.reduce((sum,sid)=>sum+sl(sid).lv,0);
   },[sl]);
 
+  // Leaderboard loader
+  const loadLeaderboard=useCallback(async()=>{
+    setLbLoading(true);
+    try{
+      // Write our own score first
+      const {collection,getDocs,query,orderBy,limit,setDoc:fsetDoc,doc:fdoc}=await import("firebase/firestore");
+      await fsetDoc(fdoc(db,"leaderboard",account.uid),{
+        name:account.displayName||"Anonymous",
+        totalSkillLv:totalSkillLevel,
+        ascensions:ascensionLevel,
+        kills:lifeStats.kills||0,
+        uid:account.uid,
+        ts:Date.now(),
+      });
+      const q=query(collection(db,"leaderboard"),orderBy("totalSkillLv","desc"),limit(20));
+      const snap=await getDocs(q);
+      setLeaderboard(snap.docs.map((d,i)=>({rank:i+1,id:d.id,...d.data()})));
+    }catch(e){console.error("Leaderboard:",e)}
+    setLbLoading(false);
+  },[account,totalSkillLevel,ascensionLevel,lifeStats.kills]);
+
   const maxSkillLevel=useMemo(()=>{
     const allSkillIds=[...SKILLS.map(s=>s.id),...CSUBS.map(c=>c.id),"enhancing"];
     return allSkillIds.reduce((mx,sid)=>Math.max(mx,sl(sid).lv),0);
   },[sl]);
+
+  // ─── SOCIAL: Global Chat ───────────────────────────────
+  useEffect(()=>{
+    let unsub;
+    (async()=>{
+      try{
+        const {collection,query,orderBy,limit,onSnapshot}=await import("firebase/firestore");
+        const q=query(collection(db,"global_chat"),orderBy("ts","desc"),limit(60));
+        unsub=onSnapshot(q,snap=>{
+          const msgs=snap.docs.map(d=>({id:d.id,...d.data()})).reverse();
+          setChatMessages(msgs);
+        });
+      }catch(e){console.error("Chat sub:",e)}
+    })();
+    return()=>{if(unsub)unsub()};
+  },[]);
+
+  const sendChat=useCallback(async()=>{
+    const txt=chatInput.trim();if(!txt)return;
+    setChatInput("");
+    try{
+      const {collection,addDoc}=await import("firebase/firestore");
+      await addDoc(collection(db,"global_chat"),{
+        uid:account.uid,name:account.displayName||"Anon",
+        text:txt,ts:Date.now(),
+      });
+    }catch(e){console.error("sendChat:",e)}
+  },[chatInput,account]);
+
+  // ─── SOCIAL: Direct Messages ──────────────────────────
+  const loadDm=useCallback(async(target)=>{
+    setDmTarget(target);setDmMessages([]);
+    try{
+      const {collection,query,where,orderBy,getDocs}=await import("firebase/firestore");
+      const dmId=[account.uid,target.uid].sort().join("_");
+      const q=query(collection(db,"dm_"+dmId),orderBy("ts","asc"));
+      const snap=await getDocs(q);
+      setDmMessages(snap.docs.map(d=>({id:d.id,...d.data()})));
+      setChatTab("dm");
+    }catch(e){console.error("loadDm:",e)}
+  },[account.uid]);
+
+  const sendDm=useCallback(async()=>{
+    const txt=dmInput.trim();if(!txt||!dmTarget)return;
+    setDmInput("");
+    try{
+      const {collection,addDoc}=await import("firebase/firestore");
+      const dmId=[account.uid,dmTarget.uid].sort().join("_");
+      const msg={uid:account.uid,name:account.displayName||"Anon",text:txt,ts:Date.now()};
+      await addDoc(collection(db,"dm_"+dmId),msg);
+      setDmMessages(p=>[...p,msg]);
+    }catch(e){console.error("sendDm:",e)}
+  },[dmInput,dmTarget,account]);
+
+  // ─── SOCIAL: Friends ──────────────────────────────────
+  const loadFriends=useCallback(async()=>{
+    try{
+      const {doc:fdoc,getDoc:fget,collection,getDocs,query,where}=await import("firebase/firestore");
+      // Load incoming requests
+      const reqSnap=await fget(fdoc(db,"friend_requests",account.uid));
+      const reqs=reqSnap.exists()?(reqSnap.data().requests||[]):[];
+      setFriendReqs(reqs);
+      // Load friends list
+      const frSnap=await fget(fdoc(db,"friends",account.uid));
+      const frIds=frSnap.exists()?(frSnap.data().friends||[]):[];
+      const frProfiles=await Promise.all(frIds.map(async uid=>{
+        try{
+          const p=await fget(fdoc(db,"leaderboard",uid));
+          return p.exists()?{uid,...p.data()}:{uid,name:uid};
+        }catch{return{uid,name:uid}}
+      }));
+      setFriends(frProfiles);
+    }catch(e){console.error("loadFriends:",e)}
+  },[account.uid]);
+
+  const sendFriendReq=useCallback(async()=>{
+    const target=addFriendInput.trim();if(!target){setAddFriendErr("Enter a commander name");return}
+    setAddFriendErr("");
+    try{
+      const {collection,getDocs,query,where,doc:fdoc,setDoc,getDoc:fget,arrayUnion}=await import("firebase/firestore");
+      // Find user by displayName in leaderboard
+      const snap=await getDocs(query(collection(db,"leaderboard"),where("name","==",target)));
+      if(snap.empty){setAddFriendErr("Commander not found");return}
+      const targetDoc=snap.docs[0];const targetUid=targetDoc.id;
+      if(targetUid===account.uid){setAddFriendErr("Can't add yourself");return}
+      // Write request to their doc
+      const reqRef=fdoc(db,"friend_requests",targetUid);
+      const existing=await fget(reqRef);
+      const reqs=existing.exists()?(existing.data().requests||[]):[];
+      if(reqs.find(r=>r.uid===account.uid)){setAddFriendErr("Request already sent");return}
+      await setDoc(reqRef,{requests:[...reqs,{uid:account.uid,name:account.displayName||"Anon"}]},{merge:true});
+      setAddFriendInput("");setAddFriendErr("Request sent! ✓");
+    }catch(e){console.error("sendFriendReq:",e);setAddFriendErr("Error: "+e.message)}
+  },[addFriendInput,account]);
+
+  const acceptFriend=useCallback(async(req)=>{
+    try{
+      const {doc:fdoc,setDoc,getDoc:fget,arrayUnion}=await import("firebase/firestore");
+      // Add each other to friends lists
+      const myRef=fdoc(db,"friends",account.uid);
+      const theirRef=fdoc(db,"friends",req.uid);
+      const myDoc=await fget(myRef);const theirDoc=await fget(theirRef);
+      const myFriends=myDoc.exists()?(myDoc.data().friends||[]):[];
+      const theirFriends=theirDoc.exists()?(theirDoc.data().friends||[]):[];
+      if(!myFriends.includes(req.uid))await setDoc(myRef,{friends:[...myFriends,req.uid]},{merge:true});
+      if(!theirFriends.includes(account.uid))await setDoc(theirRef,{friends:[...theirFriends,account.uid]},{merge:true});
+      // Remove from requests
+      const reqRef=fdoc(db,"friend_requests",account.uid);
+      const reqDoc=await fget(reqRef);
+      const reqs=(reqDoc.data()?.requests||[]).filter(r=>r.uid!==req.uid);
+      await setDoc(reqRef,{requests:reqs},{merge:true});
+      await loadFriends();
+    }catch(e){console.error("acceptFriend:",e)}
+  },[account.uid,loadFriends]);
+
+  const declineFriend=useCallback(async(req)=>{
+    try{
+      const {doc:fdoc,setDoc,getDoc:fget}=await import("firebase/firestore");
+      const reqRef=fdoc(db,"friend_requests",account.uid);
+      const reqDoc=await fget(reqRef);
+      const reqs=(reqDoc.data()?.requests||[]).filter(r=>r.uid!==req.uid);
+      await setDoc(reqRef,{requests:reqs},{merge:true});
+      setFriendReqs(p=>p.filter(r=>r.uid!==req.uid));
+    }catch(e){console.error("declineFriend:",e)}
+  },[account.uid]);
+
+  const removeFriend=useCallback(async(uid)=>{
+    try{
+      const {doc:fdoc,setDoc,getDoc:fget}=await import("firebase/firestore");
+      const myRef=fdoc(db,"friends",account.uid);
+      const myDoc=await fget(myRef);
+      const updated=(myDoc.data()?.friends||[]).filter(id=>id!==uid);
+      await setDoc(myRef,{friends:updated},{merge:true});
+      setFriends(p=>p.filter(f=>f.uid!==uid));
+    }catch(e){console.error("removeFriend:",e)}
+  },[account.uid]);
+
+  // ─── SOCIAL: Clans ────────────────────────────────────
+  const loadClan=useCallback(async()=>{
+    try{
+      const {doc:fdoc,getDoc:fget,collection,getDocs,query,where,orderBy}=await import("firebase/firestore");
+      // Check if player is in a clan
+      const memberRef=fdoc(db,"clan_members",account.uid);
+      const memberDoc=await fget(memberRef);
+      if(!memberDoc.exists()||!memberDoc.data().clanId){setClan(null);return}
+      const clanId=memberDoc.data().clanId;
+      const clanDoc=await fget(fdoc(db,"clans",clanId));
+      if(!clanDoc.exists()){setClan(null);return}
+      setClan({id:clanId,...clanDoc.data()});
+      // Load members
+      const snap=await getDocs(query(collection(db,"clan_members"),where("clanId","==",clanId)));
+      const members=await Promise.all(snap.docs.map(async d=>{
+        const lb=await fget(fdoc(db,"leaderboard",d.id));
+        return{uid:d.id,role:d.data().role,...(lb.exists()?lb.data():{name:d.id})};
+      }));
+      setClanMembers(members.sort((a,b)=>(b.totalSkillLv||0)-(a.totalSkillLv||0)));
+      // Load clan chat
+      const chatSnap=await getDocs(query(collection(db,"clan_chat_"+clanId),orderBy("ts","desc")));
+      setClanChat(chatSnap.docs.map(d=>({id:d.id,...d.data()})).reverse().slice(-60));
+    }catch(e){console.error("loadClan:",e)}
+  },[account.uid]);
+
+  const createClan=useCallback(async()=>{
+    const name=createClanName.trim();const tag=createClanTag.trim().toUpperCase().slice(0,4);
+    if(!name||!tag)return;
+    try{
+      const {doc:fdoc,setDoc,collection,addDoc,getDocs,query,where}=await import("firebase/firestore");
+      // Check name/tag uniqueness
+      const existing=await getDocs(query(collection(db,"clans"),where("tag","==",tag)));
+      if(!existing.empty){alert("Tag already taken");return}
+      const clanRef=fdoc(db,"clans",name.toLowerCase().replace(/\s+/g,"_"));
+      await setDoc(clanRef,{name,tag,leader:account.uid,leaderName:account.displayName||"Anon",memberCount:1,ts:Date.now(),totalSkillLv:totalSkillLevel});
+      await setDoc(fdoc(db,"clan_members",account.uid),{clanId:clanRef.id,role:"leader",joinedTs:Date.now()});
+      setCreateClanName("");setCreateClanTag("");
+      await loadClan();
+    }catch(e){console.error("createClan:",e);alert("Error: "+e.message)}
+  },[createClanName,createClanTag,account,totalSkillLevel,loadClan]);
+
+  const searchClans=useCallback(async()=>{
+    if(!clanSearchInput.trim())return;
+    try{
+      const {collection,getDocs,query,orderBy,limit}=await import("firebase/firestore");
+      const snap=await getDocs(query(collection(db,"clans"),orderBy("totalSkillLv","desc"),limit(20)));
+      const results=snap.docs.map(d=>({id:d.id,...d.data()}));
+      const q=clanSearchInput.toLowerCase();
+      setClanSearch(results.filter(c=>c.name.toLowerCase().includes(q)||c.tag.toLowerCase().includes(q)));
+    }catch(e){console.error("searchClans:",e)}
+  },[clanSearchInput]);
+
+  const joinClan=useCallback(async(clanId)=>{
+    try{
+      const {doc:fdoc,setDoc,getDoc:fget,increment,updateDoc}=await import("firebase/firestore");
+      await setDoc(fdoc(db,"clan_members",account.uid),{clanId,role:"member",joinedTs:Date.now()});
+      const clanRef=fdoc(db,"clans",clanId);
+      const clanDoc=await fget(clanRef);
+      await updateDoc(clanRef,{memberCount:(clanDoc.data()?.memberCount||0)+1});
+      await loadClan();
+    }catch(e){console.error("joinClan:",e)}
+  },[account.uid,loadClan]);
+
+  const leaveClan=useCallback(async()=>{
+    if(!clan)return;
+    try{
+      const {doc:fdoc,setDoc,getDoc:fget,updateDoc}=await import("firebase/firestore");
+      await setDoc(fdoc(db,"clan_members",account.uid),{clanId:null,role:null},{merge:true});
+      const clanRef=fdoc(db,"clans",clan.id);
+      const clanDoc=await fget(clanRef);
+      await updateDoc(clanRef,{memberCount:Math.max(0,(clanDoc.data()?.memberCount||1)-1)});
+      setClan(null);setClanMembers([]);setClanChat([]);
+    }catch(e){console.error("leaveClan:",e)}
+  },[clan,account.uid]);
+
+  const sendClanChat=useCallback(async()=>{
+    const txt=clanChatInput.trim();if(!txt||!clan)return;
+    setClanChatInput("");
+    try{
+      const {collection,addDoc}=await import("firebase/firestore");
+      const msg={uid:account.uid,name:account.displayName||"Anon",text:txt,ts:Date.now()};
+      await addDoc(collection(db,"clan_chat_"+clan.id),msg);
+      setClanChat(p=>[...p.slice(-59),msg]);
+    }catch(e){console.error("sendClanChat:",e)}
+  },[clanChatInput,clan,account]);
 
   // Build current achievement check snapshot
   const achSnapshot=useMemo(()=>({
@@ -1395,6 +1741,97 @@ function GameUI({account,onLogout}){
   return(
     <div style={{width:"100%",height:"100vh",display:"flex",flexDirection:"column",fontFamily:FONT,background:C.bg,color:C.text,overflow:"hidden"}}>
 
+      {/* ===== TUTORIAL MODAL ===== */}
+      {showTutorial&&(()=>{
+        const step=TUTORIAL_STEPS[tutorialStep];
+        const isLast=tutorialStep===TUTORIAL_STEPS.length-1;
+        return(
+          <div style={{position:"fixed",inset:0,zIndex:1000,display:"flex",alignItems:"center",justifyContent:"center",background:"#00000090",backdropFilter:"blur(4px)"}}>
+            <div style={{maxWidth:480,width:"90%",padding:"28px 28px 24px",borderRadius:16,background:"linear-gradient(135deg,"+C.panel+","+C.card+")",border:"2px solid "+C.acc+"50",boxShadow:"0 0 50px "+C.acc+"30",animation:"slideIn 0.3s ease-out"}}>
+              {/* Step counter */}
+              <div style={{display:"flex",gap:4,marginBottom:16,justifyContent:"center"}}>
+                {TUTORIAL_STEPS.map((_,i)=>(
+                  <div key={i} style={{width:i===tutorialStep?20:6,height:6,borderRadius:3,background:i<=tutorialStep?C.acc:C.border,transition:"all 0.2s"}}/>
+                ))}
+              </div>
+              <div style={{textAlign:"center",marginBottom:20}}>
+                <div style={{fontSize:40,marginBottom:10,filter:"drop-shadow(0 0 12px "+C.acc+")"}}>{step.icon}</div>
+                <div style={{fontSize:14,fontWeight:700,color:C.white,letterSpacing:2,marginBottom:10,fontFamily:FONT}}>{step.title}</div>
+                <div style={{fontSize:12,color:C.ts,fontFamily:FONT_BODY,lineHeight:1.7}}>{step.body}</div>
+              </div>
+              <div style={{display:"flex",gap:10}}>
+                {tutorialStep>0&&<div onClick={()=>setTutorialStep(p=>p-1)} style={{flex:1,padding:"10px 0",borderRadius:8,background:C.card,border:"1px solid "+C.border,color:C.ts,fontSize:11,fontWeight:700,cursor:"pointer",textAlign:"center",letterSpacing:1,fontFamily:FONT}}>← BACK</div>}
+                <div onClick={()=>{
+                  if(isLast){setShowTutorial(false);setTutorialDone(true);setTutorialStep(0)}
+                  else setTutorialStep(p=>p+1);
+                  if(step.highlight)setPage(step.highlight==="gather"||step.highlight==="prod"||step.highlight==="utility"?"skills":step.highlight);
+                }} style={{flex:2,padding:"10px 0",borderRadius:8,background:"linear-gradient(90deg,"+C.accD+","+C.acc+")",color:C.bg,fontSize:11,fontWeight:700,cursor:"pointer",textAlign:"center",letterSpacing:1,fontFamily:FONT,boxShadow:GLOW_STYLE}}>
+                  {isLast?"✓ START PLAYING":"NEXT →"}
+                </div>
+                <div onClick={()=>{setShowTutorial(false);setTutorialDone(true)}} style={{flex:1,padding:"10px 0",borderRadius:8,background:C.card,border:"1px solid "+C.border,color:C.td,fontSize:10,cursor:"pointer",textAlign:"center",fontFamily:FONT}}>SKIP</div>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
+
+      {/* ===== SETTINGS MODAL ===== */}
+      {showSettings&&(
+        <div style={{position:"fixed",inset:0,zIndex:1000,display:"flex",alignItems:"center",justifyContent:"center",background:"#00000088",backdropFilter:"blur(4px)"}}>
+          <div style={{maxWidth:420,width:"90%",padding:"24px",borderRadius:16,background:"linear-gradient(135deg,"+C.panel+","+C.card+")",border:"2px solid "+C.border,animation:"slideIn 0.25s ease-out"}}>
+            <div style={{fontSize:13,fontWeight:700,color:C.white,letterSpacing:2,marginBottom:16,fontFamily:FONT}}>⚙️ SETTINGS</div>
+            {/* Account info */}
+            <div style={{padding:"12px",borderRadius:8,background:C.bg,border:"1px solid "+C.border,marginBottom:12}}>
+              <div style={{fontSize:9,color:C.td,letterSpacing:2,marginBottom:8}}>ACCOUNT</div>
+              <div style={{fontSize:11,color:C.text,fontFamily:FONT_BODY,marginBottom:4}}>👤 {account.displayName||"Anonymous"}</div>
+              <div style={{fontSize:11,color:C.ts,fontFamily:FONT_BODY}}>📧 {account.email}</div>
+            </div>
+            {/* Game info */}
+            <div style={{padding:"12px",borderRadius:8,background:C.bg,border:"1px solid "+C.border,marginBottom:12}}>
+              <div style={{fontSize:9,color:C.td,letterSpacing:2,marginBottom:8}}>PROGRESS</div>
+              {[
+                ["Total Skill Level",totalSkillLevel],
+                ["Ascension Level",ascensionLevel],
+                ["Data Cores",dataCores],
+                ["Blueprints Unlocked",blueprints.length+"/"+BLUEPRINTS.length],
+                ["Achievements",Object.keys(achievements).length+"/"+ACHIEVEMENTS.length],
+              ].map(([l,v])=>(
+                <div key={l} style={{display:"flex",justifyContent:"space-between",padding:"3px 0",fontSize:10,fontFamily:FONT_BODY}}>
+                  <span style={{color:C.ts}}>{l}</span>
+                  <span style={{color:C.acc,fontWeight:700}}>{v}</span>
+                </div>
+              ))}
+            </div>
+            {/* Tutorial replay */}
+            <div onClick={()=>{setShowSettings(false);setTutorialStep(0);setShowTutorial(true)}} style={{padding:"10px",borderRadius:8,background:C.card,border:"1px solid "+C.border,color:C.acc,fontSize:11,fontWeight:700,cursor:"pointer",textAlign:"center",letterSpacing:1,fontFamily:FONT,marginBottom:8}}>
+              ❓ REPLAY TUTORIAL
+            </div>
+            {/* Logout */}
+            <div onClick={()=>{setShowSettings(false);setShowLogoutConfirm(true)}} style={{padding:"10px",borderRadius:8,background:C.bad+"15",border:"1px solid "+C.bad+"40",color:C.bad,fontSize:11,fontWeight:700,cursor:"pointer",textAlign:"center",letterSpacing:1,fontFamily:FONT,marginBottom:12}}>
+              ◉ LOGOUT
+            </div>
+            <div onClick={()=>setShowSettings(false)} style={{padding:"10px",borderRadius:8,background:C.card,border:"1px solid "+C.border,color:C.ts,fontSize:11,cursor:"pointer",textAlign:"center",fontFamily:FONT}}>
+              CLOSE
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ===== LOGOUT CONFIRM ===== */}
+      {showLogoutConfirm&&(
+        <div style={{position:"fixed",inset:0,zIndex:1000,display:"flex",alignItems:"center",justifyContent:"center",background:"#00000088",backdropFilter:"blur(4px)"}}>
+          <div style={{maxWidth:340,width:"90%",padding:"24px",borderRadius:16,background:"linear-gradient(135deg,"+C.panel+","+C.card+")",border:"2px solid "+C.bad+"40",animation:"slideIn 0.25s ease-out",textAlign:"center"}}>
+            <div style={{fontSize:28,marginBottom:10}}>🚪</div>
+            <div style={{fontSize:13,fontWeight:700,color:C.white,letterSpacing:2,marginBottom:8,fontFamily:FONT}}>LOGOUT?</div>
+            <div style={{fontSize:11,color:C.ts,fontFamily:FONT_BODY,marginBottom:20,lineHeight:1.5}}>Your progress is saved automatically every 30 seconds. Any unsaved gains from the last 30s may be lost.</div>
+            <div style={{display:"flex",gap:10}}>
+              <div onClick={()=>setShowLogoutConfirm(false)} style={{flex:1,padding:"10px 0",borderRadius:8,background:C.card,border:"1px solid "+C.border,color:C.ts,fontSize:11,fontWeight:700,cursor:"pointer",textAlign:"center",fontFamily:FONT}}>CANCEL</div>
+              <div onClick={()=>{setShowLogoutConfirm(false);onLogout()}} style={{flex:1,padding:"10px 0",borderRadius:8,background:C.bad+"20",border:"2px solid "+C.bad+"60",color:C.bad,fontSize:11,fontWeight:700,cursor:"pointer",textAlign:"center",fontFamily:FONT}}>LOGOUT</div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* ===== ACHIEVEMENT TOAST ===== */}
       {newAch&&(
         <div style={{position:"fixed",bottom:24,right:24,zIndex:997,maxWidth:320,padding:"14px 18px",borderRadius:12,background:"linear-gradient(135deg,"+C.panel+","+C.card+")",border:"2px solid "+C.gold+"70",boxShadow:"0 0 30px "+C.gold+"40",animation:"slideIn 0.3s ease-out",display:"flex",alignItems:"center",gap:12}}>
@@ -1511,39 +1948,92 @@ function GameUI({account,onLogout}){
         {/* Ascension indicator */}
         {ascensionLevel>0&&<div style={{fontSize:9,color:C.purp,fontWeight:700,letterSpacing:1,whiteSpace:"nowrap",flexShrink:0,padding:"2px 8px",borderRadius:8,background:C.purp+"18",border:"1px solid "+C.purp+"40"}}>✦ ASC {ascensionLevel}</div>}
         {canAscend&&<div onClick={()=>{setPage("prestige");setShowAscendConfirm(true)}} style={{fontSize:9,fontWeight:700,letterSpacing:1,whiteSpace:"nowrap",flexShrink:0,padding:"2px 8px",borderRadius:8,background:C.gold+"25",border:"1px solid "+C.gold+"60",color:C.gold,cursor:"pointer",animation:"pulse 1.5s infinite"}}>⬆ ASCEND</div>}
+        {/* QoL icon buttons */}
+        <div style={{display:"flex",gap:6,marginLeft:"auto",flexShrink:0}}>
+          <div onClick={()=>{setPage("leaderboard");loadLeaderboard()}} title="Leaderboard" style={{width:28,height:28,borderRadius:6,background:C.card,border:"1px solid "+C.border,display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",fontSize:14}}>🏅</div>
+          <div onClick={()=>setShowTutorial(true)} title="Tutorial" style={{width:28,height:28,borderRadius:6,background:C.card,border:"1px solid "+C.border,display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",fontSize:14}}>❓</div>
+          <div onClick={()=>setShowSettings(true)} title="Settings" style={{width:28,height:28,borderRadius:6,background:C.card,border:"1px solid "+C.border,display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",fontSize:14}}>⚙️</div>
+        </div>
       </div>
 
       {/* ===== BODY ===== */}
       <div style={{flex:1,display:"flex",overflow:"hidden"}}>
 
         {/* LEFT NAV */}
-        <div style={{width:210,flexShrink:0,display:"flex",flexDirection:"column",background:C.panel,borderRight:"1px solid "+C.border,overflowY:"auto"}}>
-          <div style={{padding:"12px 12px 8px",borderBottom:"1px solid "+C.border,background:"linear-gradient(180deg,#042233,#031926)"}}>
-            <div style={{fontSize:12,fontWeight:700,color:C.white,letterSpacing:1}}>{account.displayName}</div>
-            <div style={{fontSize:9,color:C.ts,marginTop:2,fontFamily:FONT_BODY}}>Depth Rank {combatLv}</div>
-          </div>
-          <div style={{padding:"4px 0",borderBottom:"1px solid "+C.border}}>
-            <div style={{padding:"5px 12px 3px",fontSize:8,fontWeight:700,color:C.td,textTransform:"uppercase",letterSpacing:2}}>Gathering</div>
-            {SKILLS.filter(s=>s.cat==="gather").map(sk=><SkillNav key={sk.id} sk={sk} running={curAct&&curAct.sk===sk.id}/>)}
-          </div>
-          <div style={{padding:"4px 0",borderBottom:"1px solid "+C.border}}>
-            <div style={{padding:"5px 12px 3px",fontSize:8,fontWeight:700,color:C.td,textTransform:"uppercase",letterSpacing:2}}>Production</div>
-            {SKILLS.filter(s=>s.cat==="prod").map(sk=><SkillNav key={sk.id} sk={sk} running={curAct&&curAct.sk===sk.id}/>)}
-          </div>
-          <div style={{padding:"4px 0",borderBottom:"1px solid "+C.border}}>
-            <div style={{padding:"5px 12px 3px",fontSize:8,fontWeight:700,color:"#38bdf8",textTransform:"uppercase",letterSpacing:2}}>Utility</div>
-            {SKILLS.filter(s=>s.cat==="utility").map(sk=><SkillNav key={sk.id} sk={sk} running={curAct&&curAct.sk===sk.id}/>)}
-          </div>
-          <div style={{padding:"4px 0",borderBottom:"1px solid "+C.border}}>
-            <div style={{padding:"5px 12px 3px",fontSize:8,fontWeight:700,color:C.td,textTransform:"uppercase",letterSpacing:2}}>Upgrading</div>
-            <div onClick={()=>setPage("enhancing")} style={{display:"flex",alignItems:"center",gap:8,padding:"6px 12px",cursor:"pointer",background:page==="enhancing"?"linear-gradient(90deg,"+C.acc+"15,transparent)":"transparent",borderLeft:page==="enhancing"?"3px solid "+C.acc:"3px solid transparent"}}>
-              <span style={{fontSize:14,width:20,textAlign:"center"}}>⚡</span>
-              <div style={{flex:1}}>
-                <div style={{display:"flex",justifyContent:"space-between"}}><span style={{fontSize:10,color:page==="enhancing"?C.acc:C.text,fontFamily:FONT_BODY}}>Upgrading</span><span style={{fontSize:10,color:C.ts,fontWeight:700}}>{sl("enhancing").lv}</span></div>
-                <div style={{height:2,borderRadius:1,background:C.bg,overflow:"hidden",marginTop:2}}><div style={{width:(sl("enhancing").xp/sl("enhancing").need)*100+"%",height:"100%",background:C.warn,borderRadius:1}}/></div>
-              </div>
+        <div style={{width:navCollapsed?52:210,flexShrink:0,display:"flex",flexDirection:"column",background:C.panel,borderRight:"1px solid "+C.border,overflowY:"auto",transition:"width 0.2s ease"}}>
+          {/* Nav header: player info + collapse toggle */}
+          <div style={{padding:"10px 10px 8px",borderBottom:"1px solid "+C.border,background:"linear-gradient(180deg,#042233,#031926)",display:"flex",alignItems:"center",gap:6}}>
+            {!navCollapsed&&<div style={{flex:1,minWidth:0}}>
+              <div style={{fontSize:11,fontWeight:700,color:C.white,letterSpacing:1,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{account.displayName}</div>
+              <div style={{fontSize:9,color:C.ts,marginTop:1,fontFamily:FONT_BODY}}>Rank {combatLv}</div>
+            </div>}
+            <div onClick={()=>setNavCollapsed(p=>!p)} title={navCollapsed?"Expand nav":"Collapse nav"} style={{width:28,height:28,borderRadius:6,background:C.card,border:"1px solid "+C.border,display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",fontSize:12,flexShrink:0,color:C.ts}}>
+              {navCollapsed?"▶":"◀"}
             </div>
           </div>
+
+          {/* Search box (only when expanded) */}
+          {!navCollapsed&&(
+            <div style={{padding:"6px 8px",borderBottom:"1px solid "+C.border}}>
+              <input
+                value={navSearch} onChange={e=>setNavSearch(e.target.value)}
+                placeholder="🔍 Search skills..."
+                style={{width:"100%",padding:"5px 8px",borderRadius:6,background:C.card,border:"1px solid "+C.border,color:C.text,fontSize:10,fontFamily:FONT_BODY,outline:"none",boxSizing:"border-box"}}
+              />
+            </div>
+          )}
+
+          {navCollapsed?(
+            /* Collapsed: show only icons */
+            <div style={{display:"flex",flexDirection:"column",gap:2,padding:"6px 4px"}}>
+              {SKILLS.map(sk=>{const s=sl(sk.id);const running=curAct&&curAct.sk===sk.id;return(
+                <div key={sk.id} onClick={()=>{setActSkill(sk.id);setPage("skills");}} title={sk.name+" (Lv "+s.lv+")"} style={{width:36,height:36,borderRadius:6,display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",background:actSkill===sk.id&&page==="skills"?C.acc+"25":C.card,border:"1px solid "+(actSkill===sk.id&&page==="skills"?C.acc+"60":C.border),fontSize:16,filter:running?"drop-shadow(0 0 4px "+sk.color+")":s.mastered?"drop-shadow(0 0 4px "+C.gold+")":"none"}}>
+                  {sk.icon}
+                </div>
+              );})}
+              {/* Page nav icons */}
+              {[{id:"combat",i:"⚔️"},{id:"research",i:"🔬"},{id:"structures",i:"🏗️"},{id:"drones",i:"🤖"},{id:"prestige",i:"✨"},{id:"market",i:"🏪"},{id:"achievements",i:"🏆"},{id:"blueprints",i:"📘"},{id:"equipment",i:"🗡️"},{id:"inventory",i:"🎒"},{id:"social",i:"💬"}].map(n=>(
+                <div key={n.id} onClick={()=>setPage(n.id)} title={n.id} style={{width:36,height:36,borderRadius:6,display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",background:page===n.id?C.acc+"25":C.card,border:"1px solid "+(page===n.id?C.acc+"60":C.border),fontSize:16}}>
+                  {n.i}
+                </div>
+              ))}
+            </div>
+          ):(
+            /* Expanded: full skill nav with search filter */
+            <>
+              {(()=>{
+                const q=navSearch.toLowerCase();
+                const filtered=sk=>!q||sk.name.toLowerCase().includes(q)||sk.cat.includes(q);
+                const cats=[
+                  {key:"gather",label:"Gathering",color:C.td},
+                  {key:"prod",  label:"Production",color:C.td},
+                  {key:"utility",label:"Utility",  color:"#38bdf8"},
+                ];
+                return cats.map(cat=>{
+                  const skills=SKILLS.filter(s=>s.cat===cat.key&&filtered(s));
+                  if(!skills.length&&q)return null;
+                  return(
+                    <div key={cat.key} style={{padding:"4px 0",borderBottom:"1px solid "+C.border}}>
+                      {!q&&<div style={{padding:"5px 12px 3px",fontSize:8,fontWeight:700,color:cat.color,textTransform:"uppercase",letterSpacing:2}}>{cat.label}</div>}
+                      {skills.map(sk=><SkillNav key={sk.id} sk={sk} running={curAct&&curAct.sk===sk.id}/>)}
+                    </div>
+                  );
+                });
+              })()}
+              <div style={{padding:"4px 0",borderBottom:"1px solid "+C.border}}>
+                {(!navSearch||"upgrading".includes(navSearch.toLowerCase()))&&(
+                  <>
+                    {!navSearch&&<div style={{padding:"5px 12px 3px",fontSize:8,fontWeight:700,color:C.td,textTransform:"uppercase",letterSpacing:2}}>Upgrading</div>}
+                    <div onClick={()=>setPage("enhancing")} style={{display:"flex",alignItems:"center",gap:8,padding:"6px 12px",cursor:"pointer",background:page==="enhancing"?"linear-gradient(90deg,"+C.acc+"15,transparent)":"transparent",borderLeft:page==="enhancing"?"3px solid "+C.acc:"3px solid transparent"}}>
+                      <span style={{fontSize:14,width:20,textAlign:"center"}}>⚡</span>
+                      <div style={{flex:1}}>
+                        <div style={{display:"flex",justifyContent:"space-between"}}><span style={{fontSize:10,color:page==="enhancing"?C.acc:C.text,fontFamily:FONT_BODY}}>Upgrading</span><span style={{fontSize:10,color:C.ts,fontWeight:700}}>{sl("enhancing").lv}</span></div>
+                        <div style={{height:2,borderRadius:1,background:C.bg,overflow:"hidden",marginTop:2}}><div style={{width:(sl("enhancing").xp/(sl("enhancing").need||1))*100+"%",height:"100%",background:C.warn,borderRadius:1}}/></div>
+                      </div>
+                    </div>
+                  </>
+                )}
+              </div>
           <div style={{padding:"4px 0",borderBottom:"1px solid "+C.border}}>
             <div style={{padding:"5px 12px 3px",fontSize:8,fontWeight:700,color:C.td,textTransform:"uppercase",letterSpacing:2}}>Combat</div>
             <div onClick={()=>setPage("combat")} style={{display:"flex",alignItems:"center",gap:8,padding:"6px 12px",cursor:"pointer",background:page==="combat"?"linear-gradient(90deg,"+C.bad+"15,transparent)":"transparent",borderLeft:page==="combat"?"3px solid "+C.bad:"3px solid transparent"}}>
@@ -1554,7 +2044,7 @@ function GameUI({account,onLogout}){
                 <span style={{fontSize:9}}>{cs.icon}</span>
                 <div style={{flex:1}}>
                   <div style={{display:"flex",justifyContent:"space-between"}}><span style={{fontSize:8,color:C.td,fontFamily:FONT_BODY}}>{cs.name}</span><span style={{fontSize:8,color:C.ts,fontWeight:700}}>{s.lv}</span></div>
-                  <div style={{height:2,borderRadius:1,background:C.bg,overflow:"hidden"}}><div style={{width:(s.xp/s.need)*100+"%",height:"100%",background:cs.color,borderRadius:1}}/></div>
+                  <div style={{height:2,borderRadius:1,background:C.bg,overflow:"hidden"}}><div style={{width:(s.xp/(s.need||1))*100+"%",height:"100%",background:cs.color,borderRadius:1}}/></div>
                 </div>
               </div>
             )})}
@@ -1568,11 +2058,14 @@ function GameUI({account,onLogout}){
             <NavItem id="achievements" icon="🏆" label="Achievements"/>
             <NavItem id="blueprints" icon="📘" label={`Blueprints${blueprints.length>0?" ("+blueprints.length+")":""}`}/>
             <NavItem id="stats" icon="📊" label="Stats & Profile"/>
+            <NavItem id="social" icon="💬" label={`Social${friendReqs.length>0?" ("+friendReqs.length+")":""}`}/>
             <NavItem id="equipment" icon="🗡️" label="Equipment"/>
             <NavItem id="inventory" icon="🎒" label="Inventory"/>
           </div>
           <div style={{flex:1}}/>
-          <div onClick={onLogout} style={{padding:"10px 12px",borderTop:"1px solid "+C.border,fontSize:10,color:C.td,cursor:"pointer",fontFamily:FONT_BODY,letterSpacing:1}}>◉ LOGOUT</div>
+          <div onClick={()=>setShowLogoutConfirm(true)} style={{padding:"10px 12px",borderTop:"1px solid "+C.border,fontSize:10,color:C.td,cursor:"pointer",fontFamily:FONT_BODY,letterSpacing:1,display:"flex",alignItems:"center",gap:6}}>◉ LOGOUT</div>
+            </>
+          )}
         </div>
 
         {/* CENTER */}
@@ -2437,6 +2930,297 @@ function GameUI({account,onLogout}){
               </div>
             );})()}
 
+            {/* ===== SOCIAL PAGE ===== */}
+            {page==="social"&&(()=>{
+              // Tab bar sub-component
+              const tabs=[
+                {id:"chat",  label:"💬 Global",  badge:null},
+                {id:"clan",  label:"⚔️ Clan",    badge:clan?clan.tag:null},
+                {id:"friends",label:"👥 Friends", badge:friendReqs.length>0?friendReqs.length:null},
+                {id:"dm",    label:"✉️ DM",       badge:dmTarget?dmTarget.name:null},
+              ];
+              // Chat message component
+              const ChatMsg=({m,mine})=>(
+                <div style={{display:"flex",gap:8,padding:"5px 0",alignItems:"flex-start",flexDirection:mine?"row-reverse":"row"}}>
+                  <div style={{width:26,height:26,borderRadius:13,background:mine?"linear-gradient(135deg,"+C.acc+","+C.purp+")":"linear-gradient(135deg,"+C.td+","+C.border+")",display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,fontWeight:700,color:C.bg,flexShrink:0}}>
+                    {(m.name||"?")[0].toUpperCase()}
+                  </div>
+                  <div style={{maxWidth:"72%"}}>
+                    <div style={{fontSize:9,color:mine?C.acc:C.ts,fontFamily:FONT_BODY,marginBottom:2,textAlign:mine?"right":"left"}}>{mine?"You":m.name}</div>
+                    <div style={{padding:"7px 11px",borderRadius:mine?"12px 3px 12px 12px":"3px 12px 12px 12px",background:mine?"linear-gradient(135deg,"+C.acc+"30,"+C.acc+"15)":"linear-gradient(135deg,"+C.card+","+C.bg+")",border:"1px solid "+(mine?C.acc+"40":C.border),fontSize:11,color:C.white,fontFamily:FONT_BODY,lineHeight:1.5,wordBreak:"break-word"}}>
+                      {m.text}
+                    </div>
+                    <div style={{fontSize:8,color:C.td,marginTop:2,textAlign:mine?"right":"left",fontFamily:FONT_BODY}}>{new Date(m.ts).toLocaleTimeString([],{hour:"2-digit",minute:"2-digit"})}</div>
+                  </div>
+                </div>
+              );
+              const chatEndRef=useRef(null);
+              useEffect(()=>{chatEndRef.current?.scrollIntoView({behavior:"smooth"})},[chatMessages,dmMessages,clanChat]);
+
+              return(
+              <div style={{maxWidth:720,display:"flex",flexDirection:"column",height:"calc(100vh - 130px)"}}>
+                {/* Tabs */}
+                <div style={{display:"flex",gap:4,marginBottom:12,flexShrink:0}}>
+                  {tabs.map(t=>(
+                    <div key={t.id} onClick={()=>setSocialTab(t.id)} style={{padding:"7px 14px",borderRadius:8,background:socialTab===t.id?"linear-gradient(90deg,"+C.accD+","+C.acc+")":C.card,border:"1px solid "+(socialTab===t.id?C.acc+"60":C.border),color:socialTab===t.id?C.bg:C.ts,fontSize:10,fontWeight:700,cursor:"pointer",letterSpacing:1,fontFamily:FONT,display:"flex",alignItems:"center",gap:6}}>
+                      {t.label}
+                      {t.badge&&<span style={{padding:"1px 6px",borderRadius:8,background:C.bad,color:"#fff",fontSize:9,fontWeight:700}}>{t.badge}</span>}
+                    </div>
+                  ))}
+                </div>
+
+                {/* ── GLOBAL CHAT ── */}
+                {socialTab==="chat"&&(
+                  <div style={{display:"flex",flexDirection:"column",flex:1,minHeight:0}}>
+                    <div style={{flex:1,overflowY:"auto",padding:"8px 0",display:"flex",flexDirection:"column",gap:2}}>
+                      {chatMessages.map(m=><ChatMsg key={m.id||m.ts} m={m} mine={m.uid===account.uid}/>)}
+                      <div ref={chatEndRef}/>
+                    </div>
+                    <div style={{display:"flex",gap:8,paddingTop:10,flexShrink:0}}>
+                      <input value={chatInput} onChange={e=>setChatInput(e.target.value)} onKeyDown={e=>e.key==="Enter"&&sendChat()} placeholder="Send a message to all players..." style={{flex:1,padding:"9px 12px",borderRadius:8,background:C.card,border:"1px solid "+C.border,color:C.white,fontSize:11,fontFamily:FONT_BODY,outline:"none"}}/>
+                      <div onClick={sendChat} style={{padding:"9px 20px",borderRadius:8,background:"linear-gradient(90deg,"+C.accD+","+C.acc+")",color:C.bg,fontSize:11,fontWeight:700,cursor:"pointer",letterSpacing:1,fontFamily:FONT,flexShrink:0}}>SEND</div>
+                    </div>
+                  </div>
+                )}
+
+                {/* ── FRIENDS ── */}
+                {socialTab==="friends"&&(
+                  <div style={{flex:1,overflowY:"auto",display:"flex",flexDirection:"column",gap:12}}>
+                    {/* Add friend */}
+                    <div style={{padding:"14px",borderRadius:10,background:C.card,border:"1px solid "+C.border}}>
+                      <div style={{fontSize:9,fontWeight:700,color:C.acc,letterSpacing:2,marginBottom:8}}>ADD COMMANDER</div>
+                      <div style={{display:"flex",gap:8}}>
+                        <input value={addFriendInput} onChange={e=>setAddFriendInput(e.target.value)} onKeyDown={e=>e.key==="Enter"&&sendFriendReq()} placeholder="Commander name..." style={{flex:1,padding:"8px 12px",borderRadius:8,background:C.bg,border:"1px solid "+C.border,color:C.white,fontSize:11,fontFamily:FONT_BODY,outline:"none"}}/>
+                        <div onClick={sendFriendReq} style={{padding:"8px 16px",borderRadius:8,background:"linear-gradient(90deg,"+C.accD+","+C.acc+")",color:C.bg,fontSize:10,fontWeight:700,cursor:"pointer",letterSpacing:1,fontFamily:FONT,flexShrink:0}}>ADD</div>
+                      </div>
+                      {addFriendErr&&<div style={{fontSize:10,color:addFriendErr.includes("✓")?C.ok:C.bad,marginTop:6,fontFamily:FONT_BODY}}>{addFriendErr}</div>}
+                    </div>
+                    {/* Incoming requests */}
+                    {friendReqs.length>0&&(
+                      <div style={{padding:"14px",borderRadius:10,background:C.card,border:"1px solid "+C.warn+"40"}}>
+                        <div style={{fontSize:9,fontWeight:700,color:C.warn,letterSpacing:2,marginBottom:8}}>INCOMING REQUESTS ({friendReqs.length})</div>
+                        {friendReqs.map(req=>(
+                          <div key={req.uid} style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"8px 0",borderBottom:"1px solid "+C.border}}>
+                            <div style={{display:"flex",alignItems:"center",gap:10}}>
+                              <div style={{width:32,height:32,borderRadius:16,background:"linear-gradient(135deg,"+C.warn+","+C.gold+")",display:"flex",alignItems:"center",justifyContent:"center",fontSize:14,fontWeight:700,color:C.bg}}>{(req.name||"?")[0].toUpperCase()}</div>
+                              <span style={{fontSize:12,color:C.white,fontFamily:FONT_BODY}}>{req.name}</span>
+                            </div>
+                            <div style={{display:"flex",gap:6}}>
+                              <div onClick={()=>acceptFriend(req)} style={{padding:"5px 12px",borderRadius:6,background:C.ok+"20",border:"1px solid "+C.ok+"50",color:C.ok,fontSize:10,fontWeight:700,cursor:"pointer",fontFamily:FONT}}>✓ ACCEPT</div>
+                              <div onClick={()=>declineFriend(req)} style={{padding:"5px 10px",borderRadius:6,background:C.bad+"15",border:"1px solid "+C.bad+"40",color:C.bad,fontSize:10,fontWeight:700,cursor:"pointer",fontFamily:FONT}}>✗</div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                    {/* Friends list */}
+                    <div style={{padding:"14px",borderRadius:10,background:C.card,border:"1px solid "+C.border}}>
+                      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}>
+                        <div style={{fontSize:9,fontWeight:700,color:C.acc,letterSpacing:2}}>FRIENDS ({friends.length})</div>
+                        <div onClick={loadFriends} style={{fontSize:9,color:C.ts,cursor:"pointer",fontFamily:FONT}}>↻ Refresh</div>
+                      </div>
+                      {friends.length===0&&<div style={{fontSize:11,color:C.td,fontFamily:FONT_BODY}}>No friends yet — add a commander above!</div>}
+                      {friends.map(f=>(
+                        <div key={f.uid} style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"10px 0",borderBottom:"1px solid "+C.border}}>
+                          <div style={{display:"flex",alignItems:"center",gap:10}}>
+                            <div style={{width:34,height:34,borderRadius:17,background:"linear-gradient(135deg,"+C.acc+","+C.purp+")",display:"flex",alignItems:"center",justifyContent:"center",fontSize:15,fontWeight:700,color:C.bg}}>{(f.name||"?")[0].toUpperCase()}</div>
+                            <div>
+                              <div style={{fontSize:12,fontWeight:700,color:C.white,fontFamily:FONT_BODY}}>{f.name}</div>
+                              <div style={{fontSize:9,color:C.ts,fontFamily:FONT_BODY}}>Lv {f.totalSkillLv||"?"} · {f.ascensions>0?"✦ ASC "+f.ascensions:""}</div>
+                            </div>
+                          </div>
+                          <div style={{display:"flex",gap:6}}>
+                            <div onClick={()=>loadDm(f)} style={{padding:"5px 12px",borderRadius:6,background:C.acc+"20",border:"1px solid "+C.acc+"40",color:C.acc,fontSize:9,fontWeight:700,cursor:"pointer",fontFamily:FONT}}>✉ DM</div>
+                            <div onClick={()=>removeFriend(f.uid)} style={{padding:"5px 10px",borderRadius:6,background:C.bad+"10",border:"1px solid "+C.bad+"30",color:C.bad,fontSize:9,cursor:"pointer",fontFamily:FONT}}>✗</div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* ── DIRECT MESSAGES ── */}
+                {socialTab==="dm"&&(
+                  <div style={{display:"flex",flexDirection:"column",flex:1,minHeight:0}}>
+                    {!dmTarget?(
+                      <div style={{flex:1,display:"flex",alignItems:"center",justifyContent:"center",color:C.td,fontFamily:FONT_BODY,fontSize:12,flexDirection:"column",gap:8}}>
+                        <span style={{fontSize:32}}>✉️</span>
+                        <span>Click DM on a friend to start a conversation</span>
+                      </div>
+                    ):(
+                      <>
+                        <div style={{display:"flex",alignItems:"center",gap:10,padding:"8px 0 12px",borderBottom:"1px solid "+C.border,flexShrink:0}}>
+                          <div style={{width:32,height:32,borderRadius:16,background:"linear-gradient(135deg,"+C.acc+","+C.purp+")",display:"flex",alignItems:"center",justifyContent:"center",fontSize:14,fontWeight:700,color:C.bg}}>{(dmTarget.name||"?")[0].toUpperCase()}</div>
+                          <div style={{fontSize:12,fontWeight:700,color:C.white,fontFamily:FONT_BODY}}>{dmTarget.name}</div>
+                          <div onClick={()=>{setDmTarget(null);setDmMessages([])}} style={{marginLeft:"auto",fontSize:11,color:C.td,cursor:"pointer",fontFamily:FONT}}>✕ Close</div>
+                        </div>
+                        <div style={{flex:1,overflowY:"auto",padding:"8px 0",display:"flex",flexDirection:"column",gap:2}}>
+                          {dmMessages.map((m,i)=><ChatMsg key={i} m={m} mine={m.uid===account.uid}/>)}
+                          <div ref={chatEndRef}/>
+                        </div>
+                        <div style={{display:"flex",gap:8,paddingTop:10,flexShrink:0}}>
+                          <input value={dmInput} onChange={e=>setDmInput(e.target.value)} onKeyDown={e=>e.key==="Enter"&&sendDm()} placeholder={"Message "+dmTarget.name+"..."} style={{flex:1,padding:"9px 12px",borderRadius:8,background:C.card,border:"1px solid "+C.border,color:C.white,fontSize:11,fontFamily:FONT_BODY,outline:"none"}}/>
+                          <div onClick={sendDm} style={{padding:"9px 20px",borderRadius:8,background:"linear-gradient(90deg,"+C.accD+","+C.acc+")",color:C.bg,fontSize:11,fontWeight:700,cursor:"pointer",letterSpacing:1,fontFamily:FONT,flexShrink:0}}>SEND</div>
+                        </div>
+                      </>
+                    )}
+                  </div>
+                )}
+
+                {/* ── CLAN ── */}
+                {socialTab==="clan"&&(
+                  <div style={{flex:1,overflowY:"auto",display:"flex",flexDirection:"column",gap:12}}>
+                    {!clan?(
+                      /* No clan — join or create */
+                      <>
+                        {/* Create clan */}
+                        <div style={{padding:"16px",borderRadius:10,background:C.card,border:"1px solid "+C.border}}>
+                          <div style={{fontSize:9,fontWeight:700,color:C.acc,letterSpacing:2,marginBottom:10}}>FOUND A CLAN</div>
+                          <div style={{display:"flex",gap:8,marginBottom:8}}>
+                            <input value={createClanName} onChange={e=>setCreateClanName(e.target.value)} placeholder="Clan name..." style={{flex:2,padding:"8px 12px",borderRadius:8,background:C.bg,border:"1px solid "+C.border,color:C.white,fontSize:11,fontFamily:FONT_BODY,outline:"none"}}/>
+                            <input value={createClanTag} onChange={e=>setCreateClanTag(e.target.value)} placeholder="TAG" maxLength={4} style={{flex:0,width:72,padding:"8px 12px",borderRadius:8,background:C.bg,border:"1px solid "+C.border,color:C.gold,fontSize:11,fontFamily:FONT,outline:"none",textTransform:"uppercase",textAlign:"center"}}/>
+                          </div>
+                          <div onClick={createClan} style={{padding:"10px",borderRadius:8,background:"linear-gradient(90deg,"+C.accD+","+C.acc+")",color:C.bg,fontSize:11,fontWeight:700,cursor:"pointer",textAlign:"center",letterSpacing:1,fontFamily:FONT}}>⚔️ FOUND CLAN</div>
+                        </div>
+                        {/* Search clans */}
+                        <div style={{padding:"16px",borderRadius:10,background:C.card,border:"1px solid "+C.border}}>
+                          <div style={{fontSize:9,fontWeight:700,color:C.acc,letterSpacing:2,marginBottom:10}}>FIND A CLAN</div>
+                          <div style={{display:"flex",gap:8,marginBottom:10}}>
+                            <input value={clanSearchInput} onChange={e=>setClanSearchInput(e.target.value)} onKeyDown={e=>e.key==="Enter"&&searchClans()} placeholder="Search by name or tag..." style={{flex:1,padding:"8px 12px",borderRadius:8,background:C.bg,border:"1px solid "+C.border,color:C.white,fontSize:11,fontFamily:FONT_BODY,outline:"none"}}/>
+                            <div onClick={searchClans} style={{padding:"8px 14px",borderRadius:8,background:C.card,border:"1px solid "+C.border,color:C.acc,fontSize:10,fontWeight:700,cursor:"pointer",fontFamily:FONT,flexShrink:0}}>🔍</div>
+                          </div>
+                          {clanSearch.map(c=>(
+                            <div key={c.id} style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"10px 0",borderBottom:"1px solid "+C.border}}>
+                              <div>
+                                <div style={{display:"flex",alignItems:"center",gap:8}}>
+                                  <span style={{fontSize:11,fontWeight:700,padding:"2px 8px",borderRadius:6,background:C.gold+"20",border:"1px solid "+C.gold+"50",color:C.gold,fontFamily:FONT}}>[{c.tag}]</span>
+                                  <span style={{fontSize:12,fontWeight:700,color:C.white,fontFamily:FONT_BODY}}>{c.name}</span>
+                                </div>
+                                <div style={{fontSize:9,color:C.ts,fontFamily:FONT_BODY,marginTop:2}}>Leader: {c.leaderName} · {c.memberCount||1} members · {(c.totalSkillLv||0).toLocaleString()} total lv</div>
+                              </div>
+                              <div onClick={()=>joinClan(c.id)} style={{padding:"6px 14px",borderRadius:8,background:"linear-gradient(90deg,"+C.okD+","+C.ok+")",color:C.bg,fontSize:10,fontWeight:700,cursor:"pointer",letterSpacing:1,fontFamily:FONT,flexShrink:0}}>JOIN</div>
+                            </div>
+                          ))}
+                          {clanSearch.length===0&&clanSearchInput&&<div style={{fontSize:11,color:C.td,fontFamily:FONT_BODY}}>No clans found</div>}
+                        </div>
+                      </>
+                    ):(
+                      /* In a clan */
+                      <>
+                        {/* Clan header */}
+                        <div style={{padding:"16px",borderRadius:10,background:"linear-gradient(135deg,"+C.gold+"15,"+C.card+")",border:"2px solid "+C.gold+"40"}}>
+                          <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:10}}>
+                            <div style={{fontSize:28,fontWeight:900,padding:"6px 14px",borderRadius:8,background:C.gold+"20",border:"2px solid "+C.gold+"50",color:C.gold,fontFamily:FONT,letterSpacing:2}}>[{clan.tag}]</div>
+                            <div>
+                              <div style={{fontSize:15,fontWeight:700,color:C.white,fontFamily:FONT,letterSpacing:1}}>{clan.name}</div>
+                              <div style={{fontSize:10,color:C.ts,fontFamily:FONT_BODY}}>Leader: {clan.leaderName} · {clan.memberCount||clanMembers.length} members</div>
+                            </div>
+                            <div onClick={leaveClan} style={{marginLeft:"auto",padding:"6px 12px",borderRadius:6,background:C.bad+"15",border:"1px solid "+C.bad+"30",color:C.bad,fontSize:9,fontWeight:700,cursor:"pointer",fontFamily:FONT,flexShrink:0}}>LEAVE</div>
+                          </div>
+                          {/* Members */}
+                          <div style={{fontSize:9,fontWeight:700,color:C.td,letterSpacing:2,marginBottom:6}}>MEMBERS</div>
+                          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:4}}>
+                            {clanMembers.map(m=>(
+                              <div key={m.uid} style={{display:"flex",alignItems:"center",gap:8,padding:"6px 8px",borderRadius:6,background:C.bg,border:"1px solid "+(m.role==="leader"?C.gold+"50":C.border)}}>
+                                <div style={{width:24,height:24,borderRadius:12,background:m.role==="leader"?"linear-gradient(135deg,"+C.gold+","+C.warn+")":"linear-gradient(135deg,"+C.td+","+C.border+")",display:"flex",alignItems:"center",justifyContent:"center",fontSize:10,fontWeight:700,color:C.bg,flexShrink:0}}>{(m.name||"?")[0].toUpperCase()}</div>
+                                <div style={{minWidth:0}}>
+                                  <div style={{fontSize:10,color:m.role==="leader"?C.gold:C.white,fontWeight:700,fontFamily:FONT_BODY,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{m.name}{m.role==="leader"?" 👑":""}</div>
+                                  <div style={{fontSize:8,color:C.ts,fontFamily:FONT_BODY}}>Lv {m.totalSkillLv||"?"}</div>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                        {/* Clan chat */}
+                        <div style={{display:"flex",flexDirection:"column",flex:1,minHeight:200,padding:"14px",borderRadius:10,background:C.card,border:"1px solid "+C.border}}>
+                          <div style={{fontSize:9,fontWeight:700,color:C.acc,letterSpacing:2,marginBottom:8,flexShrink:0}}>CLAN CHAT</div>
+                          <div style={{flex:1,overflowY:"auto",display:"flex",flexDirection:"column",gap:2,marginBottom:10}}>
+                            {clanChat.map((m,i)=><ChatMsg key={i} m={m} mine={m.uid===account.uid}/>)}
+                            <div ref={chatEndRef}/>
+                          </div>
+                          <div style={{display:"flex",gap:8,flexShrink:0}}>
+                            <input value={clanChatInput} onChange={e=>setClanChatInput(e.target.value)} onKeyDown={e=>e.key==="Enter"&&sendClanChat()} placeholder="Message your clan..." style={{flex:1,padding:"9px 12px",borderRadius:8,background:C.bg,border:"1px solid "+C.border,color:C.white,fontSize:11,fontFamily:FONT_BODY,outline:"none"}}/>
+                            <div onClick={sendClanChat} style={{padding:"9px 16px",borderRadius:8,background:"linear-gradient(90deg,"+C.accD+","+C.acc+")",color:C.bg,fontSize:11,fontWeight:700,cursor:"pointer",letterSpacing:1,fontFamily:FONT,flexShrink:0}}>SEND</div>
+                          </div>
+                        </div>
+                      </>
+                    )}
+                  </div>
+                )}
+              </div>
+            );})()}
+
+            {/* ===== LEADERBOARD PAGE ===== */}
+            {page==="leaderboard"&&(
+              <div style={{maxWidth:680}}>
+                <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:16}}>
+                  <div>
+                    <div style={{fontSize:14,fontWeight:700,color:C.white,letterSpacing:2}}>🏅 LEADERBOARD</div>
+                    <div style={{fontSize:11,color:C.ts,fontFamily:FONT_BODY,marginTop:2}}>Top commanders by total skill level</div>
+                  </div>
+                  <div onClick={loadLeaderboard} style={{padding:"8px 16px",borderRadius:8,background:C.card,border:"1px solid "+C.border,color:C.acc,fontSize:10,fontWeight:700,cursor:"pointer",letterSpacing:1,fontFamily:FONT}}>
+                    {lbLoading?"LOADING...":"↻ REFRESH"}
+                  </div>
+                </div>
+
+                {leaderboard.length===0&&!lbLoading&&(
+                  <div style={{padding:"40px 20px",textAlign:"center",color:C.td,fontFamily:FONT_BODY,fontSize:12}}>
+                    No data yet. Click REFRESH to load the leaderboard.
+                  </div>
+                )}
+
+                {lbLoading&&(
+                  <div style={{padding:"40px 20px",textAlign:"center",color:C.acc,fontFamily:FONT,fontSize:11,letterSpacing:2}}>
+                    SCANNING COMMANDERS...
+                  </div>
+                )}
+
+                {!lbLoading&&leaderboard.map((entry,i)=>{
+                  const isMe=entry.id===account.uid;
+                  const medal=i===0?"🥇":i===1?"🥈":i===2?"🥉":null;
+                  const rankColor=i===0?C.gold:i===1?"#c0c0c0":i===2?"#cd7f32":C.ts;
+                  return(
+                    <div key={entry.id} style={{
+                      display:"flex",alignItems:"center",gap:14,padding:"14px 16px",borderRadius:10,marginBottom:6,
+                      background:isMe?"linear-gradient(90deg,"+C.acc+"18,"+C.card+")":C.card,
+                      border:"2px solid "+(isMe?C.acc+"50":i<3?rankColor+"40":C.border),
+                      boxShadow:isMe?GLOW_STYLE:i<3?"0 0 10px "+rankColor+"20":"none",
+                      transition:"all 0.2s",
+                    }}>
+                      <div style={{width:32,textAlign:"center",flexShrink:0}}>
+                        {medal?<span style={{fontSize:20}}>{medal}</span>:<span style={{fontSize:13,fontWeight:700,color:rankColor,fontFamily:FONT}}>#{entry.rank}</span>}
+                      </div>
+                      <div style={{flex:1,minWidth:0}}>
+                        <div style={{display:"flex",alignItems:"center",gap:8}}>
+                          <span style={{fontSize:12,fontWeight:700,color:isMe?C.acc:C.white,fontFamily:FONT,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{entry.name}</span>
+                          {isMe&&<span style={{fontSize:8,padding:"1px 6px",borderRadius:6,background:C.acc+"25",border:"1px solid "+C.acc+"50",color:C.acc,fontWeight:700,letterSpacing:1}}>YOU</span>}
+                          {entry.ascensions>0&&<span style={{fontSize:8,padding:"1px 6px",borderRadius:6,background:C.purp+"25",border:"1px solid "+C.purp+"40",color:C.purp,fontWeight:700}}>✦ ASC {entry.ascensions}</span>}
+                        </div>
+                        <div style={{fontSize:10,color:C.ts,fontFamily:FONT_BODY,marginTop:2}}>
+                          {(entry.kills||0).toLocaleString()} kills
+                        </div>
+                      </div>
+                      <div style={{textAlign:"right",flexShrink:0}}>
+                        <div style={{fontSize:14,fontWeight:700,color:rankColor,fontFamily:FONT}}>{(entry.totalSkillLv||0).toLocaleString()}</div>
+                        <div style={{fontSize:9,color:C.td,fontFamily:FONT_BODY}}>total skill lv</div>
+                      </div>
+                    </div>
+                  );
+                })}
+
+                {/* Player's own rank if not in top 20 */}
+                {!lbLoading&&leaderboard.length>0&&!leaderboard.find(e=>e.id===account.uid)&&(
+                  <div style={{marginTop:8,padding:"14px 16px",borderRadius:10,background:"linear-gradient(90deg,"+C.acc+"10,"+C.card+")",border:"2px solid "+C.acc+"30"}}>
+                    <div style={{fontSize:10,color:C.ts,fontFamily:FONT_BODY,marginBottom:4}}>YOUR RANK</div>
+                    <div style={{display:"flex",alignItems:"center",gap:12}}>
+                      <span style={{fontSize:12,fontWeight:700,color:C.acc,fontFamily:FONT}}>{account.displayName}</span>
+                      <span style={{fontSize:14,fontWeight:700,color:C.white,fontFamily:FONT,marginLeft:"auto"}}>{totalSkillLevel.toLocaleString()} total lv</span>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
             {/* ===== STATS PAGE ===== */}
             {page==="stats"&&(()=>{
               const allSkillIds=[...SKILLS.map(s=>s.id),...CSUBS.map(c=>c.id),"enhancing"];
@@ -2690,10 +3474,34 @@ function GameUI({account,onLogout}){
         *{box-sizing:border-box;margin:0;padding:0}body{background:${C.bg};overflow:hidden}
         ::-webkit-scrollbar{width:4px}::-webkit-scrollbar-track{background:transparent}
         ::-webkit-scrollbar-thumb{background:${C.border};border-radius:3px}
+        ::-webkit-scrollbar-thumb:hover{background:${C.td}}
         ::selection{background:${C.acc}40}
+        input::placeholder{color:${C.td}}
         @keyframes pulse{0%,100%{opacity:1}50%{opacity:0.6}}
         @keyframes slideIn{from{transform:scale(0.85);opacity:0}to{transform:scale(1);opacity:1}}
+        @keyframes floatUp{0%{transform:translateY(0) scale(1);opacity:0.7}100%{transform:translateY(-100vh) scale(0.4);opacity:0}}
+        @keyframes glow{0%,100%{box-shadow:0 0 6px ${C.acc}40}50%{box-shadow:0 0 18px ${C.acc}80}}
+        @keyframes shimmer{0%{background-position:200% center}100%{background-position:-200% center}}
+        .particle{position:fixed;bottom:-20px;border-radius:50%;pointer-events:none;animation:floatUp linear infinite}
       `}</style>
+
+      {/* Bioluminescent particles */}
+      {[...Array(14)].map((_,i)=>{
+        const size=4+Math.random()*8|0;
+        const left=Math.random()*100;
+        const dur=8+Math.random()*12;
+        const delay=Math.random()*15;
+        const colors=[C.acc,C.ok,"#7b61ff","#00ffb3","#38bdf8"];
+        const col=colors[i%colors.length];
+        return(
+          <div key={i} className="particle" style={{
+            width:size,height:size,left:left+"%",
+            background:col,boxShadow:"0 0 "+(size*2)+"px "+col,
+            animationDuration:dur+"s",animationDelay:delay+"s",
+            opacity:0.5+Math.random()*0.3,
+          }}/>
+        );
+      })}
     </div>
   );
 }

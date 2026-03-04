@@ -868,6 +868,14 @@ function GameUI({account,onLogout}){
     const mastered=lv>=MAX_SKILL_LV;
     return{lv,xp:mastered?0:xp-tot,need:mastered?0:xpFor(lv),mastered};
   },[skills]);
+
+  // Returns a skill's acts merged with any unlocked blueprint acts
+  const getSkillActs=useCallback((skillId,baseActs)=>{
+    const bpActs=BLUEPRINTS
+      .filter(bp=>bp.skillId===skillId&&blueprints.includes(bp.id))
+      .map(bp=>({...bp.act,_blueprint:bp.id}));
+    return [...baseActs,...bpActs];
+  },[blueprints]);
   const combatLv=useMemo(()=>CSUBS.reduce((s,c)=>s+sl(c.id).lv,0),[sl]);
 
   // Aggregate research bonuses
@@ -902,6 +910,7 @@ function GameUI({account,onLogout}){
   // Load
   useEffect(()=>{(async()=>{try{const snap=await getDoc(doc(db,"doc_saves",account.uid));if(snap.exists()){const d=snap.data();if(d.skills)setSkills(d.skills);if(d.inv)setInv(d.inv);if(d.eq)setEq(d.eq);if(d.gold)setGold(d.gold);if(d.enh)setEnh(d.enh);if(d.researchPts)setResearchPts(d.researchPts);if(d.researched)setResearched(d.researched);if(d.structures)setStructures(d.structures);if(d.drones)setDrones(d.drones);if(d.ascensionLevel)setAscensionLevel(d.ascensionLevel);if(d.dataCores)setDataCores(d.dataCores);if(d.prestigeUpgrades)setPrestigeUpgrades(d.prestigeUpgrades);
       if(d.achievements)setAchievements(d.achievements);if(d.lifeStats)setLifeStats(p=>({...p,...d.lifeStats}));
+      if(d.blueprints)setBlueprints(d.blueprints);
       // Offline progress — up to 8 hours
       if(d.ts){
         const away=Math.min(Date.now()-d.ts, 8*60*60*1000); // cap at 8h
@@ -940,7 +949,7 @@ function GameUI({account,onLogout}){
       }
     }}catch(e){console.error(e)}})()},[account.uid]);
   // Save
-  useEffect(()=>{const t=setInterval(()=>{setDoc(doc(db,"doc_saves",account.uid),{skills,inv,eq,gold,enh,researchPts,researched,structures,drones,ascensionLevel,dataCores,prestigeUpgrades,achievements,lifeStats,ts:Date.now()},{merge:true}).catch(()=>{})},30000);return()=>clearInterval(t)},[skills,inv,eq,gold,enh,researchPts,researched,structures,drones,ascensionLevel,dataCores,prestigeUpgrades,achievements,lifeStats,account.uid]);
+  useEffect(()=>{const t=setInterval(()=>{setDoc(doc(db,"doc_saves",account.uid),{skills,inv,eq,gold,enh,researchPts,researched,structures,drones,ascensionLevel,dataCores,prestigeUpgrades,achievements,lifeStats,blueprints,ts:Date.now()},{merge:true}).catch(()=>{})},30000);return()=>clearInterval(t)},[skills,inv,eq,gold,enh,researchPts,researched,structures,drones,ascensionLevel,dataCores,prestigeUpgrades,achievements,lifeStats,blueprints,account.uid]);
 
   // Energy regen
   useEffect(()=>{const t=setInterval(()=>{setEnergy(e=>Math.min(maxEnergy,e+1*(1+(bonuses.energy_regen||0))))},1000);return()=>clearInterval(t)},[maxEnergy,bonuses.energy_regen]);
@@ -980,7 +989,13 @@ function GameUI({account,onLogout}){
     return()=>timers.forEach(t=>clearInterval(t));
   },[structures]);
 
-  const gainXp=useCallback((sid,amt)=>setSkills(p=>({...p,[sid]:(p[sid]||0)+Math.floor(amt*(1+(bonuses.xp_pct||0)))})),[bonuses.xp_pct]);
+  // Total XP required to reach MAX_SKILL_LV — computed once
+  const MAX_SKILL_XP=useMemo(()=>{let tot=0;for(let lv=1;lv<MAX_SKILL_LV;lv++)tot+=xpFor(lv);return tot;},[]);
+  const gainXp=useCallback((sid,amt)=>setSkills(p=>{
+    const cur=p[sid]||0;
+    if(cur>=MAX_SKILL_XP)return p; // already mastered
+    return{...p,[sid]:Math.min(MAX_SKILL_XP,cur+Math.floor(amt*(1+(bonuses.xp_pct||0))))};
+  }),[bonuses.xp_pct,MAX_SKILL_XP]);
   const addIt=useCallback((iid,q)=>setInv(p=>({...p,[iid]:(p[iid]||0)+q})),[]);
   const remIt=useCallback((iid,q)=>setInv(p=>{const c=p[iid]||0;if(c<=q){const n={...p};delete n[iid];return n}return{...p,[iid]:c-q}}),[]);
 
@@ -1133,14 +1148,27 @@ function GameUI({account,onLogout}){
   const collectDiscovery=useCallback(()=>{
     if(!activeDiscovery)return;
     const disc=activeDiscovery;
+    let bpUnlocked=null;
     disc.rewards.forEach(r=>{
       if(r.type==="item")addIt(r.id,r.q);
       if(r.type==="xp")SKILLS.filter(s=>s.cat==="gather").forEach(sk=>gainXp(sk.id,20*r.mult));
       if(r.type==="rp")setResearchPts(p=>p+r.amt);
+      if(r.type==="blueprint"){
+        // Pick one blueprint from the pool that isn't already unlocked
+        const avail=r.pool.filter(id=>!blueprints.includes(id));
+        if(avail.length>0){
+          const chosen=avail[Math.floor(Math.random()*avail.length)];
+          setBlueprints(p=>[...p,chosen]);
+          bpUnlocked=chosen;
+        }
+      }
     });
-    setDiscoveryLog(p=>[...p.slice(-20),"🔍 "+disc.name+" — "+disc.rewards.filter(r=>r.type==="item").map(r=>(ITEMS[r.id]?ITEMS[r.id].i:"")+r.q+" "+r.id).join(", ")]);
+    const bpMeta=bpUnlocked?BLUEPRINTS.find(b=>b.id===bpUnlocked):null;
+    const logItems=disc.rewards.filter(r=>r.type==="item").map(r=>(ITEMS[r.id]?ITEMS[r.id].i:"")+r.q+" "+r.id).join(", ");
+    const logBp=bpMeta?" 📘 Blueprint: "+bpMeta.name:"";
+    setDiscoveryLog(p=>[...p.slice(-20),"🔍 "+disc.name+" — "+logItems+logBp]);
     setActiveDiscovery(null);
-  },[activeDiscovery,addIt,gainXp]);
+  },[activeDiscovery,addIt,gainXp,blueprints]);
 
   // Marketplace — load shared orders from Firebase
   const loadMarket=useCallback(async()=>{
@@ -1338,12 +1366,21 @@ function GameUI({account,onLogout}){
     return lines;
   },[bonuses]);
 
-  const SkillNav=({sk,running})=>{const s=sl(sk.id);const pct=s.need>0?(s.xp/s.need)*100:0;const act=actSkill===sk.id&&page==="skills";
+  const SkillNav=({sk,running})=>{const s=sl(sk.id);const pct=s.mastered?100:s.need>0?(s.xp/s.need)*100:0;const act=actSkill===sk.id&&page==="skills";
+    const hasBp=BLUEPRINTS.some(bp=>bp.skillId===sk.id&&blueprints.includes(bp.id));
     return(<div onClick={()=>{setActSkill(sk.id);setPage("skills")}} style={{display:"flex",alignItems:"center",gap:8,padding:"6px 12px",cursor:"pointer",background:act?"linear-gradient(90deg,"+C.acc+"15,transparent)":"transparent",borderLeft:act?"3px solid "+C.acc:"3px solid transparent",transition:"all 0.15s"}}>
-      <span style={{fontSize:14,width:20,textAlign:"center",filter:running?"drop-shadow(0 0 4px "+sk.color+")":"none"}}>{sk.icon}</span>
+      <span style={{fontSize:14,width:20,textAlign:"center",filter:running?"drop-shadow(0 0 4px "+sk.color+")":s.mastered?"drop-shadow(0 0 4px "+C.gold+")":"none"}}>{sk.icon}</span>
       <div style={{flex:1,minWidth:0}}>
-        <div style={{display:"flex",justifyContent:"space-between"}}><span style={{fontSize:10,color:act?C.acc:C.text,fontWeight:act?700:500,fontFamily:FONT_BODY}}>{sk.name}</span><span style={{fontSize:10,color:C.ts,fontWeight:700,fontFamily:FONT}}>{s.lv}</span></div>
-        <div style={{height:2,borderRadius:1,background:C.bg,overflow:"hidden",marginTop:2}}><div style={{width:pct+"%",height:"100%",background:running?C.ok:sk.color,borderRadius:1,transition:"width 0.3s",boxShadow:running?"0 0 4px "+C.ok:"none"}}/></div>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+          <span style={{fontSize:10,color:act?C.acc:C.text,fontWeight:act?700:500,fontFamily:FONT_BODY}}>{sk.name}</span>
+          <div style={{display:"flex",alignItems:"center",gap:4}}>
+            {hasBp&&<span style={{fontSize:8,color:C.gold}}>📘</span>}
+            <span style={{fontSize:10,color:s.mastered?C.gold:C.ts,fontWeight:700,fontFamily:FONT}}>{s.mastered?"★":s.lv}</span>
+          </div>
+        </div>
+        <div style={{height:2,borderRadius:1,background:C.bg,overflow:"hidden",marginTop:2}}>
+          <div style={{width:pct+"%",height:"100%",background:s.mastered?C.gold:running?C.ok:sk.color,borderRadius:1,transition:"width 0.3s",boxShadow:s.mastered?"0 0 4px "+C.gold:running?"0 0 4px "+C.ok:"none"}}/>
+        </div>
       </div>
     </div>);
   };
@@ -1529,6 +1566,7 @@ function GameUI({account,onLogout}){
             <NavItem id="prestige" icon="✨" label={canAscend?"ASCEND NOW!":"Ascension"}/>
             <NavItem id="market" icon="🏪" label="Marketplace"/>
             <NavItem id="achievements" icon="🏆" label="Achievements"/>
+            <NavItem id="blueprints" icon="📘" label={`Blueprints${blueprints.length>0?" ("+blueprints.length+")":""}`}/>
             <NavItem id="stats" icon="📊" label="Stats & Profile"/>
             <NavItem id="equipment" icon="🗡️" label="Equipment"/>
             <NavItem id="inventory" icon="🎒" label="Inventory"/>
@@ -1566,28 +1604,86 @@ function GameUI({account,onLogout}){
           <div style={{flex:1,overflow:"auto",padding:20}}>
 
             {/* SKILLS PAGE */}
-            {page==="skills"&&skData&&(()=>{const s=sl(skData.id);const pct=s.need>0?(s.xp/s.need)*100:0;return(
+            {page==="skills"&&skData&&(()=>{const s=sl(skData.id);const pct=s.mastered?100:s.need>0?(s.xp/s.need)*100:0;
+              const allActs=getSkillActs(skData.id,skData.acts);
+              const unlockedBps=BLUEPRINTS.filter(bp=>bp.skillId===skData.id&&blueprints.includes(bp.id));
+              const availBps=BLUEPRINTS.filter(bp=>bp.skillId===skData.id&&!blueprints.includes(bp.id));
+              return(
               <div style={{maxWidth:700}}>
                 <div style={{display:"flex",alignItems:"center",gap:14,marginBottom:16}}>
                   <span style={{fontSize:36,filter:"drop-shadow(0 0 10px "+skData.color+")"}}>{skData.icon}</span>
-                  <div><div style={{fontSize:16,fontWeight:700,color:C.white,letterSpacing:2}}>{skData.name.toUpperCase()}</div><div style={{fontSize:11,color:C.ts,marginTop:2,fontFamily:FONT_BODY}}>Level {s.lv} — {fmt(s.xp)} / {fmt(s.need)} XP</div></div>
+                  <div style={{flex:1}}>
+                    <div style={{display:"flex",alignItems:"center",gap:10}}>
+                      <div style={{fontSize:16,fontWeight:700,color:C.white,letterSpacing:2}}>{skData.name.toUpperCase()}</div>
+                      {s.mastered&&<div style={{fontSize:9,fontWeight:700,padding:"3px 10px",borderRadius:10,background:"linear-gradient(90deg,"+C.gold+","+C.warn+")",color:C.bg,letterSpacing:2}}>★ MASTERED</div>}
+                    </div>
+                    <div style={{fontSize:11,color:C.ts,marginTop:2,fontFamily:FONT_BODY}}>
+                      {s.mastered
+                        ? `Level ${MAX_SKILL_LV} — Maximum level reached!`
+                        : `Level ${s.lv} / ${MAX_SKILL_LV} — ${fmt(s.xp)} / ${fmt(s.need)} XP`}
+                    </div>
+                  </div>
                 </div>
-                <div style={{height:8,borderRadius:4,background:C.card,overflow:"hidden",marginBottom:20,border:"1px solid "+C.border}}>
-                  <div style={{width:pct+"%",height:"100%",borderRadius:4,background:"linear-gradient(90deg,"+skData.color+","+skData.color+"aa)",transition:"width 0.3s",boxShadow:"0 0 8px "+skData.color}}/>
+                {/* XP bar — gold when mastered */}
+                <div style={{height:8,borderRadius:4,background:C.card,overflow:"hidden",marginBottom:s.mastered?8:20,border:"1px solid "+C.border}}>
+                  <div style={{width:pct+"%",height:"100%",borderRadius:4,
+                    background:s.mastered
+                      ?"linear-gradient(90deg,"+C.gold+","+C.warn+")"
+                      :"linear-gradient(90deg,"+skData.color+","+skData.color+"aa)",
+                    transition:"width 0.3s",
+                    boxShadow:"0 0 8px "+(s.mastered?C.gold:skData.color)}}/>
                 </div>
+                {s.mastered&&<div style={{fontSize:10,color:C.gold,fontFamily:FONT_BODY,marginBottom:20,textAlign:"center",letterSpacing:1}}>★ This skill is fully mastered. All operations are available.</div>}
                 <div style={{fontSize:10,fontWeight:700,color:C.td,marginBottom:10,letterSpacing:2}}>AVAILABLE OPERATIONS</div>
-                {skData.acts.map(act=>{const locked=s.lv<act.lv;const canDo=!locked&&(!act.inp||act.inp.every(i=>(inv[i.id]||0)>=i.q));const isAct=curAct&&curAct.act===act.id;return(
-                  <div key={act.id} style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"12px 16px",borderRadius:8,background:isAct?"linear-gradient(90deg,"+C.ok+"12,"+C.card+")":C.card,border:"1px solid "+(isAct?C.ok+"50":C.border),marginBottom:8,opacity:locked?0.35:1,transition:"all 0.2s"}}>
-                    <div>
-                      <div style={{fontSize:12,fontWeight:700,color:isAct?C.ok:C.white,fontFamily:FONT,letterSpacing:1}}>{act.name.toUpperCase()}</div>
-                      <div style={{fontSize:10,color:C.ts,marginTop:3,fontFamily:FONT_BODY}}>+{act.xp} XP · {act.t}s{act.inp?" · Needs: "+act.inp.map(i=>(ITEMS[i.id]?ITEMS[i.id].i:"")+i.q).join(" "):""}  {act.out?" → "+act.out.map(i=>(ITEMS[i.id]?ITEMS[i.id].i:"")+" "+(ITEMS[i.id]?ITEMS[i.id].n:"")).join(", "):""}</div>
+                {allActs.map(act=>{
+                  const locked=s.lv<act.lv&&!s.mastered;
+                  const canDo=!locked&&(!act.inp||act.inp.every(i=>(inv[i.id]||0)>=i.q));
+                  const isAct=curAct&&curAct.act===act.id;
+                  const isBp=!!act._blueprint;
+                  const bpMeta=isBp?BLUEPRINTS.find(b=>b.id===act._blueprint):null;
+                  const bpColor=bpMeta?BP_RARITY_COLOR[bpMeta.rarity]:C.gold;
+                  return(
+                  <div key={act.id} style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"12px 16px",borderRadius:8,
+                    background:isAct?"linear-gradient(90deg,"+C.ok+"12,"+C.card+")":isBp?"linear-gradient(135deg,"+bpColor+"10,"+C.card+")":C.card,
+                    border:"2px solid "+(isAct?C.ok+"50":isBp?bpColor+"50":C.border),
+                    marginBottom:8,opacity:locked?0.35:1,transition:"all 0.2s",
+                    boxShadow:isBp?"0 0 12px "+bpColor+"20":"none"}}>
+                    <div style={{flex:1}}>
+                      <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:2}}>
+                        <div style={{fontSize:12,fontWeight:700,color:isAct?C.ok:isBp?bpColor:C.white,fontFamily:FONT,letterSpacing:1}}>{act.name.toUpperCase()}</div>
+                        {isBp&&<div style={{fontSize:8,padding:"2px 7px",borderRadius:6,background:bpColor+"25",border:"1px solid "+bpColor+"60",color:bpColor,fontWeight:700,letterSpacing:1}}>📘 BLUEPRINT</div>}
+                      </div>
+                      <div style={{fontSize:10,color:C.ts,fontFamily:FONT_BODY}}>+{act.xp} XP · {act.t}s{act.inp?" · Needs: "+act.inp.map(i=>(ITEMS[i.id]?ITEMS[i.id].i:"")+i.q).join(" "):""}  {act.out?" → "+act.out.map(i=>(ITEMS[i.id]?ITEMS[i.id].i:"")+" "+(ITEMS[i.id]?ITEMS[i.id].n:"")).join(", "):""}</div>
                       {act.util&&<div style={{fontSize:9,color:"#38bdf8",marginTop:3,fontFamily:FONT_BODY}}>{act.desc||"Utility effect active"}</div>}
                       {act.out&&act.out.some(o=>ITEMS[o.id]&&ITEMS[o.id].rare)&&<div style={{fontSize:9,color:C.gold,marginTop:2,fontFamily:FONT_BODY}}>✨ Produces rare material</div>}
                       {locked&&<div style={{fontSize:9,color:C.bad,marginTop:2,fontFamily:FONT_BODY}}>Requires Level {act.lv}</div>}
                     </div>
-                    {!locked&&<div onClick={()=>{if(canDo)startAct(skData.id,act.id)}} style={{padding:"7px 18px",borderRadius:6,background:isAct?"linear-gradient(90deg,"+C.okD+","+C.ok+")":canDo?"linear-gradient(90deg,"+C.accD+","+C.acc+")":C.card,color:C.bg,fontSize:10,fontWeight:700,cursor:canDo?"pointer":"default",opacity:canDo?1:0.35,letterSpacing:1,fontFamily:FONT,boxShadow:isAct?GLOW_OK:canDo?GLOW_STYLE:"none"}}>{isAct?"ACTIVE":"START"}</div>}
+                    {!locked&&<div onClick={()=>{if(canDo)startAct(skData.id,act.id)}} style={{padding:"7px 18px",borderRadius:6,marginLeft:12,flexShrink:0,
+                      background:isAct?"linear-gradient(90deg,"+C.okD+","+C.ok+")":canDo?"linear-gradient(90deg,"+C.accD+","+C.acc+")":C.card,
+                      color:C.bg,fontSize:10,fontWeight:700,cursor:canDo?"pointer":"default",opacity:canDo?1:0.35,letterSpacing:1,fontFamily:FONT,
+                      boxShadow:isAct?GLOW_OK:canDo?GLOW_STYLE:"none"}}>{isAct?"ACTIVE":"START"}</div>}
                   </div>
                 );})}
+                {/* Blueprint teaser — locked blueprints for this skill */}
+                {availBps.length>0&&(
+                  <div style={{marginTop:20}}>
+                    <div style={{fontSize:9,fontWeight:700,color:C.td,letterSpacing:2,marginBottom:8}}>🔒 LOCKED BLUEPRINTS ({availBps.length})</div>
+                    {availBps.map(bp=>{
+                      const col=BP_RARITY_COLOR[bp.rarity];
+                      return(
+                        <div key={bp.id} style={{padding:"10px 14px",borderRadius:8,background:C.card,border:"1px dashed "+col+"40",marginBottom:6,opacity:0.5}}>
+                          <div style={{display:"flex",alignItems:"center",gap:8}}>
+                            <span style={{fontSize:18,filter:"grayscale(1)"}}>{bp.icon}</span>
+                            <div>
+                              <div style={{fontSize:10,fontWeight:700,color:C.td,fontFamily:FONT}}>??? BLUEPRINT ({bp.rarity.toUpperCase()})</div>
+                              <div style={{fontSize:9,color:C.td,fontFamily:FONT_BODY}}>Found via: {bp.source}</div>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
               </div>
             );})()}
 
@@ -2226,6 +2322,117 @@ function GameUI({account,onLogout}){
                       </div>
                     );
                   })}
+                </div>
+              </div>
+            );})()}
+
+            {/* ===== BLUEPRINTS PAGE ===== */}
+            {page==="blueprints"&&(()=>{
+              const totalBps=BLUEPRINTS.length;
+              const unlockedBps=blueprints.length;
+              const cats=["gather","prod","utility"];
+              const catLabels={gather:"Gathering",prod:"Production",utility:"Utility"};
+              return(
+              <div style={{maxWidth:800}}>
+                {/* Header */}
+                <div style={{display:"flex",alignItems:"center",gap:16,marginBottom:6}}>
+                  <div>
+                    <div style={{fontSize:14,fontWeight:700,color:C.white,letterSpacing:2}}>BLUEPRINTS</div>
+                    <div style={{fontSize:11,color:C.ts,fontFamily:FONT_BODY,marginTop:2}}>
+                      Hidden recipes discovered through exploration
+                    </div>
+                  </div>
+                  <div style={{flex:1,height:8,borderRadius:4,background:C.bg,border:"1px solid "+C.border,overflow:"hidden"}}>
+                    <div style={{width:(unlockedBps/totalBps*100)+"%",height:"100%",background:"linear-gradient(90deg,#38bdf8,"+C.purp+")",borderRadius:4,transition:"width 0.5s"}}/>
+                  </div>
+                  <div style={{fontSize:12,fontWeight:700,color:"#38bdf8",fontFamily:FONT,flexShrink:0}}>{unlockedBps}/{totalBps}</div>
+                </div>
+
+                {/* How to unlock info box */}
+                {unlockedBps===0&&(
+                  <div style={{padding:"14px 16px",borderRadius:10,background:C.card,border:"1px dashed "+C.border,marginBottom:16,marginTop:12}}>
+                    <div style={{fontSize:11,color:C.ts,fontFamily:FONT_BODY,lineHeight:1.6}}>
+                      📘 Blueprints are hidden recipes unlocked through <span style={{color:C.acc}}>Random Discoveries</span> while gathering. Each discovery type contains a pool of possible blueprints — once unlocked, the new operation appears permanently in that skill's action list.
+                    </div>
+                  </div>
+                )}
+
+                {/* Blueprints by skill category */}
+                {cats.map(cat=>{
+                  const catBps=BLUEPRINTS.filter(bp=>{
+                    const sk=SKILLS.find(s=>s.id===bp.skillId);
+                    return sk&&sk.cat===cat;
+                  });
+                  if(!catBps.length)return null;
+                  return(
+                    <div key={cat} style={{marginBottom:20}}>
+                      <div style={{fontSize:9,fontWeight:700,color:C.td,letterSpacing:2,marginBottom:10,marginTop:12}}>{catLabels[cat]||cat} BLUEPRINTS</div>
+                      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
+                        {catBps.map(bp=>{
+                          const unlocked=blueprints.includes(bp.id);
+                          const col=BP_RARITY_COLOR[bp.rarity];
+                          const sk=SKILLS.find(s=>s.id===bp.skillId);
+                          return(
+                            <div key={bp.id} style={{padding:"14px 16px",borderRadius:10,
+                              background:unlocked?"linear-gradient(135deg,"+col+"12,"+C.card+")":C.card,
+                              border:"2px solid "+(unlocked?col+"60":"#ffffff15"),
+                              opacity:unlocked?1:0.55,
+                              boxShadow:unlocked?"0 0 14px "+col+"20":"none",
+                              transition:"all 0.2s"}}>
+                              <div style={{display:"flex",alignItems:"flex-start",gap:10}}>
+                                <span style={{fontSize:26,filter:unlocked?"drop-shadow(0 0 8px "+col+")":"grayscale(1)",flexShrink:0}}>{unlocked?bp.icon:"❓"}</span>
+                                <div style={{flex:1}}>
+                                  <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:4}}>
+                                    <div style={{fontSize:11,fontWeight:700,color:unlocked?col:C.td,fontFamily:FONT,letterSpacing:0.5}}>
+                                      {unlocked?bp.name:"??? Blueprint"}
+                                    </div>
+                                    <div style={{fontSize:8,padding:"1px 6px",borderRadius:6,background:col+"20",border:"1px solid "+col+"50",color:col,fontWeight:700,letterSpacing:1}}>{bp.rarity.toUpperCase()}</div>
+                                  </div>
+                                  {unlocked?(
+                                    <>
+                                      <div style={{fontSize:10,color:C.ts,fontFamily:FONT_BODY,lineHeight:1.4,marginBottom:6}}>{bp.desc}</div>
+                                      <div style={{fontSize:9,color:sk?sk.color:C.acc,fontFamily:FONT_BODY}}>
+                                        {sk?.icon} {sk?.name} · Lv {bp.act.lv} · {bp.act.t}s
+                                      </div>
+                                      {bp.act.out&&<div style={{fontSize:9,color:C.gold,marginTop:3,fontFamily:FONT_BODY}}>
+                                        → {bp.act.out.map(o=>(ITEMS[o.id]?.i||"")+" "+(ITEMS[o.id]?.n||o.id)+" ×"+o.q).join(", ")}
+                                      </div>}
+                                      <div onClick={()=>{setActSkill(bp.skillId);setPage("skills")}} style={{marginTop:8,padding:"4px 10px",borderRadius:6,background:col+"20",border:"1px solid "+col+"50",color:col,fontSize:9,fontWeight:700,cursor:"pointer",display:"inline-block",fontFamily:FONT,letterSpacing:1}}>
+                                        VIEW IN {sk?.name?.toUpperCase()||"SKILL"} →
+                                      </div>
+                                    </>
+                                  ):(
+                                    <>
+                                      <div style={{fontSize:10,color:C.td,fontFamily:FONT_BODY,marginBottom:4}}>???</div>
+                                      <div style={{fontSize:9,color:C.td,fontFamily:FONT_BODY}}>Found via: {bp.source}</div>
+                                    </>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  );
+                })}
+
+                {/* Discovery reminder */}
+                <div style={{padding:"12px 16px",borderRadius:8,background:C.card,border:"1px solid "+C.border,marginTop:8}}>
+                  <div style={{fontSize:9,fontWeight:700,color:C.acc,letterSpacing:2,marginBottom:6}}>HOW TO UNLOCK</div>
+                  <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:6}}>
+                    {[
+                      {disc:"🚢 Ancient Submarine Wreck",bps:"Void Kelp, Leviathan Scale, Deep Scan, Supply Mastery"},
+                      {disc:"🏚️ Lost Research Facility",  bps:"Void Crystal, Ancient Brew, Atlas Complete"},
+                      {disc:"📡 Deep Signal Beacon",      bps:"Thermal Forge, Void Reactor (Legendary!)"},
+                      {disc:"💎 Crystal Vein Exposed",    bps:"Ancient Emperor Armor (Legendary!)"},
+                    ].map(row=>(
+                      <div key={row.disc} style={{fontSize:9,fontFamily:FONT_BODY}}>
+                        <div style={{color:C.gold,fontWeight:700,marginBottom:2}}>{row.disc}</div>
+                        <div style={{color:C.ts}}>{row.bps}</div>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               </div>
             );})()}

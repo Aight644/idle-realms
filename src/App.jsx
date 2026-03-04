@@ -1999,7 +1999,7 @@ function GameUI({account,onLogout}){
                       return(
                         <div key={sk.id}>
                           {/* Skill row */}
-                          <div onClick={()=>setActSkill(isActive?null:sk.id)} style={{display:"flex",alignItems:"center",gap:10,padding:"10px 12px",borderRadius:isActive?"8px 8px 0 0":8,background:isActive?"linear-gradient(90deg,"+sk.color+"25,"+C.card+")":C.card,border:"1px solid "+(isActive?sk.color+"60":C.border),cursor:"pointer",borderBottom:isActive?"none":"1px solid "+(C.border)}}>
+                          <div onPointerDown={(e)=>{e.preventDefault();setActSkill(isActive?null:sk.id);}} style={{display:"flex",alignItems:"center",gap:10,padding:"12px 14px",borderRadius:isActive?"8px 8px 0 0":8,background:isActive?"linear-gradient(90deg,"+sk.color+"25,"+C.card+")":C.card,border:"1px solid "+(isActive?sk.color+"60":C.border),cursor:"pointer",borderBottom:isActive?"none":"1px solid "+(C.border)}}>
                             <span style={{fontSize:18,flexShrink:0,filter:running?"drop-shadow(0 0 5px "+sk.color+")":s.mastered?"drop-shadow(0 0 5px "+C.gold+")":"none"}}>{sk.icon}</span>
                             <div style={{flex:1,minWidth:0}}>
                               <div style={{display:"flex",justifyContent:"space-between",marginBottom:4}}>
@@ -2027,7 +2027,7 @@ function GameUI({account,onLogout}){
                                       {!canDo&&<div style={{fontSize:11,color:C.bad,marginTop:2,fontFamily:FONT_BODY}}>Requires Lv {act.lv}</div>}
                                     </div>
                                     {canDo&&(
-                                      <div onClick={e=>{e.stopPropagation();isAct?(setCurAct(null),setActProg(0)):startAct(sk.id,act.id)}} style={{padding:"7px 14px",borderRadius:7,background:isAct?"linear-gradient(90deg,"+C.bad+"cc,"+C.bad+")":"linear-gradient(90deg,"+C.accD+","+C.acc+")",color:C.bg,fontSize:12,fontWeight:700,cursor:"pointer",flexShrink:0,fontFamily:FONT,whiteSpace:"nowrap"}}>
+                                      <div onPointerDown={e=>{e.preventDefault();e.stopPropagation();isAct?(setCurAct(null),setActProg(0)):startAct(sk.id,act.id)}} style={{padding:"9px 18px",borderRadius:7,background:isAct?"linear-gradient(90deg,"+C.bad+"cc,"+C.bad+")":"linear-gradient(90deg,"+C.accD+","+C.acc+")",color:C.bg,fontSize:12,fontWeight:700,cursor:"pointer",flexShrink:0,fontFamily:FONT,whiteSpace:"nowrap",userSelect:"none",WebkitUserSelect:"none"}}>
                                         {isAct?"STOP":"START"}
                                       </div>
                                     )}
@@ -2267,13 +2267,13 @@ function GameUI({account,onLogout}){
             </div>{/* end mobile content */}
 
             {/* ── MOBILE BOTTOM NAV ── */}
-            <div style={{flexShrink:0,height:60,background:C.panel,borderTop:"1px solid "+C.border,display:"flex",alignItems:"stretch"}}>
+            <div style={{flexShrink:0,height:60,background:C.panel,borderTop:"1px solid "+C.border,display:"flex",alignItems:"stretch",touchAction:"none"}}>
               {mobileNavItems.map(n=>{
                 const active=mobileTab===n.id||(n.id==="more"&&mobileTab==="_page");
                 return(
-                  <div key={n.id} onClick={()=>handleMobileTab(n.id)} style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:3,cursor:"pointer",background:active?"linear-gradient(180deg,"+C.acc+"15,transparent)":"transparent",borderTop:active?"2px solid "+C.acc:"2px solid transparent",transition:"all 0.15s"}}>
-                    <span style={{fontSize:20,filter:active?"drop-shadow(0 0 5px "+C.acc+")":"none"}}>{n.icon}</span>
-                    <span style={{fontSize:10,color:active?C.acc:C.td,fontWeight:active?700:400,fontFamily:FONT_BODY,letterSpacing:0.5}}>{n.label}</span>
+                  <div key={n.id} onPointerDown={(e)=>{e.preventDefault();handleMobileTab(n.id);}} style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:3,cursor:"pointer",background:active?"linear-gradient(180deg,"+C.acc+"15,transparent)":"transparent",borderTop:active?"2px solid "+C.acc:"2px solid transparent",userSelect:"none",WebkitUserSelect:"none"}}>
+                    <span style={{fontSize:20,filter:active?"drop-shadow(0 0 5px "+C.acc+")":"none",pointerEvents:"none"}}>{n.icon}</span>
+                    <span style={{fontSize:10,color:active?C.acc:C.td,fontWeight:active?700:400,fontFamily:FONT_BODY,letterSpacing:0.5,pointerEvents:"none"}}>{n.label}</span>
                   </div>
                 );
               })}

@@ -2157,34 +2157,6 @@ function GameUI({account,onLogout}){
             {/* ── MOBILE CONTENT ── */}
             <div style={{flex:1,overflow:"hidden",position:"relative"}}>
 
-              {/* Combat HUD bar (shared with desktop) */}
-              {cbt&&mobileTab==="combat"&&(()=>{
-                const mob=cbt.mob;
-                const isBoss2=mob.isBoss2;const isBoss=cbt.boss&&!isBoss2;const isElite=mob.elite;
-                const mobColor=isBoss2?C.gold:isBoss?C.bad:isElite?C.purp:C.ts;
-                return(
-                  <div style={{padding:"8px 14px",background:C.panel,borderBottom:"2px solid "+(isBoss2?C.gold:isBoss?C.bad:C.border)}}>
-                    <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:6}}>
-                      <span style={{fontSize:16,color:mobColor,fontWeight:700}}>{mob.i||"⚔️"} {mob.n}</span>
-                      <div style={{display:"flex",gap:8,alignItems:"center"}}>
-                        <span style={{fontSize:12,color:C.ts}}>kills: {killCount}</span>
-                        <div onClick={retreat} style={{padding:"4px 12px",borderRadius:6,background:C.bad+"22",border:"1px solid "+C.bad+"60",color:C.bad,fontSize:12,fontWeight:700,cursor:"pointer"}}>RETREAT</div>
-                      </div>
-                    </div>
-                    <div style={{display:"flex",gap:8}}>
-                      <div style={{flex:1}}>
-                        <div style={{display:"flex",justifyContent:"space-between",fontSize:11,color:C.td,marginBottom:2}}><span>You</span><span>{Math.floor(cbt.php)}/{cbt.mxhp}</span></div>
-                        <div style={{height:7,borderRadius:4,background:C.bg,overflow:"hidden"}}><div style={{width:(cbt.php/cbt.mxhp)*100+"%",height:"100%",background:C.ok,borderRadius:4,transition:"width 0.2s"}}/></div>
-                      </div>
-                      <div style={{flex:1}}>
-                        <div style={{display:"flex",justifyContent:"space-between",fontSize:11,color:C.td,marginBottom:2}}><span>{mob.n}</span><span>{Math.floor(cbt.mhp)}/{mob.hp}</span></div>
-                        <div style={{height:7,borderRadius:4,background:C.bg,overflow:"hidden"}}><div style={{width:Math.max(0,(cbt.mhp/mob.hp)*100)+"%",height:"100%",background:C.bad,borderRadius:4,transition:"width 0.2s"}}/></div>
-                      </div>
-                    </div>
-                  </div>
-                );
-              })()}
-
               {/* Skills tab */}
               {mobileTab==="skills"&&(
                 <div style={{height:"100%",overflowY:"auto",padding:"12px"}}>
@@ -2251,7 +2223,7 @@ function GameUI({account,onLogout}){
                                   {!canDo&&<div style={{fontSize:11,color:C.bad,marginTop:2,fontFamily:FONT_BODY}}>Requires Level {act.lv}</div>}
                                 </div>
                                 {canDo&&(
-                                  <div onClick={e=>{e.stopPropagation();isAct?setCurAct(null):setCurAct({sk:sk.id,act:act.id,dur:act.t*1000,elapsed:0})}} style={{padding:"8px 16px",borderRadius:8,background:isAct?"linear-gradient(90deg,"+C.bad+"cc,"+C.bad+")":"linear-gradient(90deg,"+C.accD+","+C.acc+")",color:C.bg,fontSize:13,fontWeight:700,cursor:"pointer",flexShrink:0,marginLeft:10,fontFamily:FONT}}>
+                                  <div onClick={e=>{e.stopPropagation();isAct?(setCurAct(null),setActProg(0)):startAct(sk.id,act.id)}} style={{padding:"8px 16px",borderRadius:8,background:isAct?"linear-gradient(90deg,"+C.bad+"cc,"+C.bad+")":"linear-gradient(90deg,"+C.accD+","+C.acc+")",color:C.bg,fontSize:13,fontWeight:700,cursor:"pointer",flexShrink:0,marginLeft:10,fontFamily:FONT}}>
                                     {isAct?"STOP":"START"}
                                   </div>
                                 )}
@@ -2265,36 +2237,65 @@ function GameUI({account,onLogout}){
                 </div>
               )}
 
-              {/* Combat tab — reuse page content */}
+              {/* Combat tab */}
               {mobileTab==="combat"&&(
-                <div style={{height:"100%",overflowY:"auto"}}>
-                  {/* Zones list */}
-                  <div style={{padding:"12px"}}>
-                    {!zoneId&&ZONES.map(zone=>{
-                      const locked=combatLv<zone.lv;
-                      return(
-                        <div key={zone.id} style={{marginBottom:10,padding:"14px",borderRadius:10,background:C.card,border:"1px solid "+(locked?C.border:C.border),opacity:locked?0.5:1}}>
-                          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:6}}>
-                            <span style={{fontSize:16,fontWeight:700,color:locked?C.td:C.white}}>{zone.icon} {zone.name}</span>
-                            {locked
-                              ?<span style={{fontSize:12,color:C.td,fontFamily:FONT_BODY}}>🔒 Lv {zone.lv}</span>
-                              :<div onClick={()=>{setZoneId(zone.id);setCbt(null);setKillCount(0)}} style={{padding:"8px 18px",borderRadius:8,background:"linear-gradient(90deg,"+C.accD+","+C.acc+")",color:C.bg,fontSize:13,fontWeight:700,cursor:"pointer",fontFamily:FONT}}>DIVE IN</div>
-                            }
-                          </div>
-                          <div style={{fontSize:12,color:C.td,fontFamily:FONT_BODY,marginBottom:6}}>Depth Rank {zone.lv}+ · {zone.mobs.length} mobs</div>
-                          <div style={{display:"flex",gap:4,flexWrap:"wrap"}}>
-                            {zone.mobs.map((m,i)=><span key={i} style={{fontSize:18}}>{m.i}</span>)}
+                <div style={{height:"100%",display:"flex",flexDirection:"column",overflow:"hidden"}}>
+                  {/* Active combat HUD */}
+                  {cbt&&(()=>{
+                    const mob=cbt.mob;
+                    const isBoss2=mob.isBoss2;const isBoss=cbt.boss&&!isBoss2;const isElite=mob.elite;
+                    const mobColor=isBoss2?C.gold:isBoss?C.bad:isElite?C.purp:C.ts;
+                    return(
+                      <div style={{flexShrink:0,padding:"10px 14px",background:C.panel,borderBottom:"2px solid "+(isBoss2?C.gold:isBoss?C.bad:isElite?C.purp:C.border)}}>
+                        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}>
+                          <span style={{fontSize:16,color:mobColor,fontWeight:700}}>{mob.i||"⚔️"} {mob.n}</span>
+                          <div style={{display:"flex",gap:8,alignItems:"center"}}>
+                            <span style={{fontSize:12,color:C.ts}}>⚔ {killCount}</span>
+                            <div onClick={stopZone} style={{padding:"5px 14px",borderRadius:6,background:C.bad+"22",border:"1px solid "+C.bad+"60",color:C.bad,fontSize:12,fontWeight:700,cursor:"pointer",fontFamily:FONT}}>RETREAT</div>
                           </div>
                         </div>
-                      );
-                    })}
-                    {zoneId&&(
-                      <div style={{textAlign:"center",padding:"20px 0"}}>
-                        <div style={{fontSize:13,color:C.ts,fontFamily:FONT_BODY,marginBottom:16}}>Fighting in {ZONES.find(z=>z.id===zoneId)?.name}</div>
-                        <div onClick={retreat} style={{display:"inline-block",padding:"10px 28px",borderRadius:8,background:C.bad+"22",border:"2px solid "+C.bad+"60",color:C.bad,fontSize:14,fontWeight:700,cursor:"pointer"}}>RETREAT</div>
+                        <div style={{display:"flex",gap:8}}>
+                          <div style={{flex:1}}>
+                            <div style={{display:"flex",justifyContent:"space-between",fontSize:11,color:C.td,marginBottom:3}}><span>You</span><span>{Math.floor(cbt.php)}/{cbt.mxhp}</span></div>
+                            <div style={{height:7,borderRadius:4,background:C.bg,overflow:"hidden"}}><div style={{width:(cbt.php/cbt.mxhp)*100+"%",height:"100%",background:C.ok,borderRadius:4,transition:"width 0.2s"}}/></div>
+                          </div>
+                          <div style={{flex:1}}>
+                            <div style={{display:"flex",justifyContent:"space-between",fontSize:11,color:C.td,marginBottom:3}}><span>{mob.n}</span><span>{Math.floor(cbt.mhp)}/{mob.hp}</span></div>
+                            <div style={{height:7,borderRadius:4,background:C.bg,overflow:"hidden"}}><div style={{width:Math.max(0,(cbt.mhp/mob.hp)*100)+"%",height:"100%",background:C.bad,borderRadius:4,transition:"width 0.2s"}}/></div>
+                          </div>
+                        </div>
                       </div>
-                    )}
-                  </div>
+                    );
+                  })()}
+                  {/* Combat log or zone list */}
+                  {zoneId?(
+                    <div style={{flex:1,overflowY:"auto",padding:"10px 14px",display:"flex",flexDirection:"column",gap:3}}>
+                      {clog.slice().reverse().map((l,i)=>(
+                        <div key={i} style={{fontSize:12,color:i===0?C.white:C.td,fontFamily:FONT_BODY,opacity:1-i*0.08,padding:"2px 0"}}>{l}</div>
+                      ))}
+                    </div>
+                  ):(
+                    <div style={{flex:1,overflowY:"auto",padding:"12px",display:"flex",flexDirection:"column",gap:8}}>
+                      {ZONES.map(zone=>{
+                        const locked=combatLv<zone.lv;
+                        return(
+                          <div key={zone.id} style={{padding:"14px",borderRadius:10,background:C.card,border:"1px solid "+C.border,opacity:locked?0.45:1}}>
+                            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:6}}>
+                              <span style={{fontSize:16,fontWeight:700,color:locked?C.td:C.white,fontFamily:FONT}}>{zone.icon} {zone.name}</span>
+                              {locked
+                                ?<span style={{fontSize:12,color:C.td,fontFamily:FONT_BODY}}>🔒 Lv {zone.lv}</span>
+                                :<div onClick={()=>startZone(zone.id)} style={{padding:"8px 18px",borderRadius:8,background:"linear-gradient(90deg,"+C.accD+","+C.acc+")",color:C.bg,fontSize:13,fontWeight:700,cursor:"pointer",fontFamily:FONT}}>DIVE IN</div>
+                              }
+                            </div>
+                            <div style={{fontSize:12,color:C.td,fontFamily:FONT_BODY,marginBottom:6}}>Depth Rank {zone.lv}+ · {zone.mobs.length} mobs · {(zone.elites||[]).length} elites</div>
+                            <div style={{display:"flex",gap:4,flexWrap:"wrap"}}>
+                              {zone.mobs.map((m,i)=><span key={i} style={{fontSize:18}}>{m.i}</span>)}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
                 </div>
               )}
 

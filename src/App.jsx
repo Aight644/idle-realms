@@ -285,79 +285,6 @@ const DRONE_TYPES = [
   },
 ];
 
-// ===================== PRESTIGE =====================
-// Ascension requires total skill level sum >= threshold
-const ASCENSION_THRESHOLDS = [100, 250, 500, 900, 1500]; // cumulative skill levels per ascension
-
-const PRESTIGE_UPGRADES = [
-  {
-    id: "pressure_mastery",
-    name: "Pressure Mastery",
-    icon: "💠",
-    color: "#00d4ff",
-    desc: "Reduces pressure build-up permanently across all ascensions.",
-    maxLevel: 10,
-    costPerLevel: 1, // Ancient Data Cores
-    effect: (lv) => ({ pressure_resist: lv * 0.08 }), // 8% per level
-    effectDesc: (lv) => `Pressure build-up -${lv*8}%`,
-  },
-  {
-    id: "drone_mastery",
-    name: "Drone Efficiency",
-    icon: "🤖",
-    color: "#ff006e",
-    desc: "Increases all drone output and reduces cycle time.",
-    maxLevel: 10,
-    costPerLevel: 1,
-    effect: (lv) => ({ drone_efficiency: lv * 0.10 }),
-    effectDesc: (lv) => `Drone yield +${lv*10}%`,
-  },
-  {
-    id: "yield_mastery",
-    name: "Resource Yield",
-    icon: "🌿",
-    color: "#00ffb3",
-    desc: "Permanently boosts all resource gathering yields.",
-    maxLevel: 10,
-    costPerLevel: 2,
-    effect: (lv) => ({ gather_yield: lv * 0.08, kelp_yield: lv * 0.05 }),
-    effectDesc: (lv) => `Gather yield +${lv*8}%, Kelp +${lv*5}%`,
-  },
-  {
-    id: "xp_mastery",
-    name: "XP Multiplier",
-    icon: "⭐",
-    color: "#ffd60a",
-    desc: "Multiplies all XP gains permanently.",
-    maxLevel: 10,
-    costPerLevel: 2,
-    effect: (lv) => ({ xp_pct: lv * 0.10 }),
-    effectDesc: (lv) => `All XP +${lv*10}%`,
-  },
-  {
-    id: "combat_mastery",
-    name: "Combat Legacy",
-    icon: "⚔️",
-    color: "#ff6b35",
-    desc: "Permanent boost to ATK, DEF and combat XP.",
-    maxLevel: 10,
-    costPerLevel: 2,
-    effect: (lv) => ({ atk_pct: lv * 0.05, def_pct: lv * 0.05, combat_xp: lv * 0.08 }),
-    effectDesc: (lv) => `ATK/DEF +${lv*5}%, Combat XP +${lv*8}%`,
-  },
-  {
-    id: "research_mastery",
-    name: "Deep Knowledge",
-    icon: "🔬",
-    color: "#7b61ff",
-    desc: "Accelerates RP generation and production speed permanently.",
-    maxLevel: 10,
-    costPerLevel: 3,
-    effect: (lv) => ({ rp_gen: lv * 2, prod_speed: lv * 0.06 }),
-    effectDesc: (lv) => `+${lv*2} RP/tick, Prod speed +${lv*6}%`,
-  },
-];
-
 // ===================== RANDOM DISCOVERIES =====================
 const DISCOVERIES = [
   { id:"ancient_wreck",   name:"Ancient Submarine Wreck",  icon:"🚢", rarity:0.04,
@@ -516,15 +443,9 @@ const TUTORIAL_STEPS = [
     highlight:null,
   },
   {
-    title:"Ascension",
-    icon:"✨",
-    body:"Once your total skill level is high enough, you can Ascend. This resets resources but grants permanent Ancient Data Cores used to buy powerful upgrades that carry over forever.",
-    highlight:"prestige",
-  },
-  {
     title:"You're Ready!",
     icon:"🚀",
-    body:"That's everything! Gather → Craft → Research → Build → Fight → Automate → Ascend. The ocean is yours to conquer. Good luck, Commander!",
+    body:"That's everything! Gather → Craft → Research → Build → Fight → Automate. The ocean is yours to conquer. Good luck, Commander!",
     highlight:null,
   },
 ];
@@ -560,13 +481,10 @@ const ACHIEVEMENTS = [
   // Drones
   {id:"drone1",        cat:"drone",  icon:"🤖", name:"Drone Operator",      desc:"Deploy your first drone",                 check:(s)=>s.dronesDeployed>=1,         reward:{rp:30}},
   {id:"drone10",       cat:"drone",  icon:"🚀", name:"Fleet Commander",     desc:"Have 10 drones deployed at once",         check:(s)=>s.dronesConcurrent>=10,      reward:{rp:150,gold:400}},
-  // Ascension
-  {id:"ascend1",       cat:"prestige",icon:"✨", name:"Ascended",            desc:"Complete your first ascension",           check:(s)=>s.ascensions>=1,             reward:{rp:200}},
-  {id:"ascend3",       cat:"prestige",icon:"🌌", name:"Transcendent",        desc:"Ascend 3 times",                          check:(s)=>s.ascensions>=3,             reward:{rp:500,dataCores:1}},
   // Skill milestones
   {id:"skill50",       cat:"skill",  icon:"⭐", name:"Seasoned Diver",      desc:"Reach level 50 in any skill",             check:(s)=>s.maxSkillLv>=50,            reward:{rp:100,gold:250}},
-  {id:"skill100",      cat:"skill",  icon:"🌟", name:"Master of the Deep",  desc:"Reach level 100 in any skill",            check:(s)=>s.maxSkillLv>=100,           reward:{rp:400,gold:1000,dataCores:1}},
-  {id:"total500",      cat:"skill",  icon:"💫", name:"Legend",              desc:"Reach 500 total skill levels",            check:(s)=>s.totalSkillLv>=500,         reward:{rp:600,dataCores:2}},
+  {id:"skill100",      cat:"skill",  icon:"🌟", name:"Master of the Deep",  desc:"Reach level 100 in any skill",            check:(s)=>s.maxSkillLv>=100,           reward:{rp:400,gold:1000}},
+  {id:"total500",      cat:"skill",  icon:"💫", name:"Legend",              desc:"Reach 500 total skill levels",            check:(s)=>s.totalSkillLv>=500,         reward:{rp:600,gold:2000}},
 ];
 
 const ACHIEVEMENT_CATS = {
@@ -575,7 +493,6 @@ const ACHIEVEMENT_CATS = {
   prod:    {label:"Production", color:"#ffd60a"},
   tech:    {label:"Technology", color:"#00d4ff"},
   drone:   {label:"Drones",     color:"#7b61ff"},
-  prestige:{label:"Prestige",   color:"#ff9500"},
   skill:   {label:"Skills",     color:"#c084fc"},
 };
 
@@ -1036,11 +953,6 @@ function GameUI({account,onLogout}){
   // Drones
   const[drones,setDrones]=useState({}); // {droneTypeId: count deployed}
   const[droneLogs,setDroneLogs]=useState([]);
-  // Prestige
-  const[ascensionLevel,setAscensionLevel]=useState(0);
-  const[dataCores,setDataCores]=useState(0);
-  const[prestigeUpgrades,setPrestigeUpgrades]=useState({}); // {upgradeId: level}
-  const[showAscendConfirm,setShowAscendConfirm]=useState(false);
   // Discoveries
   const[activeDiscovery,setActiveDiscovery]=useState(null); // {disc, rewards collected}
   const[discoveryLog,setDiscoveryLog]=useState([]);
@@ -1063,7 +975,7 @@ function GameUI({account,onLogout}){
   const[lifeStats,setLifeStats]=useState({
     totalGathered:0, kelp:0, abyss_crystal:0, kills:0, bossKills:0,
     totalGold:0, crafts:0, equippedSlots:0, researched:0, structures:0,
-    dronesDeployed:0, dronesConcurrent:0, ascensions:0, maxSkillLv:0,
+    dronesDeployed:0, dronesConcurrent:0, maxSkillLv:0,
     totalSkillLv:0, discoveries:0,
   });
   // QoL / UI state
@@ -1128,8 +1040,6 @@ function GameUI({account,onLogout}){
     ALL_RESEARCH.forEach(r=>{if(researched[r.id]&&r.effect)Object.entries(r.effect).forEach(([k,v])=>{b[k]=(b[k]||0)+v})});
     // Structure bonuses (per level)
     STRUCTURES.forEach(st=>{const lv=structures[st.id]||0;if(lv>0){if(st.bonus)Object.entries(st.bonus).forEach(([k,v])=>{b[k]=(b[k]||0)+v*lv});if(st.bonusExtra)Object.entries(st.bonusExtra).forEach(([k,v])=>{b[k]=(b[k]||0)+v*lv})}});
-    // Prestige upgrades (permanent, survive resets)
-    PRESTIGE_UPGRADES.forEach(pu=>{const lv=prestigeUpgrades[pu.id]||0;if(lv>0){const eff=pu.effect(lv);Object.entries(eff).forEach(([k,v])=>{b[k]=(b[k]||0)+v})}});
     // Utility skill passive bonuses (scale with skill level)
     const utilMap={navigation:"gather_speed",scanning:"rare_chance",ocean_cartography:"gather_yield"};
     Object.entries(utilMap).forEach(([sid,bk])=>{
@@ -1137,7 +1047,7 @@ function GameUI({account,onLogout}){
       if(lv>0)b[bk]=(b[bk]||0)+lv*0.02;
     });
     return b;
-  },[researched,structures,prestigeUpgrades,skills]);
+  },[researched,structures,skills]);
 
   const maxEnergy=useMemo(()=>100+(bonuses.max_energy||0),[bonuses]);
 
@@ -1152,7 +1062,7 @@ function GameUI({account,onLogout}){
   },[eq,sl,enh,bonuses]);
 
   // Load
-  useEffect(()=>{(async()=>{try{const snap=await getDoc(doc(db,"doc_saves",account.uid));if(snap.exists()){const d=snap.data();if(d.skills)setSkills(d.skills);if(d.inv)setInv(d.inv);if(d.eq)setEq(d.eq);if(d.gold)setGold(d.gold);if(d.enh)setEnh(d.enh);if(d.researchPts)setResearchPts(d.researchPts);if(d.researched)setResearched(d.researched);if(d.structures)setStructures(d.structures);if(d.drones)setDrones(d.drones);if(d.ascensionLevel)setAscensionLevel(d.ascensionLevel);if(d.dataCores)setDataCores(d.dataCores);if(d.prestigeUpgrades)setPrestigeUpgrades(d.prestigeUpgrades);
+  useEffect(()=>{(async()=>{try{const snap=await getDoc(doc(db,"doc_saves",account.uid));if(snap.exists()){const d=snap.data();if(d.skills)setSkills(d.skills);if(d.inv)setInv(d.inv);if(d.eq)setEq(d.eq);if(d.gold)setGold(d.gold);if(d.enh)setEnh(d.enh);if(d.researchPts)setResearchPts(d.researchPts);if(d.researched)setResearched(d.researched);if(d.structures)setStructures(d.structures);if(d.drones)setDrones(d.drones);
       if(d.achievements)setAchievements(d.achievements);if(d.lifeStats)setLifeStats(p=>({...p,...d.lifeStats}));
       if(d.blueprints)setBlueprints(d.blueprints);
       if(d.tutorialDone)setTutorialDone(true);
@@ -1186,7 +1096,7 @@ function GameUI({account,onLogout}){
             if(qty>0){gains.items[st.passive.item]=(gains.items[st.passive.item]||0)+qty;setInv(p=>({...p,[st.passive.item]:(p[st.passive.item]||0)+qty}))}
           });
           // RP trickle
-          const rpGained=Math.floor((away/10000)*(1+(d.prestigeUpgrades?.research_mastery||0)*2));
+          const rpGained=Math.floor((away/10000));
           if(rpGained>0){gains.rp=rpGained;setResearchPts(p=>p+rpGained)}
           const hasGains=Object.keys(gains.items).length>0||gains.rp>0||gains.gold>0;
           if(hasGains)setOfflineGains({away,gains});
@@ -1481,7 +1391,7 @@ function GameUI({account,onLogout}){
     }catch(e){console.error("Cancel listing:",e)}
   },[addIt,loadMarket]);
 
-  // Total skill level for ascension threshold
+  // Total skill level
   const totalSkillLevel=useMemo(()=>{
     const allSkillIds=[...SKILLS.map(s=>s.id),...CSUBS.map(c=>c.id),"enhancing"];
     return allSkillIds.reduce((sum,sid)=>sum+sl(sid).lv,0);
@@ -1496,7 +1406,6 @@ function GameUI({account,onLogout}){
       await fsetDoc(fdoc(db,"leaderboard",account.uid),{
         name:account.displayName||"Anonymous",
         totalSkillLv:totalSkillLevel,
-        ascensions:ascensionLevel,
         kills:lifeStats.kills||0,
         uid:account.uid,
         ts:Date.now(),
@@ -1506,7 +1415,7 @@ function GameUI({account,onLogout}){
       setLeaderboard(snap.docs.map((d,i)=>({rank:i+1,id:d.id,...d.data()})));
     }catch(e){console.error("Leaderboard:",e)}
     setLbLoading(false);
-  },[account,totalSkillLevel,ascensionLevel,lifeStats.kills]);
+  },[account,totalSkillLevel,lifeStats.kills]);
 
   const maxSkillLevel=useMemo(()=>{
     const allSkillIds=[...SKILLS.map(s=>s.id),...CSUBS.map(c=>c.id),"enhancing"];
@@ -1742,10 +1651,9 @@ function GameUI({account,onLogout}){
     researched:Object.values(researched).filter(Boolean).length,
     structures:Object.values(structures).filter(v=>v>0).length,
     dronesConcurrent:Object.values(drones).reduce((s,v)=>s+(v||0),0),
-    ascensions:ascensionLevel,
     maxSkillLv:maxSkillLevel,
     totalSkillLv:totalSkillLevel,
-  }),[lifeStats,eq,researched,structures,drones,ascensionLevel,maxSkillLevel,totalSkillLevel]);
+  }),[lifeStats,eq,researched,structures,drones,maxSkillLevel,totalSkillLevel]);
 
   // Check achievements whenever snapshot changes
   useEffect(()=>{
@@ -1756,40 +1664,11 @@ function GameUI({account,onLogout}){
         // Apply reward
         if(ach.reward.rp)setResearchPts(p=>p+ach.reward.rp);
         if(ach.reward.gold)setGold(g=>g+ach.reward.gold);
-        if(ach.reward.dataCores)setDataCores(c=>c+ach.reward.dataCores);
         setNewAch(ach);
         setTimeout(()=>setNewAch(null),4000);
       }
     });
   },[achSnapshot]); // eslint-disable-line
-
-  const nextThreshold=ASCENSION_THRESHOLDS[ascensionLevel]||null;
-  const canAscend=nextThreshold!==null&&totalSkillLevel>=nextThreshold;
-  const coresOnAscend=ascensionLevel+1; // earn 1 core per ascension, scaling
-
-  const doAscend=useCallback(()=>{
-    if(!canAscend)return;
-    const earned=coresOnAscend;
-    // Reset: resources, structures, equipment, gold, drones, research, action
-    setInv({});setEq({});setGold(0);setEnh({});
-    setStructures({});setDrones({});
-    setResearched({});setResearchPts(0);
-    setCurAct(null);setActProg(0);setZoneId(null);setCbt(null);
-    // Keep: skills (XP halved), prestige upgrades, ascension level
-    setSkills(p=>{const n={};Object.entries(p).forEach(([k,v])=>{n[k]=Math.floor(v*0.5)});return n});
-    setAscensionLevel(a=>a+1);
-    setDataCores(c=>c+earned);
-    setShowAscendConfirm(false);
-  },[canAscend,coresOnAscend]);
-
-  const doBuyPrestige=useCallback((pu)=>{
-    const lv=prestigeUpgrades[pu.id]||0;
-    if(lv>=pu.maxLevel)return;
-    const cost=pu.costPerLevel*(lv+1);
-    if(dataCores<cost)return;
-    setDataCores(c=>c-cost);
-    setPrestigeUpgrades(p=>({...p,[pu.id]:(p[pu.id]||0)+1}));
-  },[prestigeUpgrades,dataCores]);
 
   // Deploy a drone
   const deployDrone=useCallback((dt)=>{
@@ -1983,8 +1862,6 @@ function GameUI({account,onLogout}){
               <div style={{fontSize:9,color:C.td,letterSpacing:2,marginBottom:8}}>PROGRESS</div>
               {[
                 ["Total Skill Level",totalSkillLevel],
-                ["Ascension Level",ascensionLevel],
-                ["Data Cores",dataCores],
                 ["Blueprints Unlocked",blueprints.length+"/"+BLUEPRINTS.length],
                 ["Achievements",Object.keys(achievements).length+"/"+ACHIEVEMENTS.length],
               ].map(([l,v])=>(
@@ -2033,7 +1910,7 @@ function GameUI({account,onLogout}){
             <div style={{fontSize:12,fontWeight:700,color:C.white,fontFamily:FONT,marginBottom:2}}>{newAch.name}</div>
             <div style={{fontSize:10,color:C.ts,fontFamily:FONT_BODY}}>{newAch.desc}</div>
             <div style={{fontSize:9,color:C.ok,marginTop:4,fontFamily:FONT_BODY}}>
-              {newAch.reward.rp&&`+${newAch.reward.rp} RP `}{newAch.reward.gold&&`+${newAch.reward.gold} cr `}{newAch.reward.dataCores&&`+${newAch.reward.dataCores} Core`}
+              {newAch.reward.rp&&`+${newAch.reward.rp} RP `}{newAch.reward.gold&&`+${newAch.reward.gold} cr `}
             </div>
           </div>
         </div>
@@ -2391,7 +2268,7 @@ function GameUI({account,onLogout}){
                     <div style={{width:44,height:44,borderRadius:10,background:"linear-gradient(135deg,"+C.acc+","+C.accD+")",display:"flex",alignItems:"center",justifyContent:"center",fontSize:22,flexShrink:0}}>🌊</div>
                     <div>
                       <div style={{fontSize:15,fontWeight:700,color:C.white,fontFamily:FONT_BODY}}>{account.displayName}</div>
-                      <div style={{fontSize:12,color:C.ts,fontFamily:FONT_BODY}}>Combat Rank {combatLv}{ascensionLevel>0?" · ✦ ASC "+ascensionLevel:""}</div>
+                      <div style={{fontSize:12,color:C.ts,fontFamily:FONT_BODY}}>Combat Rank {combatLv}</div>
                     </div>
                   </div>
                   {/* Nav pages list */}
@@ -2403,7 +2280,6 @@ function GameUI({account,onLogout}){
                     {id:"achievements",icon:"🏆",label:"Achievements",badge:null},
                     {id:"blueprints",icon:"📘",label:"Blueprints",badge:blueprints.length>0?blueprints.length:null},
                     {id:"social",icon:"💬",label:"Social",badge:friendReqs.length>0?friendReqs.length:null},
-                    {id:"prestige",icon:"✨",label:canAscend?"ASCEND NOW!":"Ascension",badge:canAscend?"!":null},
                     {id:"stats",icon:"📊",label:"Stats & Profile"},
                   ].map(n=>(
                     <div key={n.id} onClick={()=>{setPage(n.id);setMobileTab("_page")}} style={{display:"flex",alignItems:"center",gap:12,padding:"14px 16px",borderBottom:"1px solid "+C.border+"60",cursor:"pointer",background:"transparent",active:{background:C.card}}}>
@@ -2494,9 +2370,6 @@ function GameUI({account,onLogout}){
 
         {/* Credits */}
         <div style={{fontSize:11,color:C.gold,fontWeight:700,letterSpacing:1,whiteSpace:"nowrap",flexShrink:0}}>◈ {fmt(gold)}</div>
-        {/* Ascension indicator */}
-        {ascensionLevel>0&&<div style={{fontSize:9,color:C.purp,fontWeight:700,letterSpacing:1,whiteSpace:"nowrap",flexShrink:0,padding:"2px 8px",borderRadius:8,background:C.purp+"18",border:"1px solid "+C.purp+"40"}}>✦ ASC {ascensionLevel}</div>}
-        {canAscend&&<div onClick={()=>{setPage("prestige");setShowAscendConfirm(true)}} style={{fontSize:9,fontWeight:700,letterSpacing:1,whiteSpace:"nowrap",flexShrink:0,padding:"2px 8px",borderRadius:8,background:C.gold+"25",border:"1px solid "+C.gold+"60",color:C.gold,cursor:"pointer",animation:"pulse 1.5s infinite"}}>⬆ ASCEND</div>}
         {/* QoL icon buttons */}
         <div style={{display:"flex",gap:6,marginLeft:"auto",flexShrink:0}}>
           <div onClick={()=>{setPage("leaderboard");loadLeaderboard()}} title="Leaderboard" style={{width:28,height:28,borderRadius:6,background:C.card,border:"1px solid "+C.border,display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",fontSize:14}}>🏅</div>
@@ -2544,7 +2417,7 @@ function GameUI({account,onLogout}){
                 </div>
               );})}
               {/* Page nav icons */}
-              {[{id:"combat",i:"⚔️"},{id:"research",i:"🔬"},{id:"structures",i:"🏗️"},{id:"drones",i:"🤖"},{id:"prestige",i:"✨"},{id:"market",i:"🏪"},{id:"achievements",i:"🏆"},{id:"blueprints",i:"📘"},{id:"equipment",i:"🗡️"},{id:"inventory",i:"🎒"},{id:"social",i:"💬"}].map(n=>(
+              {[{id:"combat",i:"⚔️"},{id:"research",i:"🔬"},{id:"structures",i:"🏗️"},{id:"drones",i:"🤖"},{id:"market",i:"🏪"},{id:"achievements",i:"🏆"},{id:"blueprints",i:"📘"},{id:"equipment",i:"🗡️"},{id:"inventory",i:"🎒"},{id:"social",i:"💬"}].map(n=>(
                 <div key={n.id} onClick={()=>setPage(n.id)} title={n.id} style={{width:36,height:36,borderRadius:6,display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",background:page===n.id?C.acc+"25":C.card,border:"1px solid "+(page===n.id?C.acc+"60":C.border),fontSize:16}}>
                   {n.i}
                 </div>
@@ -2606,7 +2479,6 @@ function GameUI({account,onLogout}){
                 <NavItem id="research"     icon="🔬" label="Research Tree"/>
                 <NavItem id="structures"   icon="🏗️" label="Structures"/>
                 <NavItem id="drones"       icon="🤖" label="Drone Fleet"/>
-                <NavItem id="prestige"     icon="✨" label={canAscend?"ASCEND NOW!":"Ascension"} badge={canAscend?"!":null}/>
                 <NavItem id="market"       icon="🏪" label="Marketplace"/>
                 <NavItem id="achievements" icon="🏆" label="Achievements"/>
                 <NavItem id="blueprints"   icon="📘" label="Blueprints"   badge={blueprints.length>0?blueprints.length:null}/>
@@ -3042,140 +2914,6 @@ function GameUI({account,onLogout}){
               </div>
             );})()}
 
-            {/* ===== PRESTIGE / ASCENSION PAGE ===== */}
-            {page==="prestige"&&(()=>{
-              const nextThr=ASCENSION_THRESHOLDS[ascensionLevel]||null;
-              const prevThr=ascensionLevel>0?ASCENSION_THRESHOLDS[ascensionLevel-1]:0;
-              const progress=nextThr?Math.min(1,(totalSkillLevel-prevThr)/Math.max(1,nextThr-prevThr)):1;
-              return(
-              <div style={{maxWidth:760}}>
-                {/* Header */}
-                <div style={{display:"flex",alignItems:"center",gap:16,marginBottom:20,padding:"18px 20px",borderRadius:12,background:"linear-gradient(135deg,"+C.purp+"18,"+C.card+")",border:"2px solid "+C.purp+"50",boxShadow:"0 0 20px "+C.purp+"30"}}>
-                  <div style={{fontSize:48,filter:"drop-shadow(0 0 12px "+C.purp+")"}}>🌊</div>
-                  <div style={{flex:1}}>
-                    <div style={{fontSize:16,fontWeight:700,color:C.white,letterSpacing:3,marginBottom:4}}>ASCENSION PROTOCOL</div>
-                    <div style={{fontSize:11,color:C.ts,fontFamily:FONT_BODY,marginBottom:8}}>
-                      Ascension {ascensionLevel} · Total Skill Level: <span style={{color:C.acc,fontWeight:700}}>{totalSkillLevel}</span>
-                    </div>
-                    {nextThr?(
-                      <>
-                        <div style={{fontSize:10,color:C.td,fontFamily:FONT_BODY,marginBottom:6}}>
-                          Next Ascension at level <span style={{color:canAscend?C.gold:C.warn,fontWeight:700}}>{nextThr}</span>
-                          {canAscend&&<span style={{color:C.gold,fontWeight:700,marginLeft:8}}>✦ READY!</span>}
-                        </div>
-                        <div style={{height:6,borderRadius:3,background:C.bg,overflow:"hidden",border:"1px solid "+C.border}}>
-                          <div style={{width:progress*100+"%",height:"100%",borderRadius:3,background:canAscend?"linear-gradient(90deg,"+C.gold+","+C.warn+")":"linear-gradient(90deg,"+C.purp+","+C.acc+")",transition:"width 0.5s",boxShadow:canAscend?"0 0 8px "+C.gold:"0 0 6px "+C.purp}}/>
-                        </div>
-                      </>
-                    ):(
-                      <div style={{fontSize:11,color:C.gold,fontWeight:700,fontFamily:FONT}}>✦ MAX ASCENSION REACHED</div>
-                    )}
-                  </div>
-                  <div style={{textAlign:"center",flexShrink:0}}>
-                    <div style={{fontSize:32,filter:"drop-shadow(0 0 8px "+C.gold+")"}}>{dataCores}</div>
-                    <div style={{fontSize:9,color:C.gold,fontWeight:700,letterSpacing:2}}>DATA CORES</div>
-                  </div>
-                </div>
-
-                {/* Ascend button */}
-                {canAscend&&(
-                  <div style={{marginBottom:20}}>
-                    {!showAscendConfirm?(
-                      <div onClick={()=>setShowAscendConfirm(true)} style={{padding:"14px 0",borderRadius:10,background:"linear-gradient(90deg,"+C.purp+"cc,"+C.gold+")",color:C.bg,fontSize:14,fontWeight:700,textAlign:"center",cursor:"pointer",letterSpacing:3,fontFamily:FONT,boxShadow:"0 0 24px "+C.gold+"60",animation:"pulse 1.5s infinite"}}>
-                        ⬆ INITIATE ASCENSION ⬆
-                      </div>
-                    ):(
-                      <div style={{padding:"16px 20px",borderRadius:10,background:C.bad+"15",border:"2px solid "+C.bad+"60",boxShadow:"0 0 20px "+C.bad+"30"}}>
-                        <div style={{fontSize:13,fontWeight:700,color:C.bad,letterSpacing:2,marginBottom:10,textAlign:"center"}}>⚠ CONFIRM ASCENSION</div>
-                        <div style={{fontSize:11,color:C.ts,fontFamily:FONT_BODY,marginBottom:6}}>This will permanently reset:</div>
-                        <div style={{fontSize:11,color:C.bad,fontFamily:FONT_BODY,marginBottom:6,paddingLeft:8}}>
-                          • All inventory & equipment<br/>
-                          • All structures & drones<br/>
-                          • All crafted items & gold<br/>
-                          • Research tree progress<br/>
-                          • Skill XP (halved, levels preserved)
-                        </div>
-                        <div style={{fontSize:11,color:C.ok,fontFamily:FONT_BODY,marginBottom:12,paddingLeft:8}}>
-                          ✓ You will earn <strong style={{color:C.gold}}>{coresOnAscend} Ancient Data Core{coresOnAscend>1?"s":""}</strong><br/>
-                          ✓ Prestige upgrades are permanent<br/>
-                          ✓ Ascension level permanently increases
-                        </div>
-                        <div style={{display:"flex",gap:10}}>
-                          <div onClick={doAscend} style={{flex:1,padding:"10px 0",borderRadius:6,background:"linear-gradient(90deg,"+C.bad+"cc,"+C.bad+")",color:C.white,fontSize:11,fontWeight:700,textAlign:"center",cursor:"pointer",letterSpacing:2,fontFamily:FONT}}>CONFIRM ASCEND</div>
-                          <div onClick={()=>setShowAscendConfirm(false)} style={{flex:1,padding:"10px 0",borderRadius:6,background:C.card,border:"1px solid "+C.border,color:C.ts,fontSize:11,fontWeight:700,textAlign:"center",cursor:"pointer",letterSpacing:2,fontFamily:FONT}}>CANCEL</div>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                )}
-
-                {/* What Ascension does */}
-                <div style={{marginBottom:20,padding:"12px 16px",borderRadius:8,background:C.card,border:"1px solid "+C.border}}>
-                  <div style={{fontSize:11,fontWeight:700,color:C.acc,letterSpacing:2,marginBottom:8}}>ASCENSION REWARDS</div>
-                  <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:6}}>
-                    {ASCENSION_THRESHOLDS.map((thr,i)=>{
-                      const done=ascensionLevel>i;const current=ascensionLevel===i;
-                      return(
-                        <div key={i} style={{padding:"8px 10px",borderRadius:6,background:done?"linear-gradient(90deg,"+C.purp+"20,"+C.card+")":current?C.gold+"12":C.bg,border:"1px solid "+(done?C.purp+"50":current?C.gold+"50":C.border),opacity:done||current?1:0.5}}>
-                          <div style={{display:"flex",justifyContent:"space-between",marginBottom:3}}>
-                            <span style={{fontSize:10,color:done?C.purp:current?C.gold:C.ts,fontWeight:700,fontFamily:FONT}}>Ascension {i+1}</span>
-                            <span style={{fontSize:9,color:C.td,fontFamily:FONT_BODY}}>{done?"✓ Done":current?"← Current":"Lv "+thr}</span>
-                          </div>
-                          <div style={{fontSize:9,color:C.ts,fontFamily:FONT_BODY}}>+{i+1} Data Core{i>0?"s":""} · Skill XP preserved</div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-
-                {/* Prestige upgrade shop */}
-                <div style={{fontSize:12,fontWeight:700,color:C.white,letterSpacing:2,marginBottom:4}}>PERMANENT UPGRADES</div>
-                <div style={{fontSize:10,color:C.ts,marginBottom:14,fontFamily:FONT_BODY}}>
-                  Spend Ancient Data Cores on permanent bonuses. These survive all ascensions.
-                  <span style={{color:C.gold,fontWeight:700}}> {dataCores} cores available.</span>
-                </div>
-                <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
-                  {PRESTIGE_UPGRADES.map(pu=>{
-                    const lv=prestigeUpgrades[pu.id]||0;
-                    const maxed=lv>=pu.maxLevel;
-                    const nextCost=maxed?0:pu.costPerLevel*(lv+1);
-                    const canBuy=!maxed&&dataCores>=nextCost;
-                    const col=pu.color;
-                    return(
-                      <div key={pu.id} style={{padding:"14px",borderRadius:10,background:lv>0?"linear-gradient(135deg,"+col+"15,"+C.card+")":C.card,border:"2px solid "+(lv>0?col+"50":C.border),boxShadow:lv>0?"0 0 12px "+col+"25":"none"}}>
-                        <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:8}}>
-                          <span style={{fontSize:22,filter:lv>0?"drop-shadow(0 0 6px "+col+")":"none"}}>{pu.icon}</span>
-                          <div style={{flex:1}}>
-                            <div style={{fontSize:11,fontWeight:700,color:lv>0?col:C.white,fontFamily:FONT,letterSpacing:1}}>{pu.name}</div>
-                            <div style={{fontSize:9,color:C.ts,fontFamily:FONT_BODY,marginTop:1}}>{pu.desc}</div>
-                          </div>
-                          <div style={{fontSize:10,fontWeight:700,color:lv>0?col:C.td,fontFamily:FONT}}>{lv}/{pu.maxLevel}</div>
-                        </div>
-                        {/* Level progress bar */}
-                        <div style={{display:"flex",gap:2,marginBottom:8}}>
-                          {[...Array(pu.maxLevel)].map((_,i)=>(
-                            <div key={i} style={{flex:1,height:3,borderRadius:2,background:i<lv?col:C.bg,border:"1px solid "+(i<lv?col:C.border),transition:"all 0.3s"}}/>
-                          ))}
-                        </div>
-                        {lv>0&&(
-                          <div style={{padding:"4px 8px",borderRadius:4,background:col+"12",border:"1px solid "+col+"25",marginBottom:8}}>
-                            <div style={{fontSize:9,color:col,fontFamily:FONT_BODY}}>{pu.effectDesc(lv)}</div>
-                          </div>
-                        )}
-                        {maxed?(
-                          <div style={{padding:"6px 0",borderRadius:5,background:col+"20",border:"1px solid "+col+"40",color:col,fontSize:9,fontWeight:700,textAlign:"center",letterSpacing:1,fontFamily:FONT}}>✦ MAXED</div>
-                        ):(
-                          <div onClick={()=>canBuy&&doBuyPrestige(pu)} style={{padding:"6px 0",borderRadius:5,background:canBuy?"linear-gradient(90deg,"+col+"cc,"+col+")":C.bg,color:canBuy?C.bg:C.td,fontSize:9,fontWeight:700,textAlign:"center",cursor:canBuy?"pointer":"default",letterSpacing:1,fontFamily:FONT,border:"1px solid "+(canBuy?col:C.border),boxShadow:canBuy?"0 0 8px "+col+"55":"none",transition:"all 0.15s"}}>
-                            {canBuy?"UPGRADE ("+nextCost+" core"+(nextCost>1?"s":"")+")":" NEED "+nextCost+" CORE"+(nextCost>1?"S":"")}
-                          </div>
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            );})()}
-
             {/* ===== MARKETPLACE PAGE ===== */}
             {page==="market"&&(()=>{
               // Load market on page open
@@ -3374,7 +3112,7 @@ function GameUI({account,onLogout}){
                             <div style={{display:"flex",gap:4,flexWrap:"wrap"}}>
                               {ach.reward.rp&&<span style={{fontSize:9,color:C.acc,padding:"1px 7px",borderRadius:4,background:C.acc+"12",border:"1px solid "+C.acc+"25"}}>🔬 +{ach.reward.rp} RP</span>}
                               {ach.reward.gold&&<span style={{fontSize:9,color:C.gold,padding:"1px 7px",borderRadius:4,background:C.gold+"12",border:"1px solid "+C.gold+"25"}}>◈ +{ach.reward.gold}</span>}
-                              {ach.reward.dataCores&&<span style={{fontSize:9,color:C.purp,padding:"1px 7px",borderRadius:4,background:C.purp+"12",border:"1px solid "+C.purp+"25"}}>✦ +{ach.reward.dataCores} Core</span>}
+                              {ach.reward.rp&&<span style={{fontSize:9,color:C.acc,padding:"1px 7px",borderRadius:4,background:C.acc+"12",border:"1px solid "+C.acc+"25"}}>+{ach.reward.rp} RP</span>}
                             </div>
                           </div>
                         </div>
@@ -3590,7 +3328,7 @@ function GameUI({account,onLogout}){
                             <div style={{width:34,height:34,borderRadius:17,background:"linear-gradient(135deg,"+C.acc+","+C.purp+")",display:"flex",alignItems:"center",justifyContent:"center",fontSize:15,fontWeight:700,color:C.bg}}>{(f.name||"?")[0].toUpperCase()}</div>
                             <div>
                               <div style={{fontSize:12,fontWeight:700,color:C.white,fontFamily:FONT_BODY}}>{f.name}</div>
-                              <div style={{fontSize:9,color:C.ts,fontFamily:FONT_BODY}}>Lv {f.totalSkillLv||"?"} · {f.ascensions>0?"✦ ASC "+f.ascensions:""}</div>
+                              <div style={{fontSize:9,color:C.ts,fontFamily:FONT_BODY}}>Lv {f.totalSkillLv||"?"}</div>
                             </div>
                           </div>
                           <div style={{display:"flex",gap:6}}>
@@ -3758,7 +3496,7 @@ function GameUI({account,onLogout}){
                         <div style={{display:"flex",alignItems:"center",gap:8}}>
                           <span style={{fontSize:12,fontWeight:700,color:isMe?C.acc:C.white,fontFamily:FONT,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{entry.name}</span>
                           {isMe&&<span style={{fontSize:8,padding:"1px 6px",borderRadius:6,background:C.acc+"25",border:"1px solid "+C.acc+"50",color:C.acc,fontWeight:700,letterSpacing:1}}>YOU</span>}
-                          {entry.ascensions>0&&<span style={{fontSize:8,padding:"1px 6px",borderRadius:6,background:C.purp+"25",border:"1px solid "+C.purp+"40",color:C.purp,fontWeight:700}}>✦ ASC {entry.ascensions}</span>}
+                          <div style={{fontSize:9,color:C.ts,fontFamily:FONT_BODY}}>⚔ {entry.kills||0} kills</div>
                         </div>
                         <div style={{fontSize:10,color:C.ts,fontFamily:FONT_BODY,marginTop:2}}>
                           {(entry.kills||0).toLocaleString()} kills
@@ -3803,14 +3541,9 @@ function GameUI({account,onLogout}){
                       <div style={{fontSize:16,fontWeight:700,color:C.white,fontFamily:FONT,letterSpacing:2}}>{account.displayName||"Deep Diver"}</div>
                       <div style={{fontSize:11,color:C.ts,fontFamily:FONT_BODY,marginTop:2}}>{account.email}</div>
                       <div style={{display:"flex",gap:8,marginTop:6,flexWrap:"wrap"}}>
-                        {ascensionLevel>0&&<span style={{fontSize:10,color:C.purp,fontWeight:700,padding:"2px 8px",borderRadius:8,background:C.purp+"18",border:"1px solid "+C.purp+"40"}}>✦ Ascension {ascensionLevel}</span>}
                         <span style={{fontSize:10,color:C.acc,fontWeight:700,padding:"2px 8px",borderRadius:8,background:C.acc+"18",border:"1px solid "+C.acc+"40"}}>⭐ Skill Lv {totalSkillLevel}</span>
                         <span style={{fontSize:10,color:C.gold,fontWeight:700,padding:"2px 8px",borderRadius:8,background:C.gold+"18",border:"1px solid "+C.gold+"40"}}>🏆 {Object.keys(achievements).length} Achievements</span>
                       </div>
-                    </div>
-                    <div style={{textAlign:"center",flexShrink:0}}>
-                      <div style={{fontSize:28,fontWeight:700,color:C.gold,fontFamily:FONT}}>{dataCores}</div>
-                      <div style={{fontSize:9,color:C.gold,letterSpacing:2}}>DATA CORES</div>
                     </div>
                   </div>
                 </div>

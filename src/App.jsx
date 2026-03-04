@@ -1075,6 +1075,7 @@ function GameUI({account,onLogout}){
   const[lbLoading,setLbLoading]=useState(false);
   const[showLogoutConfirm,setShowLogoutConfirm]=useState(false);
   // ── Social ──
+  const chatEndRef=useRef(null);
   const[chatMessages,setChatMessages]=useState([]);  // global chat
   const[chatInput,setChatInput]=useState("");
   const[chatTab,setChatTab]=useState("global");      // global | clan | dm
@@ -1192,6 +1193,8 @@ function GameUI({account,onLogout}){
 
   // Load social on mount
   useEffect(()=>{loadFriends();loadClan();},[account.uid]);
+  // Scroll chat to bottom when messages change
+  useEffect(()=>{chatEndRef.current?.scrollIntoView({behavior:"smooth"})},[chatMessages,dmMessages,clanChat]);
   // Save
   useEffect(()=>{const t=setInterval(()=>{setDoc(doc(db,"doc_saves",account.uid),{skills,inv,eq,gold,enh,researchPts,researched,structures,drones,ascensionLevel,dataCores,prestigeUpgrades,achievements,lifeStats,blueprints,tutorialDone,ts:Date.now()},{merge:true}).catch(()=>{})},30000);return()=>clearInterval(t)},[skills,inv,eq,gold,enh,researchPts,researched,structures,drones,ascensionLevel,dataCores,prestigeUpgrades,achievements,lifeStats,blueprints,tutorialDone,account.uid]);
 
@@ -1351,16 +1354,16 @@ function GameUI({account,onLogout}){
             setLifeStats(p=>({...p,bossKills:(p.bossKills||0)+1}));
           }
           setClog(p=>[...p.slice(-20),logMsg]);
-          // Pick next mob: boss2 every 25 kills, boss every 10, elite 15%, else random mob
-          const pickMob=(zone,nk,isBossKill)=>{
-            if(isBossKill&&nk%25===0&&zone.boss2)return{...zone.boss2,isBoss2:true};
-            if(isBossKill)return zone.mobs[Math.floor(Math.random()*zone.mobs.length)];
+          // Pick next mob: boss2 every 25 kills, regular boss every 10, elite 15%, else random mob
+          const pickMob=(zone,nk)=>{
+            if(nk%25===0)return zone.boss2?{...zone.boss2,isBoss2:true}:zone.boss;
+            if(nk%10===0)return zone.boss;
             if(zone.elites&&zone.elites.length&&Math.random()<0.15)return zone.elites[Math.floor(Math.random()*zone.elites.length)];
             return zone.mobs[Math.floor(Math.random()*zone.mobs.length)];
           };
-          const nb=nk%10===0;
-          const nm=nb?(nk%25===0&&zone.boss2?{...zone.boss2,isBoss2:true}:zone.boss):pickMob(zone,nk,false);
-          return{mob:nm,mhp:nm.hp,php,mxhp,kills:nk,boss:nb};
+          const nm=pickMob(zone,nk);
+          const isBossSpawn=(nk%10===0);
+          return{mob:nm,mhp:nm.hp,php,mxhp,kills:nk,boss:isBossSpawn};
         }
         return{...prev,mhp,php};
       });
@@ -1369,7 +1372,7 @@ function GameUI({account,onLogout}){
   },[zoneId,cbt,pStats,gainXp,food,remIt,bonuses]);
 
   const startAct=useCallback((skId,actId)=>{setZoneId(null);setCbt(null);setCurAct({sk:skId,act:actId});setActProg(0);setActSkill(skId)},[]);
-  const startZone=useCallback((zid)=>{const z=ZONES.find(x=>x.id===zid);if(!z)return;setCurAct(null);setZoneId(zid);const m=z.mobs[0];setCbt({mob:m,mhp:m.hp,php:pStats.hp,mxhp:pStats.hp,kills:0,boss:false});setClog(["📡 Entered "+z.name+"...","⚠️ "+z.mobs.length+" mob types · "+z.elites.length+" elites · 2 bosses"])},[pStats]);
+  const startZone=useCallback((zid)=>{const z=ZONES.find(x=>x.id===zid);if(!z)return;setCurAct(null);setZoneId(zid);const m=z.mobs[0];setCbt({mob:m,mhp:m.hp,php:pStats.hp,mxhp:pStats.hp,kills:0,boss:false});setClog(["📡 Entered "+z.name+"...","⚠️ "+z.mobs.length+" mob types · "+(z.elites||[]).length+" elites · 2 bosses"])},[pStats]);
   const stopZone=useCallback(()=>{setZoneId(null);setCbt(null)},[]);
   const equipIt=useCallback((iid)=>{const it=ITEMS[iid];if(!it||!it.eq||(inv[iid]||0)<=0)return;const cur=eq[it.eq];if(cur)addIt(cur,1);remIt(iid,1);setEq(p=>({...p,[it.eq]:iid}))},[inv,eq,addIt,remIt]);
   const unequipIt=useCallback((sid)=>{const iid=eq[sid];if(!iid)return;addIt(iid,1);setEq(p=>{const n={...p};delete n[sid];return n})},[eq,addIt]);
@@ -3094,14 +3097,14 @@ function GameUI({account,onLogout}){
 
             {/* ===== SOCIAL PAGE ===== */}
             {page==="social"&&(()=>{
-              // Tab bar sub-component
+              // Tab bar
               const tabs=[
                 {id:"chat",  label:"💬 Global",  badge:null},
                 {id:"clan",  label:"⚔️ Clan",    badge:clan?clan.tag:null},
                 {id:"friends",label:"👥 Friends", badge:friendReqs.length>0?friendReqs.length:null},
                 {id:"dm",    label:"✉️ DM",       badge:dmTarget?dmTarget.name:null},
               ];
-              // Chat message component
+              // Chat message bubble (plain function, no hooks)
               const ChatMsg=({m,mine})=>(
                 <div style={{display:"flex",gap:8,padding:"5px 0",alignItems:"flex-start",flexDirection:mine?"row-reverse":"row"}}>
                   <div style={{width:26,height:26,borderRadius:13,background:mine?"linear-gradient(135deg,"+C.acc+","+C.purp+")":"linear-gradient(135deg,"+C.td+","+C.border+")",display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,fontWeight:700,color:C.bg,flexShrink:0}}>
@@ -3116,8 +3119,6 @@ function GameUI({account,onLogout}){
                   </div>
                 </div>
               );
-              const chatEndRef=useRef(null);
-              useEffect(()=>{chatEndRef.current?.scrollIntoView({behavior:"smooth"})},[chatMessages,dmMessages,clanChat]);
 
               return(
               <div style={{maxWidth:720,display:"flex",flexDirection:"column",height:"calc(100vh - 130px)"}}>
@@ -3491,7 +3492,7 @@ function GameUI({account,onLogout}){
                     <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:6}}>
                       <div>
                         <div style={{fontSize:13,fontWeight:700,color:isAct?C.bad:C.white,fontFamily:FONT,letterSpacing:1}}>{zone.icon} {zone.name.toUpperCase()}</div>
-                        <div style={{fontSize:10,color:C.ts,marginTop:2,fontFamily:FONT_BODY}}>Depth Rank {zone.lv}+ · {zone.mobs.length} mobs · {zone.elites.length} elites · 2 bosses</div>
+                        <div style={{fontSize:10,color:C.ts,marginTop:2,fontFamily:FONT_BODY}}>Depth Rank {zone.lv}+ · {zone.mobs.length} mobs · {(zone.elites||[]).length} elites · 2 bosses</div>
                       </div>
                       {!lk&&<div onClick={()=>{if(isAct)stopZone();else startZone(zone.id)}} style={{padding:"7px 18px",borderRadius:6,background:isAct?"linear-gradient(90deg,"+C.badD+","+C.bad+")":"linear-gradient(90deg,"+C.accD+","+C.acc+")",color:C.bg,fontSize:10,fontWeight:700,cursor:"pointer",letterSpacing:1,fontFamily:FONT,boxShadow:isAct?GLOW_BAD:GLOW_STYLE,flexShrink:0}}>{isAct?"RETREAT":"DIVE IN"}</div>}
                       {lk&&<span style={{fontSize:10,color:C.bad,fontFamily:FONT,flexShrink:0}}>LV {zone.lv}</span>}
@@ -3502,7 +3503,7 @@ function GameUI({account,onLogout}){
                         <span key={i} title={m.n+" (HP:"+m.hp+" ATK:"+m.atk+")"} style={{fontSize:16,cursor:"default",filter:"drop-shadow(0 0 3px #00d4ff22)"}}>{m.i||"👾"}</span>
                       ))}
                       <span style={{fontSize:10,color:C.td,alignSelf:"center",marginLeft:2}}>+</span>
-                      {zone.elites.map((m,i)=>(
+                      {(zone.elites||[]).map((m,i)=>(
                         <span key={i} title={"💠 ELITE: "+m.n+" (HP:"+m.hp+")"} style={{fontSize:16,cursor:"default",filter:"drop-shadow(0 0 5px "+C.purp+")"}}>{m.i||"⚡"}</span>
                       ))}
                       <span style={{fontSize:10,color:C.td,alignSelf:"center",marginLeft:2}}>bosses:</span>

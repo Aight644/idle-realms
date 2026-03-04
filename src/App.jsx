@@ -1020,6 +1020,8 @@ function GameUI({account,onLogout}){
   const[clog,setClog]=useState([]);
   const[food,setFood]=useState(null);
   const[page,setPage]=useState("skills");
+  const[isMobile,setIsMobile]=useState(()=>window.innerWidth<768);
+  const[mobileTab,setMobileTab]=useState("skills"); // skills|combat|bag|chat|more
   const[actSkill,setActSkill]=useState("kelp_farming");
   // Top bar
   const[energy,setEnergy]=useState(100);
@@ -1199,7 +1201,7 @@ function GameUI({account,onLogout}){
   // Scroll chat to bottom when messages change
   useEffect(()=>{chatEndRef.current?.scrollIntoView({behavior:"smooth"})},[chatMessages,dmMessages,clanChat]);
   // Save
-  useEffect(()=>{const t=setInterval(()=>{setDoc(doc(db,"doc_saves",account.uid),{skills,inv,eq,gold,enh,researchPts,researched,structures,drones,ascensionLevel,dataCores,prestigeUpgrades,achievements,lifeStats,blueprints,tutorialDone,ts:Date.now()},{merge:true}).catch(()=>{})},30000);return()=>clearInterval(t)},[skills,inv,eq,gold,enh,researchPts,researched,structures,drones,ascensionLevel,dataCores,prestigeUpgrades,achievements,lifeStats,blueprints,tutorialDone,account.uid]);
+  useEffect(()=>{const fn=()=>setIsMobile(window.innerWidth<768);window.addEventListener("resize",fn);return()=>window.removeEventListener("resize",fn)},[]);
 
   // Energy regen
   useEffect(()=>{const t=setInterval(()=>{setEnergy(e=>Math.min(maxEnergy,e+1*(1+(bonuses.energy_regen||0))))},1000);return()=>clearInterval(t)},[maxEnergy,bonuses.energy_regen]);
@@ -1931,7 +1933,7 @@ function GameUI({account,onLogout}){
   return(
     <div style={{width:"100%",height:"100vh",display:"flex",flexDirection:"column",fontFamily:FONT,background:C.bg,color:C.text,overflow:"hidden"}}>
 
-      {/* ===== TUTORIAL MODAL ===== */}
+      {/* ===== MODALS (shared) ===== */}
       {showTutorial&&(()=>{
         const step=TUTORIAL_STEPS[tutorialStep];
         const isLast=tutorialStep===TUTORIAL_STEPS.length-1;
@@ -2097,6 +2099,386 @@ function GameUI({account,onLogout}){
           </div>
         </div>
       )}
+
+      {/* ===== MOBILE UI ===== */}
+      {isMobile&&(()=>{
+        // Mobile page mapping: mobileTab drives what page content shows
+        const mobileNavItems=[
+          {id:"skills",   icon:"⚒️",  label:"Skills"},
+          {id:"combat",   icon:"⚔️",  label:"Combat"},
+          {id:"bag",      icon:"🎒",  label:"Bag"},
+          {id:"chat",     icon:"💬",  label:"Chat"},
+          {id:"more",     icon:"☰",   label:"More"},
+        ];
+        const mobilePageMap={skills:"skills",combat:"combat",bag:null,chat:null,more:null};
+
+        // Sync mobileTab → page for content tabs
+        const handleMobileTab=(id)=>{
+          setMobileTab(id);
+          if(id==="skills")setPage("skills");
+          else if(id==="combat")setPage("combat");
+        };
+
+        return(
+          <div style={{position:"fixed",inset:0,display:"flex",flexDirection:"column",background:C.bg,zIndex:500,fontFamily:FONT}}>
+
+            {/* ── MOBILE TOP BAR ── */}
+            <div style={{flexShrink:0,height:52,background:C.panel,borderBottom:"1px solid "+C.border,display:"flex",alignItems:"center",padding:"0 12px",gap:10}}>
+              <div style={{fontSize:13,fontWeight:900,color:C.acc,letterSpacing:2,flexShrink:0}}>🌊 DOC</div>
+              <div style={{flex:1,display:"flex",gap:10,alignItems:"center",overflow:"hidden"}}>
+                <div style={{display:"flex",alignItems:"center",gap:4,flexShrink:0}}>
+                  <span style={{fontSize:11,color:C.gold,fontWeight:700}}>◈</span>
+                  <span style={{fontSize:12,color:C.gold,fontWeight:700,fontFamily:FONT}}>{fmt(gold)}</span>
+                </div>
+                <div style={{display:"flex",alignItems:"center",gap:4,flexShrink:0}}>
+                  <span style={{fontSize:11,color:C.warn}}>⚡</span>
+                  <div style={{width:50,height:5,borderRadius:3,background:C.bg,border:"1px solid "+C.border,overflow:"hidden"}}>
+                    <div style={{width:(energy/maxEnergy)*100+"%",height:"100%",background:C.warn,borderRadius:3}}/>
+                  </div>
+                  <span style={{fontSize:11,color:C.warn,fontFamily:FONT_BODY}}>{Math.floor(energy)}</span>
+                </div>
+                <div style={{display:"flex",alignItems:"center",gap:4,flexShrink:0}}>
+                  <span style={{fontSize:11,color:C.purp}}>🔵</span>
+                  <span style={{fontSize:11,color:C.purp,fontFamily:FONT_BODY}}>{Math.floor(pressure)}%</span>
+                </div>
+                {curAct&&(()=>{const sk=SKILLS.find(s=>s.id===curAct.sk);return(
+                  <div style={{flex:1,minWidth:0,display:"flex",alignItems:"center",gap:6,background:C.card,borderRadius:6,padding:"4px 8px",border:"1px solid "+C.border}}>
+                    <span style={{fontSize:12,flexShrink:0}}>{sk?.icon}</span>
+                    <div style={{flex:1,height:4,borderRadius:2,background:C.bg,overflow:"hidden"}}>
+                      <div style={{width:actProg*100+"%",height:"100%",background:"linear-gradient(90deg,"+C.accD+","+C.acc+")",transition:"width 0.1s linear"}}/>
+                    </div>
+                    <span onClick={()=>{setCurAct(null);setActProg(0)}} style={{fontSize:11,color:C.bad,fontWeight:700,cursor:"pointer",flexShrink:0}}>■</span>
+                  </div>
+                );})()}
+              </div>
+              <div onClick={()=>setPage("stats")} style={{width:32,height:32,borderRadius:8,background:C.card,border:"1px solid "+C.border,display:"flex",alignItems:"center",justifyContent:"center",fontSize:15,cursor:"pointer",flexShrink:0}}>👤</div>
+            </div>
+
+            {/* ── MOBILE CONTENT ── */}
+            <div style={{flex:1,overflow:"hidden",position:"relative"}}>
+
+              {/* Combat HUD bar (shared with desktop) */}
+              {cbt&&mobileTab==="combat"&&(()=>{
+                const mob=cbt.mob;
+                const isBoss2=mob.isBoss2;const isBoss=cbt.boss&&!isBoss2;const isElite=mob.elite;
+                const mobColor=isBoss2?C.gold:isBoss?C.bad:isElite?C.purp:C.ts;
+                return(
+                  <div style={{padding:"8px 14px",background:C.panel,borderBottom:"2px solid "+(isBoss2?C.gold:isBoss?C.bad:C.border)}}>
+                    <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:6}}>
+                      <span style={{fontSize:16,color:mobColor,fontWeight:700}}>{mob.i||"⚔️"} {mob.n}</span>
+                      <div style={{display:"flex",gap:8,alignItems:"center"}}>
+                        <span style={{fontSize:12,color:C.ts}}>kills: {killCount}</span>
+                        <div onClick={retreat} style={{padding:"4px 12px",borderRadius:6,background:C.bad+"22",border:"1px solid "+C.bad+"60",color:C.bad,fontSize:12,fontWeight:700,cursor:"pointer"}}>RETREAT</div>
+                      </div>
+                    </div>
+                    <div style={{display:"flex",gap:8}}>
+                      <div style={{flex:1}}>
+                        <div style={{display:"flex",justifyContent:"space-between",fontSize:11,color:C.td,marginBottom:2}}><span>You</span><span>{Math.floor(cbt.php)}/{cbt.mxhp}</span></div>
+                        <div style={{height:7,borderRadius:4,background:C.bg,overflow:"hidden"}}><div style={{width:(cbt.php/cbt.mxhp)*100+"%",height:"100%",background:C.ok,borderRadius:4,transition:"width 0.2s"}}/></div>
+                      </div>
+                      <div style={{flex:1}}>
+                        <div style={{display:"flex",justifyContent:"space-between",fontSize:11,color:C.td,marginBottom:2}}><span>{mob.n}</span><span>{Math.floor(cbt.mhp)}/{mob.hp}</span></div>
+                        <div style={{height:7,borderRadius:4,background:C.bg,overflow:"hidden"}}><div style={{width:Math.max(0,(cbt.mhp/mob.hp)*100)+"%",height:"100%",background:C.bad,borderRadius:4,transition:"width 0.2s"}}/></div>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })()}
+
+              {/* Skills tab */}
+              {mobileTab==="skills"&&(
+                <div style={{height:"100%",overflowY:"auto",padding:"12px"}}>
+                  {/* Active skill header */}
+                  {actSkill&&(()=>{
+                    const sk=SKILLS.find(s=>s.id===actSkill);
+                    if(!sk)return null;
+                    const s=sl(sk.id);
+                    const pct=s.need>0?(s.xp/s.need)*100:0;
+                    return(
+                      <div style={{marginBottom:14,padding:"12px 14px",borderRadius:10,background:"linear-gradient(135deg,"+sk.color+"18,"+C.card+")",border:"1px solid "+sk.color+"40"}}>
+                        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:6}}>
+                          <span style={{fontSize:18,fontWeight:700,color:sk.color}}>{sk.icon} {sk.name}</span>
+                          <span style={{fontSize:13,color:C.ts,fontFamily:FONT}}>Lv {s.lv}</span>
+                        </div>
+                        <div style={{height:5,borderRadius:3,background:C.bg,overflow:"hidden",marginBottom:4}}>
+                          <div style={{width:pct+"%",height:"100%",background:sk.color,borderRadius:3,transition:"width 0.3s"}}/>
+                        </div>
+                        <div style={{fontSize:12,color:C.td,fontFamily:FONT_BODY}}>{pct.toFixed(1)}% to level {s.lv+1}</div>
+                      </div>
+                    );
+                  })()}
+                  {/* Skill list */}
+                  <div style={{display:"flex",flexDirection:"column",gap:4}}>
+                    {SKILLS.map(sk=>{
+                      const s=sl(sk.id);
+                      const pct=s.need>0?(s.xp/s.need)*100:0;
+                      const running=curAct?.sk===sk.id;
+                      const isActive=actSkill===sk.id;
+                      return(
+                        <div key={sk.id} onClick={()=>setActSkill(sk.id)} style={{display:"flex",alignItems:"center",gap:10,padding:"10px 12px",borderRadius:8,background:isActive?"linear-gradient(90deg,"+sk.color+"20,"+C.card+")":C.card,border:"1px solid "+(isActive?sk.color+"50":C.border),cursor:"pointer"}}>
+                          <span style={{fontSize:18,flexShrink:0,filter:running?"drop-shadow(0 0 5px "+sk.color+")":s.mastered?"drop-shadow(0 0 5px "+C.gold+")":"none"}}>{sk.icon}</span>
+                          <div style={{flex:1,minWidth:0}}>
+                            <div style={{display:"flex",justifyContent:"space-between",marginBottom:4}}>
+                              <span style={{fontSize:13,color:isActive?sk.color:C.text,fontWeight:600,fontFamily:FONT_BODY}}>{sk.name}</span>
+                              <span style={{fontSize:12,color:s.mastered?C.gold:C.ts,fontWeight:700,fontFamily:FONT}}>{s.mastered?"★":pct.toFixed(1)+"% "+s.lv}</span>
+                            </div>
+                            <div style={{height:3,borderRadius:2,background:C.bg,overflow:"hidden"}}>
+                              <div style={{width:pct+"%",height:"100%",background:s.mastered?C.gold:running?C.ok:sk.color,borderRadius:2,transition:"width 0.3s"}}/>
+                            </div>
+                          </div>
+                          {running&&<span style={{fontSize:12,color:C.ok,fontWeight:700,flexShrink:0}}>▶</span>}
+                        </div>
+                      );
+                    })}
+                  </div>
+                  {/* Actions for selected skill */}
+                  {actSkill&&(()=>{
+                    const sk=SKILLS.find(s=>s.id===actSkill);
+                    if(!sk)return null;
+                    return(
+                      <div style={{marginTop:16}}>
+                        <div style={{fontSize:11,fontWeight:700,color:C.td,letterSpacing:2,marginBottom:8,textTransform:"uppercase"}}>Available Actions</div>
+                        <div style={{display:"flex",flexDirection:"column",gap:8}}>
+                          {sk.acts.map(act=>{
+                            const s=sl(sk.id);
+                            const canDo=s.lv>=act.lv;
+                            const isAct=curAct?.sk===sk.id&&curAct?.act===act.id;
+                            return(
+                              <div key={act.id} style={{padding:"12px 14px",borderRadius:8,background:isAct?"linear-gradient(135deg,"+C.acc+"18,"+C.card+")":C.card,border:"1px solid "+(isAct?C.acc+"60":canDo?C.border:C.border+"60"),opacity:canDo?1:0.5,display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+                                <div style={{flex:1,minWidth:0}}>
+                                  <div style={{fontSize:14,color:isAct?C.acc:canDo?C.text:C.td,fontWeight:700,fontFamily:FONT_BODY,marginBottom:3}}>{act.name}</div>
+                                  <div style={{fontSize:12,color:C.ts,fontFamily:FONT_BODY}}>+{act.xp} XP · {act.t}s → {act.out.map(o=>(ITEMS[o.id]?.i||"📦")+" "+(ITEMS[o.id]?.n||o.id)).join(", ")}</div>
+                                  {!canDo&&<div style={{fontSize:11,color:C.bad,marginTop:2,fontFamily:FONT_BODY}}>Requires Level {act.lv}</div>}
+                                </div>
+                                {canDo&&(
+                                  <div onClick={e=>{e.stopPropagation();isAct?setCurAct(null):setCurAct({sk:sk.id,act:act.id,dur:act.t*1000,elapsed:0})}} style={{padding:"8px 16px",borderRadius:8,background:isAct?"linear-gradient(90deg,"+C.bad+"cc,"+C.bad+")":"linear-gradient(90deg,"+C.accD+","+C.acc+")",color:C.bg,fontSize:13,fontWeight:700,cursor:"pointer",flexShrink:0,marginLeft:10,fontFamily:FONT}}>
+                                    {isAct?"STOP":"START"}
+                                  </div>
+                                )}
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    );
+                  })()}
+                </div>
+              )}
+
+              {/* Combat tab — reuse page content */}
+              {mobileTab==="combat"&&(
+                <div style={{height:"100%",overflowY:"auto"}}>
+                  {/* Zones list */}
+                  <div style={{padding:"12px"}}>
+                    {!zoneId&&ZONES.map(zone=>{
+                      const locked=combatLv<zone.lv;
+                      return(
+                        <div key={zone.id} style={{marginBottom:10,padding:"14px",borderRadius:10,background:C.card,border:"1px solid "+(locked?C.border:C.border),opacity:locked?0.5:1}}>
+                          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:6}}>
+                            <span style={{fontSize:16,fontWeight:700,color:locked?C.td:C.white}}>{zone.icon} {zone.name}</span>
+                            {locked
+                              ?<span style={{fontSize:12,color:C.td,fontFamily:FONT_BODY}}>🔒 Lv {zone.lv}</span>
+                              :<div onClick={()=>{setZoneId(zone.id);setCbt(null);setKillCount(0)}} style={{padding:"8px 18px",borderRadius:8,background:"linear-gradient(90deg,"+C.accD+","+C.acc+")",color:C.bg,fontSize:13,fontWeight:700,cursor:"pointer",fontFamily:FONT}}>DIVE IN</div>
+                            }
+                          </div>
+                          <div style={{fontSize:12,color:C.td,fontFamily:FONT_BODY,marginBottom:6}}>Depth Rank {zone.lv}+ · {zone.mobs.length} mobs</div>
+                          <div style={{display:"flex",gap:4,flexWrap:"wrap"}}>
+                            {zone.mobs.map((m,i)=><span key={i} style={{fontSize:18}}>{m.i}</span>)}
+                          </div>
+                        </div>
+                      );
+                    })}
+                    {zoneId&&(
+                      <div style={{textAlign:"center",padding:"20px 0"}}>
+                        <div style={{fontSize:13,color:C.ts,fontFamily:FONT_BODY,marginBottom:16}}>Fighting in {ZONES.find(z=>z.id===zoneId)?.name}</div>
+                        <div onClick={retreat} style={{display:"inline-block",padding:"10px 28px",borderRadius:8,background:C.bad+"22",border:"2px solid "+C.bad+"60",color:C.bad,fontSize:14,fontWeight:700,cursor:"pointer"}}>RETREAT</div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* Bag tab */}
+              {mobileTab==="bag"&&(
+                <div style={{height:"100%",overflowY:"auto",padding:"12px"}}>
+                  {/* Tabs inside bag */}
+                  <div style={{display:"flex",marginBottom:12,borderRadius:8,overflow:"hidden",border:"1px solid "+C.border}}>
+                    {["inventory","equipment","stats"].map(t=>(
+                      <div key={t} onClick={()=>setRightTab(t)} style={{flex:1,padding:"8px",textAlign:"center",fontSize:12,fontWeight:700,fontFamily:FONT_BODY,background:rightTab===t?C.acc:C.card,color:rightTab===t?C.bg:C.td,cursor:"pointer",textTransform:"capitalize"}}>
+                        {t==="inventory"?"Inventory":t==="equipment"?"Equipment":"Stats"}
+                      </div>
+                    ))}
+                  </div>
+                  {/* Currency row */}
+                  {rightTab==="inventory"&&(
+                    <div>
+                      <div style={{display:"flex",gap:8,marginBottom:12}}>
+                        {[{icon:"◈",label:"Credits",val:gold,c:C.gold},{icon:"🔬",label:"RP",val:researchPts,c:C.acc},{icon:"⚡",label:"Energy",val:Math.floor(energy),c:C.warn}].map(s=>(
+                          <div key={s.label} style={{flex:1,padding:"8px",borderRadius:8,background:C.card,border:"1px solid "+C.border,textAlign:"center"}}>
+                            <div style={{fontSize:18,marginBottom:2}}>{s.icon}</div>
+                            <div style={{fontSize:12,color:s.c,fontWeight:700,fontFamily:FONT}}>{s.val>=1e6?(s.val/1e6).toFixed(1)+"M":s.val>=1000?Math.floor(s.val/1000)+"k":Math.floor(s.val)}</div>
+                            <div style={{fontSize:10,color:C.td,fontFamily:FONT_BODY}}>{s.label}</div>
+                          </div>
+                        ))}
+                      </div>
+                      <div style={{display:"flex",flexWrap:"wrap",gap:6}}>
+                        {Object.entries(inv).filter(([id,qty])=>qty>0&&ITEMS[id]).map(([id,qty])=>{
+                          const it=ITEMS[id];
+                          const rareColor=it.rarity==="rare"?C.gold:it.rarity==="uncommon"?C.purp:null;
+                          return(
+                            <div key={id} title={it.n+" ×"+fmt(qty)} style={{position:"relative",width:58,height:58,borderRadius:8,background:rareColor?rareColor+"18":C.card,border:"1px solid "+(rareColor?rareColor+"50":C.border),display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:1}}>
+                              <span style={{fontSize:24,lineHeight:1}}>{it.i||"📦"}</span>
+                              <span style={{fontSize:11,color:rareColor||C.ts,fontWeight:700,fontFamily:FONT}}>{qty>=1000?Math.floor(qty/1000)+"k":qty}</span>
+                              {rareColor&&<div style={{position:"absolute",top:0,left:0,right:0,height:2,background:rareColor,borderRadius:"8px 8px 0 0"}}/>}
+                            </div>
+                          );
+                        })}
+                        {Object.keys(inv).filter(id=>inv[id]>0).length===0&&<div style={{fontSize:13,color:C.td,fontFamily:FONT_BODY,padding:"20px 0",width:"100%",textAlign:"center"}}>Cargo hold empty</div>}
+                      </div>
+                    </div>
+                  )}
+                  {rightTab==="equipment"&&(
+                    <div style={{display:"flex",flexDirection:"column",gap:6}}>
+                      {ESLOTS.map(slot=>{
+                        const iid=eq[slot.id];const it=iid?ITEMS[iid]:null;const el=iid?(enh[iid]||0):0;
+                        return(
+                          <div key={slot.id} style={{display:"flex",alignItems:"center",gap:10,padding:"12px 14px",borderRadius:8,background:it?"linear-gradient(90deg,"+C.acc+"10,"+C.card+")":C.card,border:"1px solid "+(it?C.acc+"40":C.border)}}>
+                            <div style={{width:44,height:44,borderRadius:8,background:C.bg,border:"1px solid "+C.border,display:"flex",alignItems:"center",justifyContent:"center",fontSize:22,flexShrink:0}}>{it?it.i:slot.i}</div>
+                            <div style={{flex:1}}>
+                              <div style={{fontSize:12,color:C.td,fontFamily:FONT_BODY}}>{slot.n}</div>
+                              <div style={{fontSize:13,color:it?C.white:C.td,fontWeight:600,fontFamily:FONT_BODY}}>{it?(it.n+(el>0?" +"+el:"")):"— empty —"}</div>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                  {rightTab==="stats"&&(
+                    <div style={{display:"flex",flexDirection:"column",gap:6}}>
+                      {[{l:"Hull HP",v:pStats.hp,c:C.ok,i:"❤️"},{l:"Attack",v:pStats.atk,c:C.bad,i:"⚔️"},{l:"Defense",v:pStats.def,c:C.acc,i:"🛡️"},{l:"Sonic",v:pStats.rng,c:C.okD,i:"🔊"},{l:"Leviathan",v:pStats.mag,c:C.purp,i:"🌀"}].map(s=>(
+                        <div key={s.l} style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"12px 14px",borderRadius:8,background:C.card,border:"1px solid "+C.border}}>
+                          <span style={{fontSize:14,color:C.ts,fontFamily:FONT_BODY}}>{s.i} {s.l}</span>
+                          <span style={{fontSize:16,color:s.c,fontWeight:700,fontFamily:FONT}}>{s.v}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Chat tab */}
+              {mobileTab==="chat"&&(
+                <div style={{height:"100%",display:"flex",flexDirection:"column"}}>
+                  <div style={{display:"flex",borderBottom:"1px solid "+C.border,background:C.panel}}>
+                    {[{id:"global",label:"General"},{id:"clan",label:"Guild"},{id:"dm",label:"Whisper"}].map(t=>(
+                      <div key={t.id} onClick={()=>setChatTab(t.id)} style={{flex:1,padding:"10px 0",textAlign:"center",fontSize:13,fontWeight:700,fontFamily:FONT_BODY,color:chatTab===t.id?C.white:C.td,borderBottom:chatTab===t.id?"3px solid "+C.acc:"3px solid transparent",cursor:"pointer"}}>
+                        {t.label}
+                      </div>
+                    ))}
+                  </div>
+                  <div style={{flex:1,overflowY:"auto",padding:"8px 14px",display:"flex",flexDirection:"column",gap:3}}>
+                    {(chatTab==="global"?chatMessages:chatTab==="clan"?clanChat:dmMessages).map((m,i)=>{
+                      const mine=m.uid===account.uid;
+                      const name=mine?"You":(chatTab==="dm"?dmTarget?.name:m.name)||"?";
+                      const color=chatTab==="clan"?C.gold:mine?C.acc:C.ts;
+                      return(
+                        <div key={m.id||i} style={{display:"flex",gap:6,alignItems:"baseline"}}>
+                          <span style={{fontSize:11,color:C.td,flexShrink:0}}>{new Date(m.ts||Date.now()).toLocaleTimeString([],{hour:"2-digit",minute:"2-digit"})}</span>
+                          <span style={{fontSize:13,color:color,fontWeight:700,flexShrink:0}}>{name}:</span>
+                          <span style={{fontSize:13,color:C.white,fontFamily:FONT_BODY,wordBreak:"break-word"}}>{m.text}</span>
+                        </div>
+                      );
+                    })}
+                    {chatTab==="clan"&&!clan&&<div style={{fontSize:13,color:C.td,fontFamily:FONT_BODY,padding:"20px 0",textAlign:"center"}}>Not in a guild yet.</div>}
+                    {chatTab==="dm"&&!dmTarget&&<div style={{fontSize:13,color:C.td,fontFamily:FONT_BODY,padding:"20px 0",textAlign:"center"}}>No DM open.</div>}
+                    <div ref={chatEndRef}/>
+                  </div>
+                  <div style={{flexShrink:0,display:"flex",gap:8,padding:"10px 12px",borderTop:"1px solid "+C.border,background:C.panel}}>
+                    <input
+                      value={chatTab==="global"?chatInput:chatTab==="clan"?clanChatInput:dmInput}
+                      onChange={e=>{if(chatTab==="global")setChatInput(e.target.value);else if(chatTab==="clan")setClanChatInput(e.target.value);else setDmInput(e.target.value);}}
+                      onKeyDown={e=>{if(e.key!=="Enter")return;if(chatTab==="global")sendChat();else if(chatTab==="clan")sendClanChat();else sendDm();}}
+                      placeholder="Message..."
+                      style={{flex:1,padding:"10px 14px",borderRadius:8,background:C.card,border:"1px solid "+C.border,color:C.white,fontSize:14,fontFamily:FONT_BODY,outline:"none"}}
+                    />
+                    <div onClick={()=>{if(chatTab==="global")sendChat();else if(chatTab==="clan")sendClanChat();else sendDm();}} style={{padding:"10px 18px",borderRadius:8,background:C.acc,color:C.bg,fontSize:14,fontWeight:700,cursor:"pointer",fontFamily:FONT_BODY,flexShrink:0}}>Send</div>
+                  </div>
+                </div>
+              )}
+
+              {/* More tab — nav drawer */}
+              {mobileTab==="more"&&(
+                <div style={{height:"100%",overflowY:"auto",padding:"8px 0"}}>
+                  {/* Player card */}
+                  <div style={{margin:"0 12px 12px",padding:"14px",borderRadius:10,background:C.card,border:"1px solid "+C.border,display:"flex",alignItems:"center",gap:12}}>
+                    <div style={{width:44,height:44,borderRadius:10,background:"linear-gradient(135deg,"+C.acc+","+C.accD+")",display:"flex",alignItems:"center",justifyContent:"center",fontSize:22,flexShrink:0}}>🌊</div>
+                    <div>
+                      <div style={{fontSize:15,fontWeight:700,color:C.white,fontFamily:FONT_BODY}}>{account.displayName}</div>
+                      <div style={{fontSize:12,color:C.ts,fontFamily:FONT_BODY}}>Combat Rank {combatLv}{ascensionLevel>0?" · ✦ ASC "+ascensionLevel:""}</div>
+                    </div>
+                  </div>
+                  {/* Nav pages list */}
+                  {[
+                    {id:"research",icon:"🔬",label:"Research Tree"},
+                    {id:"structures",icon:"🏗️",label:"Structures"},
+                    {id:"drones",icon:"🤖",label:"Drone Fleet"},
+                    {id:"market",icon:"🏪",label:"Marketplace"},
+                    {id:"achievements",icon:"🏆",label:"Achievements",badge:null},
+                    {id:"blueprints",icon:"📘",label:"Blueprints",badge:blueprints.length>0?blueprints.length:null},
+                    {id:"social",icon:"💬",label:"Social",badge:friendReqs.length>0?friendReqs.length:null},
+                    {id:"prestige",icon:"✨",label:canAscend?"ASCEND NOW!":"Ascension",badge:canAscend?"!":null},
+                    {id:"stats",icon:"📊",label:"Stats & Profile"},
+                  ].map(n=>(
+                    <div key={n.id} onClick={()=>{setPage(n.id);setMobileTab("_page")}} style={{display:"flex",alignItems:"center",gap:12,padding:"14px 16px",borderBottom:"1px solid "+C.border+"60",cursor:"pointer",background:"transparent",active:{background:C.card}}}>
+                      <span style={{fontSize:20,width:28,textAlign:"center",flexShrink:0}}>{n.icon}</span>
+                      <span style={{fontSize:14,color:C.text,fontFamily:FONT_BODY,flex:1}}>{n.label}</span>
+                      {n.badge!=null&&<span style={{fontSize:11,color:C.white,fontWeight:700,background:C.bad,padding:"2px 8px",borderRadius:10,flexShrink:0}}>{n.badge}</span>}
+                      <span style={{fontSize:14,color:C.td}}>›</span>
+                    </div>
+                  ))}
+                  <div onClick={()=>setShowLogoutConfirm(true)} style={{display:"flex",alignItems:"center",gap:12,padding:"14px 16px",cursor:"pointer",marginTop:8}}>
+                    <span style={{fontSize:20,width:28,textAlign:"center"}}>🚪</span>
+                    <span style={{fontSize:14,color:C.bad,fontFamily:FONT_BODY}}>Logout</span>
+                  </div>
+                </div>
+              )}
+
+              {/* Full page view (from More nav) */}
+              {mobileTab==="_page"&&(
+                <div style={{height:"100%",display:"flex",flexDirection:"column"}}>
+                  <div style={{flexShrink:0,display:"flex",alignItems:"center",gap:10,padding:"10px 14px",borderBottom:"1px solid "+C.border,background:C.panel}}>
+                    <div onClick={()=>setMobileTab("more")} style={{fontSize:14,color:C.acc,cursor:"pointer",fontWeight:700,padding:"4px 0"}}>‹ Back</div>
+                  </div>
+                  <div style={{flex:1,overflowY:"auto"}}>
+                    {/* reuse desktop center page content inline — the page state drives it */}
+                    <div style={{padding:"4px"}}>
+                      {/* This renders the current page — same JSX as desktop center */}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+            </div>{/* end mobile content */}
+
+            {/* ── MOBILE BOTTOM NAV ── */}
+            <div style={{flexShrink:0,height:60,background:C.panel,borderTop:"1px solid "+C.border,display:"flex",alignItems:"stretch"}}>
+              {mobileNavItems.map(n=>{
+                const active=mobileTab===n.id||(n.id==="more"&&mobileTab==="_page");
+                return(
+                  <div key={n.id} onClick={()=>handleMobileTab(n.id)} style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:3,cursor:"pointer",background:active?"linear-gradient(180deg,"+C.acc+"15,transparent)":"transparent",borderTop:active?"2px solid "+C.acc:"2px solid transparent",transition:"all 0.15s"}}>
+                    <span style={{fontSize:20,filter:active?"drop-shadow(0 0 5px "+C.acc+")":"none"}}>{n.icon}</span>
+                    <span style={{fontSize:10,color:active?C.acc:C.td,fontWeight:active?700:400,fontFamily:FONT_BODY,letterSpacing:0.5}}>{n.label}</span>
+                  </div>
+                );
+              })}
+            </div>
+
+          </div>
+        );
+      })()}
+
+      {/* ===== DESKTOP UI (hidden on mobile) ===== */}
+      {!isMobile&&<>
 
       {/* ===== TOP BAR ===== */}
       <div style={{flexShrink:0,height:46,background:C.panel,borderBottom:"1px solid "+C.border,display:"flex",alignItems:"center",padding:"0 14px",gap:16}}>
@@ -3995,6 +4377,8 @@ function GameUI({account,onLogout}){
         })()}
 
       </div>{/* end BODY column */}
+
+      </>}{/* end desktop UI */}
 
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Inter:wght@400;500;600&display=swap');

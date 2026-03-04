@@ -556,7 +556,7 @@ const ITEMS={
 // ===================== SKILLS =====================
 const SKILLS=[
   // ── Kelp Cultivation: kelp → soft_coral → sea_mushrooms → tide_sap → kelp_spores → void_kelp ──
-  {id:"kelp_farming",name:"Kelp Cultivation",icon:"🌿",color:"#00c285",cat:"gather",acts:[
+  {id:"kelp_farming",name:"Cultivation",icon:"🌿",color:"#00c285",cat:"gather",acts:[
     {id:"kf1",name:"Reef Kelp Bed",      lv:1, xp:10, t:3, out:[{id:"kelp",q:1}]},
     {id:"kf2",name:"Coral Fronds",       lv:5, xp:22, t:4, out:[{id:"soft_coral",q:1}]},
     {id:"kf3",name:"Mushroom Patch",     lv:15,xp:48, t:5, out:[{id:"sea_mushrooms",q:1}]},
@@ -565,7 +565,7 @@ const SKILLS=[
     {id:"kf6",name:"Void Kelp Abyss",    lv:75,xp:280,t:7, out:[{id:"void_kelp",q:1}]}]},
 
   // ── Deep Mining: trench_stone → shell_fragments → salt_crystals → thermal_ore → magma_shard → obsidian_ore ──
-  {id:"deep_mining",name:"Deep Mining",icon:"⛏️",color:"#7b61ff",cat:"gather",acts:[
+  {id:"deep_mining",name:"Deep Sea Mining",icon:"⛏️",color:"#7b61ff",cat:"gather",acts:[
     {id:"dm1",name:"Reef Sandstone",     lv:1, xp:10, t:3, out:[{id:"trench_stone",q:1}]},
     {id:"dm2",name:"Shell Bed",          lv:5, xp:22, t:4, out:[{id:"shell_fragments",q:1}]},
     {id:"dm3",name:"Salt Crystal Vein",  lv:15,xp:48, t:5, out:[{id:"salt_crystals",q:1}]},
@@ -574,7 +574,7 @@ const SKILLS=[
     {id:"dm6",name:"Obsidian Depths",    lv:75,xp:280,t:7, out:[{id:"obsidian_ore",q:1}]}]},
 
   // ── Bioluminescent Fishing: glowfish → phosphor_scales → deepsea_roe → ocean_fiber → void_fin → alien_bio_tissue ──
-  {id:"bioluminescent_fishing",name:"Bioluminescent Fishing",icon:"🎣",color:"#00d4ff",cat:"gather",acts:[
+  {id:"bioluminescent_fishing",name:"Abyss Fishing",icon:"🎣",color:"#00d4ff",cat:"gather",acts:[
     {id:"bf1",name:"Reef Pool Fishing",  lv:1, xp:10, t:3, out:[{id:"glowfish",q:1}]},
     {id:"bf2",name:"Scale Harvest",      lv:5, xp:22, t:4, out:[{id:"phosphor_scales",q:1}]},
     {id:"bf3",name:"Roe Collection",     lv:15,xp:48, t:5, out:[{id:"deepsea_roe",q:1}]},

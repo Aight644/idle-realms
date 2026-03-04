@@ -2240,12 +2240,12 @@ function GameUI({account,onLogout}){
         <div style={{flex:1,display:"flex",flexDirection:"column",overflow:"hidden"}}>
           {/* Action progress bar */}
           {curAct&&(()=>{const sk=SKILLS.find(s=>s.id===curAct.sk);const act=sk?sk.acts.find(a=>a.id===curAct.act):null;return(
-            <div style={{flexShrink:0,padding:"8px 16px",background:C.panel,borderBottom:"1px solid "+C.border}}>
-              <div style={{display:"flex",justifyContent:"space-between",fontSize:10,color:C.ts,marginBottom:4,fontFamily:FONT_BODY}}>
+            <div style={{flexShrink:0,padding:"10px 20px",background:C.panel,borderBottom:"1px solid "+C.border}}>
+              <div style={{display:"flex",justifyContent:"space-between",fontSize:13,color:C.ts,marginBottom:6,fontFamily:FONT_BODY}}>
                 <span>{sk?sk.icon:""} {sk?sk.name:""} — {act?act.name:""}</span>
                 <span onClick={()=>{setCurAct(null);setActProg(0)}} style={{color:C.bad,cursor:"pointer",fontWeight:700,letterSpacing:1}}>■ STOP</span>
               </div>
-              <div style={{height:6,borderRadius:3,background:C.bg,overflow:"hidden"}}><div style={{width:actProg*100+"%",height:"100%",borderRadius:3,background:"linear-gradient(90deg,"+C.acc+","+C.ok+")",transition:"width 0.1s linear",boxShadow:GLOW_STYLE}}/></div>
+              <div style={{height:7,borderRadius:4,background:C.bg,overflow:"hidden"}}><div style={{width:actProg*100+"%",height:"100%",borderRadius:4,background:"linear-gradient(90deg,"+C.acc+","+C.ok+")",transition:"width 0.1s linear",boxShadow:GLOW_STYLE}}/></div>
             </div>
           );})()}
           {/* Combat bar */}
@@ -2257,19 +2257,19 @@ function GameUI({account,onLogout}){
             const mobColor=isBoss2?C.gold:isBoss?C.bad:isElite?C.purp:C.ts;
             const label=isBoss2?"⚜️ TITAN BOSS":isBoss?"👑 BOSS":isElite?"💠 ELITE":"";
             return(
-            <div style={{flexShrink:0,padding:"8px 16px",background:C.panel,borderBottom:"1px solid "+(isBoss2?C.gold:isBoss?C.bad:isElite?C.purp:C.border),boxShadow:isBoss2?"0 0 12px "+C.gold+"40":isBoss?"0 0 8px "+C.bad+"30":"none"}}>
-              <div style={{display:"flex",justifyContent:"space-between",fontSize:10,color:C.ts,marginBottom:4,fontFamily:FONT_BODY,alignItems:"center"}}>
-                <span style={{display:"flex",alignItems:"center",gap:6}}>
-                  <span style={{fontSize:18}}>{mob.i||"👾"}</span>
-                  <span style={{color:mobColor,fontWeight:700}}>{mob.n}</span>
-                  {label&&<span style={{fontSize:8,padding:"1px 6px",borderRadius:6,background:mobColor+"25",border:"1px solid "+mobColor+"60",color:mobColor,fontWeight:700,letterSpacing:1}}>{label}</span>}
-                  <span style={{fontSize:9,color:C.td}}>— Kill #{cbt.kills+1}</span>
+            <div style={{flexShrink:0,padding:"10px 20px",background:C.panel,borderBottom:"2px solid "+(isBoss2?C.gold:isBoss?C.bad:isElite?C.purp:C.border),boxShadow:isBoss2?"0 0 12px "+C.gold+"40":isBoss?"0 0 8px "+C.bad+"30":"none"}}>
+              <div style={{display:"flex",justifyContent:"space-between",fontSize:13,color:C.ts,marginBottom:6,fontFamily:FONT_BODY,alignItems:"center"}}>
+                <span style={{display:"flex",alignItems:"center",gap:8}}>
+                  <span style={{fontSize:24}}>{mob.i||"👾"}</span>
+                  <span style={{color:mobColor,fontWeight:700,fontSize:15}}>{mob.n}</span>
+                  {label&&<span style={{fontSize:10,padding:"2px 8px",borderRadius:6,background:mobColor+"25",border:"1px solid "+mobColor+"60",color:mobColor,fontWeight:700,letterSpacing:1}}>{label}</span>}
+                  <span style={{fontSize:12,color:C.td}}>— Kill #{cbt.kills+1}</span>
                 </span>
-                <span onClick={stopZone} style={{color:C.bad,cursor:"pointer",fontWeight:700,letterSpacing:1,fontSize:10}}>◄ RETREAT</span>
+                <span onClick={stopZone} style={{color:C.bad,cursor:"pointer",fontWeight:700,letterSpacing:1,fontSize:12}}>◄ RETREAT</span>
               </div>
-              <div style={{display:"flex",gap:8}}>
-                <div style={{flex:1}}><div style={{fontSize:9,color:C.td,marginBottom:2,fontFamily:FONT_BODY}}>You: {cbt.php}/{cbt.mxhp}</div><div style={{height:5,borderRadius:3,background:C.bg,overflow:"hidden"}}><div style={{width:(cbt.php/cbt.mxhp)*100+"%",height:"100%",background:C.ok,borderRadius:3,transition:"width 0.2s",boxShadow:GLOW_OK}}/></div></div>
-                <div style={{flex:1}}><div style={{fontSize:9,color:C.td,marginBottom:2,fontFamily:FONT_BODY}}>{mob.n}: {Math.max(0,cbt.mhp)}/{mob.hp}</div><div style={{height:5,borderRadius:3,background:C.bg,overflow:"hidden"}}><div style={{width:Math.max(0,(cbt.mhp/mob.hp)*100)+"%",height:"100%",background:isBoss2?C.gold:isBoss?C.bad:isElite?C.purp:C.warn,borderRadius:3,transition:"width 0.2s",boxShadow:isBoss2?"0 0 6px "+C.gold:isBoss?GLOW_BAD:"none"}}/></div></div>
+              <div style={{display:"flex",gap:12}}>
+                <div style={{flex:1}}><div style={{fontSize:11,color:C.td,marginBottom:3,fontFamily:FONT_BODY}}>You: {cbt.php}/{cbt.mxhp}</div><div style={{height:7,borderRadius:4,background:C.bg,overflow:"hidden"}}><div style={{width:(cbt.php/cbt.mxhp)*100+"%",height:"100%",background:C.ok,borderRadius:4,transition:"width 0.2s",boxShadow:GLOW_OK}}/></div></div>
+                <div style={{flex:1}}><div style={{fontSize:11,color:C.td,marginBottom:3,fontFamily:FONT_BODY}}>{mob.n}: {Math.max(0,cbt.mhp)}/{mob.hp}</div><div style={{height:7,borderRadius:4,background:C.bg,overflow:"hidden"}}><div style={{width:Math.max(0,(cbt.mhp/mob.hp)*100)+"%",height:"100%",background:isBoss2?C.gold:isBoss?C.bad:isElite?C.purp:C.warn,borderRadius:4,transition:"width 0.2s",boxShadow:isBoss2?"0 0 6px "+C.gold:isBoss?GLOW_BAD:"none"}}/></div></div>
               </div>
             </div>
             );

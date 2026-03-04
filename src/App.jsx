@@ -25,7 +25,16 @@ const GLOW_STYLE = "0 0 8px #00d4ff55, 0 0 20px #00d4ff22";
 const GLOW_OK = "0 0 8px #00ffb355";
 const GLOW_BAD = "0 0 8px #ff006e55";
 
-function xpFor(lv){return Math.floor(50*Math.pow(1.1,lv-1))}
+const MAX_SKILL_LV = 120;
+// XP needed to advance from level lv → lv+1
+// Early levels are fast, late levels (80-120) are a real grind
+function xpFor(lv){
+  if(lv<1)return 50;
+  if(lv>=MAX_SKILL_LV)return Infinity; // capped
+  if(lv<=50) return Math.floor(50*Math.pow(1.12,lv-1));
+  if(lv<=80) return Math.floor(50*Math.pow(1.12,49)*Math.pow(1.18,lv-50));
+  return Math.floor(50*Math.pow(1.12,49)*Math.pow(1.18,30)*Math.pow(1.25,lv-80));
+}
 function fmt(n){if(n>=1e9)return(n/1e9).toFixed(1)+"B";if(n>=1e6)return(n/1e6).toFixed(1)+"M";if(n>=1e3)return(n/1e3).toFixed(1)+"K";return String(Math.floor(n))}
 
 // ===================== RESEARCH TREE =====================
@@ -352,11 +361,13 @@ const PRESTIGE_UPGRADES = [
 // ===================== RANDOM DISCOVERIES =====================
 const DISCOVERIES = [
   { id:"ancient_wreck",   name:"Ancient Submarine Wreck",  icon:"🚢", rarity:0.04,
-    desc:"You found an ancient submarine! Salvaging yields rare materials.",
-    rewards:[{type:"item",id:"drone_processor",q:2},{type:"item",id:"reinforced_alloy",q:5},{type:"xp",mult:3}] },
+    desc:"You found an ancient submarine! Salvaging yields rare materials and ancient blueprints.",
+    rewards:[{type:"item",id:"drone_processor",q:2},{type:"item",id:"reinforced_alloy",q:5},{type:"xp",mult:3},
+             {type:"blueprint",pool:["bp_void_kelp","bp_leviathan_scale","bp_deep_scan","bp_supply_mastery"]}] },
   { id:"lost_facility",   name:"Lost Research Facility",   icon:"🏚️", rarity:0.03,
-    desc:"A hidden research lab! You recover valuable data and components.",
-    rewards:[{type:"item",id:"abyss_crystal",q:2},{type:"item",id:"pressure_reactor",q:1},{type:"rp",amt:50}] },
+    desc:"A hidden research lab! You recover valuable data, components, and research blueprints.",
+    rewards:[{type:"item",id:"abyss_crystal",q:2},{type:"item",id:"pressure_reactor",q:1},{type:"rp",amt:50},
+             {type:"blueprint",pool:["bp_void_crystal","bp_ancient_brew","bp_atlas_complete"]}] },
   { id:"hidden_trench",   name:"Hidden Trench Cave",        icon:"🕳️", rarity:0.05,
     desc:"A concealed trench filled with rare minerals!",
     rewards:[{type:"item",id:"thermal_ore",q:8},{type:"item",id:"trench_stone",q:10},{type:"xp",mult:2}] },
@@ -364,15 +375,95 @@ const DISCOVERIES = [
     desc:"A rare bioluminescent bloom! Harvesting yields bonus materials.",
     rewards:[{type:"item",id:"soft_coral",q:12},{type:"item",id:"luminescent_gel",q:3},{type:"xp",mult:2}] },
   { id:"signal_beacon",   name:"Deep Signal Beacon",        icon:"📡", rarity:0.02,
-    desc:"An alien signal beacon — analyzing it grants rare knowledge.",
-    rewards:[{type:"rp",amt:120},{type:"item",id:"artifact_scanner",q:1},{type:"xp",mult:4}] },
+    desc:"An alien signal beacon — analyzing it grants rare knowledge and legendary blueprints.",
+    rewards:[{type:"rp",amt:120},{type:"item",id:"artifact_scanner",q:1},{type:"xp",mult:4},
+             {type:"blueprint",pool:["bp_thermal_forge","bp_void_reactor"]}] },
   { id:"crystal_vein",    name:"Crystal Vein Exposed",      icon:"💎", rarity:0.035,
-    desc:"A massive abyss crystal vein is exposed! Collect quickly.",
-    rewards:[{type:"item",id:"abyss_crystal",q:4},{type:"item",id:"salt_crystals",q:6}] },
+    desc:"A massive abyss crystal vein is exposed! Also contains ancient construction schematics.",
+    rewards:[{type:"item",id:"abyss_crystal",q:4},{type:"item",id:"salt_crystals",q:6},
+             {type:"blueprint",pool:["bp_ancient_armor"]}] },
   { id:"thermal_pocket",  name:"Thermal Vent Pocket",       icon:"🔥", rarity:0.045,
     desc:"A superheated pocket bursts open, revealing thermal ore.",
     rewards:[{type:"item",id:"thermal_ore",q:6},{type:"item",id:"enzyme_compound",q:2},{type:"xp",mult:2}] },
 ];
+
+// ===================== BLUEPRINTS =====================
+// Hidden skill actions unlocked via discoveries or rare item use.
+// Each blueprint adds an extra act to an existing skill once unlocked.
+const BLUEPRINTS = [
+  {
+    id:"bp_void_kelp", skillId:"kelp_farming", icon:"🌀", rarity:"rare",
+    name:"Void Kelp Cultivation",
+    desc:"Ancient technique for cultivating void-infused kelp. Massive yield.",
+    act:{id:"kf5",name:"Void Kelp Grove",lv:80,xp:300,t:8,out:[{id:"kelp",q:12},{id:"void_essence",q:1}]},
+    source:"Ancient Submarine Wreck",
+  },
+  {
+    id:"bp_leviathan_scale", skillId:"coral_harvesting", icon:"🐉", rarity:"rare",
+    name:"Leviathan Scale Harvest",
+    desc:"Carefully extract scales from leviathan remains — potent crafting material.",
+    act:{id:"ch5",name:"Leviathan Scale Harvest",lv:90,xp:350,t:10,inp:[{id:"leviathan_bone",q:1}],out:[{id:"reinforced_alloy",q:5},{id:"alien_bio_tissue",q:1}]},
+    source:"Ancient Submarine Wreck",
+  },
+  {
+    id:"bp_void_crystal", skillId:"crystal_diving", icon:"💎", rarity:"epic",
+    name:"Void Crystal Resonance",
+    desc:"Resonate with void crystals to yield pure essence.",
+    act:{id:"cd5",name:"Void Crystal Resonance",lv:95,xp:400,t:12,inp:[{id:"abyss_crystal",q:3}],out:[{id:"void_essence",q:2},{id:"abyss_crystal",q:5}]},
+    source:"Lost Research Facility",
+  },
+  {
+    id:"bp_ancient_brew", skillId:"bio_synthesis", icon:"🧬", rarity:"epic",
+    name:"Ancient Healing Formula",
+    desc:"A powerful healing formula recovered from a lost research facility.",
+    act:{id:"bs5",name:"Ancient Healing Formula",lv:70,xp:250,t:10,inp:[{id:"alien_bio_tissue",q:1},{id:"void_pearl",q:1}],out:[{id:"pressure_tonic",q:3},{id:"bio_stim",q:2}]},
+    source:"Lost Research Facility",
+  },
+  {
+    id:"bp_thermal_forge", skillId:"relic_forging", icon:"🌋", rarity:"legendary",
+    name:"Thermal Core Mastery",
+    desc:"Master thermal core forging — double output from thermal processes.",
+    act:{id:"rf9",name:"Thermal Core Mastery",lv:85,xp:450,t:14,inp:[{id:"thermal_ore",q:20},{id:"void_essence",q:1}],out:[{id:"thermal_core",q:3}]},
+    source:"Deep Signal Beacon",
+  },
+  {
+    id:"bp_void_reactor", skillId:"energy_systems", icon:"⚡", rarity:"legendary",
+    name:"Void Reactor Blueprint",
+    desc:"Harness void energy to produce massive amounts of pressure reactors.",
+    act:{id:"es5",name:"Void Reactor Synthesis",lv:100,xp:500,t:16,inp:[{id:"void_essence",q:2},{id:"thermal_core",q:1},{id:"abyss_crystal",q:5}],out:[{id:"pressure_reactor",q:5},{id:"drone_processor",q:3}]},
+    source:"Deep Signal Beacon",
+  },
+  {
+    id:"bp_ancient_armor", skillId:"relic_forging", icon:"👑", rarity:"legendary",
+    name:"Ancient Emperor Armor",
+    desc:"Blueprints for the ancient emperor's armor — the pinnacle of defense.",
+    act:{id:"rf10",name:"Emperor Armor",lv:110,xp:600,t:18,inp:[{id:"ancient_processor",q:3},{id:"void_essence",q:3},{id:"leviathan_bone",q:8},{id:"alien_bio_tissue",q:4}],out:[{id:"leviathan_armor",q:1},{id:"ancient_helm",q:1}]},
+    source:"Crystal Vein Exposed",
+  },
+  {
+    id:"bp_deep_scan", skillId:"scanning", icon:"📡", rarity:"rare",
+    name:"Deep Void Scanner",
+    desc:"Scan deep void pockets for rare essence deposits.",
+    act:{id:"sc5",name:"Void Pocket Scan",lv:75,xp:300,t:12,inp:[{id:"resonance_crystal",q:3},{id:"void_pearl",q:1}],out:[{id:"void_essence",q:1},{id:"ancient_data_chip",q:1}],util:{type:"rare",val:0.15},desc:"Scan void pockets. +15% rare drops."},
+    source:"Ancient Submarine Wreck",
+  },
+  {
+    id:"bp_supply_mastery", skillId:"logistics", icon:"📦", rarity:"rare",
+    name:"Void Supply Network",
+    desc:"Build a void-powered supply network — extreme logistics efficiency.",
+    act:{id:"lg5",name:"Void Supply Network",lv:80,xp:350,t:14,inp:[{id:"void_essence",q:1},{id:"ancient_data_chip",q:2}],out:[{id:"supply_crate",q:8}],util:{type:"gold",val:500},desc:"Void supply network. +500 credits per run."},
+    source:"Ancient Submarine Wreck",
+  },
+  {
+    id:"bp_atlas_complete", skillId:"ocean_cartography", icon:"🗺️", rarity:"epic",
+    name:"Void Realm Atlas",
+    desc:"Chart the void realms beyond the known ocean — yields impossible resources.",
+    act:{id:"oc5",name:"Void Realm Atlas",lv:100,xp:500,t:18,inp:[{id:"void_map",q:3},{id:"void_essence",q:2}],out:[{id:"void_map",q:5},{id:"ancient_relic",q:2}],util:{type:"yield",val:0.40},desc:"Void realm atlas. +40% all yields permanently."},
+    source:"Lost Research Facility",
+  },
+];
+
+const BP_RARITY_COLOR = {rare:"#00d4ff", epic:"#c084fc", legendary:"#ffd60a"};
 
 // ===================== MARKETPLACE =====================
 // Uses Firebase shared storage — orders visible to all players
@@ -458,6 +549,31 @@ const ITEMS={
   bioluminescent_drink:{n:"Bioluminescent Brew",i:"🫧",s:1,drink:1},
   deep_extract:{n:"Deep Extract",i:"🧬",s:1,drink:1},
   void_elixir:{n:"Void Elixir",i:"🌌",s:1,drink:1},
+  // ── Rare materials ──
+  leviathan_bone:{n:"Leviathan Bone",i:"🦴",s:1,rare:1},
+  ancient_relic:{n:"Ancient Relic Fragment",i:"🗿",s:1,rare:1},
+  void_pearl:{n:"Void Pearl",i:"🔵",s:1,rare:1},
+  alien_bio_tissue:{n:"Alien Bio Tissue",i:"🧫",s:1,rare:1},
+  thermal_core:{n:"Thermal Core",i:"🌋",s:1,rare:1},
+  black_coral:{n:"Black Coral",i:"🖤",s:1,rare:1},
+  ancient_processor:{n:"Ancient Processor",i:"🔲",s:1,rare:1},
+  void_essence:{n:"Void Essence",i:"🌀",s:1,rare:1},
+  // ── Utility crafted items ──
+  nav_beacon:{n:"Navigation Beacon",i:"📍",s:1},
+  scan_report:{n:"Scan Report",i:"📋",s:1},
+  relic_shard:{n:"Relic Shard",i:"🧩",s:1},
+  ocean_chart:{n:"Ocean Chart",i:"🗺️",s:1},
+  supply_crate:{n:"Supply Crate",i:"📦",s:1,food:1,heal:150},
+  resonance_crystal:{n:"Resonance Crystal",i:"🔮",s:1},
+  ancient_data_chip:{n:"Ancient Data Chip",i:"💾",s:1},
+  void_map:{n:"Void Map",i:"🌌",s:1},
+  // ── Endgame equipment ──
+  leviathan_spear:{n:"Leviathan Spear",i:"🔱",eq:"weapon",st:{atk:42,rng:12,mag:10}},
+  leviathan_armor:{n:"Leviathan Armor",i:"🟠",eq:"body",st:{def:45,hp:100}},
+  ancient_helm:{n:"Ancient Helm",i:"👑",eq:"head",st:{def:22,hp:40,mag:6}},
+  void_gauntlets:{n:"Void Gauntlets",i:"🖐️",eq:"hands",st:{atk:12,def:8}},
+  leviathan_ring:{n:"Leviathan Ring",i:"🔘",eq:"ring",st:{atk:10,mag:10,hp:20}},
+  void_amulet:{n:"Void Amulet",i:"🌑",eq:"neck",st:{def:12,hp:25,mag:12}},
 };
 
 // ===================== SKILLS =====================
@@ -550,6 +666,42 @@ const SKILLS=[
     {id:"es2",name:"Pressure Conduit",lv:20,xp:55,t:6,inp:[{id:"pressure_glass",q:2},{id:"reinforced_alloy",q:3}],out:[{id:"pressure_reactor",q:1},{id:"drone_processor",q:1}]},
     {id:"es3",name:"Kelp Broth Premium",lv:15,xp:42,t:5,inp:[{id:"kelp",q:6},{id:"enzyme_compound",q:2}],out:[{id:"kelp_broth",q:2}]},
     {id:"es4",name:"Pressure Tonic Mk2",lv:40,xp:95,t:7,inp:[{id:"abyss_crystal",q:1},{id:"enzyme_compound",q:3},{id:"luminescent_gel",q:2}],out:[{id:"pressure_tonic",q:2}]}]},
+  // ── Utility Skills ──
+  {id:"navigation",name:"Navigation",icon:"🧭",color:"#38bdf8",cat:"utility",acts:[
+    {id:"nv1",name:"Chart Reef Currents",lv:1,xp:20,t:6,out:[{id:"nav_beacon",q:1}],util:{type:"speed",val:0.05},desc:"Map reef currents. +5% gather speed this session."},
+    {id:"nv2",name:"Map Twilight Lanes",lv:15,xp:50,t:8,inp:[{id:"nav_beacon",q:1}],out:[{id:"ocean_chart",q:1}],util:{type:"speed",val:0.10},desc:"Chart twilight lanes. +10% gather speed."},
+    {id:"nv3",name:"Deep Trench Routes",lv:35,xp:100,t:10,inp:[{id:"ocean_chart",q:1}],out:[{id:"void_map",q:1}],util:{type:"speed",val:0.15},desc:"Map deep trench routes. +15% gather speed."},
+    {id:"nv4",name:"Void Cartography",lv:60,xp:200,t:12,inp:[{id:"void_map",q:1},{id:"abyss_crystal",q:2}],out:[{id:"void_map",q:2}],util:{type:"speed",val:0.20},desc:"Chart void passages. +20% gather speed permanently."}]},
+  {id:"scanning",name:"Scanning",icon:"📡",color:"#22d3ee",cat:"utility",acts:[
+    {id:"sc1",name:"Bio Scan",lv:1,xp:20,t:5,out:[{id:"scan_report",q:1}],util:{type:"rare",val:0.03},desc:"Scan for lifeforms. +3% discovery chance."},
+    {id:"sc2",name:"Deep Resonance Scan",lv:20,xp:55,t:7,inp:[{id:"scan_report",q:1}],out:[{id:"resonance_crystal",q:1}],util:{type:"rare",val:0.05},desc:"Detect rare nodes. +5% rare drop chance."},
+    {id:"sc3",name:"Void Signal Trace",lv:40,xp:110,t:9,inp:[{id:"resonance_crystal",q:1},{id:"drone_processor",q:1}],out:[{id:"resonance_crystal",q:2}],util:{type:"rare",val:0.08},desc:"Trace void signals. +8% rare drops."},
+    {id:"sc4",name:"Ancient Frequency Lock",lv:65,xp:220,t:12,inp:[{id:"resonance_crystal",q:2},{id:"ancient_processor",q:1}],out:[{id:"ancient_data_chip",q:1}],util:{type:"rare",val:0.12},desc:"Lock ancient frequencies. +12% rare drops."}]},
+  {id:"archaeology",name:"Archaeology",icon:"🏺",color:"#fb923c",cat:"utility",acts:[
+    {id:"ac1",name:"Surface Excavation",lv:1,xp:25,t:6,out:[{id:"relic_shard",q:1}],util:{type:"rp",val:5},desc:"Excavate reef surface. Gain RP and relics."},
+    {id:"ac2",name:"Ancient Wreck Dive",lv:20,xp:65,t:8,inp:[{id:"relic_shard",q:2}],out:[{id:"ancient_relic",q:1}],util:{type:"rp",val:15},desc:"Dive ancient wrecks. Recover artifact fragments."},
+    {id:"ac3",name:"Relic Reconstruction",lv:40,xp:130,t:10,inp:[{id:"ancient_relic",q:2},{id:"abyss_crystal",q:1}],out:[{id:"ancient_processor",q:1}],util:{type:"rp",val:30},desc:"Reconstruct ancient tech. +30 RP per action."},
+    {id:"ac4",name:"Ancient Core Extraction",lv:70,xp:260,t:14,inp:[{id:"ancient_processor",q:1},{id:"thermal_core",q:1}],out:[{id:"ancient_data_chip",q:2}],util:{type:"rp",val:80},desc:"Extract ancient cores. Massive RP gain."}]},
+  {id:"ocean_cartography",name:"Ocean Cartography",icon:"🗺️",color:"#a78bfa",cat:"utility",acts:[
+    {id:"oc1",name:"Reef Survey",lv:1,xp:22,t:5,out:[{id:"ocean_chart",q:1}],util:{type:"yield",val:0.05},desc:"Survey reef zones. +5% resource yield."},
+    {id:"oc2",name:"Abyss Mapping",lv:25,xp:65,t:8,inp:[{id:"ocean_chart",q:1}],out:[{id:"ocean_chart",q:2}],util:{type:"yield",val:0.10},desc:"Map abyssal regions. +10% resource yield."},
+    {id:"oc3",name:"Void Region Chart",lv:50,xp:130,t:11,inp:[{id:"ocean_chart",q:2},{id:"void_pearl",q:1}],out:[{id:"void_map",q:1}],util:{type:"yield",val:0.15},desc:"Chart void regions. +15% resource yield."},
+    {id:"oc4",name:"Complete Ocean Atlas",lv:80,xp:280,t:15,inp:[{id:"void_map",q:2},{id:"ancient_relic",q:1}],out:[{id:"void_map",q:3}],util:{type:"yield",val:0.25},desc:"Complete the ocean atlas. +25% all yield."}]},
+  {id:"logistics",name:"Logistics",icon:"📦",color:"#34d399",cat:"utility",acts:[
+    {id:"lg1",name:"Supply Cache",lv:1,xp:18,t:4,inp:[{id:"kelp",q:5},{id:"sea_mushrooms",q:3}],out:[{id:"supply_crate",q:1}],util:{type:"gold",val:10},desc:"Pack supply cache. Creates healing crates."},
+    {id:"lg2",name:"Trade Bundle",lv:15,xp:45,t:6,inp:[{id:"soft_coral",q:8},{id:"shell_fragments",q:8}],out:[{id:"supply_crate",q:2}],util:{type:"gold",val:25},desc:"Bundle for trade. +25 bonus credits."},
+    {id:"lg3",name:"Efficiency Protocol",lv:35,xp:90,t:8,inp:[{id:"drone_processor",q:1},{id:"supply_crate",q:1}],out:[{id:"supply_crate",q:3}],util:{type:"gold",val:50},desc:"Optimize logistics. +50 bonus credits per action."},
+    {id:"lg4",name:"Deep Supply Network",lv:60,xp:180,t:12,inp:[{id:"ancient_data_chip",q:1},{id:"supply_crate",q:2}],out:[{id:"supply_crate",q:5}],util:{type:"gold",val:120},desc:"Build deep supply network. Major credit bonus."}]},
+  // ── Endgame / Rare Crafting ──
+  {id:"relic_forging",name:"Relic Forging",icon:"⚗️",color:"#e11d48",cat:"prod",acts:[
+    {id:"rf1",name:"Void Pearl Extract",lv:30,xp:80,t:8,inp:[{id:"abyss_crystal",q:3},{id:"luminescent_gel",q:4}],out:[{id:"void_pearl",q:1}]},
+    {id:"rf2",name:"Black Coral Harvest",lv:45,xp:120,t:9,inp:[{id:"soft_coral",q:20},{id:"thermal_ore",q:5}],out:[{id:"black_coral",q:1}]},
+    {id:"rf3",name:"Thermal Core Forge",lv:55,xp:160,t:10,inp:[{id:"thermal_ore",q:15},{id:"pressure_glass",q:5},{id:"abyss_crystal",q:2}],out:[{id:"thermal_core",q:1}]},
+    {id:"rf4",name:"Alien Tissue Culture",lv:65,xp:200,t:12,inp:[{id:"enzyme_compound",q:8},{id:"luminescent_gel",q:6},{id:"void_pearl",q:1}],out:[{id:"alien_bio_tissue",q:1}]},
+    {id:"rf5",name:"Leviathan Spear",lv:70,xp:280,t:14,inp:[{id:"leviathan_bone",q:3},{id:"thermal_core",q:2},{id:"ancient_processor",q:1}],out:[{id:"leviathan_spear",q:1}]},
+    {id:"rf6",name:"Leviathan Armor",lv:75,xp:300,t:15,inp:[{id:"leviathan_bone",q:5},{id:"alien_bio_tissue",q:2},{id:"black_coral",q:3}],out:[{id:"leviathan_armor",q:1}]},
+    {id:"rf7",name:"Ancient Helm",lv:60,xp:220,t:12,inp:[{id:"ancient_relic",q:3},{id:"void_pearl",q:2},{id:"reinforced_alloy",q:10}],out:[{id:"ancient_helm",q:1}]},
+    {id:"rf8",name:"Void Amulet",lv:50,xp:180,t:11,inp:[{id:"void_pearl",q:2},{id:"abyss_crystal",q:4},{id:"black_coral",q:2}],out:[{id:"void_amulet",q:1}]}]},
 ];
 
 // ===================== COMBAT SKILLS =====================
@@ -684,6 +836,8 @@ function GameUI({account,onLogout}){
   // Discoveries
   const[activeDiscovery,setActiveDiscovery]=useState(null); // {disc, rewards collected}
   const[discoveryLog,setDiscoveryLog]=useState([]);
+  // Blueprints — set of unlocked blueprint IDs
+  const[blueprints,setBlueprints]=useState([]);
   // Marketplace
   const[marketOrders,setMarketOrders]=useState([]); // loaded from Firebase shared
   const[myListings,setMyListings]=useState([]); // player's own listings
@@ -707,7 +861,13 @@ function GameUI({account,onLogout}){
   const invRef=useRef(inv);
   invRef.current=inv;
 
-  const sl=useCallback((sid)=>{const xp=skills[sid]||0;let lv=1,tot=0;while(tot+xpFor(lv)<=xp){tot+=xpFor(lv);lv++}return{lv,xp:xp-tot,need:xpFor(lv)}},[skills]);
+  const sl=useCallback((sid)=>{
+    const xp=skills[sid]||0;
+    let lv=1,tot=0;
+    while(lv<MAX_SKILL_LV&&tot+xpFor(lv)<=xp){tot+=xpFor(lv);lv++}
+    const mastered=lv>=MAX_SKILL_LV;
+    return{lv,xp:mastered?0:xp-tot,need:mastered?0:xpFor(lv),mastered};
+  },[skills]);
   const combatLv=useMemo(()=>CSUBS.reduce((s,c)=>s+sl(c.id).lv,0),[sl]);
 
   // Aggregate research bonuses
@@ -718,8 +878,14 @@ function GameUI({account,onLogout}){
     STRUCTURES.forEach(st=>{const lv=structures[st.id]||0;if(lv>0){if(st.bonus)Object.entries(st.bonus).forEach(([k,v])=>{b[k]=(b[k]||0)+v*lv});if(st.bonusExtra)Object.entries(st.bonusExtra).forEach(([k,v])=>{b[k]=(b[k]||0)+v*lv})}});
     // Prestige upgrades (permanent, survive resets)
     PRESTIGE_UPGRADES.forEach(pu=>{const lv=prestigeUpgrades[pu.id]||0;if(lv>0){const eff=pu.effect(lv);Object.entries(eff).forEach(([k,v])=>{b[k]=(b[k]||0)+v})}});
+    // Utility skill passive bonuses (scale with skill level)
+    const utilMap={navigation:"gather_speed",scanning:"rare_chance",ocean_cartography:"gather_yield"};
+    Object.entries(utilMap).forEach(([sid,bk])=>{
+      const lv=Math.floor(((skills[sid]||0)/100));// level from raw xp via sl() would cause circular dep, use raw estimate
+      if(lv>0)b[bk]=(b[bk]||0)+lv*0.02;
+    });
     return b;
-  },[researched,structures,prestigeUpgrades]);
+  },[researched,structures,prestigeUpgrades,skills]);
 
   const maxEnergy=useMemo(()=>100+(bonuses.max_energy||0),[bonuses]);
 
@@ -842,6 +1008,12 @@ function GameUI({account,onLogout}){
           if(sk.cat==="gather")setLifeStats(p=>({...p,totalGathered:(p.totalGathered||0)+qty,[i.id]:(p[i.id]||0)+qty}));
         });
         if(sk.cat==="prod")setLifeStats(p=>({...p,crafts:(p.crafts||0)+1}));
+        // Utility skill bonus effects
+        if(sk.cat==="utility"&&act.util){
+          const u=act.util;
+          if(u.type==="gold")setGold(g=>g+u.val);
+          if(u.type==="rp")setResearchPts(p=>p+u.val);
+        }
         // Random discovery chance (gather only, ~8% base + rare_chance bonus)
         if(sk.cat==="gather"&&!activeDiscovery){
           const baseChance=0.08+(bonuses.rare_chance||0)*0.5;
@@ -883,20 +1055,39 @@ function GameUI({account,onLogout}){
           setGold(g=>g+goldGain);setResearchPts(p=>p+Math.floor(mob.xp/20));
           // Track lifetime stats
           setLifeStats(p=>({...p,kills:(p.kills||0)+1,totalGold:(p.totalGold||0)+goldGain}));
-          // Boss drops
+          // Zone index for rare drop scaling
+          const zIdx=ZONES.findIndex(z=>z.id===zoneId);
           const nb=(nk%10===9)&&zone.boss;
           let logMsg="⚔️ Neutralized "+mob.n+"! +"+mob.xp+"xp +"+goldGain+"cr";
+          // Regular mob rare drops (deep zones only)
+          if(zIdx>=3){
+            const rareBase=0.04*(zIdx-2)+(bonuses.rare_chance||0);
+            const mobRares=[
+              {id:"leviathan_bone",ch:rareBase*0.3,z:5},
+              {id:"void_pearl",ch:rareBase*0.25,z:4},
+              {id:"black_coral",ch:rareBase*0.4,z:3},
+              {id:"alien_bio_tissue",ch:rareBase*0.15,z:6},
+            ].filter(r=>zIdx>=r.z);
+            const rd=[];
+            mobRares.forEach(r=>{if(Math.random()<r.ch){setInv(p=>({...p,[r.id]:(p[r.id]||0)+1}));rd.push(ITEMS[r.id].i)}});
+            if(rd.length)logMsg+=" ✨"+rd.join("");
+          }
           if(boss){
-            // Boss guaranteed drops
             const dropChance=0.4+(bonuses.boss_drop||0);
             const bossDrops=[
-              {id:"abyss_crystal",q:2,ch:dropChance},
-              {id:"drone_processor",q:1,ch:dropChance*0.5},
-              {id:"pressure_reactor",q:1,ch:dropChance*0.3},
-              {id:"reinforced_alloy",q:3,ch:dropChance*0.8},
+              {id:"abyss_crystal",    q:2, ch:dropChance},
+              {id:"drone_processor",  q:1, ch:dropChance*0.5},
+              {id:"pressure_reactor", q:1, ch:dropChance*0.3},
+              {id:"reinforced_alloy", q:3, ch:dropChance*0.8},
+              {id:"leviathan_bone",   q:1, ch:dropChance*0.35},
+              {id:"ancient_relic",    q:1, ch:dropChance*0.25},
+              {id:"thermal_core",     q:1, ch:dropChance*0.20},
+              {id:"void_pearl",       q:1, ch:dropChance*0.20},
+              {id:"alien_bio_tissue", q:1, ch:dropChance*0.15*(zIdx/4)},
+              {id:"ancient_processor",q:1, ch:dropChance*0.10*(zIdx/6)},
             ];
             const dropped=[];
-            bossDrops.forEach(d=>{if(Math.random()<d.ch){setInv(p=>({...p,[d.id]:(p[d.id]||0)+d.q}));dropped.push((ITEMS[d.id]?ITEMS[d.id].i:"")+"×"+d.q)}});
+            bossDrops.forEach(d=>{if(d.ch>0&&Math.random()<d.ch){setInv(p=>({...p,[d.id]:(p[d.id]||0)+d.q}));dropped.push((ITEMS[d.id]?ITEMS[d.id].i:"")+"×"+d.q)}});
             if(dropped.length)logMsg+=" 🎁 "+dropped.join(" ");
             setLifeStats(p=>({...p,bossKills:(p.bossKills||0)+1}));
           }
@@ -1303,6 +1494,10 @@ function GameUI({account,onLogout}){
             {SKILLS.filter(s=>s.cat==="prod").map(sk=><SkillNav key={sk.id} sk={sk} running={curAct&&curAct.sk===sk.id}/>)}
           </div>
           <div style={{padding:"4px 0",borderBottom:"1px solid "+C.border}}>
+            <div style={{padding:"5px 12px 3px",fontSize:8,fontWeight:700,color:"#38bdf8",textTransform:"uppercase",letterSpacing:2}}>Utility</div>
+            {SKILLS.filter(s=>s.cat==="utility").map(sk=><SkillNav key={sk.id} sk={sk} running={curAct&&curAct.sk===sk.id}/>)}
+          </div>
+          <div style={{padding:"4px 0",borderBottom:"1px solid "+C.border}}>
             <div style={{padding:"5px 12px 3px",fontSize:8,fontWeight:700,color:C.td,textTransform:"uppercase",letterSpacing:2}}>Upgrading</div>
             <div onClick={()=>setPage("enhancing")} style={{display:"flex",alignItems:"center",gap:8,padding:"6px 12px",cursor:"pointer",background:page==="enhancing"?"linear-gradient(90deg,"+C.acc+"15,transparent)":"transparent",borderLeft:page==="enhancing"?"3px solid "+C.acc:"3px solid transparent"}}>
               <span style={{fontSize:14,width:20,textAlign:"center"}}>⚡</span>
@@ -1386,6 +1581,8 @@ function GameUI({account,onLogout}){
                     <div>
                       <div style={{fontSize:12,fontWeight:700,color:isAct?C.ok:C.white,fontFamily:FONT,letterSpacing:1}}>{act.name.toUpperCase()}</div>
                       <div style={{fontSize:10,color:C.ts,marginTop:3,fontFamily:FONT_BODY}}>+{act.xp} XP · {act.t}s{act.inp?" · Needs: "+act.inp.map(i=>(ITEMS[i.id]?ITEMS[i.id].i:"")+i.q).join(" "):""}  {act.out?" → "+act.out.map(i=>(ITEMS[i.id]?ITEMS[i.id].i:"")+" "+(ITEMS[i.id]?ITEMS[i.id].n:"")).join(", "):""}</div>
+                      {act.util&&<div style={{fontSize:9,color:"#38bdf8",marginTop:3,fontFamily:FONT_BODY}}>{act.desc||"Utility effect active"}</div>}
+                      {act.out&&act.out.some(o=>ITEMS[o.id]&&ITEMS[o.id].rare)&&<div style={{fontSize:9,color:C.gold,marginTop:2,fontFamily:FONT_BODY}}>✨ Produces rare material</div>}
                       {locked&&<div style={{fontSize:9,color:C.bad,marginTop:2,fontFamily:FONT_BODY}}>Requires Level {act.lv}</div>}
                     </div>
                     {!locked&&<div onClick={()=>{if(canDo)startAct(skData.id,act.id)}} style={{padding:"7px 18px",borderRadius:6,background:isAct?"linear-gradient(90deg,"+C.okD+","+C.ok+")":canDo?"linear-gradient(90deg,"+C.accD+","+C.acc+")":C.card,color:C.bg,fontSize:10,fontWeight:700,cursor:canDo?"pointer":"default",opacity:canDo?1:0.35,letterSpacing:1,fontFamily:FONT,boxShadow:isAct?GLOW_OK:canDo?GLOW_STYLE:"none"}}>{isAct?"ACTIVE":"START"}</div>}
@@ -2181,19 +2378,72 @@ function GameUI({account,onLogout}){
 
             {/* INVENTORY PAGE */}
             {page==="inventory"&&(
-              <div style={{maxWidth:700}}>
+              <div style={{maxWidth:760}}>
                 <div style={{fontSize:14,fontWeight:700,color:C.white,marginBottom:16,letterSpacing:2}}>CARGO HOLD</div>
                 {Object.entries(inv).length===0&&<div style={{fontSize:12,color:C.td,fontFamily:FONT_BODY}}>Cargo hold is empty. Begin gathering operations!</div>}
-                <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8}}>
-                  {Object.entries(inv).map(e=>{const id=e[0],qty=e[1];const it=ITEMS[id];if(!it)return null;return(
-                    <div key={id} style={{padding:"10px 12px",borderRadius:6,background:C.card,border:"1px solid "+(it.eq?C.acc+"30":C.border),boxShadow:it.eq?GLOW_STYLE:"none"}}>
-                      <div style={{fontSize:12,fontWeight:700,color:C.white,fontFamily:FONT}}>{it.i} {it.n}</div>
-                      <div style={{fontSize:10,color:C.ts,fontFamily:FONT_BODY}}>×{qty}</div>
-                      {it.st&&<div style={{fontSize:9,color:C.td,marginTop:2,fontFamily:FONT_BODY}}>{Object.entries(it.st).map(s=>s[0]+"+"+s[1]).join(" ")}</div>}
-                      {it.food&&<div style={{fontSize:9,color:C.ok,fontFamily:FONT_BODY}}>Restores {it.heal} HP</div>}
-                      {it.eq&&<div onClick={()=>equipIt(id)} style={{marginTop:6,padding:"4px 8px",borderRadius:4,background:"linear-gradient(90deg,"+C.accD+","+C.acc+")",color:C.bg,fontSize:9,fontWeight:700,cursor:"pointer",textAlign:"center",letterSpacing:1,fontFamily:FONT}}>EQUIP</div>}
+
+                {/* Rare items section */}
+                {Object.entries(inv).some(([id])=>ITEMS[id]&&ITEMS[id].rare)&&(
+                  <div style={{marginBottom:16}}>
+                    <div style={{fontSize:9,fontWeight:700,color:C.gold,letterSpacing:2,marginBottom:8}}>✨ RARE MATERIALS</div>
+                    <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr 1fr",gap:6}}>
+                      {Object.entries(inv).filter(([id])=>ITEMS[id]&&ITEMS[id].rare).map(([id,qty])=>{const it=ITEMS[id];return(
+                        <div key={id} style={{padding:"10px 12px",borderRadius:8,background:"linear-gradient(135deg,"+C.gold+"18,"+C.card+")",border:"2px solid "+C.gold+"50",boxShadow:"0 0 10px "+C.gold+"25",textAlign:"center"}}>
+                          <div style={{fontSize:20,marginBottom:4,filter:"drop-shadow(0 0 6px "+C.gold+")"}}>{it.i}</div>
+                          <div style={{fontSize:9,fontWeight:700,color:C.gold,fontFamily:FONT,letterSpacing:0.5}}>{it.n}</div>
+                          <div style={{fontSize:11,color:C.text,fontWeight:700,fontFamily:FONT,marginTop:2}}>×{qty}</div>
+                        </div>
+                      );})}
                     </div>
-                  );})}
+                  </div>
+                )}
+
+                {/* Equipment section */}
+                {Object.entries(inv).some(([id])=>ITEMS[id]&&ITEMS[id].eq)&&(
+                  <div style={{marginBottom:16}}>
+                    <div style={{fontSize:9,fontWeight:700,color:C.acc,letterSpacing:2,marginBottom:8}}>🗡️ EQUIPMENT</div>
+                    <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:6}}>
+                      {Object.entries(inv).filter(([id])=>ITEMS[id]&&ITEMS[id].eq).map(([id,qty])=>{const it=ITEMS[id];return(
+                        <div key={id} style={{padding:"10px 12px",borderRadius:6,background:C.card,border:"1px solid "+C.acc+"30",boxShadow:GLOW_STYLE}}>
+                          <div style={{fontSize:12,fontWeight:700,color:C.white,fontFamily:FONT}}>{it.i} {it.n}</div>
+                          <div style={{fontSize:9,color:C.ts,fontFamily:FONT_BODY,marginTop:2}}>×{qty}</div>
+                          {it.st&&<div style={{fontSize:9,color:C.td,marginTop:2,fontFamily:FONT_BODY}}>{Object.entries(it.st).map(([k,v])=>k+"+"+v).join(" ")}</div>}
+                          <div onClick={()=>equipIt(id)} style={{marginTop:6,padding:"4px 0",borderRadius:4,background:"linear-gradient(90deg,"+C.accD+","+C.acc+")",color:C.bg,fontSize:9,fontWeight:700,cursor:"pointer",textAlign:"center",letterSpacing:1,fontFamily:FONT}}>EQUIP</div>
+                        </div>
+                      );})}
+                    </div>
+                  </div>
+                )}
+
+                {/* Consumables */}
+                {Object.entries(inv).some(([id])=>ITEMS[id]&&ITEMS[id].food)&&(
+                  <div style={{marginBottom:16}}>
+                    <div style={{fontSize:9,fontWeight:700,color:C.ok,letterSpacing:2,marginBottom:8}}>💉 CONSUMABLES</div>
+                    <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:6}}>
+                      {Object.entries(inv).filter(([id])=>ITEMS[id]&&ITEMS[id].food).map(([id,qty])=>{const it=ITEMS[id];return(
+                        <div key={id} style={{padding:"10px 12px",borderRadius:6,background:C.card,border:"1px solid "+C.ok+"30"}}>
+                          <div style={{fontSize:12,fontWeight:700,color:C.white,fontFamily:FONT}}>{it.i} {it.n}</div>
+                          <div style={{fontSize:9,color:C.ok,fontFamily:FONT_BODY,marginTop:2}}>×{qty} · Heals {it.heal} HP</div>
+                        </div>
+                      );})}
+                    </div>
+                  </div>
+                )}
+
+                {/* Materials */}
+                <div>
+                  <div style={{fontSize:9,fontWeight:700,color:C.ts,letterSpacing:2,marginBottom:8}}>🪨 MATERIALS</div>
+                  <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:6}}>
+                    {Object.entries(inv).filter(([id,qty])=>ITEMS[id]&&ITEMS[id].s&&!ITEMS[id].rare&&!ITEMS[id].eq&&!ITEMS[id].food&&qty>0).map(([id,qty])=>{const it=ITEMS[id];return(
+                      <div key={id} style={{padding:"8px 12px",borderRadius:6,background:C.card,border:"1px solid "+C.border,display:"flex",alignItems:"center",gap:8}}>
+                        <span style={{fontSize:14}}>{it.i}</span>
+                        <div style={{flex:1}}>
+                          <div style={{fontSize:10,color:C.text,fontFamily:FONT_BODY}}>{it.n}</div>
+                          <div style={{fontSize:10,fontWeight:700,color:C.acc,fontFamily:FONT}}>×{fmt(qty)}</div>
+                        </div>
+                      </div>
+                    );})}
+                  </div>
                 </div>
               </div>
             )}

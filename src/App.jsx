@@ -12,6 +12,12 @@ import { doc, setDoc, getDoc } from 'firebase/firestore';
 const FONT = "'Orbitron', 'Segoe UI', system-ui, sans-serif";
 const FONT_BODY = "'Inter', system-ui, sans-serif";
 
+// Cross-platform tap: instant on touch, normal onClick on mouse
+const tap=(fn)=>({
+  onPointerDown:(e)=>{if(e.pointerType==="touch"){e.preventDefault();fn(e);}},
+  onClick:(e)=>{if(e.pointerType!=="touch"&&e.detail>0)fn(e);},
+});
+
 const C = {
   bg: "#021218", panel: "#031926", card: "#042233", border: "#0a3a50",
   text: "#a8d8ea", ts: "#5a9fb5", td: "#2d6a80",
@@ -2015,7 +2021,7 @@ function GameUI({account,onLogout}){
                         const isGather=sk.cat==="gather";
                         return(
                           <div key={sk.id}>
-                            <div onPointerDown={(e)=>{e.preventDefault();setActSkill(isActive?null:sk.id);}} style={{display:"flex",alignItems:"center",gap:10,padding:"12px 14px",borderRadius:isActive?"8px 8px 0 0":8,background:isActive?"linear-gradient(90deg,"+sk.color+"25,"+C.card+")":C.card,border:"1px solid "+(isActive?sk.color+"60":isPinned?sk.color+"40":C.border),cursor:"pointer",borderBottom:isActive?"none":"1px solid "+(isPinned?sk.color+"40":C.border),userSelect:"none",WebkitUserSelect:"none"}}>
+                            <div {...tap(()=>setActSkill(isActive?null:sk.id))} style={{display:"flex",alignItems:"center",gap:10,padding:"12px 14px",borderRadius:isActive?"8px 8px 0 0":8,background:isActive?"linear-gradient(90deg,"+sk.color+"25,"+C.card+")":C.card,border:"1px solid "+(isActive?sk.color+"60":isPinned?sk.color+"40":C.border),cursor:"pointer",borderBottom:isActive?"none":"1px solid "+(isPinned?sk.color+"40":C.border),userSelect:"none",WebkitUserSelect:"none"}}>
                               <span style={{fontSize:18,flexShrink:0,filter:running?"drop-shadow(0 0 5px "+sk.color+")":s.mastered?"drop-shadow(0 0 5px "+C.gold+")":"none"}}>{sk.icon}</span>
                               <div style={{flex:1,minWidth:0}}>
                                 <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:4}}>
@@ -2037,7 +2043,7 @@ function GameUI({account,onLogout}){
                             {isActive&&(
                               <div style={{background:C.bg,border:"1px solid "+sk.color+"40",borderTop:"none",borderRadius:"0 0 8px 8px",padding:"8px",display:"flex",flexDirection:"column",gap:6,marginBottom:4}}>
                                 {isGather&&(
-                                  <div onPointerDown={e=>{e.preventDefault();e.stopPropagation();setPinnedSkill(p=>p===sk.id?null:sk.id);}} style={{padding:"5px 10px",borderRadius:6,background:isPinned?sk.color+"25":C.card,border:"1px solid "+(isPinned?sk.color:C.border),fontSize:10,fontWeight:700,color:isPinned?sk.color:C.td,fontFamily:FONT,letterSpacing:1,textAlign:"center",cursor:"pointer",userSelect:"none",marginBottom:2}}>
+                                  <div {...tap(e=>{e.stopPropagation?.();setPinnedSkill(p=>p===sk.id?null:sk.id);})} style={{padding:"5px 10px",borderRadius:6,background:isPinned?sk.color+"25":C.card,border:"1px solid "+(isPinned?sk.color:C.border),fontSize:10,fontWeight:700,color:isPinned?sk.color:C.td,fontFamily:FONT,letterSpacing:1,textAlign:"center",cursor:"pointer",userSelect:"none",marginBottom:2}}>
                                     {isPinned?"📌 PINNED — TAP TO UNPIN":"📌 PIN TO TOP"}
                                   </div>
                                 )}
@@ -2065,7 +2071,7 @@ function GameUI({account,onLogout}){
                                         )}
                                       </div>
                                       {canDo&&(
-                                        <div onPointerDown={e=>{e.preventDefault();e.stopPropagation();isAct?(setCurAct(null),setActProg(0)):startAct(sk.id,act.id)}} style={{padding:"9px 18px",borderRadius:7,background:isAct?"linear-gradient(90deg,"+C.bad+"cc,"+C.bad+")":"linear-gradient(90deg,"+C.accD+","+C.acc+")",color:C.bg,fontSize:12,fontWeight:700,cursor:"pointer",flexShrink:0,fontFamily:FONT,whiteSpace:"nowrap",userSelect:"none",WebkitUserSelect:"none"}}>
+                                        <div {...tap(e=>{e.stopPropagation?.();isAct?(setCurAct(null),setActProg(0)):startAct(sk.id,act.id);})} style={{padding:"9px 18px",borderRadius:7,background:isAct?"linear-gradient(90deg,"+C.bad+"cc,"+C.bad+")":"linear-gradient(90deg,"+C.accD+","+C.acc+")",color:C.bg,fontSize:12,fontWeight:700,cursor:"pointer",flexShrink:0,fontFamily:FONT,whiteSpace:"nowrap",userSelect:"none",WebkitUserSelect:"none"}}>
                                           {isAct?"STOP":"START"}
                                         </div>
                                       )}
@@ -2310,7 +2316,7 @@ function GameUI({account,onLogout}){
               {mobileNavItems.map(n=>{
                 const active=mobileTab===n.id||(n.id==="more"&&mobileTab==="_page");
                 return(
-                  <div key={n.id} onPointerDown={(e)=>{e.preventDefault();handleMobileTab(n.id);}} style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:3,cursor:"pointer",background:active?"linear-gradient(180deg,"+C.acc+"15,transparent)":"transparent",borderTop:active?"2px solid "+C.acc:"2px solid transparent",userSelect:"none",WebkitUserSelect:"none"}}>
+                  <div key={n.id} {...tap(()=>handleMobileTab(n.id))} style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:3,cursor:"pointer",background:active?"linear-gradient(180deg,"+C.acc+"15,transparent)":"transparent",borderTop:active?"2px solid "+C.acc:"2px solid transparent",userSelect:"none",WebkitUserSelect:"none"}}>
                     <span style={{fontSize:20,filter:active?"drop-shadow(0 0 5px "+C.acc+")":"none",pointerEvents:"none"}}>{n.icon}</span>
                     <span style={{fontSize:10,color:active?C.acc:C.td,fontWeight:active?700:400,fontFamily:FONT_BODY,letterSpacing:0.5,pointerEvents:"none"}}>{n.label}</span>
                   </div>

@@ -780,16 +780,158 @@ const CSUBS=[
 ];
 
 // ===================== ZONES =====================
+// Each zone has: mobs[] (regular), elites[] (rare spawn ~15%), boss (every 10 kills), boss2 (every 25 kills)
 const ZONES=[
-  {id:"z1",name:"Sunlit Reef",icon:"🪸",lv:1,mobs:[{n:"Coral Crab",hp:20,atk:2,def:1,xp:8,g:3},{n:"Reef Eel",hp:35,atk:4,def:2,xp:15,g:6}],boss:{n:"Reef Hunter",hp:120,atk:8,def:5,xp:60,g:30}},
-  {id:"z2",name:"Coral Forest",icon:"🌊",lv:10,mobs:[{n:"Glass Jellyfish",hp:70,atk:9,def:5,xp:28,g:12},{n:"Shadow Octopus",hp:100,atk:13,def:8,xp:42,g:20}],boss:{n:"Predator Squid",hp:350,atk:22,def:14,xp:160,g:90}},
-  {id:"z3",name:"Twilight Shelf",icon:"🌆",lv:18,mobs:[{n:"Dusk Shark",hp:120,atk:17,def:11,xp:48,g:22},{n:"Lantern Ray",hp:180,atk:22,def:14,xp:70,g:35}],boss:{n:"Phantom Whale",hp:550,atk:34,def:20,xp:240,g:130}},
-  {id:"z4",name:"Midnight Depths",icon:"🌑",lv:25,mobs:[{n:"Bone Fish",hp:150,atk:20,def:14,xp:60,g:30},{n:"Electric Ray",hp:240,atk:28,def:18,xp:90,g:45}],boss:{n:"Deep Angler",hp:700,atk:42,def:30,xp:320,g:170}},
-  {id:"z5",name:"Abyssal Plain",icon:"🫧",lv:35,mobs:[{n:"Pressure Crab",hp:260,atk:32,def:22,xp:105,g:52},{n:"Void Serpent",hp:380,atk:44,def:30,xp:155,g:80}],boss:{n:"Abyssal Titan",hp:1100,atk:62,def:44,xp:460,g:260}},
-  {id:"z6",name:"Hydrothermal Vents",icon:"🔥",lv:40,mobs:[{n:"Pressure Worm",hp:300,atk:36,def:24,xp:120,g:60},{n:"Abyss Crawler",hp:480,atk:48,def:36,xp:180,g:95}],boss:{n:"Thermal Leviathan",hp:1400,atk:72,def:48,xp:580,g:340}},
-  {id:"z7",name:"Frozen Trench",icon:"🧊",lv:50,mobs:[{n:"Ice Stalker",hp:420,atk:54,def:38,xp:170,g:88},{n:"Cryo Leviathan",hp:650,atk:72,def:52,xp:260,g:135}],boss:{n:"Glacier Kraken",hp:2200,atk:100,def:70,xp:860,g:500}},
-  {id:"z8",name:"Black Trench",icon:"🕳️",lv:60,mobs:[{n:"Void Eel",hp:480,atk:60,def:42,xp:240,g:120},{n:"Trench Serpent",hp:840,atk:84,def:60,xp:420,g:210}],boss:{n:"Abyss Kraken",hp:3000,atk:120,def:84,xp:1200,g:720}},
-  {id:"z9",name:"Ancient Ruins",icon:"🏛️",lv:80,mobs:[{n:"Relic Guardian",hp:720,atk:90,def:66,xp:360,g:185},{n:"Void Sentinel",hp:1100,atk:120,def:88,xp:560,g:285}],boss:{n:"Leviathan Prime",hp:6000,atk:180,def:130,xp:2400,g:1500}},
+  {id:"z1",name:"Sunlit Reef",icon:"🪸",lv:1,
+    mobs:[
+      {n:"Coral Crab",      hp:20,  atk:2,  def:1,  xp:8,   g:3,  i:"🦀"},
+      {n:"Reef Eel",        hp:35,  atk:4,  def:2,  xp:15,  g:6,  i:"🐍"},
+      {n:"Striped Jelly",   hp:25,  atk:3,  def:1,  xp:10,  g:4,  i:"🪼"},
+      {n:"Sand Puffer",     hp:30,  atk:5,  def:3,  xp:12,  g:5,  i:"🐡"},
+      {n:"Sea Spider",      hp:18,  atk:3,  def:2,  xp:9,   g:3,  i:"🕷️"},
+      {n:"Coral Shrimp",    hp:15,  atk:2,  def:1,  xp:7,   g:2,  i:"🦐"},
+    ],
+    elites:[
+      {n:"Alpha Reef Crab", hp:80,  atk:7,  def:5,  xp:40,  g:20, i:"🦀", elite:true},
+      {n:"Sting Pike",      hp:65,  atk:9,  def:4,  xp:35,  g:18, i:"🐟", elite:true},
+      {n:"Reef Colossus",   hp:95,  atk:10, def:6,  xp:48,  g:24, i:"🦈", elite:true},
+    ],
+    boss: {n:"Reef Hunter",       hp:120, atk:8,  def:5,  xp:60,  g:30,  i:"🦈"},
+    boss2:{n:"Giant Reef Mantis",  hp:200, atk:12, def:8,  xp:100, g:60,  i:"🦂"},
+  },
+  {id:"z2",name:"Coral Forest",icon:"🌊",lv:10,
+    mobs:[
+      {n:"Glass Jellyfish",  hp:70,  atk:9,  def:5,  xp:28,  g:12, i:"🪼"},
+      {n:"Shadow Octopus",   hp:100, atk:13, def:8,  xp:42,  g:20, i:"🐙"},
+      {n:"Mini Manta",       hp:85,  atk:11, def:6,  xp:34,  g:16, i:"🐟"},
+      {n:"Reef Hunter",      hp:90,  atk:12, def:7,  xp:38,  g:18, i:"🦈"},
+      {n:"Thorn Urchin",     hp:60,  atk:8,  def:10, xp:25,  g:11, i:"🌵"},
+      {n:"Banded Sea Snake", hp:75,  atk:14, def:4,  xp:32,  g:15, i:"🐍"},
+    ],
+    elites:[
+      {n:"Coral Forest Drake",hp:220, atk:20, def:14, xp:110, g:55, i:"🐉", elite:true},
+      {n:"Phantom Jellyfish", hp:180, atk:18, def:10, xp:90,  g:45, i:"🪼", elite:true},
+      {n:"Elder Octopus",     hp:200, atk:19, def:12, xp:100, g:50, i:"🐙", elite:true},
+    ],
+    boss: {n:"Predator Squid",     hp:350, atk:22, def:14, xp:160, g:90,  i:"🦑"},
+    boss2:{n:"Elder Coral Drake",   hp:550, atk:30, def:20, xp:260, g:150, i:"🐉"},
+  },
+  {id:"z3",name:"Twilight Shelf",icon:"🌆",lv:18,
+    mobs:[
+      {n:"Dusk Shark",       hp:120, atk:17, def:11, xp:48,  g:22, i:"🦈"},
+      {n:"Lantern Ray",      hp:180, atk:22, def:14, xp:70,  g:35, i:"🐟"},
+      {n:"Twilight Eel",     hp:140, atk:19, def:12, xp:55,  g:27, i:"🐍"},
+      {n:"Dusk Cuttlefish",  hp:160, atk:20, def:13, xp:62,  g:30, i:"🦑"},
+      {n:"Bone Crab",        hp:200, atk:16, def:18, xp:65,  g:32, i:"🦀"},
+      {n:"Needle Shark",     hp:130, atk:24, def:10, xp:58,  g:28, i:"🦈"},
+    ],
+    elites:[
+      {n:"Twilight Leviathan",hp:450, atk:32, def:22, xp:220, g:110,i:"🐋", elite:true},
+      {n:"Barbed Manta",      hp:380, atk:28, def:18, xp:185, g:92, i:"🐟", elite:true},
+    ],
+    boss: {n:"Phantom Whale",      hp:550, atk:34, def:20, xp:240, g:130, i:"🐋"},
+    boss2:{n:"Crimson Barracuda",   hp:780, atk:44, def:28, xp:380, g:200, i:"🐠"},
+  },
+  {id:"z4",name:"Midnight Depths",icon:"🌑",lv:25,
+    mobs:[
+      {n:"Bone Fish",        hp:150, atk:20, def:14, xp:60,  g:30, i:"🐟"},
+      {n:"Electric Ray",     hp:240, atk:28, def:18, xp:90,  g:45, i:"⚡"},
+      {n:"Hunter Eel",       hp:190, atk:25, def:15, xp:72,  g:36, i:"🐍"},
+      {n:"Iron Shell Crab",  hp:280, atk:22, def:24, xp:95,  g:48, i:"🦀"},
+      {n:"Ghost Jelly",      hp:170, atk:30, def:10, xp:78,  g:39, i:"🪼"},
+      {n:"Deep Stalker",     hp:210, atk:26, def:17, xp:82,  g:42, i:"🦑"},
+    ],
+    elites:[
+      {n:"Midnight Horror",   hp:580, atk:42, def:28, xp:290, g:145,i:"👁️", elite:true},
+      {n:"Abyssal Ray Lord",  hp:520, atk:38, def:30, xp:260, g:130,i:"⚡", elite:true},
+    ],
+    boss: {n:"Deep Angler",        hp:700, atk:42, def:30, xp:320, g:170, i:"🎣"},
+    boss2:{n:"Midnight Colossus",   hp:1000,atk:55, def:40, xp:500, g:270, i:"💀"},
+  },
+  {id:"z5",name:"Abyssal Plain",icon:"🫧",lv:35,
+    mobs:[
+      {n:"Pressure Crab",    hp:260, atk:32, def:22, xp:105, g:52, i:"🦀"},
+      {n:"Void Serpent",     hp:380, atk:44, def:30, xp:155, g:80, i:"🐍"},
+      {n:"Abyssal Manta",    hp:320, atk:38, def:26, xp:128, g:64, i:"🐟"},
+      {n:"Dark Angler",      hp:290, atk:42, def:20, xp:118, g:59, i:"🎣"},
+      {n:"Shadow Cuttlefish",hp:350, atk:36, def:28, xp:140, g:70, i:"🦑"},
+      {n:"Deep Horror",      hp:410, atk:46, def:32, xp:165, g:84, i:"👁️"},
+    ],
+    elites:[
+      {n:"Void Titan",        hp:900, atk:62, def:44, xp:450, g:225,i:"🌀", elite:true},
+      {n:"Abyss Hydra",       hp:820, atk:58, def:40, xp:410, g:205,i:"🐉", elite:true},
+      {n:"Deep Leviathan",    hp:870, atk:60, def:42, xp:435, g:218,i:"🐋", elite:true},
+    ],
+    boss: {n:"Abyssal Titan",      hp:1100,atk:62, def:44, xp:460, g:260, i:"💀"},
+    boss2:{n:"Void Whale",          hp:1600,atk:78, def:56, xp:720, g:400, i:"🐋"},
+  },
+  {id:"z6",name:"Hydrothermal Vents",icon:"🔥",lv:40,
+    mobs:[
+      {n:"Pressure Worm",    hp:300, atk:36, def:24, xp:120, g:60, i:"🪱"},
+      {n:"Abyss Crawler",    hp:480, atk:48, def:36, xp:180, g:95, i:"🦂"},
+      {n:"Thermal Eel",      hp:360, atk:44, def:28, xp:142, g:72, i:"🐍"},
+      {n:"Magma Crab",       hp:550, atk:40, def:42, xp:195, g:98, i:"🦀"},
+      {n:"Vent Serpent",     hp:420, atk:50, def:32, xp:165, g:84, i:"🐍"},
+      {n:"Lava Jelly",       hp:380, atk:52, def:22, xp:155, g:78, i:"🪼"},
+    ],
+    elites:[
+      {n:"Hydrothermal Drake",hp:1100,atk:72, def:50, xp:550, g:275,i:"🐉", elite:true},
+      {n:"Magma Colossus",    hp:1000,atk:68, def:54, xp:500, g:250,i:"🌋", elite:true},
+      {n:"Vent Overlord",     hp:950, atk:65, def:52, xp:475, g:238,i:"🦂", elite:true},
+    ],
+    boss: {n:"Thermal Leviathan",  hp:1400,atk:72, def:48, xp:580, g:340, i:"🌋"},
+    boss2:{n:"Hydrothermal Titan",  hp:2000,atk:90, def:62, xp:900, g:520, i:"🔥"},
+  },
+  {id:"z7",name:"Frozen Trench",icon:"🧊",lv:50,
+    mobs:[
+      {n:"Ice Stalker",      hp:420, atk:54, def:38, xp:170, g:88, i:"❄️"},
+      {n:"Cryo Leviathan",   hp:650, atk:72, def:52, xp:260, g:135,i:"🐋"},
+      {n:"Frost Eel",        hp:500, atk:62, def:44, xp:200, g:102,i:"🐍"},
+      {n:"Ice Titan Crab",   hp:720, atk:58, def:58, xp:270, g:138,i:"🦀"},
+      {n:"Crystal Shark",    hp:560, atk:68, def:46, xp:225, g:115,i:"🦈"},
+      {n:"Frozen Horror",    hp:610, atk:70, def:50, xp:245, g:125,i:"👁️"},
+    ],
+    elites:[
+      {n:"Glacier Titan",     hp:1500,atk:95, def:70, xp:750, g:375,i:"🧊", elite:true},
+      {n:"Blizzard Drake",    hp:1400,atk:90, def:66, xp:700, g:350,i:"🐉", elite:true},
+    ],
+    boss: {n:"Glacier Kraken",     hp:2200,atk:100,def:70, xp:860, g:500, i:"🦑"},
+    boss2:{n:"Frost Ancient",       hp:3000,atk:120,def:88, xp:1200,g:720, i:"❄️"},
+  },
+  {id:"z8",name:"Black Trench",icon:"🕳️",lv:60,
+    mobs:[
+      {n:"Void Eel",         hp:480, atk:60, def:42, xp:240, g:120,i:"🌀"},
+      {n:"Trench Serpent",   hp:840, atk:84, def:60, xp:420, g:210,i:"🐍"},
+      {n:"Night Kraken",     hp:700, atk:76, def:54, xp:350, g:175,i:"🦑"},
+      {n:"Black Hydra",      hp:920, atk:88, def:64, xp:460, g:230,i:"🐉"},
+      {n:"Abyss Emperor",    hp:780, atk:80, def:58, xp:390, g:195,i:"👑"},
+      {n:"Trench Devourer",  hp:860, atk:86, def:62, xp:430, g:215,i:"💀"},
+    ],
+    elites:[
+      {n:"Void Overlord",     hp:2000,atk:115,def:82, xp:1000,g:500,i:"🌀", elite:true},
+      {n:"Black Ancient",     hp:1800,atk:108,def:78, xp:900, g:450,i:"🕳️", elite:true},
+      {n:"Trench Emperor",    hp:1900,atk:112,def:80, xp:950, g:475,i:"👑", elite:true},
+    ],
+    boss: {n:"Abyss Kraken",       hp:3000,atk:120,def:84, xp:1200,g:720, i:"🦑"},
+    boss2:{n:"Void Colossus",       hp:4500,atk:145,def:102,xp:1800,g:1100,i:"🌀"},
+  },
+  {id:"z9",name:"Ancient Ruins",icon:"🏛️",lv:80,
+    mobs:[
+      {n:"Relic Guardian",   hp:720, atk:90, def:66, xp:360, g:185,i:"🗿"},
+      {n:"Void Sentinel",    hp:1100,atk:120,def:88, xp:560, g:285,i:"⚔️"},
+      {n:"Ancient Construct",hp:950, atk:110,def:80, xp:475, g:240,i:"🤖"},
+      {n:"Ruin Stalker",     hp:850, atk:105,def:74, xp:425, g:215,i:"👁️"},
+      {n:"Corruption Shade", hp:980, atk:115,def:78, xp:490, g:248,i:"🌑"},
+      {n:"Void Golem",       hp:1200,atk:108,def:96, xp:600, g:305,i:"🗿"},
+    ],
+    elites:[
+      {n:"Ancient Horror",    hp:2800,atk:155,def:115,xp:1400,g:700,i:"👁️", elite:true},
+      {n:"Ruins Titan",       hp:3200,atk:165,def:125,xp:1600,g:800,i:"🏛️", elite:true},
+      {n:"Void Emperor",      hp:3000,atk:160,def:120,xp:1500,g:750,i:"👑", elite:true},
+    ],
+    boss: {n:"Leviathan Prime",    hp:6000,atk:180,def:130,xp:2400,g:1500,i:"🐉"},
+    boss2:{n:"Ancient Colossus",    hp:9000,atk:220,def:160,xp:3600,g:2400,i:"🏛️"},
+  },
 ];
 
 const ESLOTS=[
@@ -1175,7 +1317,7 @@ function GameUI({account,onLogout}){
           // Zone index for rare drop scaling
           const zIdx=ZONES.findIndex(z=>z.id===zoneId);
           const nb=(nk%10===9)&&zone.boss;
-          let logMsg="⚔️ Neutralized "+mob.n+"! +"+mob.xp+"xp +"+goldGain+"cr";
+          let logMsg="⚔️ "+(mob.i||"")+" "+mob.n+" neutralized! +"+mob.xp+"xp +"+goldGain+"cr"+(mob.elite?" 💠":"")+(mob.isBoss2?" ⚜️":"");
           // Regular mob rare drops (deep zones only)
           if(zIdx>=3){
             const rareBase=0.04*(zIdx-2)+(bonuses.rare_chance||0);
@@ -1209,7 +1351,15 @@ function GameUI({account,onLogout}){
             setLifeStats(p=>({...p,bossKills:(p.bossKills||0)+1}));
           }
           setClog(p=>[...p.slice(-20),logMsg]);
-          const nm=nb?zone.boss:zone.mobs[Math.floor(Math.random()*zone.mobs.length)];
+          // Pick next mob: boss2 every 25 kills, boss every 10, elite 15%, else random mob
+          const pickMob=(zone,nk,isBossKill)=>{
+            if(isBossKill&&nk%25===0&&zone.boss2)return{...zone.boss2,isBoss2:true};
+            if(isBossKill)return zone.mobs[Math.floor(Math.random()*zone.mobs.length)];
+            if(zone.elites&&zone.elites.length&&Math.random()<0.15)return zone.elites[Math.floor(Math.random()*zone.elites.length)];
+            return zone.mobs[Math.floor(Math.random()*zone.mobs.length)];
+          };
+          const nb=nk%10===0;
+          const nm=nb?(nk%25===0&&zone.boss2?{...zone.boss2,isBoss2:true}:zone.boss):pickMob(zone,nk,false);
           return{mob:nm,mhp:nm.hp,php,mxhp,kills:nk,boss:nb};
         }
         return{...prev,mhp,php};
@@ -1219,7 +1369,7 @@ function GameUI({account,onLogout}){
   },[zoneId,cbt,pStats,gainXp,food,remIt,bonuses]);
 
   const startAct=useCallback((skId,actId)=>{setZoneId(null);setCbt(null);setCurAct({sk:skId,act:actId});setActProg(0);setActSkill(skId)},[]);
-  const startZone=useCallback((zid)=>{const z=ZONES.find(x=>x.id===zid);if(!z)return;setCurAct(null);setZoneId(zid);const m=z.mobs[0];setCbt({mob:m,mhp:m.hp,php:pStats.hp,mxhp:pStats.hp,kills:0,boss:false});setClog(["📡 Entered "+z.name+"..."])},[pStats]);
+  const startZone=useCallback((zid)=>{const z=ZONES.find(x=>x.id===zid);if(!z)return;setCurAct(null);setZoneId(zid);const m=z.mobs[0];setCbt({mob:m,mhp:m.hp,php:pStats.hp,mxhp:pStats.hp,kills:0,boss:false});setClog(["📡 Entered "+z.name+"...","⚠️ "+z.mobs.length+" mob types · "+z.elites.length+" elites · 2 bosses"])},[pStats]);
   const stopZone=useCallback(()=>{setZoneId(null);setCbt(null)},[]);
   const equipIt=useCallback((iid)=>{const it=ITEMS[iid];if(!it||!it.eq||(inv[iid]||0)<=0)return;const cur=eq[it.eq];if(cur)addIt(cur,1);remIt(iid,1);setEq(p=>({...p,[it.eq]:iid}))},[inv,eq,addIt,remIt]);
   const unequipIt=useCallback((sid)=>{const iid=eq[sid];if(!iid)return;addIt(iid,1);setEq(p=>{const n={...p};delete n[sid];return n})},[eq,addIt]);
@@ -2080,18 +2230,31 @@ function GameUI({account,onLogout}){
             </div>
           );})()}
           {/* Combat bar */}
-          {cbt&&(
-            <div style={{flexShrink:0,padding:"8px 16px",background:C.panel,borderBottom:"1px solid "+C.border}}>
-              <div style={{display:"flex",justifyContent:"space-between",fontSize:10,color:C.ts,marginBottom:4,fontFamily:FONT_BODY}}>
-                <span>⚔️ {cbt.mob.n}{cbt.boss?" 👑":""} — Kill #{cbt.kills+1}</span>
-                <span onClick={stopZone} style={{color:C.bad,cursor:"pointer",fontWeight:700,letterSpacing:1}}>◄ RETREAT</span>
+          {cbt&&(()=>{
+            const mob=cbt.mob;
+            const isElite=mob.elite;
+            const isBoss2=mob.isBoss2;
+            const isBoss=cbt.boss&&!isBoss2;
+            const mobColor=isBoss2?C.gold:isBoss?C.bad:isElite?C.purp:C.ts;
+            const label=isBoss2?"⚜️ TITAN BOSS":isBoss?"👑 BOSS":isElite?"💠 ELITE":"";
+            return(
+            <div style={{flexShrink:0,padding:"8px 16px",background:C.panel,borderBottom:"1px solid "+(isBoss2?C.gold:isBoss?C.bad:isElite?C.purp:C.border),boxShadow:isBoss2?"0 0 12px "+C.gold+"40":isBoss?"0 0 8px "+C.bad+"30":"none"}}>
+              <div style={{display:"flex",justifyContent:"space-between",fontSize:10,color:C.ts,marginBottom:4,fontFamily:FONT_BODY,alignItems:"center"}}>
+                <span style={{display:"flex",alignItems:"center",gap:6}}>
+                  <span style={{fontSize:18}}>{mob.i||"👾"}</span>
+                  <span style={{color:mobColor,fontWeight:700}}>{mob.n}</span>
+                  {label&&<span style={{fontSize:8,padding:"1px 6px",borderRadius:6,background:mobColor+"25",border:"1px solid "+mobColor+"60",color:mobColor,fontWeight:700,letterSpacing:1}}>{label}</span>}
+                  <span style={{fontSize:9,color:C.td}}>— Kill #{cbt.kills+1}</span>
+                </span>
+                <span onClick={stopZone} style={{color:C.bad,cursor:"pointer",fontWeight:700,letterSpacing:1,fontSize:10}}>◄ RETREAT</span>
               </div>
               <div style={{display:"flex",gap:8}}>
                 <div style={{flex:1}}><div style={{fontSize:9,color:C.td,marginBottom:2,fontFamily:FONT_BODY}}>You: {cbt.php}/{cbt.mxhp}</div><div style={{height:5,borderRadius:3,background:C.bg,overflow:"hidden"}}><div style={{width:(cbt.php/cbt.mxhp)*100+"%",height:"100%",background:C.ok,borderRadius:3,transition:"width 0.2s",boxShadow:GLOW_OK}}/></div></div>
-                <div style={{flex:1}}><div style={{fontSize:9,color:C.td,marginBottom:2,fontFamily:FONT_BODY}}>{cbt.mob.n}: {Math.max(0,cbt.mhp)}/{cbt.mob.hp}</div><div style={{height:5,borderRadius:3,background:C.bg,overflow:"hidden"}}><div style={{width:Math.max(0,(cbt.mhp/cbt.mob.hp)*100)+"%",height:"100%",background:C.bad,borderRadius:3,transition:"width 0.2s",boxShadow:GLOW_BAD}}/></div></div>
+                <div style={{flex:1}}><div style={{fontSize:9,color:C.td,marginBottom:2,fontFamily:FONT_BODY}}>{mob.n}: {Math.max(0,cbt.mhp)}/{mob.hp}</div><div style={{height:5,borderRadius:3,background:C.bg,overflow:"hidden"}}><div style={{width:Math.max(0,(cbt.mhp/mob.hp)*100)+"%",height:"100%",background:isBoss2?C.gold:isBoss?C.bad:isElite?C.purp:C.warn,borderRadius:3,transition:"width 0.2s",boxShadow:isBoss2?"0 0 6px "+C.gold:isBoss?GLOW_BAD:"none"}}/></div></div>
               </div>
             </div>
-          )}
+            );
+          })()}
 
           <div style={{flex:1,overflow:"auto",padding:20}}>
 
@@ -3324,10 +3487,29 @@ function GameUI({account,onLogout}){
                 </div>
                 <div style={{fontSize:9,fontWeight:700,color:C.td,marginBottom:10,letterSpacing:2}}>OCEAN ZONES</div>
                 {ZONES.map(zone=>{const lk=combatLv<zone.lv;const isAct=zoneId===zone.id;return(
-                  <div key={zone.id} style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"12px 16px",borderRadius:8,background:isAct?"linear-gradient(90deg,"+C.bad+"15,"+C.card+")":C.card,border:"1px solid "+(isAct?C.bad+"50":C.border),marginBottom:8,opacity:lk?0.35:1}}>
-                    <div><div style={{fontSize:13,fontWeight:700,color:isAct?C.bad:C.white,fontFamily:FONT,letterSpacing:1}}>{zone.icon} {zone.name.toUpperCase()}</div><div style={{fontSize:10,color:C.ts,marginTop:2,fontFamily:FONT_BODY}}>Depth Rank {zone.lv}+ · {zone.mobs.map(m=>m.n).join(", ")}{zone.boss?" · Boss: "+zone.boss.n:""}</div></div>
-                    {!lk&&<div onClick={()=>{if(isAct)stopZone();else startZone(zone.id)}} style={{padding:"7px 18px",borderRadius:6,background:isAct?"linear-gradient(90deg,"+C.badD+","+C.bad+")":"linear-gradient(90deg,"+C.accD+","+C.acc+")",color:C.bg,fontSize:10,fontWeight:700,cursor:"pointer",letterSpacing:1,fontFamily:FONT,boxShadow:isAct?GLOW_BAD:GLOW_STYLE}}>{isAct?"RETREAT":"DIVE IN"}</div>}
-                    {lk&&<span style={{fontSize:10,color:C.bad,fontFamily:FONT}}>LV {zone.lv}</span>}
+                  <div key={zone.id} style={{padding:"12px 16px",borderRadius:8,background:isAct?"linear-gradient(90deg,"+C.bad+"15,"+C.card+")":C.card,border:"1px solid "+(isAct?C.bad+"50":C.border),marginBottom:8,opacity:lk?0.35:1}}>
+                    <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:6}}>
+                      <div>
+                        <div style={{fontSize:13,fontWeight:700,color:isAct?C.bad:C.white,fontFamily:FONT,letterSpacing:1}}>{zone.icon} {zone.name.toUpperCase()}</div>
+                        <div style={{fontSize:10,color:C.ts,marginTop:2,fontFamily:FONT_BODY}}>Depth Rank {zone.lv}+ · {zone.mobs.length} mobs · {zone.elites.length} elites · 2 bosses</div>
+                      </div>
+                      {!lk&&<div onClick={()=>{if(isAct)stopZone();else startZone(zone.id)}} style={{padding:"7px 18px",borderRadius:6,background:isAct?"linear-gradient(90deg,"+C.badD+","+C.bad+")":"linear-gradient(90deg,"+C.accD+","+C.acc+")",color:C.bg,fontSize:10,fontWeight:700,cursor:"pointer",letterSpacing:1,fontFamily:FONT,boxShadow:isAct?GLOW_BAD:GLOW_STYLE,flexShrink:0}}>{isAct?"RETREAT":"DIVE IN"}</div>}
+                      {lk&&<span style={{fontSize:10,color:C.bad,fontFamily:FONT,flexShrink:0}}>LV {zone.lv}</span>}
+                    </div>
+                    {/* Creature preview row */}
+                    <div style={{display:"flex",gap:4,flexWrap:"wrap",marginBottom:4}}>
+                      {zone.mobs.map((m,i)=>(
+                        <span key={i} title={m.n+" (HP:"+m.hp+" ATK:"+m.atk+")"} style={{fontSize:16,cursor:"default",filter:"drop-shadow(0 0 3px #00d4ff22)"}}>{m.i||"👾"}</span>
+                      ))}
+                      <span style={{fontSize:10,color:C.td,alignSelf:"center",marginLeft:2}}>+</span>
+                      {zone.elites.map((m,i)=>(
+                        <span key={i} title={"💠 ELITE: "+m.n+" (HP:"+m.hp+")"} style={{fontSize:16,cursor:"default",filter:"drop-shadow(0 0 5px "+C.purp+")"}}>{m.i||"⚡"}</span>
+                      ))}
+                      <span style={{fontSize:10,color:C.td,alignSelf:"center",marginLeft:2}}>bosses:</span>
+                      <span title={"👑 "+zone.boss.n} style={{fontSize:16,cursor:"default",filter:"drop-shadow(0 0 5px "+C.bad+")"}}>{zone.boss.i||"💀"}</span>
+                      <span title={"⚜️ "+zone.boss2.n} style={{fontSize:16,cursor:"default",filter:"drop-shadow(0 0 6px "+C.gold+")"}}>{zone.boss2.i||"👑"}</span>
+                    </div>
+                    <div style={{fontSize:9,color:C.td,fontFamily:FONT_BODY}}>{zone.mobs.map(m=>m.n).slice(0,4).join(" · ")}{zone.mobs.length>4?" · ...":""}</div>
                   </div>
                 );})}
                 {clog.length>0&&(<div style={{marginTop:16,padding:"12px 16px",borderRadius:8,background:C.card,border:"1px solid "+C.border,maxHeight:160,overflow:"auto"}}><div style={{fontSize:9,fontWeight:700,color:C.ts,marginBottom:6,letterSpacing:2}}>COMBAT LOG</div>{clog.slice(-10).reverse().map((l,i)=>(<div key={i} style={{fontSize:10,color:C.ts,padding:"2px 0",borderBottom:"1px solid "+C.bg,opacity:1-i*0.08,fontFamily:FONT_BODY}}>{l}</div>))}</div>)}

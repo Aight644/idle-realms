@@ -1046,8 +1046,7 @@ function GameUI({account,onLogout}){
       }
       // Show tutorial for new players (no prior save)
     }else{setShowTutorial(true)}
-    // Always load social data on mount
-    }}catch(e){console.error(e)}})()},[account.uid]);
+    }catch(e){console.error(e)}})()},[account.uid]);
 
   // Load social on mount
   useEffect(()=>{loadFriends();loadClan();},[account.uid]);

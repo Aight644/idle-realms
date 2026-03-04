@@ -1865,23 +1865,32 @@ function GameUI({account,onLogout}){
     return lines;
   },[bonuses]);
 
-  const SkillNav=({sk,running})=>{const s=sl(sk.id);const pct=s.mastered?100:s.need>0?(s.xp/s.need)*100:0;const act=actSkill===sk.id&&page==="skills";
+  const SkillNav=({sk,running})=>{
+    const s=sl(sk.id);
+    const pct=s.mastered?100:s.need>0?(s.xp/s.need)*100:0;
+    const act=actSkill===sk.id&&page==="skills";
     const hasBp=BLUEPRINTS.some(bp=>bp.skillId===sk.id&&blueprints.includes(bp.id));
-    return(<div onClick={()=>{setActSkill(sk.id);setPage("skills")}} style={{display:"flex",alignItems:"center",gap:8,padding:"6px 12px",cursor:"pointer",background:act?"linear-gradient(90deg,"+C.acc+"15,transparent)":"transparent",borderLeft:act?"3px solid "+C.acc:"3px solid transparent",transition:"all 0.15s"}}>
-      <span style={{fontSize:14,width:20,textAlign:"center",filter:running?"drop-shadow(0 0 4px "+sk.color+")":s.mastered?"drop-shadow(0 0 4px "+C.gold+")":"none"}}>{sk.icon}</span>
-      <div style={{flex:1,minWidth:0}}>
-        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
-          <span style={{fontSize:10,color:act?C.acc:C.text,fontWeight:act?700:500,fontFamily:FONT_BODY}}>{sk.name}</span>
-          <div style={{display:"flex",alignItems:"center",gap:4}}>
-            {hasBp&&<span style={{fontSize:8,color:C.gold}}>📘</span>}
-            <span style={{fontSize:10,color:s.mastered?C.gold:C.ts,fontWeight:700,fontFamily:FONT}}>{s.mastered?"★":s.lv}</span>
+    return(
+      <div onClick={()=>{setActSkill(sk.id);setPage("skills")}} style={{display:"flex",alignItems:"center",gap:8,padding:"5px 10px 5px 8px",cursor:"pointer",background:act?"linear-gradient(90deg,"+C.acc+"18,transparent)":"transparent",borderLeft:act?"3px solid "+C.acc:"3px solid transparent",transition:"all 0.15s"}}>
+        <span style={{fontSize:16,width:22,textAlign:"center",flexShrink:0,filter:running?"drop-shadow(0 0 5px "+sk.color+")":s.mastered?"drop-shadow(0 0 5px "+C.gold+")":"none"}}>{sk.icon}</span>
+        <div style={{flex:1,minWidth:0}}>
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"baseline",marginBottom:3}}>
+            <span style={{fontSize:11,color:act?C.acc:s.mastered?C.gold:C.text,fontWeight:act||running?700:500,fontFamily:FONT_BODY,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{sk.name}</span>
+            <div style={{display:"flex",alignItems:"center",gap:4,flexShrink:0,marginLeft:4}}>
+              {hasBp&&<span style={{fontSize:9,color:C.gold}}>📘</span>}
+              {running&&<span style={{fontSize:9,color:C.ok,fontWeight:700,fontFamily:FONT}}>▶</span>}
+              <span style={{fontSize:11,color:s.mastered?C.gold:C.ts,fontWeight:700,fontFamily:FONT,minWidth:16,textAlign:"right"}}>{s.mastered?"★":s.lv}</span>
+            </div>
+          </div>
+          <div style={{display:"flex",alignItems:"center",gap:5}}>
+            <div style={{flex:1,height:3,borderRadius:2,background:C.bg,overflow:"hidden"}}>
+              <div style={{width:pct+"%",height:"100%",background:s.mastered?C.gold:running?C.ok:sk.color,borderRadius:2,transition:"width 0.3s",boxShadow:s.mastered?"0 0 4px "+C.gold:running?"0 0 4px "+C.ok:"none"}}/>
+            </div>
+            <span style={{fontSize:9,color:C.td,fontFamily:FONT_BODY,flexShrink:0,minWidth:32,textAlign:"right"}}>{pct.toFixed(1)}%</span>
           </div>
         </div>
-        <div style={{height:2,borderRadius:1,background:C.bg,overflow:"hidden",marginTop:2}}>
-          <div style={{width:pct+"%",height:"100%",background:s.mastered?C.gold:running?C.ok:sk.color,borderRadius:1,transition:"width 0.3s",boxShadow:s.mastered?"0 0 4px "+C.gold:running?"0 0 4px "+C.ok:"none"}}/>
-        </div>
       </div>
-    </div>);
+    );
   };
 
   // Item grid cell for right panel inventory
@@ -1896,10 +1905,11 @@ function GameUI({account,onLogout}){
       </div>
     );
   };
-  const NavItem=({id,icon,label})=>{const act=page===id;return(
-    <div onClick={()=>setPage(id)} style={{display:"flex",alignItems:"center",gap:8,padding:"6px 12px",cursor:"pointer",background:act?"linear-gradient(90deg,"+C.acc+"15,transparent)":"transparent",borderLeft:act?"3px solid "+C.acc:"3px solid transparent",transition:"all 0.15s"}}>
-      <span style={{fontSize:14,width:20,textAlign:"center"}}>{icon}</span>
-      <span style={{fontSize:11,color:act?C.acc:C.text,fontFamily:FONT_BODY,fontWeight:act?600:400}}>{label}</span>
+  const NavItem=({id,icon,label,badge})=>{const act=page===id;return(
+    <div onClick={()=>setPage(id)} style={{display:"flex",alignItems:"center",gap:8,padding:"7px 10px 7px 8px",cursor:"pointer",background:act?"linear-gradient(90deg,"+C.acc+"18,transparent)":"transparent",borderLeft:act?"3px solid "+C.acc:"3px solid transparent",transition:"all 0.15s"}}>
+      <span style={{fontSize:16,width:22,textAlign:"center",flexShrink:0}}>{icon}</span>
+      <span style={{fontSize:11,color:act?C.acc:C.text,fontFamily:FONT_BODY,fontWeight:act?700:400,flex:1}}>{label}</span>
+      {badge!=null&&<span style={{fontSize:10,color:C.acc,fontWeight:700,fontFamily:FONT,background:C.acc+"20",padding:"1px 6px",borderRadius:8,flexShrink:0}}>{badge}</span>}
     </div>
   );};
 
@@ -2218,17 +2228,17 @@ function GameUI({account,onLogout}){
             )})}
           </div>
           <div style={{padding:"4px 0",borderBottom:"1px solid "+C.border}}>
-            <NavItem id="research" icon="🔬" label="Research Tree"/>
-            <NavItem id="structures" icon="🏗️" label="Structures"/>
-            <NavItem id="drones" icon="🤖" label="Drone Fleet"/>
-            <NavItem id="prestige" icon="✨" label={canAscend?"ASCEND NOW!":"Ascension"}/>
-            <NavItem id="market" icon="🏪" label="Marketplace"/>
-            <NavItem id="achievements" icon="🏆" label="Achievements"/>
-            <NavItem id="blueprints" icon="📘" label={`Blueprints${blueprints.length>0?" ("+blueprints.length+")":""}`}/>
-            <NavItem id="stats" icon="📊" label="Stats & Profile"/>
-            <NavItem id="social" icon="💬" label={`Social${friendReqs.length>0?" ("+friendReqs.length+")":""}`}/>
-            <NavItem id="equipment" icon="🗡️" label="Equipment"/>
-            <NavItem id="inventory" icon="🎒" label="Inventory"/>
+            <NavItem id="research"    icon="🔬" label="Research Tree"/>
+            <NavItem id="structures"  icon="🏗️" label="Structures"/>
+            <NavItem id="drones"      icon="🤖" label="Drone Fleet"/>
+            <NavItem id="prestige"    icon="✨" label={canAscend?"ASCEND NOW!":"Ascension"} badge={canAscend?"!":null}/>
+            <NavItem id="market"      icon="🏪" label="Marketplace"/>
+            <NavItem id="achievements"icon="🏆" label="Achievements"/>
+            <NavItem id="blueprints"  icon="📘" label="Blueprints"  badge={blueprints.length>0?blueprints.length:null}/>
+            <NavItem id="stats"       icon="📊" label="Stats & Profile"/>
+            <NavItem id="social"      icon="💬" label="Social"       badge={friendReqs.length>0?friendReqs.length:null}/>
+            <NavItem id="equipment"   icon="🗡️" label="Equipment"/>
+            <NavItem id="inventory"   icon="🎒" label="Inventory"/>
           </div>
           <div style={{flex:1}}/>
           <div onClick={()=>setShowLogoutConfirm(true)} style={{padding:"10px 12px",borderTop:"1px solid "+C.border,fontSize:10,color:C.td,cursor:"pointer",fontFamily:FONT_BODY,letterSpacing:1,display:"flex",alignItems:"center",gap:6}}>◉ LOGOUT</div>

@@ -525,66 +525,66 @@ const ITEMS={
   sediment_core:{n:"Sediment Core",i:"🗜️",s:1,v:30},
   ancient_fragment:{n:"Ancient Fragment",i:"🧩",s:1,v:65},
   abyss_silt:{n:"Abyss Silt",i:"🔘",s:1,v:110},
-  tide_mallet:{n:"Tide Mallet",i:"🔨",eq:"weapon",set:"tidebreaker",st:{atk:10,def:3}},
+  tide_mallet:{n:"Tide Mallet",i:"🔨",eq:"weapon",wtype:"melee",set:"tidebreaker",st:{atk:10,def:3}},
   tide_helm:{n:"Tide Helm",i:"🪸",eq:"head",set:"tidebreaker",st:{def:8,hp:14}},
   tide_plate:{n:"Tide Plate",i:"🦺",eq:"body",set:"tidebreaker",st:{def:15,hp:28}},
   tide_gauntlets:{n:"Tide Gauntlets",i:"🦾",eq:"hands",set:"tidebreaker",st:{atk:4,def:3}},
   tide_sabatons:{n:"Tide Sabatons",i:"🥾",eq:"feet",set:"tidebreaker",st:{def:4,hp:8}},
   tide_shield:{n:"Tide Shield",i:"🛡️",eq:"shield",set:"tidebreaker",st:{def:10,hp:18}},
-  reef_mallet:{n:"Reef Mallet",i:"⚔️",eq:"weapon",set:"tidebreaker",st:{atk:22,def:6}},
+  reef_mallet:{n:"Reef Mallet",i:"⚔️",eq:"weapon",wtype:"melee",set:"tidebreaker",st:{atk:22,def:6}},
   reef_warhelm:{n:"Reef Warhelm",i:"🪸",eq:"head",set:"tidebreaker",st:{def:18,hp:32}},
   reef_warplate:{n:"Reef Warplate",i:"🦺",eq:"body",set:"tidebreaker",st:{def:32,hp:60}},
   reef_warfists:{n:"Reef Warfists",i:"🦾",eq:"hands",set:"tidebreaker",st:{atk:8,def:7}},
   reef_warboots:{n:"Reef Warboots",i:"🥾",eq:"feet",set:"tidebreaker",st:{def:10,hp:18}},
   reef_bulwark:{n:"Reef Bulwark",i:"🛡️",eq:"shield",set:"tidebreaker",st:{def:24,hp:38}},
-  abyssal_mallet:{n:"Abyssal Mallet",i:"⚔️",eq:"weapon",set:"tidebreaker",st:{atk:40,def:10}},
+  abyssal_mallet:{n:"Abyssal Mallet",i:"⚔️",eq:"weapon",wtype:"melee",set:"tidebreaker",st:{atk:40,def:10}},
   abyssal_warhelm:{n:"Abyssal Warhelm",i:"⛑️",eq:"head",set:"tidebreaker",st:{def:32,hp:58}},
   abyssal_warplate:{n:"Abyssal Warplate",i:"🦺",eq:"body",set:"tidebreaker",st:{def:58,hp:105}},
   abyssal_warfists:{n:"Abyssal Warfists",i:"🦾",eq:"hands",set:"tidebreaker",st:{atk:15,def:12}},
   abyssal_warboots:{n:"Abyssal Warboots",i:"🥾",eq:"feet",set:"tidebreaker",st:{def:18,hp:30}},
   abyssal_bulwark:{n:"Abyssal Bulwark",i:"🛡️",eq:"shield",set:"tidebreaker",st:{def:46,hp:68}},
-  leviathan_mallet:{n:"Leviathan Mallet",i:"⚔️",eq:"weapon",set:"tidebreaker",st:{atk:65,def:16}},
+  leviathan_mallet:{n:"Leviathan Mallet",i:"⚔️",eq:"weapon",wtype:"melee",set:"tidebreaker",st:{atk:65,def:16}},
   leviathan_warhelm:{n:"Leviathan Warhelm",i:"👑",eq:"head",set:"tidebreaker",st:{def:52,hp:95}},
   leviathan_warplate:{n:"Leviathan Warplate",i:"🦺",eq:"body",set:"tidebreaker",st:{def:90,hp:175}},
   leviathan_warfists:{n:"Leviathan Warfists",i:"🦾",eq:"hands",set:"tidebreaker",st:{atk:24,def:20}},
   leviathan_warboots:{n:"Leviathan Warboots",i:"🥾",eq:"feet",set:"tidebreaker",st:{def:28,hp:50}},
   leviathan_bulwark:{n:"Leviathan Bulwark",i:"🛡️",eq:"shield",set:"tidebreaker",st:{def:74,hp:115}},
-  sting_bolt:{n:"Sting Bolt",i:"🎯",eq:"weapon",set:"deepstriker",st:{atk:8,rng:8}},
+  sting_bolt:{n:"Sting Bolt",i:"🎯",eq:"weapon",wtype:"ranged",set:"deepstriker",st:{atk:8,rng:8}},
   strike_cowl:{n:"Strike Cowl",i:"🎣",eq:"head",set:"deepstriker",st:{rng:5,hp:10}},
   strike_vest:{n:"Strike Vest",i:"🧥",eq:"body",set:"deepstriker",st:{rng:10,hp:20}},
   strike_wraps:{n:"Strike Wraps",i:"🧤",eq:"hands",set:"deepstriker",st:{rng:6,atk:2}},
   strike_fins:{n:"Strike Fins",i:"🩴",eq:"feet",set:"deepstriker",st:{rng:4,hp:6}},
-  reef_crossbow:{n:"Reef Crossbow",i:"🏹",eq:"weapon",set:"deepstriker",st:{atk:18,rng:18}},
+  reef_crossbow:{n:"Reef Crossbow",i:"🏹",eq:"weapon",wtype:"ranged",set:"deepstriker",st:{atk:18,rng:18}},
   reef_hood:{n:"Reef Hood",i:"🎣",eq:"head",set:"deepstriker",st:{rng:11,hp:22}},
   reef_leathers:{n:"Reef Leathers",i:"🧥",eq:"body",set:"deepstriker",st:{rng:20,hp:42}},
   reef_bracers:{n:"Reef Bracers",i:"🧤",eq:"hands",set:"deepstriker",st:{rng:13,atk:4}},
   reef_striders:{n:"Reef Striders",i:"🩴",eq:"feet",set:"deepstriker",st:{rng:8,hp:14}},
-  void_bow:{n:"Void Bow",i:"🏹",eq:"weapon",set:"deepstriker",st:{atk:32,rng:30}},
+  void_bow:{n:"Void Bow",i:"🏹",eq:"weapon",wtype:"ranged",set:"deepstriker",st:{atk:32,rng:30}},
   void_cowl:{n:"Void Cowl",i:"🎣",eq:"head",set:"deepstriker",st:{rng:20,hp:38}},
   void_leathers:{n:"Void Leathers",i:"🧥",eq:"body",set:"deepstriker",st:{rng:36,hp:68}},
   void_bracers:{n:"Void Bracers",i:"🧤",eq:"hands",set:"deepstriker",st:{rng:22,atk:7}},
   void_striders:{n:"Void Striders",i:"🩴",eq:"feet",set:"deepstriker",st:{rng:14,hp:26}},
-  abyss_bow:{n:"Abyss Bow",i:"🏹",eq:"weapon",set:"deepstriker",st:{atk:50,rng:48}},
+  abyss_bow:{n:"Abyss Bow",i:"🏹",eq:"weapon",wtype:"ranged",set:"deepstriker",st:{atk:50,rng:48}},
   abyss_cowl:{n:"Abyss Cowl",i:"🎣",eq:"head",set:"deepstriker",st:{rng:32,hp:62}},
   abyss_leathers:{n:"Abyss Leathers",i:"🧥",eq:"body",set:"deepstriker",st:{rng:58,hp:112}},
   abyss_bracers:{n:"Abyss Bracers",i:"🧤",eq:"hands",set:"deepstriker",st:{rng:34,atk:11}},
   abyss_striders:{n:"Abyss Striders",i:"🩴",eq:"feet",set:"deepstriker",st:{rng:22,hp:42}},
-  crystal_wand:{n:"Crystal Wand",i:"🪄",eq:"weapon",set:"voidcaller",st:{mag:12,atk:3}},
+  crystal_wand:{n:"Crystal Wand",i:"🪄",eq:"weapon",wtype:"magic",set:"voidcaller",st:{mag:12,atk:3}},
   crystal_circlet:{n:"Crystal Circlet",i:"💎",eq:"head",set:"voidcaller",st:{mag:8,hp:10}},
   crystal_robe:{n:"Crystal Robe",i:"🔮",eq:"body",set:"voidcaller",st:{mag:15,hp:20}},
   crystal_focus:{n:"Crystal Focus",i:"🔹",eq:"hands",set:"voidcaller",st:{mag:6,atk:2}},
   crystal_sandals:{n:"Crystal Sandals",i:"💠",eq:"feet",set:"voidcaller",st:{mag:4,hp:6}},
-  ether_staff:{n:"Ether Staff",i:"🪄",eq:"weapon",set:"voidcaller",st:{mag:26,atk:6}},
+  ether_staff:{n:"Ether Staff",i:"🪄",eq:"weapon",wtype:"magic",set:"voidcaller",st:{mag:26,atk:6}},
   ether_crown:{n:"Ether Crown",i:"💎",eq:"head",set:"voidcaller",st:{mag:18,hp:22}},
   ether_robes:{n:"Ether Robes",i:"🔮",eq:"body",set:"voidcaller",st:{mag:34,hp:40}},
   ether_gloves:{n:"Ether Gloves",i:"🔹",eq:"hands",set:"voidcaller",st:{mag:14,atk:4}},
   ether_slippers:{n:"Ether Slippers",i:"💠",eq:"feet",set:"voidcaller",st:{mag:10,hp:14}},
-  void_staff:{n:"Void Staff",i:"🪄",eq:"weapon",set:"voidcaller",st:{mag:44,atk:10}},
+  void_staff:{n:"Void Staff",i:"🪄",eq:"weapon",wtype:"magic",set:"voidcaller",st:{mag:44,atk:10}},
   void_crown:{n:"Void Crown",i:"👑",eq:"head",set:"voidcaller",st:{mag:32,hp:38}},
   void_robes:{n:"Void Robes",i:"🔮",eq:"body",set:"voidcaller",st:{mag:60,hp:68}},
   void_focus:{n:"Void Focus",i:"🔹",eq:"hands",set:"voidcaller",st:{mag:26,atk:7}},
   void_sandals:{n:"Void Sandals",i:"💠",eq:"feet",set:"voidcaller",st:{mag:18,hp:26}},
-  abyss_scepter:{n:"Abyss Scepter",i:"🪄",eq:"weapon",set:"voidcaller",st:{mag:70,atk:16}},
+  abyss_scepter:{n:"Abyss Scepter",i:"🪄",eq:"weapon",wtype:"magic",set:"voidcaller",st:{mag:70,atk:16}},
   abyss_crown:{n:"Abyss Crown",i:"👑",eq:"head",set:"voidcaller",st:{mag:52,hp:62}},
   abyss_robes:{n:"Abyss Robes",i:"🔮",eq:"body",set:"voidcaller",st:{mag:98,hp:110}},
   abyss_focus:{n:"Abyss Focus",i:"🔹",eq:"hands",set:"voidcaller",st:{mag:40,atk:11}},
@@ -1381,6 +1381,8 @@ function GameUI({account,onLogout}){
     ESLOTS.forEach(slot=>{const iid=eq[slot.id];if(iid){const it=ITEMS[iid];if(it&&it.st)Object.entries(it.st||{}).forEach(([k,v])=>{const e=enh[iid]||0;s[k]=(s[k]||0)+Math.floor(v*(1+e*0.08))})}});
     if(bonuses.atk_pct)s.atk=Math.floor(s.atk*(1+bonuses.atk_pct));
     if(bonuses.def_pct)s.def=Math.floor(s.def*(1+bonuses.def_pct));
+    const weapId=eq["weapon"];const weap=weapId?ITEMS[weapId]:null;
+    s.wtype=weap?.wtype||"melee";
     return s;
   },[eq,sl,enh,bonuses]);
 
@@ -1614,7 +1616,10 @@ function GameUI({account,onLogout}){
       setCbt(prev=>{
         if(!prev)return null;
         let{mob,mhp,php,mxhp,kills,boss}=prev;
-        const pd=Math.max(1,st.atk-Math.floor(mob.def*0.5)+Math.floor(Math.random()*3));mhp-=pd;
+        const wt=st.wtype||"melee";
+        const baseDmg=wt==="magic"?(st.mag||0)*1.5:wt==="ranged"?(st.rng||0)*1.2:st.atk;
+        const defMult=wt==="magic"?0:0.5; // magic bypasses def
+        const pd=Math.max(1,Math.floor(baseDmg)-Math.floor(mob.def*defMult)+Math.floor(Math.random()*3));mhp-=pd;
         if(mhp>0){
           const md=Math.max(1,mob.atk-Math.floor(st.def*0.5)+Math.floor(Math.random()*2));php-=md;
           const ci=invRef.current;
@@ -1623,7 +1628,14 @@ function GameUI({account,onLogout}){
         }
         if(mhp<=0){
           const nk=kills+1;const xpp=Math.floor(mob.xp/5*(1+(bonuses.combat_xp||0)));
-          CSUBS.forEach(s=>gainXp(s.id,xpp));
+          // Level weapon-type skill + shared skills
+          const wtype=st.wtype||"melee";
+          const typeSkill=wtype==="magic"?"leviathan_lore":wtype==="ranged"?"sonic_weapons":"harpoon_mastery";
+          gainXp(typeSkill,xpp*3); // weapon skill levels faster
+          gainXp("pressure_resistance",xpp);
+          gainXp("combat_systems",xpp);
+          gainXp("depth_shielding",xpp);
+          gainXp("drone_combat",xpp);
           const goldGain=Math.floor(mob.g*(1+(bonuses.gold_pct||0)));
           setGold(g=>g+goldGain);setResearchPts(p=>p+Math.floor(mob.xp/20));
           // Track lifetime stats

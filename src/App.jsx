@@ -306,70 +306,70 @@ const BLUEPRINTS = [
     id:"bp_void_kelp", skillId:"kelp_farming", icon:"🌀", rarity:"rare",
     name:"Void Kelp Cultivation",
     desc:"Ancient technique for cultivating void-infused kelp. Massive yield.",
-    act:{id:"kf5",name:"Void Kelp Grove",lv:80,xp:170,t:24,out:[{id:"kelp",q:12},{id:"void_essence",q:1}]},
+    act:{id:"bp_kf5",name:"Void Kelp Grove",lv:80,xp:170,t:24,out:[{id:"kelp",q:12},{id:"void_essence",q:1}]},
     source:"Ancient Submarine Wreck",
   },
   {
     id:"bp_leviathan_scale", skillId:"bioluminescent_fishing", icon:"🐉", rarity:"rare",
     name:"Leviathan Scale Harvest",
     desc:"Carefully extract scales from leviathan remains — potent crafting material.",
-    act:{id:"ch5",name:"Leviathan Scale Harvest",lv:90,xp:88,t:11,inp:[{id:"leviathan_bone",q:1}],out:[{id:"reinforced_alloy",q:5},{id:"alien_bio_tissue",q:1}]},
+    act:{id:"bp_ch5",name:"Leviathan Scale Harvest",lv:90,xp:88,t:11,inp:[{id:"leviathan_bone",q:1}],out:[{id:"reinforced_alloy",q:5},{id:"alien_bio_tissue",q:1}]},
     source:"Ancient Submarine Wreck",
   },
   {
     id:"bp_void_crystal", skillId:"crystal_diving", icon:"💎", rarity:"epic",
     name:"Void Crystal Resonance",
     desc:"Resonate with void crystals to yield pure essence.",
-    act:{id:"cd5",name:"Void Crystal Resonance",lv:95,xp:196,t:24,inp:[{id:"abyss_crystal",q:3}],out:[{id:"void_essence",q:2},{id:"abyss_crystal",q:5}]},
+    act:{id:"bp_cd5",name:"Void Crystal Resonance",lv:95,xp:196,t:24,inp:[{id:"abyss_crystal",q:3}],out:[{id:"void_essence",q:2},{id:"abyss_crystal",q:5}]},
     source:"Lost Research Facility",
   },
   {
     id:"bp_ancient_brew", skillId:"bio_lab", icon:"🧬", rarity:"epic",
     name:"Ancient Healing Formula",
     desc:"A powerful healing formula recovered from a lost research facility.",
-    act:{id:"bs5",name:"Ancient Healing Formula",lv:70,xp:133,t:26,inp:[{id:"alien_bio_tissue",q:1},{id:"void_pearl",q:1}],out:[{id:"pressure_tonic",q:3},{id:"bio_stim",q:1}]},
+    act:{id:"bp_bs5",name:"Ancient Healing Formula",lv:70,xp:133,t:26,inp:[{id:"alien_bio_tissue",q:1},{id:"void_pearl",q:1}],out:[{id:"pressure_tonic",q:3},{id:"bio_stim",q:1}]},
     source:"Lost Research Facility",
   },
   {
     id:"bp_thermal_forge", skillId:"relic_forging", icon:"🌋", rarity:"legendary",
     name:"Thermal Core Mastery",
     desc:"Master thermal core forging — double output from thermal processes.",
-    act:{id:"rf9",name:"Thermal Core Mastery",lv:85,xp:208,t:60,inp:[{id:"thermal_ore",q:20},{id:"void_essence",q:1}],out:[{id:"thermal_core",q:1}]},
+    act:{id:"bp_rf9",name:"Thermal Core Mastery",lv:85,xp:208,t:60,inp:[{id:"thermal_ore",q:20},{id:"void_essence",q:1}],out:[{id:"thermal_core",q:1}]},
     source:"Deep Signal Beacon",
   },
   {
     id:"bp_void_reactor", skillId:"fabrication", icon:"⚡", rarity:"legendary",
     name:"Void Reactor Blueprint",
     desc:"Harness void energy to produce massive amounts of pressure reactors.",
-    act:{id:"es5",name:"Void Reactor Synthesis",lv:100,xp:200,t:60,inp:[{id:"void_essence",q:2},{id:"thermal_core",q:1},{id:"abyss_crystal",q:5}],out:[{id:"pressure_reactor",q:5},{id:"drone_processor",q:1}]},
+    act:{id:"bp_es5",name:"Void Reactor Synthesis",lv:100,xp:200,t:60,inp:[{id:"void_essence",q:2},{id:"thermal_core",q:1},{id:"abyss_crystal",q:5}],out:[{id:"pressure_reactor",q:5},{id:"drone_processor",q:1}]},
     source:"Deep Signal Beacon",
   },
   {
     id:"bp_ancient_armor", skillId:"gear_crafting", icon:"👑", rarity:"legendary",
     name:"Ancient Emperor Armor",
     desc:"Blueprints for the ancient emperor's armor — the pinnacle of defense.",
-    act:{id:"rf10",gearCat:"combat",name:"Emperor Armor",lv:110,xp:450,t:60,inp:[{id:"ancient_processor",q:3},{id:"void_essence",q:3},{id:"leviathan_bone",q:8},{id:"alien_bio_tissue",q:4}],out:[{id:"leviathan_armor",q:1},{id:"ancient_helm",q:1}]},
+    act:{id:"bp_rf10",gearCat:"combat",name:"Emperor Armor",lv:110,xp:450,t:60,inp:[{id:"ancient_processor",q:3},{id:"void_essence",q:3},{id:"leviathan_bone",q:8},{id:"alien_bio_tissue",q:4}],out:[{id:"leviathan_warplate",q:1},{id:"abyss_crown",q:1}]},
     source:"Crystal Vein Exposed",
   },
   {
     id:"bp_deep_scan", skillId:"exploration", icon:"📡", rarity:"rare",
     name:"Deep Void Scanner",
     desc:"Scan deep void pockets for rare essence deposits.",
-    act:{id:"sc5",name:"Void Pocket Scan",lv:75,xp:102,t:60,inp:[{id:"resonance_crystal",q:3},{id:"void_pearl",q:1}],out:[{id:"void_essence",q:1},{id:"ancient_data_chip",q:1}],util:{type:"rare",val:0.15},desc:"Scan void pockets. +15% rare drops."},
+    act:{id:"bp_sc5",name:"Void Pocket Scan",lv:75,xp:102,t:60,inp:[{id:"resonance_crystal",q:3},{id:"void_pearl",q:1}],out:[{id:"void_essence",q:1},{id:"ancient_data_chip",q:1}],util:{type:"rare",val:0.15},desc:"Scan void pockets. +15% rare drops."},
     source:"Ancient Submarine Wreck",
   },
   {
     id:"bp_supply_mastery", skillId:"exploration", icon:"📦", rarity:"rare",
     name:"Void Supply Network",
     desc:"Build a void-powered supply network — extreme logistics efficiency.",
-    act:{id:"lg5",name:"Void Supply Network",lv:80,xp:168,t:60,inp:[{id:"void_essence",q:1},{id:"ancient_data_chip",q:2}],out:[{id:"supply_crate",q:8}],util:{type:"gold",val:500},desc:"Void supply network. +500 credits per run."},
+    act:{id:"bp_lg5",name:"Void Supply Network",lv:80,xp:168,t:60,inp:[{id:"void_essence",q:1},{id:"ancient_data_chip",q:2}],out:[{id:"supply_crate",q:8}],util:{type:"gold",val:500},desc:"Void supply network. +500 credits per run."},
     source:"Ancient Submarine Wreck",
   },
   {
     id:"bp_atlas_complete", skillId:"exploration", icon:"🗺️", rarity:"epic",
     name:"Void Realm Atlas",
     desc:"Chart the void realms beyond the known ocean — yields impossible resources.",
-    act:{id:"oc5",name:"Void Realm Atlas",lv:100,xp:218,t:60,inp:[{id:"void_map",q:3},{id:"void_essence",q:2}],out:[{id:"void_map",q:5},{id:"ancient_relic",q:2}],util:{type:"yield",val:0.40},desc:"Void realm atlas. +40% all yields permanently."},
+    act:{id:"bp_oc5",name:"Void Realm Atlas",lv:100,xp:218,t:60,inp:[{id:"void_map",q:3},{id:"void_essence",q:2}],out:[{id:"void_map",q:5},{id:"ancient_relic",q:2}],util:{type:"yield",val:0.40},desc:"Void realm atlas. +40% all yields permanently."},
     source:"Lost Research Facility",
   },
 ];
@@ -1177,6 +1177,7 @@ function ProgBar({progRef,height=7,radius=4,bg,color,glow}){
 // Standalone ActRow — must be outside GameUI to prevent React remount-on-render
 function ActRow({act,skColor,inv,curAct,startAct,skId,s,tipProps,C,FONT,FONT_BODY,ITEMS,BLUEPRINTS,BP_RARITY_COLOR,GLOW_OK,GLOW_STYLE}){
   if(!act||!act.name)return null;
+  const tp=tipProps||(()=>({}));
   const locked=s.lv<act.lv&&!s.mastered;
   const canDo=!locked&&(!act.inp||act.inp.every(i=>(inv[i.id]||0)>=i.q));
   const isAct=curAct&&curAct.act===act.id&&curAct.sk===skId;
@@ -1197,10 +1198,10 @@ function ActRow({act,skColor,inv,curAct,startAct,skId,s,tipProps,C,FONT,FONT_BOD
         </div>
         <div style={{fontSize:11,color:C.ts,fontFamily:FONT_BODY,display:"flex",alignItems:"center",gap:3,flexWrap:"wrap"}}>
           {act.inp&&<>{act.inp.map(i=>{const it=ITEMS[i.id];const has=(inv[i.id]||0)>=i.q;return(
-            <span key={i.id} style={{color:has?C.ts:"#f87171",marginRight:2}}>{it?.i||""}{i.q} {it?.n||i.id}</span>
+            <span key={i.id} {...tp(i.id)} style={{color:has?C.ts:"#f87171",marginRight:2,cursor:"help"}}>{it?.i||""}{i.q} {it?.n||i.id}</span>
           );})}<span style={{color:C.td,margin:"0 2px"}}>→</span></>}
           {act.out&&act.out.map(i=>{const it=ITEMS[i.id];const isGear=it?.eq&&it.eq!=="tool";return(
-            <span key={i.id} style={{color:isGear?skColor:C.ts,fontWeight:isGear?700:400,borderBottom:isGear?"1px dashed "+skColor+"50":"none"}}>
+            <span key={i.id} {...tp(i.id)} style={{color:isGear?skColor:C.ts,fontWeight:isGear?700:400,borderBottom:isGear?"1px dashed "+skColor+"50":"none",cursor:"help"}}>
               {it?.i||""} {it?.n||i.id}{i.q>1?" ×"+i.q:""}
             </span>
           );})}

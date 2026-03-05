@@ -2339,6 +2339,7 @@ function GameUI({account,onLogout}){
               const allItems={};
               Object.keys(ITEMS).forEach(id=>{allItems[id]=999;});
               setInv(allItems);
+
               // Max gold and RP
               setGold(9999999);
               setResearchPts(99999);

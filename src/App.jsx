@@ -487,6 +487,14 @@ const ITEMS={
   shell_fragments:{n:"Shell Fragments",i:"🐚",s:1,v:14}, thermal_ore:{n:"Thermal Ore",i:"🔶",s:1,v:55},
   abyss_crystal:{n:"Abyss Crystal",i:"💎",s:1,v:12}, ocean_fiber:{n:"Ocean Fiber",i:"🧵",s:1,v:65},
   sea_fiber:{n:"Sea Fiber",i:"🪢",s:1,v:4},
+  stone_powder:{n:"Stone Powder",i:"🟤",s:1,v:3},
+  shell_dust:{n:"Shell Dust",i:"🌫️",s:1,v:8},
+  fiber_cord:{n:"Fiber Cord",i:"🧶",s:1,v:12},
+  crystal_shard:{n:"Crystal Shard",i:"🔷",s:1,v:8},
+  quartz_powder:{n:"Quartz Powder",i:"⬜",s:1,v:14},
+  refined_silt:{n:"Refined Silt",i:"🟫",s:1,v:28},
+  ore_flakes:{n:"Ore Flakes",i:"🟠",s:1,v:35},
+  void_dust:{n:"Void Dust",i:"🌌",s:1,v:90},
   sea_mushrooms:{n:"Sea Mushrooms",i:"🍄",s:1,v:22}, trench_stone:{n:"Trench Stone",i:"🪨",s:1,v:5},
   coral_blocks:{n:"Coral Blocks",i:"🟦",s:1,v:10}, reinforced_alloy:{n:"Reinforced Alloy",i:"⚙️",s:1,v:45},
   biofuel:{n:"Biofuel",i:"🟩",s:1,v:18}, pressure_glass:{n:"Pressure Glass",i:"🔮",s:1,v:40},
@@ -666,13 +674,20 @@ const SKILLS=[
     {id:"te6",name:"Lost Relic Vault",   lv:110,xp:310,t:30, out:[{id:"ancient_relic",q:1}]}]},
   // ── Fabrication: materials + tech components ──
   {id:"fabrication",name:"Fabrication",icon:"🔧",color:"#ffd60a",cat:"prod",acts:[
+    // ── Refining chain (lv1-25) ──
+    {id:"fb1",name:"Grind Stone",        lv:1, xp:14, t:10,inp:[{id:"trench_stone",q:3}],                                                    out:[{id:"stone_powder",q:1}]},
+    {id:"fb2",name:"Crush Shells",       lv:5, xp:18, t:10,inp:[{id:"shell_fragments",q:3}],                                                 out:[{id:"shell_dust",q:1}]},
+    {id:"fb3",name:"Braid Sea Fiber",    lv:10,xp:22, t:11,inp:[{id:"sea_fiber",q:4}],                                                       out:[{id:"fiber_cord",q:1}]},
+    {id:"fb4",name:"Smelt Ore Flakes",   lv:20,xp:40, t:13,inp:[{id:"thermal_ore",q:2}],                                                     out:[{id:"ore_flakes",q:1}]},
+    {id:"fb5",name:"Refine Salt",        lv:30,xp:65, t:15,inp:[{id:"salt_crystals",q:3}],                                                   out:[{id:"shell_dust",q:2},{id:"ore_flakes",q:1}]},
+    // ── Materials ──
     {id:"ce1",name:"Coral Blocks",       lv:1, xp:13, t:11,inp:[{id:"soft_coral",q:3}],                                                      out:[{id:"coral_blocks",q:1}]},
     {id:"ar1",name:"Ore Processing",     lv:1, xp:20, t:12,inp:[{id:"trench_stone",q:8}],                                                    out:[{id:"drone_processor",q:1}]},
-    {id:"ce2",name:"Reinforced Alloy",   lv:10,xp:30, t:13,inp:[{id:"shell_fragments",q:5},{id:"trench_stone",q:3}],                         out:[{id:"reinforced_alloy",q:1}]},
-    {id:"dc1",name:"Basic Processor",    lv:10,xp:86, t:20,inp:[{id:"trench_stone",q:5},{id:"thermal_ore",q:3}],                             out:[{id:"drone_processor",q:1}]},
-    {id:"ar2",name:"Crystal Refinement", lv:15,xp:40, t:15,inp:[{id:"abyss_crystal",q:2}],                                                   out:[{id:"pressure_reactor",q:1}]},
+    {id:"ce2",name:"Reinforced Alloy",   lv:10,xp:30, t:13,inp:[{id:"shell_dust",q:3},{id:"stone_powder",q:4}],                         out:[{id:"reinforced_alloy",q:1}]},
+    {id:"dc1",name:"Basic Processor",    lv:10,xp:86, t:20,inp:[{id:"stone_powder",q:6},{id:"thermal_ore",q:2}],                             out:[{id:"drone_processor",q:1}]},
+    {id:"ar2",name:"Crystal Refinement", lv:15,xp:40, t:15,inp:[{id:"crystal_shard",q:4}],                                                   out:[{id:"pressure_reactor",q:1}]},
     {id:"oa1",name:"Thermal Steel",      lv:15,xp:37, t:14,inp:[{id:"thermal_ore",q:4},{id:"salt_crystals",q:3}],                            out:[{id:"reinforced_alloy",q:1}]},
-    {id:"ce3",name:"Pressure Glass",     lv:20,xp:78, t:19,inp:[{id:"salt_crystals",q:4},{id:"thermal_ore",q:2}],                            out:[{id:"pressure_glass",q:1}]},
+    {id:"ce3",name:"Pressure Glass",     lv:20,xp:78, t:19,inp:[{id:"ore_flakes",q:4},{id:"salt_crystals",q:2}],                            out:[{id:"pressure_glass",q:1}]},
     {id:"dc2",name:"Pressure Reactor",   lv:20,xp:60, t:17,inp:[{id:"pressure_glass",q:3},{id:"enzyme_compound",q:2}],                       out:[{id:"pressure_reactor",q:1}]},
     {id:"es2",name:"Pressure Conduit",   lv:40,xp:76, t:19,inp:[{id:"pressure_glass",q:2},{id:"reinforced_alloy",q:3}],                      out:[{id:"pressure_reactor",q:1},{id:"drone_processor",q:1}]}]},
 
@@ -715,14 +730,21 @@ const SKILLS=[
 
   // ── Endgame / Rare Crafting ──
   {id:"relic_forging",name:"Relic Forging",icon:"⚗️",color:"#e11d48",cat:"prod",acts:[
-    {id:"rf1",name:"Void Pearl Extract",lv:30,xp:72,t:19,inp:[{id:"abyss_crystal",q:3},{id:"luminescent_gel",q:4}],out:[{id:"void_pearl",q:1}]},
+    // ── Crystal refining chain (lv1-25) ──
+    {id:"rl1",name:"Split Crystals",     lv:1, xp:16, t:10,inp:[{id:"abyss_crystal",q:2}],                                                   out:[{id:"crystal_shard",q:1}]},
+    {id:"rl2",name:"Grind Quartz",       lv:10,xp:24, t:12,inp:[{id:"raw_quartz",q:3}],                                                      out:[{id:"quartz_powder",q:1}]},
+    {id:"rl3",name:"Refine Silt",        lv:20,xp:45, t:15,inp:[{id:"silt_crystal",q:2}],                                                    out:[{id:"refined_silt",q:1}]},
+    {id:"rl4",name:"Extract Ether",      lv:25,xp:65, t:17,inp:[{id:"ether_dust",q:2}],                                                      out:[{id:"void_dust",q:1}]},
+    // ── Rare material synthesis (lv30+) ──
+    {id:"rf1",name:"Void Pearl Extract",lv:30,xp:72,t:19,inp:[{id:"void_dust",q:2},{id:"luminescent_gel",q:3}],out:[{id:"void_pearl",q:1}]},
     {id:"rf2",name:"Black Coral Harvest",lv:45,xp:149,t:28,inp:[{id:"coral_blocks",q:15},{id:"thermal_ore",q:5}],out:[{id:"black_coral",q:1}]},
-    {id:"rf3",name:"Thermal Core Forge",lv:55,xp:350,t:35,inp:[{id:"thermal_ore",q:15},{id:"pressure_glass",q:5},{id:"abyss_crystal",q:2}],out:[{id:"thermal_core",q:1}]},
+    {id:"rf3",name:"Thermal Core Forge",lv:55,xp:350,t:35,inp:[{id:"ore_flakes",q:10},{id:"pressure_glass",q:5},{id:"refined_silt",q:3}],out:[{id:"thermal_core",q:1}]},
     {id:"rf4",name:"Alien Tissue Culture",lv:65,xp:299,t:35,inp:[{id:"enzyme_compound",q:8},{id:"luminescent_gel",q:6},{id:"void_pearl",q:1}],out:[{id:"alien_bio_tissue",q:1}]}]},
 
   // ── Cultivation Gear ──
   {id:"gear_crafting",name:"Gear Crafting",icon:"🛠️",color:"#f59e0b",cat:"prod",acts:[
     // ── Combat Gear ──
+    {id:"gc1",gearCat:"combat",name:"Weave Fiber Cord",lv:1,xp:14,t:10,inp:[{id:"sea_fiber",q:4}],                                          out:[{id:"fiber_cord",q:1}]},
     {id:"pe1",gearCat:"combat",name:"Basic Harpoon",   lv:1, xp:77, t:19,inp:[{id:"trench_stone",q:5},{id:"sea_fiber",q:3}],                                   out:[{id:"basic_harpoon",q:1}]},
     {id:"ce4",gearCat:"combat",name:"Coral Helm",      lv:5, xp:53, t:16,inp:[{id:"coral_blocks",q:8},{id:"shell_fragments",q:5}],                              out:[{id:"coral_helm",q:1}]},
     {id:"pe2",gearCat:"combat",name:"Pressure Helm",   lv:10,xp:91, t:21,inp:[{id:"pressure_glass",q:2},{id:"reinforced_alloy",q:4}],                          out:[{id:"pressure_helm",q:1}]},

@@ -1164,7 +1164,7 @@ function ProgBar({progRef,height=7,radius=4,bg,color,glow}){
 }
 
 // Standalone ActRow — must be outside GameUI to prevent React remount-on-render
-function ActRow({act,skColor,inv,curAct,startAct,skId,s,tipProps,C,FONT,FONT_BODY,ITEMS,BLUEPRINTS,BP_RARITY_COLOR,GLOW_OK,GLOW_STYLE}){
+function ActRow({act,skColor,inv,curAct,startAct,skId,s,tipProps,C,FONT,FONT_BODY,ITEMS,BLUEPRINTS,BP_DROPS,BP_RARITY_COLOR,GLOW_OK,GLOW_STYLE}){
   if(!act||!act.name)return null;
   const tp=tipProps||(()=>({}));
   const locked=s.lv<act.lv&&!s.mastered;
@@ -1195,7 +1195,25 @@ function ActRow({act,skColor,inv,curAct,startAct,skId,s,tipProps,C,FONT,FONT_BOD
             </span>
           );})}
         </div>
-        {(act.util||act.dropId)&&<div style={{fontSize:10,color:"#38bdf8",marginTop:2,fontFamily:FONT_BODY}}>{act.desc}</div>}
+        {act.dropId&&(()=>{
+          const drop=(BP_DROPS||[]).find(d=>d.id===act.dropId);
+          const poolBps=(drop?.pool||[]).map(id=>BLUEPRINTS.find(b=>b.id===id)).filter(Boolean);
+          return poolBps.length>0?(
+            <div style={{marginTop:6,display:"flex",flexWrap:"wrap",gap:4}}>
+              {poolBps.map(bp=>{
+                const col=BP_RARITY_COLOR[bp.rarity]||"#ffd60a";
+                return(
+                  <div key={bp.id} style={{display:"flex",alignItems:"center",gap:4,padding:"2px 7px",borderRadius:6,
+                    background:col+"15",border:"1px solid "+col+"40"}}>
+                    <span style={{fontSize:11}}>{bp.icon}</span>
+                    <span style={{fontSize:9,fontWeight:700,color:col,fontFamily:FONT}}>{bp.name}</span>
+                    <span style={{fontSize:8,color:col+"99",fontFamily:FONT,letterSpacing:0.5}}>{(bp.rarity||"").toUpperCase()}</span>
+                  </div>
+                );
+              })}
+            </div>
+          ):null;
+        })()}
         {locked&&<div style={{fontSize:10,color:C.bad,marginTop:2,fontFamily:FONT_BODY}}>🔒 Requires Level {act.lv}</div>}
       </div>
       {!locked&&<div onClick={()=>{if(canDo)startAct(skId,act.id)}} style={{padding:"9px 20px",borderRadius:8,marginLeft:12,flexShrink:0,
@@ -3012,7 +3030,7 @@ function GameUI({account,onLogout}){
                   const isGearProdSkill=["fabrication","relic_forging","gear_crafting"].includes(skData.id);
 
                   // Pass all needed context as props to standalone ActRow
-                  const arProps={skColor:skData.color,inv,curAct,startAct,skId:skData.id,s,tipProps,C,FONT,FONT_BODY,ITEMS,BLUEPRINTS,BP_RARITY_COLOR,GLOW_OK,GLOW_STYLE};
+                  const arProps={skColor:skData.color,inv,curAct,startAct,skId:skData.id,s,tipProps,C,FONT,FONT_BODY,ITEMS,BLUEPRINTS,BP_DROPS,BP_RARITY_COLOR,GLOW_OK,GLOW_STYLE};
                   const AR=({act})=><ActRow key={skData.id+"-"+act.id} act={act} {...arProps}/>;
 
                   // Gathering / Bio Lab / Exploration — flat list, no tabs

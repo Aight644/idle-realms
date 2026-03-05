@@ -57,7 +57,7 @@ const RESEARCH_TREE = {
   ],
   combat: [
     {id:"cb1",name:"Harpoon Upgrades",  icon:"🗡️",tier:1,cost:80, prereqs:[],      desc:"ATK +10%",                  effect:{atk_pct:0.10}},
-    {id:"cb2",name:"Drone Combat Sys.", icon:"🤖",tier:2,cost:180,prereqs:["cb1"], desc:"Combat XP +25%",            effect:{combat_xp:0.25}},
+    {id:"cb2",name:"Drone Combat Sys.", icon:"🤖",tier:2,cost:180,prereqs:["cb1"], desc:"Combat XP +25%",effect:{combat_xp:0.25}},
     {id:"cb3",name:"Sonic Weapons",     icon:"🔊",tier:3,cost:350,prereqs:["cb2"], desc:"ATK +20% total",            effect:{atk_pct:0.10}},
     {id:"cb4",name:"Leviathan Protocol",icon:"🐉",tier:4,cost:700,prereqs:["cb3"], desc:"Boss drop rate +50%",       effect:{boss_drop:0.50}},
   ],
@@ -502,7 +502,6 @@ const ITEMS={
   drone_processor:{n:"Drone Processor",i:"📡",s:1,v:90}, pressure_reactor:{n:"Pressure Reactor",i:"⚡",s:1,v:110},
   coral_cutter:{n:"Coral Cutter",i:"🔪",s:1,v:28}, deep_drill:{n:"Deep Drill",i:"🔩",s:1,v:38},
   artifact_scanner:{n:"Artifact Scanner",i:"📟",s:1,v:70},
-  // ── New gathering drops ──
   tide_sap:{n:"Tide Sap",i:"🟢",s:1,v:45},
   kelp_spores:{n:"Kelp Spores",i:"🌱",s:1,v:80},
   void_kelp:{n:"Void Kelp",i:"🌑",s:1,v:180},
@@ -518,7 +517,6 @@ const ITEMS={
   sediment_core:{n:"Sediment Core",i:"🗜️",s:1,v:30},
   ancient_fragment:{n:"Ancient Fragment",i:"🧩",s:1,v:65},
   abyss_silt:{n:"Abyss Silt",i:"🔘",s:1,v:110},
-  // ── MELEE: Tidebreaker (Fabrication) — T1→T4 ──
   tide_mallet:{n:"Tide Mallet",i:"🔨",eq:"weapon",set:"tidebreaker",st:{atk:10,def:3}},
   tide_helm:{n:"Tide Helm",i:"🪸",eq:"head",set:"tidebreaker",st:{def:8,hp:14}},
   tide_plate:{n:"Tide Plate",i:"🦺",eq:"body",set:"tidebreaker",st:{def:15,hp:28}},
@@ -543,7 +541,6 @@ const ITEMS={
   leviathan_warfists:{n:"Leviathan Warfists",i:"🦾",eq:"hands",set:"tidebreaker",st:{atk:24,def:20}},
   leviathan_warboots:{n:"Leviathan Warboots",i:"🥾",eq:"feet",set:"tidebreaker",st:{def:28,hp:50}},
   leviathan_bulwark:{n:"Leviathan Bulwark",i:"🛡️",eq:"shield",set:"tidebreaker",st:{def:74,hp:115}},
-  // ── RANGE: Deepstriker (Gear Crafting) — T1→T4 ──
   sting_bolt:{n:"Sting Bolt",i:"🎯",eq:"weapon",set:"deepstriker",st:{atk:8,rng:8}},
   strike_cowl:{n:"Strike Cowl",i:"🎣",eq:"head",set:"deepstriker",st:{rng:5,hp:10}},
   strike_vest:{n:"Strike Vest",i:"🧥",eq:"body",set:"deepstriker",st:{rng:10,hp:20}},
@@ -564,7 +561,6 @@ const ITEMS={
   abyss_leathers:{n:"Abyss Leathers",i:"🧥",eq:"body",set:"deepstriker",st:{rng:58,hp:112}},
   abyss_bracers:{n:"Abyss Bracers",i:"🧤",eq:"hands",set:"deepstriker",st:{rng:34,atk:11}},
   abyss_striders:{n:"Abyss Striders",i:"🩴",eq:"feet",set:"deepstriker",st:{rng:22,hp:42}},
-  // ── MAGIC: Voidcaller (Relic Forging) — T1→T4 ──
   crystal_wand:{n:"Crystal Wand",i:"🪄",eq:"weapon",set:"voidcaller",st:{mag:12,atk:3}},
   crystal_circlet:{n:"Crystal Circlet",i:"💎",eq:"head",set:"voidcaller",st:{mag:8,hp:10}},
   crystal_robe:{n:"Crystal Robe",i:"🔮",eq:"body",set:"voidcaller",st:{mag:15,hp:20}},
@@ -592,7 +588,6 @@ const ITEMS={
   bioluminescent_drink:{n:"Bioluminescent Brew",i:"🫧",s:1,v:25,drink:1},
   deep_extract:{n:"Deep Extract",i:"🧬",s:1,v:50,drink:1},
   void_elixir:{n:"Void Elixir",i:"🌌",s:1,v:120,drink:1},
-  // ── Rare materials ──
   leviathan_bone:{n:"Leviathan Bone",i:"🦴",s:1,v:300,rare:1},
   ancient_relic:{n:"Ancient Relic Fragment",i:"🗿",s:1,v:220,rare:1},
   void_pearl:{n:"Void Pearl",i:"🔵",s:1,v:160,rare:1},
@@ -601,7 +596,6 @@ const ITEMS={
   black_coral:{n:"Black Coral",i:"🖤",s:1,v:200,rare:1},
   ancient_processor:{n:"Ancient Processor",i:"🔲",s:1,v:240,rare:1},
   void_essence:{n:"Void Essence",i:"🌀",s:1,v:280,rare:1},
-  // ── Utility crafted items ──
   nav_beacon:{n:"Navigation Beacon",i:"📍",s:1,v:30},
   scan_report:{n:"Scan Report",i:"📋",s:1,v:35},
   relic_shard:{n:"Relic Shard",i:"🧩",s:1,v:50},
@@ -610,63 +604,42 @@ const ITEMS={
   resonance_crystal:{n:"Resonance Crystal",i:"🔮",s:1,v:70},
   ancient_data_chip:{n:"Ancient Data Chip",i:"💾",s:1,v:180},
   void_map:{n:"Void Map",i:"🌌",s:1,v:100},
-
-
-  // ── Cultivation Tools (cultiv_yield) ──
   kelp_rake:{n:"Kelp Rake",i:"🌿",eq:"tool",st:{gather_yield:0.05,gather_speed:0.03}},
   tide_harvester:{n:"Tide Harvester",i:"🌊",eq:"tool",st:{gather_yield:0.10,gather_speed:0.06}},
   spore_collector:{n:"Spore Collector",i:"🌱",eq:"tool",st:{gather_yield:0.18,gather_speed:0.10,cultiv_yield:0.10}},
   void_tendril:{n:"Void Tendril",i:"🌑",eq:"tool",st:{gather_yield:0.28,gather_speed:0.15,cultiv_yield:0.20}},
-
-  // ── Mining Tools (gather_speed heavy) ──
   reef_pick:{n:"Reef Pick",i:"⛏️",eq:"tool",st:{gather_speed:0.06,gather_yield:0.03}},
   brine_drill:{n:"Brine Drill",i:"🔩",eq:"tool",st:{gather_speed:0.12,gather_yield:0.06}},
   magma_borer:{n:"Magma Borer",i:"🔥",eq:"tool",st:{gather_speed:0.20,gather_yield:0.10}},
   obsidian_crusher:{n:"Obsidian Crusher",i:"⬛",eq:"tool",st:{gather_speed:0.30,gather_yield:0.15}},
-
-  // ── Fishing Tools (gather_yield + rare_chance) ──
   glow_rod:{n:"Glow Rod",i:"🎣",eq:"tool",st:{gather_yield:0.05,rare_chance:0.02}},
   phosphor_net:{n:"Phosphor Net",i:"🕸️",eq:"tool",st:{gather_yield:0.10,rare_chance:0.04}},
   void_lure:{n:"Void Lure",i:"🦑",eq:"tool",st:{gather_yield:0.18,rare_chance:0.07}},
   abyss_trawl:{n:"Abyss Trawl",i:"🌀",eq:"tool",st:{gather_yield:0.28,rare_chance:0.12}},
-
-  // ── Crystal Tools (crystal_yield + gather_speed) ──
   quartz_chisel:{n:"Quartz Chisel",i:"🔮",eq:"tool",st:{crystal_yield:0.10,gather_speed:0.04}},
   silt_probe:{n:"Silt Probe",i:"🔹",eq:"tool",st:{crystal_yield:0.20,gather_speed:0.08}},
   ether_lens:{n:"Ether Lens",i:"💫",eq:"tool",st:{crystal_yield:0.35,gather_speed:0.13}},
   void_resonator:{n:"Void Resonator",i:"🟣",eq:"tool",st:{crystal_yield:0.55,gather_speed:0.18}},
-
-  // ── Trench Tools (rare_chance + gather_yield) ──
   sediment_brush:{n:"Sediment Brush",i:"🗺️",eq:"tool",st:{rare_chance:0.03,gather_yield:0.04}},
   ruin_scanner:{n:"Ruin Scanner",i:"📡",eq:"tool",st:{rare_chance:0.06,gather_yield:0.08}},
   fragment_extractor:{n:"Fragment Extractor",i:"🧩",eq:"tool",st:{rare_chance:0.10,gather_yield:0.13}},
   ancient_probe:{n:"Ancient Probe",i:"🏺",eq:"tool",st:{rare_chance:0.16,gather_yield:0.20}},
-
-  // ── Cultivation Armor Set ──
   kelp_hood:{n:"Kelp Hood",i:"🍃",eq:"head",set:"kelp",st:{rare_chance:0.04}},
   kelp_suit:{n:"Kelp Suit",i:"🌿",eq:"body",set:"kelp",st:{cultiv_yield:0.10,xp_bonus:0.08}},
   kelp_gloves:{n:"Kelp Gloves",i:"🧤",eq:"hands",set:"kelp",st:{gather_speed:0.06}},
   kelp_boots:{n:"Kelp Boots",i:"👟",eq:"feet",set:"kelp",st:{cultiv_yield:0.08}},
-
-  // ── Mining Armor Set ──
   ore_helm:{n:"Ore Helm",i:"⛑️",eq:"head",set:"ore",st:{rare_chance:0.05}},
   ore_vest:{n:"Ore Vest",i:"🪨",eq:"body",set:"ore",st:{mining_yield:0.10,xp_bonus:0.08}},
   ore_gauntlets:{n:"Ore Gauntlets",i:"🦾",eq:"hands",set:"ore",st:{gather_speed:0.08}},
   ore_treads:{n:"Ore Treads",i:"🥾",eq:"feet",set:"ore",st:{mining_yield:0.08}},
-
-  // ── Fishing Armor Set ──
   scale_mask:{n:"Scale Mask",i:"🐡",eq:"head",set:"scale",st:{rare_chance:0.05}},
   scale_suit:{n:"Scale Suit",i:"🦈",eq:"body",set:"scale",st:{fishing_yield:0.10,xp_bonus:0.08}},
   scale_fins:{n:"Scale Fins",i:"🫧",eq:"hands",set:"scale",st:{gather_speed:0.07}},
   scale_boots:{n:"Scale Boots",i:"🐚",eq:"feet",set:"scale",st:{fishing_yield:0.08}},
-
-  // ── Crystal Armor Set ──
   crystal_visor:{n:"Crystal Visor",i:"💎",eq:"head",set:"crystal",st:{rare_chance:0.06}},
   crystal_suit:{n:"Crystal Suit",i:"🔮",eq:"body",set:"crystal",st:{crystal_yield:0.14,xp_bonus:0.10}},
   crystal_gloves:{n:"Crystal Gloves",i:"🔹",eq:"hands",set:"crystal",st:{gather_speed:0.08}},
   crystal_fins:{n:"Crystal Fins",i:"💠",eq:"feet",set:"crystal",st:{crystal_yield:0.10}},
-
-  // ── Trench Armor Set ──
   explorer_helm:{n:"Explorer Helm",i:"🪖",eq:"head",set:"explorer",st:{rare_chance:0.08}},
   explorer_suit:{n:"Explorer Suit",i:"🗺️",eq:"body",set:"explorer",st:{trench_yield:0.12,xp_bonus:0.10}},
   explorer_gloves:{n:"Explorer Gloves",i:"🧩",eq:"hands",set:"explorer",st:{gather_speed:0.09}},
@@ -675,233 +648,203 @@ const ITEMS={
 
 // ===================== SKILLS =====================
 const SKILLS=[
-  // ── Kelp Cultivation: kelp → soft_coral → sea_mushrooms → tide_sap → kelp_spores → void_kelp ──
   {id:"kelp_farming",name:"Cultivation",icon:"🌿",color:"#00c285",cat:"gather",acts:[
-    {id:"kf1",name:"Reef Kelp Bed",      lv:1,  xp:14,t:10, out:[{id:"kelp",q:1}]},
-    {id:"kf2",name:"Coral Fronds",       lv:20, xp:24,t:12, out:[{id:"soft_coral",q:1}]},
-    {id:"kf3",name:"Mushroom Patch",     lv:40, xp:45,t:15, out:[{id:"sea_mushrooms",q:1}]},
-    {id:"kf4",name:"Tidal Sap Harvest",  lv:60, xp:85,t:18, out:[{id:"tide_sap",q:1}]},
-    {id:"kf5",name:"Spore Bed",          lv:85, xp:170,t:24, out:[{id:"kelp_spores",q:1}]},
-    {id:"kf6",name:"Void Kelp Abyss",    lv:110,xp:310,t:30, out:[{id:"void_kelp",q:1}]}]},
-
-  // ── Deep Sea Mining: trench_stone → shell_fragments → salt_crystals → thermal_ore → magma_shard → obsidian_ore ──
+    {id:"kf1",name:"Reef Kelp Bed",lv:1,xp:14,t:10, out:[{id:"kelp",q:1}]},
+    {id:"kf2",name:"Coral Fronds",lv:20, xp:24,t:12, out:[{id:"soft_coral",q:1}]},
+    {id:"kf3",name:"Mushroom Patch",lv:40, xp:45,t:15, out:[{id:"sea_mushrooms",q:1}]},
+    {id:"kf4",name:"Tidal Sap Harvest",lv:60, xp:85,t:18, out:[{id:"tide_sap",q:1}]},
+    {id:"kf5",name:"Spore Bed",lv:85, xp:170,t:24, out:[{id:"kelp_spores",q:1}]},
+    {id:"kf6",name:"Void Kelp Abyss",lv:110,xp:310,t:30, out:[{id:"void_kelp",q:1}]}]},
   {id:"deep_mining",name:"Deep Sea Mining",icon:"⛏️",color:"#7b61ff",cat:"gather",acts:[
-    {id:"dm1",name:"Reef Sandstone",     lv:1,  xp:14,t:10, out:[{id:"trench_stone",q:1}]},
-    {id:"dm2",name:"Shell Bed",          lv:20, xp:24,t:12, out:[{id:"shell_fragments",q:1}]},
-    {id:"dm3",name:"Salt Crystal Vein",  lv:40, xp:45,t:15, out:[{id:"salt_crystals",q:1}]},
-    {id:"dm4",name:"Thermal Ore Seam",   lv:60, xp:85,t:18, out:[{id:"thermal_ore",q:1}]},
-    {id:"dm5",name:"Magma Shard Seam",   lv:85, xp:170,t:24, out:[{id:"magma_shard",q:1}]},
-    {id:"dm6",name:"Obsidian Depths",    lv:110,xp:310,t:30, out:[{id:"obsidian_ore",q:1}]}]},
-
-  // ── Abyss Fishing: glowfish → phosphor_scales → deepsea_roe → ocean_fiber → void_fin → alien_bio_tissue ──
+    {id:"dm1",name:"Reef Sandstone",lv:1,xp:14,t:10, out:[{id:"trench_stone",q:1}]},
+    {id:"dm2",name:"Shell Bed",lv:20, xp:24,t:12, out:[{id:"shell_fragments",q:1}]},
+    {id:"dm3",name:"Salt Crystal Vein",lv:40, xp:45,t:15, out:[{id:"salt_crystals",q:1}]},
+    {id:"dm4",name:"Thermal Ore Seam",lv:60, xp:85,t:18, out:[{id:"thermal_ore",q:1}]},
+    {id:"dm5",name:"Magma Shard Seam",lv:85, xp:170,t:24, out:[{id:"magma_shard",q:1}]},
+    {id:"dm6",name:"Obsidian Depths",lv:110,xp:310,t:30, out:[{id:"obsidian_ore",q:1}]}]},
   {id:"bioluminescent_fishing",name:"Abyss Fishing",icon:"🎣",color:"#00d4ff",cat:"gather",acts:[
-    {id:"bf1",name:"Reef Pool Fishing",  lv:1,  xp:14,t:10, out:[{id:"glowfish",q:1}]},
-    {id:"bf2",name:"Scale Harvest",      lv:20, xp:24,t:12, out:[{id:"phosphor_scales",q:1}]},
-    {id:"bf3",name:"Roe Collection",     lv:40, xp:45,t:15, out:[{id:"deepsea_roe",q:1}]},
-    {id:"bf4",name:"Fiber Net Trawl",    lv:60, xp:85,t:18, out:[{id:"ocean_fiber",q:1}]},
-    {id:"bf5",name:"Void Fin Hunt",      lv:85, xp:170,t:24, out:[{id:"void_fin",q:1}]},
-    {id:"bf6",name:"Abyss Trawling",     lv:110,xp:310,t:30, out:[{id:"alien_bio_tissue",q:1}]}]},
-
-  // ── Crystal Diving: abyss_crystal → raw_quartz → silt_crystal → ether_dust → void_pearl → void_essence ──
+    {id:"bf1",name:"Reef Pool Fishing",lv:1,xp:14,t:10, out:[{id:"glowfish",q:1}]},
+    {id:"bf2",name:"Scale Harvest",lv:20, xp:24,t:12, out:[{id:"phosphor_scales",q:1}]},
+    {id:"bf3",name:"Roe Collection",lv:40, xp:45,t:15, out:[{id:"deepsea_roe",q:1}]},
+    {id:"bf4",name:"Fiber Net Trawl",lv:60, xp:85,t:18, out:[{id:"ocean_fiber",q:1}]},
+    {id:"bf5",name:"Void Fin Hunt",lv:85, xp:170,t:24, out:[{id:"void_fin",q:1}]},
+    {id:"bf6",name:"Abyss Trawling",lv:110,xp:310,t:30, out:[{id:"alien_bio_tissue",q:1}]}]},
   {id:"crystal_diving",name:"Crystal Diving",icon:"💎",color:"#a78bfa",cat:"gather",acts:[
-    {id:"cd1",name:"Shallows Crystals",  lv:1,  xp:16,t:10, out:[{id:"abyss_crystal",q:1}]},
-    {id:"cd2",name:"Quartz Shelf",       lv:20, xp:28,t:12, out:[{id:"raw_quartz",q:1}]},
-    {id:"cd3",name:"Silt Crystal Cave",  lv:40, xp:52,t:15, out:[{id:"silt_crystal",q:1}]},
-    {id:"cd4",name:"Ether Dust Pocket",  lv:60, xp:98,t:18, out:[{id:"ether_dust",q:1}]},
-    {id:"cd5",name:"Void Pearl Dive",    lv:85, xp:196,t:24, out:[{id:"void_pearl",q:1}]},
-    {id:"cd6",name:"Void Crystal Core",  lv:110,xp:356,t:30, out:[{id:"void_essence",q:1}]}]},
-
-  // ── Trench Exploration: ocean_fiber → deep_moss → sediment_core → ancient_fragment → abyss_silt → ancient_relic ──
+    {id:"cd1",name:"Shallows Crystals",lv:1,xp:16,t:10, out:[{id:"abyss_crystal",q:1}]},
+    {id:"cd2",name:"Quartz Shelf",lv:20, xp:28,t:12, out:[{id:"raw_quartz",q:1}]},
+    {id:"cd3",name:"Silt Crystal Cave",lv:40, xp:52,t:15, out:[{id:"silt_crystal",q:1}]},
+    {id:"cd4",name:"Ether Dust Pocket",lv:60, xp:98,t:18, out:[{id:"ether_dust",q:1}]},
+    {id:"cd5",name:"Void Pearl Dive",lv:85, xp:196,t:24, out:[{id:"void_pearl",q:1}]},
+    {id:"cd6",name:"Void Crystal Core",lv:110,xp:356,t:30, out:[{id:"void_essence",q:1}]}]},
   {id:"trench_exploration",name:"Trench Exploration",icon:"🗺️",color:"#38bdf8",cat:"gather",acts:[
-    {id:"te1",name:"Shallow Survey",     lv:1,  xp:14,t:10, out:[{id:"sea_fiber",q:1}]},
-    {id:"te2",name:"Deep Moss Bed",      lv:20, xp:24,t:12, out:[{id:"deep_moss",q:1}]},
-    {id:"te3",name:"Sediment Core",      lv:40, xp:45,t:15, out:[{id:"sediment_core",q:1}]},
-    {id:"te4",name:"Ancient Ruin Dig",   lv:60, xp:85,t:18, out:[{id:"ancient_fragment",q:1}]},
-    {id:"te5",name:"Abyss Silt Trench",  lv:85, xp:170,t:24, out:[{id:"abyss_silt",q:1}]},
-    {id:"te6",name:"Lost Relic Vault",   lv:110,xp:310,t:30, out:[{id:"ancient_relic",q:1}]}]},
-  // ── Fabrication: materials + tech components ──
+    {id:"te1",name:"Shallow Survey",lv:1,xp:14,t:10, out:[{id:"sea_fiber",q:1}]},
+    {id:"te2",name:"Deep Moss Bed",lv:20, xp:24,t:12, out:[{id:"deep_moss",q:1}]},
+    {id:"te3",name:"Sediment Core",lv:40, xp:45,t:15, out:[{id:"sediment_core",q:1}]},
+    {id:"te4",name:"Ancient Ruin Dig",lv:60, xp:85,t:18, out:[{id:"ancient_fragment",q:1}]},
+    {id:"te5",name:"Abyss Silt Trench",lv:85, xp:170,t:24, out:[{id:"abyss_silt",q:1}]},
+    {id:"te6",name:"Lost Relic Vault",lv:110,xp:310,t:30, out:[{id:"ancient_relic",q:1}]}]},
   {id:"fabrication",name:"Fabrication",icon:"🔧",color:"#ffd60a",cat:"prod",acts:[
-    // ── MELEE: Tidebreaker set — coral/stone/alloy themed ──
-    {id:"tb_m1a",name:"Tide Mallet",      lv:1, xp:28, t:12,inp:[{id:"trench_stone",q:8},{id:"sea_fiber",q:4}],                                out:[{id:"tide_mallet",q:1}]},
-    {id:"tb_m1b",name:"Tide Helm",        lv:1, xp:20, t:11,inp:[{id:"trench_stone",q:6},{id:"shell_fragments",q:4}],                          out:[{id:"tide_helm",q:1}]},
-    {id:"tb_m1c",name:"Tide Plate",       lv:5, xp:38, t:14,inp:[{id:"coral_blocks",q:8},{id:"shell_fragments",q:6}],                          out:[{id:"tide_plate",q:1}]},
-    {id:"tb_m1d",name:"Tide Gauntlets",   lv:5, xp:24, t:12,inp:[{id:"trench_stone",q:5},{id:"shell_fragments",q:4}],                          out:[{id:"tide_gauntlets",q:1}]},
-    {id:"tb_m1e",name:"Tide Sabatons",    lv:5, xp:22, t:11,inp:[{id:"trench_stone",q:5},{id:"coral_blocks",q:3}],                             out:[{id:"tide_sabatons",q:1}]},
-    {id:"tb_m1f",name:"Tide Shield",      lv:5, xp:30, t:13,inp:[{id:"coral_blocks",q:10},{id:"shell_fragments",q:6}],                         out:[{id:"tide_shield",q:1}]},
-    {id:"tb_m2a",name:"Reef Mallet",      lv:25,xp:70, t:18,inp:[{id:"reinforced_alloy",q:6},{id:"shell_dust",q:8}],                           out:[{id:"reef_mallet",q:1}]},
-    {id:"tb_m2b",name:"Reef Warhelm",     lv:25,xp:52, t:16,inp:[{id:"reinforced_alloy",q:4},{id:"coral_blocks",q:8}],                         out:[{id:"reef_warhelm",q:1}]},
-    {id:"tb_m2c",name:"Reef Warplate",    lv:30,xp:90, t:21,inp:[{id:"reinforced_alloy",q:8},{id:"coral_blocks",q:12},{id:"shell_dust",q:6}],  out:[{id:"reef_warplate",q:1}]},
-    {id:"tb_m2d",name:"Reef Warfists",    lv:30,xp:58, t:16,inp:[{id:"reinforced_alloy",q:4},{id:"shell_dust",q:5}],                           out:[{id:"reef_warfists",q:1}]},
-    {id:"tb_m2e",name:"Reef Warboots",    lv:30,xp:52, t:15,inp:[{id:"reinforced_alloy",q:3},{id:"coral_blocks",q:5}],                         out:[{id:"reef_warboots",q:1}]},
-    {id:"tb_m2f",name:"Reef Bulwark",     lv:30,xp:75, t:19,inp:[{id:"reinforced_alloy",q:6},{id:"coral_blocks",q:10}],                        out:[{id:"reef_bulwark",q:1}]},
-    {id:"tb_m3a",name:"Abyssal Mallet",   lv:55,xp:140,t:26,inp:[{id:"pressure_glass",q:6},{id:"ore_flakes",q:10},{id:"reinforced_alloy",q:8}],out:[{id:"abyssal_mallet",q:1}]},
-    {id:"tb_m3b",name:"Abyssal Warhelm",  lv:55,xp:100,t:22,inp:[{id:"pressure_glass",q:4},{id:"reinforced_alloy",q:6}],                       out:[{id:"abyssal_warhelm",q:1}]},
+    {id:"tb_m1a",name:"Tide Mallet",lv:1, xp:28, t:12,inp:[{id:"trench_stone",q:8},{id:"sea_fiber",q:4}],out:[{id:"tide_mallet",q:1}]},
+    {id:"tb_m1b",name:"Tide Helm",lv:1, xp:20, t:11,inp:[{id:"trench_stone",q:6},{id:"shell_fragments",q:4}],out:[{id:"tide_helm",q:1}]},
+    {id:"tb_m1c",name:"Tide Plate",lv:5, xp:38, t:14,inp:[{id:"coral_blocks",q:8},{id:"shell_fragments",q:6}],out:[{id:"tide_plate",q:1}]},
+    {id:"tb_m1d",name:"Tide Gauntlets",lv:5, xp:24, t:12,inp:[{id:"trench_stone",q:5},{id:"shell_fragments",q:4}],out:[{id:"tide_gauntlets",q:1}]},
+    {id:"tb_m1e",name:"Tide Sabatons",lv:5, xp:22, t:11,inp:[{id:"trench_stone",q:5},{id:"coral_blocks",q:3}],out:[{id:"tide_sabatons",q:1}]},
+    {id:"tb_m1f",name:"Tide Shield",lv:5, xp:30, t:13,inp:[{id:"coral_blocks",q:10},{id:"shell_fragments",q:6}],out:[{id:"tide_shield",q:1}]},
+    {id:"tb_m2a",name:"Reef Mallet",lv:25,xp:70, t:18,inp:[{id:"reinforced_alloy",q:6},{id:"shell_dust",q:8}],out:[{id:"reef_mallet",q:1}]},
+    {id:"tb_m2b",name:"Reef Warhelm",lv:25,xp:52, t:16,inp:[{id:"reinforced_alloy",q:4},{id:"coral_blocks",q:8}],out:[{id:"reef_warhelm",q:1}]},
+    {id:"tb_m2c",name:"Reef Warplate",lv:30,xp:90, t:21,inp:[{id:"reinforced_alloy",q:8},{id:"coral_blocks",q:12},{id:"shell_dust",q:6}],out:[{id:"reef_warplate",q:1}]},
+    {id:"tb_m2d",name:"Reef Warfists",lv:30,xp:58, t:16,inp:[{id:"reinforced_alloy",q:4},{id:"shell_dust",q:5}],out:[{id:"reef_warfists",q:1}]},
+    {id:"tb_m2e",name:"Reef Warboots",lv:30,xp:52, t:15,inp:[{id:"reinforced_alloy",q:3},{id:"coral_blocks",q:5}],out:[{id:"reef_warboots",q:1}]},
+    {id:"tb_m2f",name:"Reef Bulwark",lv:30,xp:75, t:19,inp:[{id:"reinforced_alloy",q:6},{id:"coral_blocks",q:10}],out:[{id:"reef_bulwark",q:1}]},
+    {id:"tb_m3a",name:"Abyssal Mallet",lv:55,xp:140,t:26,inp:[{id:"pressure_glass",q:6},{id:"ore_flakes",q:10},{id:"reinforced_alloy",q:8}],out:[{id:"abyssal_mallet",q:1}]},
+    {id:"tb_m3b",name:"Abyssal Warhelm",lv:55,xp:100,t:22,inp:[{id:"pressure_glass",q:4},{id:"reinforced_alloy",q:6}],out:[{id:"abyssal_warhelm",q:1}]},
     {id:"tb_m3c",name:"Abyssal Warplate", lv:60,xp:175,t:29,inp:[{id:"pressure_glass",q:8},{id:"ore_flakes",q:12},{id:"reinforced_alloy",q:12}],out:[{id:"abyssal_warplate",q:1}]},
-    {id:"tb_m3d",name:"Abyssal Warfists", lv:60,xp:115,t:23,inp:[{id:"pressure_glass",q:4},{id:"ore_flakes",q:6}],                             out:[{id:"abyssal_warfists",q:1}]},
-    {id:"tb_m3e",name:"Abyssal Warboots", lv:60,xp:105,t:22,inp:[{id:"pressure_glass",q:3},{id:"reinforced_alloy",q:5}],                       out:[{id:"abyssal_warboots",q:1}]},
-    {id:"tb_m3f",name:"Abyssal Bulwark",  lv:60,xp:148,t:27,inp:[{id:"pressure_glass",q:6},{id:"reinforced_alloy",q:10}],                      out:[{id:"abyssal_bulwark",q:1}]},
-    {id:"tb_m4a",name:"Leviathan Mallet", lv:85,xp:215,t:30,inp:[{id:"thermal_core",q:2},{id:"ore_flakes",q:15},{id:"pressure_glass",q:8}],    out:[{id:"leviathan_mallet",q:1}]},
+    {id:"tb_m3d",name:"Abyssal Warfists", lv:60,xp:115,t:23,inp:[{id:"pressure_glass",q:4},{id:"ore_flakes",q:6}],out:[{id:"abyssal_warfists",q:1}]},
+    {id:"tb_m3e",name:"Abyssal Warboots", lv:60,xp:105,t:22,inp:[{id:"pressure_glass",q:3},{id:"reinforced_alloy",q:5}],out:[{id:"abyssal_warboots",q:1}]},
+    {id:"tb_m3f",name:"Abyssal Bulwark",lv:60,xp:148,t:27,inp:[{id:"pressure_glass",q:6},{id:"reinforced_alloy",q:10}],out:[{id:"abyssal_bulwark",q:1}]},
+    {id:"tb_m4a",name:"Leviathan Mallet", lv:85,xp:215,t:30,inp:[{id:"thermal_core",q:2},{id:"ore_flakes",q:15},{id:"pressure_glass",q:8}],out:[{id:"leviathan_mallet",q:1}]},
     {id:"tb_m4b",name:"Leviathan Warhelm",lv:85,xp:165,t:27,inp:[{id:"thermal_core",q:1},{id:"pressure_glass",q:6},{id:"reinforced_alloy",q:8}],out:[{id:"leviathan_warhelm",q:1}]},
-    {id:"tb_m4c",name:"Leviathan Warplate",lv:85,xp:270,t:33,inp:[{id:"thermal_core",q:3},{id:"ore_flakes",q:18},{id:"pressure_glass",q:10}],  out:[{id:"leviathan_warplate",q:1}]},
-    {id:"tb_m4d",name:"Leviathan Warfists",lv:85,xp:175,t:28,inp:[{id:"thermal_core",q:1},{id:"ore_flakes",q:8},{id:"reinforced_alloy",q:6}],  out:[{id:"leviathan_warfists",q:1}]},
-    {id:"tb_m4e",name:"Leviathan Warboots",lv:85,xp:160,t:27,inp:[{id:"thermal_core",q:1},{id:"pressure_glass",q:4},{id:"ore_flakes",q:6}],    out:[{id:"leviathan_warboots",q:1}]},
+    {id:"tb_m4c",name:"Leviathan Warplate",lv:85,xp:270,t:33,inp:[{id:"thermal_core",q:3},{id:"ore_flakes",q:18},{id:"pressure_glass",q:10}],out:[{id:"leviathan_warplate",q:1}]},
+    {id:"tb_m4d",name:"Leviathan Warfists",lv:85,xp:175,t:28,inp:[{id:"thermal_core",q:1},{id:"ore_flakes",q:8},{id:"reinforced_alloy",q:6}],out:[{id:"leviathan_warfists",q:1}]},
+    {id:"tb_m4e",name:"Leviathan Warboots",lv:85,xp:160,t:27,inp:[{id:"thermal_core",q:1},{id:"pressure_glass",q:4},{id:"ore_flakes",q:6}],out:[{id:"leviathan_warboots",q:1}]},
     {id:"tb_m4f",name:"Leviathan Bulwark",lv:85,xp:225,t:31,inp:[{id:"thermal_core",q:2},{id:"pressure_glass",q:8},{id:"reinforced_alloy",q:12}],out:[{id:"leviathan_bulwark",q:1}]},
-    // ── Refining chain (lv1-25) ──
-    {id:"fb1",name:"Grind Stone",        lv:1, xp:14, t:10,inp:[{id:"trench_stone",q:3}],                                                    out:[{id:"stone_powder",q:1}]},
-    {id:"fb2",name:"Crush Shells",       lv:5, xp:18, t:10,inp:[{id:"shell_fragments",q:3}],                                                 out:[{id:"shell_dust",q:1}]},
-    {id:"fb3",name:"Braid Sea Fiber",    lv:10,xp:22, t:11,inp:[{id:"sea_fiber",q:4}],                                                       out:[{id:"fiber_cord",q:1}]},
-    {id:"fb4",name:"Smelt Ore Flakes",   lv:20,xp:40, t:13,inp:[{id:"thermal_ore",q:2}],                                                     out:[{id:"ore_flakes",q:1}]},
-    {id:"fb5",name:"Refine Salt",        lv:30,xp:65, t:15,inp:[{id:"salt_crystals",q:3}],                                                   out:[{id:"shell_dust",q:2},{id:"ore_flakes",q:1}]},
-    // ── Materials ──
-    {id:"ce1",name:"Coral Blocks",       lv:1, xp:13, t:11,inp:[{id:"soft_coral",q:3}],                                                      out:[{id:"coral_blocks",q:1}]},
-    {id:"ar1",name:"Ore Processing",     lv:1, xp:20, t:12,inp:[{id:"trench_stone",q:8}],                                                    out:[{id:"drone_processor",q:1}]},
-    {id:"ce2",name:"Reinforced Alloy",   lv:10,xp:30, t:13,inp:[{id:"shell_dust",q:3},{id:"stone_powder",q:4}],                         out:[{id:"reinforced_alloy",q:1}]},
-    {id:"dc1",name:"Basic Processor",    lv:10,xp:86, t:20,inp:[{id:"stone_powder",q:6},{id:"thermal_ore",q:2}],                             out:[{id:"drone_processor",q:1}]},
-    {id:"ar2",name:"Crystal Refinement", lv:15,xp:40, t:15,inp:[{id:"crystal_shard",q:4}],                                                   out:[{id:"pressure_reactor",q:1}]},
-    {id:"oa1",name:"Thermal Steel",      lv:15,xp:37, t:14,inp:[{id:"thermal_ore",q:4},{id:"salt_crystals",q:3}],                            out:[{id:"reinforced_alloy",q:1}]},
-    {id:"ce3",name:"Pressure Glass",     lv:20,xp:78, t:19,inp:[{id:"ore_flakes",q:4},{id:"salt_crystals",q:2}],                            out:[{id:"pressure_glass",q:1}]},
-    {id:"dc2",name:"Pressure Reactor",   lv:20,xp:60, t:17,inp:[{id:"pressure_glass",q:3},{id:"enzyme_compound",q:2}],                       out:[{id:"pressure_reactor",q:1}]},
-    {id:"es2",name:"Pressure Conduit",   lv:40,xp:76, t:19,inp:[{id:"pressure_glass",q:2},{id:"reinforced_alloy",q:3}],                      out:[{id:"pressure_reactor",q:1},{id:"drone_processor",q:1}]}]},
-
-  // ── Bio Lab: consumables, potions, brews, refined materials ──
+    {id:"fb1",name:"Grind Stone",lv:1, xp:14, t:10,inp:[{id:"trench_stone",q:3}],out:[{id:"stone_powder",q:1}]},
+    {id:"fb2",name:"Crush Shells",lv:5, xp:18, t:10,inp:[{id:"shell_fragments",q:3}],out:[{id:"shell_dust",q:1}]},
+    {id:"fb3",name:"Braid Sea Fiber",lv:10,xp:22, t:11,inp:[{id:"sea_fiber",q:4}],out:[{id:"fiber_cord",q:1}]},
+    {id:"fb4",name:"Smelt Ore Flakes",lv:20,xp:40, t:13,inp:[{id:"thermal_ore",q:2}],out:[{id:"ore_flakes",q:1}]},
+    {id:"fb5",name:"Refine Salt",lv:30,xp:65, t:15,inp:[{id:"salt_crystals",q:3}],out:[{id:"shell_dust",q:2},{id:"ore_flakes",q:1}]},
+    {id:"ce1",name:"Coral Blocks",lv:1, xp:13, t:11,inp:[{id:"soft_coral",q:3}],out:[{id:"coral_blocks",q:1}]},
+    {id:"ar1",name:"Ore Processing",lv:1, xp:20, t:12,inp:[{id:"trench_stone",q:8}],out:[{id:"drone_processor",q:1}]},
+    {id:"ce2",name:"Reinforced Alloy",lv:10,xp:30, t:13,inp:[{id:"shell_dust",q:3},{id:"stone_powder",q:4}],out:[{id:"reinforced_alloy",q:1}]},
+    {id:"dc1",name:"Basic Processor",lv:10,xp:86, t:20,inp:[{id:"stone_powder",q:6},{id:"thermal_ore",q:2}],out:[{id:"drone_processor",q:1}]},
+    {id:"ar2",name:"Crystal Refinement", lv:15,xp:40, t:15,inp:[{id:"crystal_shard",q:4}],out:[{id:"pressure_reactor",q:1}]},
+    {id:"oa1",name:"Thermal Steel",lv:15,xp:37, t:14,inp:[{id:"thermal_ore",q:4},{id:"salt_crystals",q:3}],out:[{id:"reinforced_alloy",q:1}]},
+    {id:"ce3",name:"Pressure Glass",lv:20,xp:78, t:19,inp:[{id:"ore_flakes",q:4},{id:"salt_crystals",q:2}],out:[{id:"pressure_glass",q:1}]},
+    {id:"dc2",name:"Pressure Reactor",lv:20,xp:60, t:17,inp:[{id:"pressure_glass",q:3},{id:"enzyme_compound",q:2}],out:[{id:"pressure_reactor",q:1}]},
+    {id:"es2",name:"Pressure Conduit",lv:40,xp:76, t:19,inp:[{id:"pressure_glass",q:2},{id:"reinforced_alloy",q:3}],out:[{id:"pressure_reactor",q:1},{id:"drone_processor",q:1}]}]},
   {id:"bio_lab",name:"Bio Lab",icon:"🧪",color:"#00ffb3",cat:"prod",acts:[
-    {id:"br1",name:"Biofuel",            lv:1, xp:10, t:11,inp:[{id:"kelp",q:5}],                                                    out:[{id:"biofuel",q:1}]},
-    {id:"bs1",name:"Healing Serum",      lv:1, xp:24, t:13,inp:[{id:"sea_mushrooms",q:3}],                                           out:[{id:"healing_serum",q:1}]},
-    {id:"br2",name:"Enzyme Compound",    lv:10,xp:10, t:11,inp:[{id:"glowfish",q:3}],                                                out:[{id:"enzyme_compound",q:1}]},
-    {id:"bs2",name:"Kelp Broth",         lv:10,xp:14, t:11,inp:[{id:"kelp",q:4},{id:"enzyme_compound",q:1}],                         out:[{id:"kelp_broth",q:1}]},
-    {id:"br3",name:"Luminescent Gel",    lv:20,xp:27, t:13,inp:[{id:"glowfish",q:4},{id:"sea_mushrooms",q:2}],                       out:[{id:"luminescent_gel",q:1}]},
-    {id:"oa3",name:"Deep Extract",       lv:20,xp:72, t:18,inp:[{id:"sea_mushrooms",q:5},{id:"glowfish",q:3}],                       out:[{id:"deep_extract",q:1}]},
-    {id:"bs3",name:"Pressure Tonic",     lv:25,xp:54, t:16,inp:[{id:"enzyme_compound",q:2},{id:"abyss_crystal",q:1}],                out:[{id:"pressure_tonic",q:1}]},
-    {id:"bs4",name:"Bio Stim",           lv:30,xp:55, t:16,inp:[{id:"luminescent_gel",q:2},{id:"sea_mushrooms",q:3}],                out:[{id:"bio_stim",q:1}]},
-    {id:"dc4",name:"Bioluminescent Brew",lv:35,xp:75, t:19,inp:[{id:"luminescent_gel",q:2},{id:"glowfish",q:4}],                     out:[{id:"bioluminescent_drink",q:1}]},
-    {id:"oa2",name:"Void Elixir",        lv:40,xp:100,t:22,inp:[{id:"abyss_crystal",q:2},{id:"enzyme_compound",q:2}],                out:[{id:"void_elixir",q:1}]},
-    {id:"oa4",name:"Bio Stim Mk2",       lv:50,xp:95, t:21,inp:[{id:"luminescent_gel",q:3},{id:"pressure_tonic",q:1}],               out:[{id:"bio_stim",q:1}]}]},
-
-  // ── Exploration: navigation, scanning, archaeology, cartography, logistics ──
+    {id:"br1",name:"Biofuel",lv:1, xp:10, t:11,inp:[{id:"kelp",q:5}],out:[{id:"biofuel",q:1}]},
+    {id:"bs1",name:"Healing Serum",lv:1, xp:24, t:13,inp:[{id:"sea_mushrooms",q:3}],out:[{id:"healing_serum",q:1}]},
+    {id:"br2",name:"Enzyme Compound",lv:10,xp:10, t:11,inp:[{id:"glowfish",q:3}],out:[{id:"enzyme_compound",q:1}]},
+    {id:"bs2",name:"Kelp Broth",lv:10,xp:14, t:11,inp:[{id:"kelp",q:4},{id:"enzyme_compound",q:1}],out:[{id:"kelp_broth",q:1}]},
+    {id:"br3",name:"Luminescent Gel",lv:20,xp:27, t:13,inp:[{id:"glowfish",q:4},{id:"sea_mushrooms",q:2}],out:[{id:"luminescent_gel",q:1}]},
+    {id:"oa3",name:"Deep Extract",lv:20,xp:72, t:18,inp:[{id:"sea_mushrooms",q:5},{id:"glowfish",q:3}],out:[{id:"deep_extract",q:1}]},
+    {id:"bs3",name:"Pressure Tonic",lv:25,xp:54, t:16,inp:[{id:"enzyme_compound",q:2},{id:"abyss_crystal",q:1}],out:[{id:"pressure_tonic",q:1}]},
+    {id:"bs4",name:"Bio Stim",lv:30,xp:55, t:16,inp:[{id:"luminescent_gel",q:2},{id:"sea_mushrooms",q:3}],out:[{id:"bio_stim",q:1}]},
+    {id:"dc4",name:"Bioluminescent Brew",lv:35,xp:75, t:19,inp:[{id:"luminescent_gel",q:2},{id:"glowfish",q:4}],out:[{id:"bioluminescent_drink",q:1}]},
+    {id:"oa2",name:"Void Elixir",lv:40,xp:100,t:22,inp:[{id:"abyss_crystal",q:2},{id:"enzyme_compound",q:2}],out:[{id:"void_elixir",q:1}]},
+    {id:"oa4",name:"Bio Stim Mk2",lv:50,xp:95, t:21,inp:[{id:"luminescent_gel",q:3},{id:"pressure_tonic",q:1}],out:[{id:"bio_stim",q:1}]}]},
   {id:"exploration",name:"Exploration",icon:"🧭",color:"#38bdf8",cat:"utility",acts:[
-    {id:"nv1",name:"Chart Reef Currents",  lv:1, xp:20,t:12,out:[{id:"nav_beacon",q:1}],util:{type:"speed",val:0.05},desc:"+5% gather speed."},
-    {id:"ac1",name:"Surface Excavation",   lv:1, xp:25,t:12,out:[{id:"relic_shard",q:1}],util:{type:"rp",val:5},desc:"Excavate reef. Gain RP + relics."},
-    {id:"sc1",name:"Bio Scan",             lv:1, xp:20,t:12,out:[{id:"scan_report",q:1}],util:{type:"rare",val:0.03},desc:"+3% rare drop chance."},
-    {id:"oc1",name:"Reef Survey",          lv:1, xp:22,t:12,out:[{id:"ocean_chart",q:1}],util:{type:"yield",val:0.05},desc:"+5% resource yield."},
-    {id:"lg1",name:"Supply Cache",         lv:1, xp:31,t:13,inp:[{id:"kelp",q:5},{id:"sea_mushrooms",q:3}],out:[{id:"supply_crate",q:1}],util:{type:"gold",val:10},desc:"Pack supply cache."},
-    {id:"nv2",name:"Map Twilight Lanes",   lv:15,xp:40,t:14,inp:[{id:"nav_beacon",q:1}],out:[{id:"ocean_chart",q:1}],util:{type:"speed",val:0.10},desc:"+10% gather speed."},
-    {id:"lg2",name:"Trade Bundle",         lv:15,xp:26,t:13,inp:[{id:"kelp",q:8},{id:"glowfish",q:5}],out:[{id:"supply_crate",q:2}],util:{type:"gold",val:25},desc:"+25 bonus credits."},
-    {id:"sc2",name:"Deep Resonance Scan",  lv:20,xp:45,t:15,inp:[{id:"scan_report",q:1}],out:[{id:"resonance_crystal",q:1}],util:{type:"rare",val:0.05},desc:"+5% rare drops."},
-    {id:"oc2",name:"Abyss Mapping",        lv:25,xp:50,t:15,inp:[{id:"ocean_chart",q:1}],out:[{id:"ocean_chart",q:2}],util:{type:"yield",val:0.10},desc:"+10% resource yield."},
-    {id:"ac2",name:"Ancient Wreck Dive",   lv:25,xp:55,t:16,inp:[{id:"relic_shard",q:2}],out:[{id:"ancient_relic",q:1}],util:{type:"rp",val:15},desc:"Recover artifact fragments."},
-    {id:"nv3",name:"Deep Trench Routes",   lv:35,xp:75,t:18,inp:[{id:"ocean_chart",q:1}],out:[{id:"void_map",q:1}],util:{type:"speed",val:0.15},desc:"+15% gather speed."},
-    {id:"lg3",name:"Efficiency Protocol",  lv:35,xp:84,t:20,inp:[{id:"drone_processor",q:1},{id:"supply_crate",q:1}],out:[{id:"supply_crate",q:3}],util:{type:"gold",val:50},desc:"+50 bonus credits."},
-    {id:"sc3",name:"Void Signal Trace",    lv:40,xp:90,t:20,inp:[{id:"resonance_crystal",q:1},{id:"drone_processor",q:1}],out:[{id:"resonance_crystal",q:2}],util:{type:"rare",val:0.08},desc:"+8% rare drops."},
+    {id:"nv1",name:"Chart Reef Currents",lv:1, xp:20,t:12,out:[{id:"nav_beacon",q:1}],util:{type:"speed",val:0.05},desc:"+5% gather speed."},
+    {id:"ac1",name:"Surface Excavation",lv:1, xp:25,t:12,out:[{id:"relic_shard",q:1}],util:{type:"rp",val:5},desc:"Excavate reef. Gain RP + relics."},
+    {id:"sc1",name:"Bio Scan",lv:1, xp:20,t:12,out:[{id:"scan_report",q:1}],util:{type:"rare",val:0.03},desc:"+3% rare drop chance."},
+    {id:"oc1",name:"Reef Survey",lv:1, xp:22,t:12,out:[{id:"ocean_chart",q:1}],util:{type:"yield",val:0.05},desc:"+5% resource yield."},
+    {id:"lg1",name:"Supply Cache",lv:1, xp:31,t:13,inp:[{id:"kelp",q:5},{id:"sea_mushrooms",q:3}],out:[{id:"supply_crate",q:1}],util:{type:"gold",val:10},desc:"Pack supply cache."},
+    {id:"nv2",name:"Map Twilight Lanes",lv:15,xp:40,t:14,inp:[{id:"nav_beacon",q:1}],out:[{id:"ocean_chart",q:1}],util:{type:"speed",val:0.10},desc:"+10% gather speed."},
+    {id:"lg2",name:"Trade Bundle",lv:15,xp:26,t:13,inp:[{id:"kelp",q:8},{id:"glowfish",q:5}],out:[{id:"supply_crate",q:2}],util:{type:"gold",val:25},desc:"+25 bonus credits."},
+    {id:"sc2",name:"Deep Resonance Scan",lv:20,xp:45,t:15,inp:[{id:"scan_report",q:1}],out:[{id:"resonance_crystal",q:1}],util:{type:"rare",val:0.05},desc:"+5% rare drops."},
+    {id:"oc2",name:"Abyss Mapping",lv:25,xp:50,t:15,inp:[{id:"ocean_chart",q:1}],out:[{id:"ocean_chart",q:2}],util:{type:"yield",val:0.10},desc:"+10% resource yield."},
+    {id:"ac2",name:"Ancient Wreck Dive",lv:25,xp:55,t:16,inp:[{id:"relic_shard",q:2}],out:[{id:"ancient_relic",q:1}],util:{type:"rp",val:15},desc:"Recover artifact fragments."},
+    {id:"nv3",name:"Deep Trench Routes",lv:35,xp:75,t:18,inp:[{id:"ocean_chart",q:1}],out:[{id:"void_map",q:1}],util:{type:"speed",val:0.15},desc:"+15% gather speed."},
+    {id:"lg3",name:"Efficiency Protocol",lv:35,xp:84,t:20,inp:[{id:"drone_processor",q:1},{id:"supply_crate",q:1}],out:[{id:"supply_crate",q:3}],util:{type:"gold",val:50},desc:"+50 bonus credits."},
+    {id:"sc3",name:"Void Signal Trace",lv:40,xp:90,t:20,inp:[{id:"resonance_crystal",q:1},{id:"drone_processor",q:1}],out:[{id:"resonance_crystal",q:2}],util:{type:"rare",val:0.08},desc:"+8% rare drops."},
     {id:"ac3",name:"Relic Reconstruction", lv:45,xp:110,t:22,inp:[{id:"ancient_relic",q:2},{id:"abyss_crystal",q:1}],out:[{id:"ancient_processor",q:1}],util:{type:"rp",val:30},desc:"+30 RP per action."},
-    {id:"oc3",name:"Void Region Chart",    lv:50,xp:100,t:22,inp:[{id:"ocean_chart",q:2},{id:"void_pearl",q:1}],out:[{id:"void_map",q:1}],util:{type:"yield",val:0.15},desc:"+15% resource yield."},
-    {id:"nv4",name:"Void Cartography",     lv:60,xp:140,t:22,inp:[{id:"void_map",q:1},{id:"abyss_crystal",q:2}],out:[{id:"void_map",q:2}],util:{type:"speed",val:0.20},desc:"+20% gather speed."},
-    {id:"lg4",name:"Deep Supply Network",  lv:60,xp:168,t:31,inp:[{id:"ancient_data_chip",q:1},{id:"supply_crate",q:2}],out:[{id:"supply_crate",q:5}],util:{type:"gold",val:120},desc:"+120 bonus credits."},
-    {id:"sc4",name:"Ancient Freq Lock",    lv:65,xp:180,t:25,inp:[{id:"resonance_crystal",q:2},{id:"ancient_processor",q:1}],out:[{id:"ancient_data_chip",q:1}],util:{type:"rare",val:0.12},desc:"+12% rare drops."},
+    {id:"oc3",name:"Void Region Chart",lv:50,xp:100,t:22,inp:[{id:"ocean_chart",q:2},{id:"void_pearl",q:1}],out:[{id:"void_map",q:1}],util:{type:"yield",val:0.15},desc:"+15% resource yield."},
+    {id:"nv4",name:"Void Cartography",lv:60,xp:140,t:22,inp:[{id:"void_map",q:1},{id:"abyss_crystal",q:2}],out:[{id:"void_map",q:2}],util:{type:"speed",val:0.20},desc:"+20% gather speed."},
+    {id:"lg4",name:"Deep Supply Network",lv:60,xp:168,t:31,inp:[{id:"ancient_data_chip",q:1},{id:"supply_crate",q:2}],out:[{id:"supply_crate",q:5}],util:{type:"gold",val:120},desc:"+120 bonus credits."},
+    {id:"sc4",name:"Ancient Freq Lock",lv:65,xp:180,t:25,inp:[{id:"resonance_crystal",q:2},{id:"ancient_processor",q:1}],out:[{id:"ancient_data_chip",q:1}],util:{type:"rare",val:0.12},desc:"+12% rare drops."},
     {id:"ac4",name:"Ancient Core Extract", lv:70,xp:220,t:28,inp:[{id:"ancient_processor",q:1},{id:"thermal_core",q:1}],out:[{id:"ancient_data_chip",q:2}],util:{type:"rp",val:80},desc:"+80 RP per action."},
     {id:"oc4",name:"Complete Ocean Atlas", lv:80,xp:220,t:28,inp:[{id:"void_map",q:2},{id:"ancient_relic",q:1}],out:[{id:"void_map",q:3}],util:{type:"yield",val:0.25},desc:"+25% all yield."}]},
-
-  // ── Endgame / Rare Crafting ──
   {id:"relic_forging",name:"Relic Forging",icon:"⚗️",color:"#e11d48",cat:"prod",acts:[
-    // ── MAGIC: Voidcaller set — crystal/ether/void themed ──
-    {id:"vc_g1a",name:"Crystal Wand",     lv:1, xp:28, t:12,inp:[{id:"abyss_crystal",q:6},{id:"raw_quartz",q:4}],                              out:[{id:"crystal_wand",q:1}]},
-    {id:"vc_g1b",name:"Crystal Circlet",  lv:1, xp:20, t:11,inp:[{id:"abyss_crystal",q:4},{id:"raw_quartz",q:3}],                              out:[{id:"crystal_circlet",q:1}]},
-    {id:"vc_g1c",name:"Crystal Robe",     lv:5, xp:38, t:14,inp:[{id:"abyss_crystal",q:8},{id:"raw_quartz",q:5},{id:"sea_fiber",q:4}],         out:[{id:"crystal_robe",q:1}]},
-    {id:"vc_g1d",name:"Crystal Focus",    lv:5, xp:24, t:12,inp:[{id:"abyss_crystal",q:4},{id:"raw_quartz",q:3}],                              out:[{id:"crystal_focus",q:1}]},
-    {id:"vc_g1e",name:"Crystal Sandals",  lv:5, xp:22, t:11,inp:[{id:"abyss_crystal",q:4},{id:"sea_fiber",q:3}],                               out:[{id:"crystal_sandals",q:1}]},
-    {id:"vc_g2a",name:"Ether Staff",      lv:25,xp:72, t:18,inp:[{id:"silt_crystal",q:6},{id:"crystal_shard",q:8},{id:"raw_quartz",q:6}],      out:[{id:"ether_staff",q:1}]},
-    {id:"vc_g2b",name:"Ether Crown",      lv:25,xp:52, t:16,inp:[{id:"silt_crystal",q:4},{id:"abyss_crystal",q:6}],                            out:[{id:"ether_crown",q:1}]},
-    {id:"vc_g2c",name:"Ether Robes",      lv:30,xp:92, t:21,inp:[{id:"silt_crystal",q:8},{id:"crystal_shard",q:10},{id:"raw_quartz",q:8}],     out:[{id:"ether_robes",q:1}]},
-    {id:"vc_g2d",name:"Ether Gloves",     lv:30,xp:58, t:16,inp:[{id:"silt_crystal",q:4},{id:"crystal_shard",q:5}],                            out:[{id:"ether_gloves",q:1}]},
-    {id:"vc_g2e",name:"Ether Slippers",   lv:30,xp:52, t:15,inp:[{id:"silt_crystal",q:3},{id:"abyss_crystal",q:4}],                            out:[{id:"ether_slippers",q:1}]},
-    {id:"vc_g3a",name:"Void Staff",       lv:55,xp:145,t:26,inp:[{id:"ether_dust",q:8},{id:"void_dust",q:6},{id:"silt_crystal",q:8}],          out:[{id:"void_staff",q:1}]},
-    {id:"vc_g3b",name:"Void Crown",       lv:55,xp:105,t:22,inp:[{id:"ether_dust",q:5},{id:"silt_crystal",q:6}],                               out:[{id:"void_crown",q:1}]},
-    {id:"vc_g3c",name:"Void Robes",       lv:60,xp:180,t:29,inp:[{id:"ether_dust",q:10},{id:"void_dust",q:8},{id:"silt_crystal",q:10}],        out:[{id:"void_robes",q:1}]},
-    {id:"vc_g3d",name:"Void Focus",       lv:60,xp:118,t:23,inp:[{id:"ether_dust",q:5},{id:"void_dust",q:4}],                                  out:[{id:"void_focus",q:1}]},
-    {id:"vc_g3e",name:"Void Sandals",     lv:60,xp:108,t:22,inp:[{id:"ether_dust",q:4},{id:"silt_crystal",q:5}],                               out:[{id:"void_sandals",q:1}]},
-    {id:"vc_g4a",name:"Abyss Scepter",    lv:85,xp:220,t:30,inp:[{id:"void_pearl",q:3},{id:"void_dust",q:10},{id:"ether_dust",q:8}],           out:[{id:"abyss_scepter",q:1}]},
-    {id:"vc_g4b",name:"Abyss Crown",      lv:85,xp:168,t:27,inp:[{id:"void_pearl",q:2},{id:"ether_dust",q:6},{id:"silt_crystal",q:6}],         out:[{id:"abyss_crown",q:1}]},
-    {id:"vc_g4c",name:"Abyss Robes",      lv:85,xp:275,t:33,inp:[{id:"void_pearl",q:3},{id:"void_dust",q:12},{id:"ether_dust",q:10}],          out:[{id:"abyss_robes",q:1}]},
-    {id:"vc_g4d",name:"Abyss Focus",      lv:85,xp:178,t:28,inp:[{id:"void_pearl",q:2},{id:"void_dust",q:6}],                                  out:[{id:"abyss_focus",q:1}]},
-    {id:"vc_g4e",name:"Abyss Sandals",    lv:85,xp:165,t:27,inp:[{id:"void_pearl",q:1},{id:"ether_dust",q:5},{id:"silt_crystal",q:5}],         out:[{id:"abyss_sandals",q:1}]},
-    // ── Crystal refining chain (lv1-25) ──
-    {id:"rl1",name:"Split Crystals",     lv:1, xp:16, t:10,inp:[{id:"abyss_crystal",q:2}],                                                   out:[{id:"crystal_shard",q:1}]},
-    {id:"rl2",name:"Grind Quartz",       lv:10,xp:24, t:12,inp:[{id:"raw_quartz",q:3}],                                                      out:[{id:"quartz_powder",q:1}]},
-    {id:"rl3",name:"Refine Silt",        lv:20,xp:45, t:15,inp:[{id:"silt_crystal",q:2}],                                                    out:[{id:"refined_silt",q:1}]},
-    {id:"rl4",name:"Extract Ether",      lv:25,xp:65, t:17,inp:[{id:"ether_dust",q:2}],                                                      out:[{id:"void_dust",q:1}]},
-    // ── Rare material synthesis (lv30+) ──
+    {id:"vc_g1a",name:"Crystal Wand",lv:1, xp:28, t:12,inp:[{id:"abyss_crystal",q:6},{id:"raw_quartz",q:4}],out:[{id:"crystal_wand",q:1}]},
+    {id:"vc_g1b",name:"Crystal Circlet",lv:1, xp:20, t:11,inp:[{id:"abyss_crystal",q:4},{id:"raw_quartz",q:3}],out:[{id:"crystal_circlet",q:1}]},
+    {id:"vc_g1c",name:"Crystal Robe",lv:5, xp:38, t:14,inp:[{id:"abyss_crystal",q:8},{id:"raw_quartz",q:5},{id:"sea_fiber",q:4}],out:[{id:"crystal_robe",q:1}]},
+    {id:"vc_g1d",name:"Crystal Focus",lv:5, xp:24, t:12,inp:[{id:"abyss_crystal",q:4},{id:"raw_quartz",q:3}],out:[{id:"crystal_focus",q:1}]},
+    {id:"vc_g1e",name:"Crystal Sandals",lv:5, xp:22, t:11,inp:[{id:"abyss_crystal",q:4},{id:"sea_fiber",q:3}],out:[{id:"crystal_sandals",q:1}]},
+    {id:"vc_g2a",name:"Ether Staff",lv:25,xp:72, t:18,inp:[{id:"silt_crystal",q:6},{id:"crystal_shard",q:8},{id:"raw_quartz",q:6}],out:[{id:"ether_staff",q:1}]},
+    {id:"vc_g2b",name:"Ether Crown",lv:25,xp:52, t:16,inp:[{id:"silt_crystal",q:4},{id:"abyss_crystal",q:6}],out:[{id:"ether_crown",q:1}]},
+    {id:"vc_g2c",name:"Ether Robes",lv:30,xp:92, t:21,inp:[{id:"silt_crystal",q:8},{id:"crystal_shard",q:10},{id:"raw_quartz",q:8}],out:[{id:"ether_robes",q:1}]},
+    {id:"vc_g2d",name:"Ether Gloves",lv:30,xp:58, t:16,inp:[{id:"silt_crystal",q:4},{id:"crystal_shard",q:5}],out:[{id:"ether_gloves",q:1}]},
+    {id:"vc_g2e",name:"Ether Slippers",lv:30,xp:52, t:15,inp:[{id:"silt_crystal",q:3},{id:"abyss_crystal",q:4}],out:[{id:"ether_slippers",q:1}]},
+    {id:"vc_g3a",name:"Void Staff",lv:55,xp:145,t:26,inp:[{id:"ether_dust",q:8},{id:"void_dust",q:6},{id:"silt_crystal",q:8}],out:[{id:"void_staff",q:1}]},
+    {id:"vc_g3b",name:"Void Crown",lv:55,xp:105,t:22,inp:[{id:"ether_dust",q:5},{id:"silt_crystal",q:6}],out:[{id:"void_crown",q:1}]},
+    {id:"vc_g3c",name:"Void Robes",lv:60,xp:180,t:29,inp:[{id:"ether_dust",q:10},{id:"void_dust",q:8},{id:"silt_crystal",q:10}],out:[{id:"void_robes",q:1}]},
+    {id:"vc_g3d",name:"Void Focus",lv:60,xp:118,t:23,inp:[{id:"ether_dust",q:5},{id:"void_dust",q:4}],out:[{id:"void_focus",q:1}]},
+    {id:"vc_g3e",name:"Void Sandals",lv:60,xp:108,t:22,inp:[{id:"ether_dust",q:4},{id:"silt_crystal",q:5}],out:[{id:"void_sandals",q:1}]},
+    {id:"vc_g4a",name:"Abyss Scepter",lv:85,xp:220,t:30,inp:[{id:"void_pearl",q:3},{id:"void_dust",q:10},{id:"ether_dust",q:8}],out:[{id:"abyss_scepter",q:1}]},
+    {id:"vc_g4b",name:"Abyss Crown",lv:85,xp:168,t:27,inp:[{id:"void_pearl",q:2},{id:"ether_dust",q:6},{id:"silt_crystal",q:6}],out:[{id:"abyss_crown",q:1}]},
+    {id:"vc_g4c",name:"Abyss Robes",lv:85,xp:275,t:33,inp:[{id:"void_pearl",q:3},{id:"void_dust",q:12},{id:"ether_dust",q:10}],out:[{id:"abyss_robes",q:1}]},
+    {id:"vc_g4d",name:"Abyss Focus",lv:85,xp:178,t:28,inp:[{id:"void_pearl",q:2},{id:"void_dust",q:6}],out:[{id:"abyss_focus",q:1}]},
+    {id:"vc_g4e",name:"Abyss Sandals",lv:85,xp:165,t:27,inp:[{id:"void_pearl",q:1},{id:"ether_dust",q:5},{id:"silt_crystal",q:5}],out:[{id:"abyss_sandals",q:1}]},
+    {id:"rl1",name:"Split Crystals",lv:1, xp:16, t:10,inp:[{id:"abyss_crystal",q:2}],out:[{id:"crystal_shard",q:1}]},
+    {id:"rl2",name:"Grind Quartz",lv:10,xp:24, t:12,inp:[{id:"raw_quartz",q:3}],out:[{id:"quartz_powder",q:1}]},
+    {id:"rl3",name:"Refine Silt",lv:20,xp:45, t:15,inp:[{id:"silt_crystal",q:2}],out:[{id:"refined_silt",q:1}]},
+    {id:"rl4",name:"Extract Ether",lv:25,xp:65, t:17,inp:[{id:"ether_dust",q:2}],out:[{id:"void_dust",q:1}]},
     {id:"rf1",name:"Void Pearl Extract",lv:30,xp:72,t:19,inp:[{id:"void_dust",q:2},{id:"luminescent_gel",q:3}],out:[{id:"void_pearl",q:1}]},
     {id:"rf2",name:"Black Coral Harvest",lv:45,xp:149,t:28,inp:[{id:"coral_blocks",q:15},{id:"thermal_ore",q:5}],out:[{id:"black_coral",q:1}]},
     {id:"rf3",name:"Thermal Core Forge",lv:55,xp:350,t:35,inp:[{id:"ore_flakes",q:10},{id:"pressure_glass",q:5},{id:"refined_silt",q:3}],out:[{id:"thermal_core",q:1}]},
     {id:"rf4",name:"Alien Tissue Culture",lv:65,xp:299,t:35,inp:[{id:"enzyme_compound",q:8},{id:"luminescent_gel",q:6},{id:"void_pearl",q:1}],out:[{id:"alien_bio_tissue",q:1}]}]},
-
-  // ── Cultivation Gear ──
   {id:"gear_crafting",name:"Gear Crafting",icon:"🛠️",color:"#f59e0b",cat:"prod",acts:[
-    // ── RANGE: Deepstriker set — fiber/scale themed ──
-    {id:"ds_r1a",gearCat:"combat",name:"Sting Bolt",        lv:1, xp:24, t:12,inp:[{id:"sea_fiber",q:4},{id:"shell_fragments",q:3}],                           out:[{id:"sting_bolt",q:1}]},
-    {id:"ds_r1b",gearCat:"combat",name:"Strike Cowl",       lv:1, xp:18, t:11,inp:[{id:"sea_fiber",q:5}],                                                      out:[{id:"strike_cowl",q:1}]},
-    {id:"ds_r1c",gearCat:"combat",name:"Strike Vest",       lv:5, xp:35, t:14,inp:[{id:"sea_fiber",q:8},{id:"ocean_fiber",q:3}],                               out:[{id:"strike_vest",q:1}]},
-    {id:"ds_r1d",gearCat:"combat",name:"Strike Wraps",      lv:5, xp:22, t:12,inp:[{id:"sea_fiber",q:4},{id:"kelp",q:4}],                                      out:[{id:"strike_wraps",q:1}]},
-    {id:"ds_r1e",gearCat:"combat",name:"Strike Fins",       lv:5, xp:20, t:11,inp:[{id:"sea_fiber",q:4},{id:"ocean_fiber",q:2}],                               out:[{id:"strike_fins",q:1}]},
-    {id:"ds_r2a",gearCat:"combat",name:"Reef Crossbow",     lv:25,xp:65, t:17,inp:[{id:"ocean_fiber",q:8},{id:"phosphor_scales",q:5},{id:"fiber_cord",q:3}],   out:[{id:"reef_crossbow",q:1}]},
-    {id:"ds_r2b",gearCat:"combat",name:"Reef Hood",         lv:25,xp:48, t:15,inp:[{id:"phosphor_scales",q:6},{id:"ocean_fiber",q:4}],                         out:[{id:"reef_hood",q:1}]},
-    {id:"ds_r2c",gearCat:"combat",name:"Reef Leathers",     lv:30,xp:85, t:20,inp:[{id:"ocean_fiber",q:8},{id:"phosphor_scales",q:10},{id:"fiber_cord",q:4}],  out:[{id:"reef_leathers",q:1}]},
-    {id:"ds_r2d",gearCat:"combat",name:"Reef Bracers",      lv:30,xp:55, t:16,inp:[{id:"phosphor_scales",q:6},{id:"ocean_fiber",q:5}],                         out:[{id:"reef_bracers",q:1}]},
-    {id:"ds_r2e",gearCat:"combat",name:"Reef Striders",     lv:30,xp:50, t:15,inp:[{id:"phosphor_scales",q:5},{id:"ocean_fiber",q:4}],                         out:[{id:"reef_striders",q:1}]},
-    {id:"ds_r3a",gearCat:"combat",name:"Void Bow",          lv:55,xp:130,t:25,inp:[{id:"void_fin",q:5},{id:"deepsea_roe",q:8},{id:"fiber_cord",q:6}],          out:[{id:"void_bow",q:1}]},
-    {id:"ds_r3b",gearCat:"combat",name:"Void Cowl",         lv:55,xp:95, t:21,inp:[{id:"void_fin",q:4},{id:"ocean_fiber",q:8}],                                out:[{id:"void_cowl",q:1}]},
-    {id:"ds_r3c",gearCat:"combat",name:"Void Leathers",     lv:60,xp:160,t:28,inp:[{id:"void_fin",q:6},{id:"deepsea_roe",q:10},{id:"phosphor_scales",q:8}],    out:[{id:"void_leathers",q:1}]},
-    {id:"ds_r3d",gearCat:"combat",name:"Void Bracers",      lv:60,xp:110,t:23,inp:[{id:"void_fin",q:4},{id:"deepsea_roe",q:6}],                                out:[{id:"void_bracers",q:1}]},
-    {id:"ds_r3e",gearCat:"combat",name:"Void Striders",     lv:60,xp:100,t:22,inp:[{id:"void_fin",q:3},{id:"ocean_fiber",q:6}],                                out:[{id:"void_striders",q:1}]},
-    {id:"ds_r4a",gearCat:"combat",name:"Abyss Bow",         lv:85,xp:210,t:30,inp:[{id:"alien_bio_tissue",q:4},{id:"void_fin",q:8},{id:"void_essence",q:1}],   out:[{id:"abyss_bow",q:1}]},
-    {id:"ds_r4b",gearCat:"combat",name:"Abyss Cowl",        lv:85,xp:160,t:27,inp:[{id:"alien_bio_tissue",q:3},{id:"void_fin",q:5}],                           out:[{id:"abyss_cowl",q:1}]},
-    {id:"ds_r4c",gearCat:"combat",name:"Abyss Leathers",    lv:85,xp:260,t:33,inp:[{id:"alien_bio_tissue",q:5},{id:"void_fin",q:10},{id:"deepsea_roe",q:8}],   out:[{id:"abyss_leathers",q:1}]},
-    {id:"ds_r4d",gearCat:"combat",name:"Abyss Bracers",     lv:85,xp:175,t:28,inp:[{id:"alien_bio_tissue",q:3},{id:"void_fin",q:4}],                           out:[{id:"abyss_bracers",q:1}]},
-    {id:"ds_r4e",gearCat:"combat",name:"Abyss Striders",    lv:85,xp:165,t:27,inp:[{id:"alien_bio_tissue",q:2},{id:"void_fin",q:4}],                           out:[{id:"abyss_striders",q:1}]},
-    // ── Cultivation ──
-    {id:"cg1",gearCat:"cultivation",name:"Kelp Rake",         lv:5, xp:28,t:12, inp:[{id:"kelp",q:10},{id:"ocean_fiber",q:5}],                               out:[{id:"kelp_rake",q:1}]},
-    {id:"cg2",gearCat:"cultivation",name:"Tide Harvester",    lv:25,xp:55,t:15, inp:[{id:"soft_coral",q:8},{id:"tide_sap",q:4},{id:"ocean_fiber",q:8}],      out:[{id:"tide_harvester",q:1}]},
-    {id:"cg3",gearCat:"cultivation",name:"Spore Collector",   lv:55,xp:110,t:22, inp:[{id:"kelp_spores",q:6},{id:"tide_sap",q:8},{id:"void_pearl",q:1}],      out:[{id:"spore_collector",q:1}]},
-    {id:"cg4",gearCat:"cultivation",name:"Void Tendril",      lv:85,xp:210,t:30,inp:[{id:"void_kelp",q:4},{id:"kelp_spores",q:10},{id:"void_essence",q:1}],  out:[{id:"void_tendril",q:1}]},
-    {id:"cg5",gearCat:"cultivation",name:"Kelp Hood",         lv:55,xp:100,t:20, inp:[{id:"kelp",q:20},{id:"soft_coral",q:8},{id:"ocean_fiber",q:10}],         out:[{id:"kelp_hood",q:1}]},
-    {id:"cg6",gearCat:"cultivation",name:"Kelp Suit",         lv:80,xp:180,t:28, inp:[{id:"tide_sap",q:6},{id:"soft_coral",q:15},{id:"kelp",q:25},{id:"ocean_fiber",q:12}], out:[{id:"kelp_suit",q:1}]},
-    {id:"cg7",gearCat:"cultivation",name:"Kelp Gloves",       lv:15,xp:28,t:12, inp:[{id:"kelp",q:10},{id:"ocean_fiber",q:6}],                               out:[{id:"kelp_gloves",q:1}]},
-    {id:"cg8",gearCat:"cultivation",name:"Kelp Boots",        lv:35,xp:55,t:15, inp:[{id:"kelp",q:12},{id:"sea_mushrooms",q:6},{id:"ocean_fiber",q:5}],      out:[{id:"kelp_boots",q:1}]},
-    // ── Mining ──
-    {id:"mg1",gearCat:"mining",name:"Reef Pick",              lv:5, xp:28,t:12, inp:[{id:"trench_stone",q:12},{id:"shell_fragments",q:6}],                   out:[{id:"reef_pick",q:1}]},
-    {id:"mg2",gearCat:"mining",name:"Brine Drill",            lv:25,xp:55,t:15, inp:[{id:"salt_crystals",q:8},{id:"shell_fragments",q:10},{id:"reinforced_alloy",q:3}], out:[{id:"brine_drill",q:1}]},
-    {id:"mg3",gearCat:"mining",name:"Magma Borer",            lv:55,xp:110,t:22, inp:[{id:"magma_shard",q:5},{id:"thermal_ore",q:10},{id:"reinforced_alloy",q:6}],       out:[{id:"magma_borer",q:1}]},
-    {id:"mg4",gearCat:"mining",name:"Obsidian Crusher",       lv:85,xp:210,t:30,inp:[{id:"obsidian_ore",q:4},{id:"magma_shard",q:8},{id:"thermal_core",q:2}],           out:[{id:"obsidian_crusher",q:1}]},
-    {id:"mg5",gearCat:"mining",name:"Ore Helm",               lv:55,xp:100,t:20, inp:[{id:"trench_stone",q:25},{id:"shell_fragments",q:10},{id:"salt_crystals",q:6}], out:[{id:"ore_helm",q:1}]},
-    {id:"mg6",gearCat:"mining",name:"Ore Vest",               lv:80,xp:180,t:28, inp:[{id:"shell_fragments",q:20},{id:"salt_crystals",q:12},{id:"thermal_ore",q:8},{id:"reinforced_alloy",q:6}], out:[{id:"ore_vest",q:1}]},
-    {id:"mg7",gearCat:"mining",name:"Ore Gauntlets",          lv:15,xp:28,t:12, inp:[{id:"trench_stone",q:15},{id:"shell_fragments",q:8}],                   out:[{id:"ore_gauntlets",q:1}]},
-    {id:"mg8",gearCat:"mining",name:"Ore Treads",             lv:35,xp:55,t:15, inp:[{id:"trench_stone",q:18},{id:"shell_fragments",q:8},{id:"salt_crystals",q:5}], out:[{id:"ore_treads",q:1}]},
-    // ── Fishing ──
-    {id:"fg1",gearCat:"fishing",name:"Glow Rod",              lv:5, xp:28,t:12, inp:[{id:"glowfish",q:8},{id:"ocean_fiber",q:6}],                            out:[{id:"glow_rod",q:1}]},
-    {id:"fg2",gearCat:"fishing",name:"Phosphor Net",          lv:25,xp:55,t:15, inp:[{id:"phosphor_scales",q:8},{id:"deepsea_roe",q:4},{id:"ocean_fiber",q:10}], out:[{id:"phosphor_net",q:1}]},
-    {id:"fg3",gearCat:"fishing",name:"Void Lure",             lv:55,xp:110,t:22, inp:[{id:"void_fin",q:4},{id:"deepsea_roe",q:8},{id:"void_pearl",q:1}],      out:[{id:"void_lure",q:1}]},
-    {id:"fg4",gearCat:"fishing",name:"Abyss Trawl",           lv:85,xp:210,t:30,inp:[{id:"alien_bio_tissue",q:3},{id:"void_fin",q:6},{id:"void_essence",q:1}], out:[{id:"abyss_trawl",q:1}]},
-    {id:"fg5",gearCat:"fishing",name:"Scale Mask",            lv:55,xp:100,t:20, inp:[{id:"phosphor_scales",q:14},{id:"glowfish",q:10},{id:"deepsea_roe",q:5}], out:[{id:"scale_mask",q:1}]},
-    {id:"fg6",gearCat:"fishing",name:"Scale Suit",            lv:80,xp:180,t:28, inp:[{id:"phosphor_scales",q:20},{id:"deepsea_roe",q:12},{id:"ocean_fiber",q:15},{id:"glowfish",q:8}], out:[{id:"scale_suit",q:1}]},
-    {id:"fg7",gearCat:"fishing",name:"Scale Fins",            lv:15,xp:28,t:12, inp:[{id:"glowfish",q:12},{id:"ocean_fiber",q:8}],                           out:[{id:"scale_fins",q:1}]},
-    {id:"fg8",gearCat:"fishing",name:"Scale Boots",           lv:35,xp:55,t:15, inp:[{id:"phosphor_scales",q:12},{id:"glowfish",q:8},{id:"ocean_fiber",q:8}], out:[{id:"scale_boots",q:1}]},
-    // ── Crystal ──
-    {id:"xg1",gearCat:"crystal",name:"Quartz Chisel",         lv:10,xp:28,t:12, inp:[{id:"abyss_crystal",q:4},{id:"raw_quartz",q:6}],                        out:[{id:"quartz_chisel",q:1}]},
-    {id:"xg2",gearCat:"crystal",name:"Silt Probe",            lv:30,xp:55,t:15, inp:[{id:"raw_quartz",q:8},{id:"silt_crystal",q:5},{id:"abyss_crystal",q:3}], out:[{id:"silt_probe",q:1}]},
-    {id:"xg3",gearCat:"crystal",name:"Ether Lens",            lv:60,xp:110,t:22, inp:[{id:"silt_crystal",q:6},{id:"ether_dust",q:6},{id:"void_pearl",q:2}],   out:[{id:"ether_lens",q:1}]},
-    {id:"xg4",gearCat:"crystal",name:"Void Resonator",        lv:90,xp:210,t:30,inp:[{id:"void_pearl",q:3},{id:"ether_dust",q:10},{id:"void_essence",q:2}],  out:[{id:"void_resonator",q:1}]},
-    {id:"xg5",gearCat:"crystal",name:"Crystal Visor",         lv:65,xp:100,t:20, inp:[{id:"abyss_crystal",q:8},{id:"raw_quartz",q:10},{id:"silt_crystal",q:4}], out:[{id:"crystal_visor",q:1}]},
-    {id:"xg6",gearCat:"crystal",name:"Crystal Suit",          lv:90,xp:180,t:28, inp:[{id:"silt_crystal",q:12},{id:"ether_dust",q:6},{id:"abyss_crystal",q:12},{id:"raw_quartz",q:10}], out:[{id:"crystal_suit",q:1}]},
-    {id:"xg7",gearCat:"crystal",name:"Crystal Gloves",        lv:25,xp:28,t:12, inp:[{id:"abyss_crystal",q:6},{id:"raw_quartz",q:6}],                        out:[{id:"crystal_gloves",q:1}]},
-    {id:"xg8",gearCat:"crystal",name:"Crystal Fins",          lv:45,xp:55,t:15, inp:[{id:"raw_quartz",q:8},{id:"abyss_crystal",q:6},{id:"silt_crystal",q:3}], out:[{id:"crystal_fins",q:1}]},
-    // ── Trench ──
-    {id:"tg1",gearCat:"trench",name:"Sediment Brush",         lv:10,xp:28,t:12, inp:[{id:"sea_fiber",q:12},{id:"deep_moss",q:6}],                           out:[{id:"sediment_brush",q:1}]},
-    {id:"tg2",gearCat:"trench",name:"Ruin Scanner",           lv:30,xp:55,t:15, inp:[{id:"sediment_core",q:5},{id:"deep_moss",q:8},{id:"trench_stone",q:10}], out:[{id:"ruin_scanner",q:1}]},
-    {id:"tg3",gearCat:"trench",name:"Fragment Extractor",     lv:60,xp:110,t:22, inp:[{id:"ancient_fragment",q:4},{id:"sediment_core",q:8},{id:"abyss_crystal",q:2}], out:[{id:"fragment_extractor",q:1}]},
-    {id:"tg4",gearCat:"trench",name:"Ancient Probe",          lv:90,xp:210,t:30,inp:[{id:"abyss_silt",q:5},{id:"ancient_fragment",q:8},{id:"void_essence",q:1}], out:[{id:"ancient_probe",q:1}]},
-    {id:"tg5",gearCat:"trench",name:"Explorer Helm",          lv:65,xp:100,t:20, inp:[{id:"deep_moss",q:14},{id:"ocean_fiber",q:10},{id:"sediment_core",q:5}], out:[{id:"explorer_helm",q:1}]},
-    {id:"tg6",gearCat:"trench",name:"Explorer Suit",          lv:90,xp:180,t:28, inp:[{id:"sediment_core",q:12},{id:"ancient_fragment",q:6},{id:"deep_moss",q:15},{id:"ocean_fiber",q:15}], out:[{id:"explorer_suit",q:1}]},
-    {id:"tg7",gearCat:"trench",name:"Explorer Gloves",        lv:25,xp:28,t:12, inp:[{id:"deep_moss",q:10},{id:"ocean_fiber",q:8}],                          out:[{id:"explorer_gloves",q:1}]},
-    {id:"tg8",gearCat:"trench",name:"Explorer Boots",         lv:45,xp:55,t:15, inp:[{id:"ocean_fiber",q:12},{id:"deep_moss",q:8},{id:"sediment_core",q:3}],  out:[{id:"explorer_boots",q:1}]}]},
+    {id:"ds_r1a",gearCat:"combat",name:"Sting Bolt",lv:1, xp:24, t:12,inp:[{id:"sea_fiber",q:4},{id:"shell_fragments",q:3}],out:[{id:"sting_bolt",q:1}]},
+    {id:"ds_r1b",gearCat:"combat",name:"Strike Cowl",lv:1, xp:18, t:11,inp:[{id:"sea_fiber",q:5}],out:[{id:"strike_cowl",q:1}]},
+    {id:"ds_r1c",gearCat:"combat",name:"Strike Vest",lv:5, xp:35, t:14,inp:[{id:"sea_fiber",q:8},{id:"ocean_fiber",q:3}],out:[{id:"strike_vest",q:1}]},
+    {id:"ds_r1d",gearCat:"combat",name:"Strike Wraps",lv:5, xp:22, t:12,inp:[{id:"sea_fiber",q:4},{id:"kelp",q:4}],out:[{id:"strike_wraps",q:1}]},
+    {id:"ds_r1e",gearCat:"combat",name:"Strike Fins",lv:5, xp:20, t:11,inp:[{id:"sea_fiber",q:4},{id:"ocean_fiber",q:2}],out:[{id:"strike_fins",q:1}]},
+    {id:"ds_r2a",gearCat:"combat",name:"Reef Crossbow",lv:25,xp:65, t:17,inp:[{id:"ocean_fiber",q:8},{id:"phosphor_scales",q:5},{id:"fiber_cord",q:3}],out:[{id:"reef_crossbow",q:1}]},
+    {id:"ds_r2b",gearCat:"combat",name:"Reef Hood",lv:25,xp:48, t:15,inp:[{id:"phosphor_scales",q:6},{id:"ocean_fiber",q:4}],out:[{id:"reef_hood",q:1}]},
+    {id:"ds_r2c",gearCat:"combat",name:"Reef Leathers",lv:30,xp:85, t:20,inp:[{id:"ocean_fiber",q:8},{id:"phosphor_scales",q:10},{id:"fiber_cord",q:4}],out:[{id:"reef_leathers",q:1}]},
+    {id:"ds_r2d",gearCat:"combat",name:"Reef Bracers",lv:30,xp:55, t:16,inp:[{id:"phosphor_scales",q:6},{id:"ocean_fiber",q:5}],out:[{id:"reef_bracers",q:1}]},
+    {id:"ds_r2e",gearCat:"combat",name:"Reef Striders",lv:30,xp:50, t:15,inp:[{id:"phosphor_scales",q:5},{id:"ocean_fiber",q:4}],out:[{id:"reef_striders",q:1}]},
+    {id:"ds_r3a",gearCat:"combat",name:"Void Bow",lv:55,xp:130,t:25,inp:[{id:"void_fin",q:5},{id:"deepsea_roe",q:8},{id:"fiber_cord",q:6}],out:[{id:"void_bow",q:1}]},
+    {id:"ds_r3b",gearCat:"combat",name:"Void Cowl",lv:55,xp:95, t:21,inp:[{id:"void_fin",q:4},{id:"ocean_fiber",q:8}],out:[{id:"void_cowl",q:1}]},
+    {id:"ds_r3c",gearCat:"combat",name:"Void Leathers",lv:60,xp:160,t:28,inp:[{id:"void_fin",q:6},{id:"deepsea_roe",q:10},{id:"phosphor_scales",q:8}],out:[{id:"void_leathers",q:1}]},
+    {id:"ds_r3d",gearCat:"combat",name:"Void Bracers",lv:60,xp:110,t:23,inp:[{id:"void_fin",q:4},{id:"deepsea_roe",q:6}],out:[{id:"void_bracers",q:1}]},
+    {id:"ds_r3e",gearCat:"combat",name:"Void Striders",lv:60,xp:100,t:22,inp:[{id:"void_fin",q:3},{id:"ocean_fiber",q:6}],out:[{id:"void_striders",q:1}]},
+    {id:"ds_r4a",gearCat:"combat",name:"Abyss Bow",lv:85,xp:210,t:30,inp:[{id:"alien_bio_tissue",q:4},{id:"void_fin",q:8},{id:"void_essence",q:1}],out:[{id:"abyss_bow",q:1}]},
+    {id:"ds_r4b",gearCat:"combat",name:"Abyss Cowl",lv:85,xp:160,t:27,inp:[{id:"alien_bio_tissue",q:3},{id:"void_fin",q:5}],out:[{id:"abyss_cowl",q:1}]},
+    {id:"ds_r4c",gearCat:"combat",name:"Abyss Leathers",lv:85,xp:260,t:33,inp:[{id:"alien_bio_tissue",q:5},{id:"void_fin",q:10},{id:"deepsea_roe",q:8}],out:[{id:"abyss_leathers",q:1}]},
+    {id:"ds_r4d",gearCat:"combat",name:"Abyss Bracers",lv:85,xp:175,t:28,inp:[{id:"alien_bio_tissue",q:3},{id:"void_fin",q:4}],out:[{id:"abyss_bracers",q:1}]},
+    {id:"ds_r4e",gearCat:"combat",name:"Abyss Striders",lv:85,xp:165,t:27,inp:[{id:"alien_bio_tissue",q:2},{id:"void_fin",q:4}],out:[{id:"abyss_striders",q:1}]},
+    {id:"cg1",gearCat:"cultivation",name:"Kelp Rake",lv:5, xp:28,t:12, inp:[{id:"kelp",q:10},{id:"ocean_fiber",q:5}],out:[{id:"kelp_rake",q:1}]},
+    {id:"cg2",gearCat:"cultivation",name:"Tide Harvester",lv:25,xp:55,t:15, inp:[{id:"soft_coral",q:8},{id:"tide_sap",q:4},{id:"ocean_fiber",q:8}],out:[{id:"tide_harvester",q:1}]},
+    {id:"cg3",gearCat:"cultivation",name:"Spore Collector",lv:55,xp:110,t:22, inp:[{id:"kelp_spores",q:6},{id:"tide_sap",q:8},{id:"void_pearl",q:1}],out:[{id:"spore_collector",q:1}]},
+    {id:"cg4",gearCat:"cultivation",name:"Void Tendril",lv:85,xp:210,t:30,inp:[{id:"void_kelp",q:4},{id:"kelp_spores",q:10},{id:"void_essence",q:1}],out:[{id:"void_tendril",q:1}]},
+    {id:"cg5",gearCat:"cultivation",name:"Kelp Hood",lv:55,xp:100,t:20, inp:[{id:"kelp",q:20},{id:"soft_coral",q:8},{id:"ocean_fiber",q:10}],out:[{id:"kelp_hood",q:1}]},
+    {id:"cg6",gearCat:"cultivation",name:"Kelp Suit",lv:80,xp:180,t:28, inp:[{id:"tide_sap",q:6},{id:"soft_coral",q:15},{id:"kelp",q:25},{id:"ocean_fiber",q:12}], out:[{id:"kelp_suit",q:1}]},
+    {id:"cg7",gearCat:"cultivation",name:"Kelp Gloves",lv:15,xp:28,t:12, inp:[{id:"kelp",q:10},{id:"ocean_fiber",q:6}],out:[{id:"kelp_gloves",q:1}]},
+    {id:"cg8",gearCat:"cultivation",name:"Kelp Boots",lv:35,xp:55,t:15, inp:[{id:"kelp",q:12},{id:"sea_mushrooms",q:6},{id:"ocean_fiber",q:5}],out:[{id:"kelp_boots",q:1}]},
+    {id:"mg1",gearCat:"mining",name:"Reef Pick",lv:5, xp:28,t:12, inp:[{id:"trench_stone",q:12},{id:"shell_fragments",q:6}],out:[{id:"reef_pick",q:1}]},
+    {id:"mg2",gearCat:"mining",name:"Brine Drill",lv:25,xp:55,t:15, inp:[{id:"salt_crystals",q:8},{id:"shell_fragments",q:10},{id:"reinforced_alloy",q:3}], out:[{id:"brine_drill",q:1}]},
+    {id:"mg3",gearCat:"mining",name:"Magma Borer",lv:55,xp:110,t:22, inp:[{id:"magma_shard",q:5},{id:"thermal_ore",q:10},{id:"reinforced_alloy",q:6}],out:[{id:"magma_borer",q:1}]},
+    {id:"mg4",gearCat:"mining",name:"Obsidian Crusher",lv:85,xp:210,t:30,inp:[{id:"obsidian_ore",q:4},{id:"magma_shard",q:8},{id:"thermal_core",q:2}],out:[{id:"obsidian_crusher",q:1}]},
+    {id:"mg5",gearCat:"mining",name:"Ore Helm",lv:55,xp:100,t:20, inp:[{id:"trench_stone",q:25},{id:"shell_fragments",q:10},{id:"salt_crystals",q:6}], out:[{id:"ore_helm",q:1}]},
+    {id:"mg6",gearCat:"mining",name:"Ore Vest",lv:80,xp:180,t:28, inp:[{id:"shell_fragments",q:20},{id:"salt_crystals",q:12},{id:"thermal_ore",q:8},{id:"reinforced_alloy",q:6}], out:[{id:"ore_vest",q:1}]},
+    {id:"mg7",gearCat:"mining",name:"Ore Gauntlets",lv:15,xp:28,t:12, inp:[{id:"trench_stone",q:15},{id:"shell_fragments",q:8}],out:[{id:"ore_gauntlets",q:1}]},
+    {id:"mg8",gearCat:"mining",name:"Ore Treads",lv:35,xp:55,t:15, inp:[{id:"trench_stone",q:18},{id:"shell_fragments",q:8},{id:"salt_crystals",q:5}], out:[{id:"ore_treads",q:1}]},
+    {id:"fg1",gearCat:"fishing",name:"Glow Rod",lv:5, xp:28,t:12, inp:[{id:"glowfish",q:8},{id:"ocean_fiber",q:6}],out:[{id:"glow_rod",q:1}]},
+    {id:"fg2",gearCat:"fishing",name:"Phosphor Net",lv:25,xp:55,t:15, inp:[{id:"phosphor_scales",q:8},{id:"deepsea_roe",q:4},{id:"ocean_fiber",q:10}], out:[{id:"phosphor_net",q:1}]},
+    {id:"fg3",gearCat:"fishing",name:"Void Lure",lv:55,xp:110,t:22, inp:[{id:"void_fin",q:4},{id:"deepsea_roe",q:8},{id:"void_pearl",q:1}],out:[{id:"void_lure",q:1}]},
+    {id:"fg4",gearCat:"fishing",name:"Abyss Trawl",lv:85,xp:210,t:30,inp:[{id:"alien_bio_tissue",q:3},{id:"void_fin",q:6},{id:"void_essence",q:1}], out:[{id:"abyss_trawl",q:1}]},
+    {id:"fg5",gearCat:"fishing",name:"Scale Mask",lv:55,xp:100,t:20, inp:[{id:"phosphor_scales",q:14},{id:"glowfish",q:10},{id:"deepsea_roe",q:5}], out:[{id:"scale_mask",q:1}]},
+    {id:"fg6",gearCat:"fishing",name:"Scale Suit",lv:80,xp:180,t:28, inp:[{id:"phosphor_scales",q:20},{id:"deepsea_roe",q:12},{id:"ocean_fiber",q:15},{id:"glowfish",q:8}], out:[{id:"scale_suit",q:1}]},
+    {id:"fg7",gearCat:"fishing",name:"Scale Fins",lv:15,xp:28,t:12, inp:[{id:"glowfish",q:12},{id:"ocean_fiber",q:8}],out:[{id:"scale_fins",q:1}]},
+    {id:"fg8",gearCat:"fishing",name:"Scale Boots",lv:35,xp:55,t:15, inp:[{id:"phosphor_scales",q:12},{id:"glowfish",q:8},{id:"ocean_fiber",q:8}], out:[{id:"scale_boots",q:1}]},
+    {id:"xg1",gearCat:"crystal",name:"Quartz Chisel",lv:10,xp:28,t:12, inp:[{id:"abyss_crystal",q:4},{id:"raw_quartz",q:6}],out:[{id:"quartz_chisel",q:1}]},
+    {id:"xg2",gearCat:"crystal",name:"Silt Probe",lv:30,xp:55,t:15, inp:[{id:"raw_quartz",q:8},{id:"silt_crystal",q:5},{id:"abyss_crystal",q:3}], out:[{id:"silt_probe",q:1}]},
+    {id:"xg3",gearCat:"crystal",name:"Ether Lens",lv:60,xp:110,t:22, inp:[{id:"silt_crystal",q:6},{id:"ether_dust",q:6},{id:"void_pearl",q:2}],out:[{id:"ether_lens",q:1}]},
+    {id:"xg4",gearCat:"crystal",name:"Void Resonator",lv:90,xp:210,t:30,inp:[{id:"void_pearl",q:3},{id:"ether_dust",q:10},{id:"void_essence",q:2}],out:[{id:"void_resonator",q:1}]},
+    {id:"xg5",gearCat:"crystal",name:"Crystal Visor",lv:65,xp:100,t:20, inp:[{id:"abyss_crystal",q:8},{id:"raw_quartz",q:10},{id:"silt_crystal",q:4}], out:[{id:"crystal_visor",q:1}]},
+    {id:"xg6",gearCat:"crystal",name:"Crystal Suit",lv:90,xp:180,t:28, inp:[{id:"silt_crystal",q:12},{id:"ether_dust",q:6},{id:"abyss_crystal",q:12},{id:"raw_quartz",q:10}], out:[{id:"crystal_suit",q:1}]},
+    {id:"xg7",gearCat:"crystal",name:"Crystal Gloves",lv:25,xp:28,t:12, inp:[{id:"abyss_crystal",q:6},{id:"raw_quartz",q:6}],out:[{id:"crystal_gloves",q:1}]},
+    {id:"xg8",gearCat:"crystal",name:"Crystal Fins",lv:45,xp:55,t:15, inp:[{id:"raw_quartz",q:8},{id:"abyss_crystal",q:6},{id:"silt_crystal",q:3}], out:[{id:"crystal_fins",q:1}]},
+    {id:"tg1",gearCat:"trench",name:"Sediment Brush",lv:10,xp:28,t:12, inp:[{id:"sea_fiber",q:12},{id:"deep_moss",q:6}],out:[{id:"sediment_brush",q:1}]},
+    {id:"tg2",gearCat:"trench",name:"Ruin Scanner",lv:30,xp:55,t:15, inp:[{id:"sediment_core",q:5},{id:"deep_moss",q:8},{id:"trench_stone",q:10}], out:[{id:"ruin_scanner",q:1}]},
+    {id:"tg3",gearCat:"trench",name:"Fragment Extractor",lv:60,xp:110,t:22, inp:[{id:"ancient_fragment",q:4},{id:"sediment_core",q:8},{id:"abyss_crystal",q:2}], out:[{id:"fragment_extractor",q:1}]},
+    {id:"tg4",gearCat:"trench",name:"Ancient Probe",lv:90,xp:210,t:30,inp:[{id:"abyss_silt",q:5},{id:"ancient_fragment",q:8},{id:"void_essence",q:1}], out:[{id:"ancient_probe",q:1}]},
+    {id:"tg5",gearCat:"trench",name:"Explorer Helm",lv:65,xp:100,t:20, inp:[{id:"deep_moss",q:14},{id:"ocean_fiber",q:10},{id:"sediment_core",q:5}], out:[{id:"explorer_helm",q:1}]},
+    {id:"tg6",gearCat:"trench",name:"Explorer Suit",lv:90,xp:180,t:28, inp:[{id:"sediment_core",q:12},{id:"ancient_fragment",q:6},{id:"deep_moss",q:15},{id:"ocean_fiber",q:15}], out:[{id:"explorer_suit",q:1}]},
+    {id:"tg7",gearCat:"trench",name:"Explorer Gloves",lv:25,xp:28,t:12, inp:[{id:"deep_moss",q:10},{id:"ocean_fiber",q:8}],out:[{id:"explorer_gloves",q:1}]},
+    {id:"tg8",gearCat:"trench",name:"Explorer Boots",lv:45,xp:55,t:15, inp:[{id:"ocean_fiber",q:12},{id:"deep_moss",q:8},{id:"sediment_core",q:3}],out:[{id:"explorer_boots",q:1}]}]},
 ];
 
 // ===================== COMBAT SKILLS =====================
@@ -1210,6 +1153,27 @@ function AuthScreen({onLogin}){
 }
 
 // ===================== GAME UI =====================
+// RAF-driven progress bar — reads ref directly, no React re-renders
+function ProgBar({progRef,height=7,radius=4,bg,color,glow}){
+  const domRef=useRef(null);
+  useEffect(()=>{
+    let id;
+    const loop=()=>{
+      if(domRef.current)domRef.current.style.width=(progRef.current*100)+"%";
+      id=requestAnimationFrame(loop);
+    };
+    id=requestAnimationFrame(loop);
+    return()=>cancelAnimationFrame(id);
+  },[progRef]);
+  return(
+    <div style={{height,borderRadius:radius,background:bg||"rgba(255,255,255,0.08)",overflow:"hidden"}}>
+      <div ref={domRef} style={{width:"0%",height:"100%",borderRadius:radius,
+        background:color||"linear-gradient(90deg,#7b61ff,#00d4ff)",
+        boxShadow:glow||"none",transition:"none"}}/>
+    </div>
+  );
+}
+
 function GameUI({account,onLogout}){
   const[skills,setSkills]=useState({});
   const[inv,setInv]=useState({});
@@ -1217,7 +1181,7 @@ function GameUI({account,onLogout}){
   const[gold,setGold]=useState(0);
   const[enh,setEnh]=useState({});
   const[curAct,setCurAct]=useState(null);
-  const[actProg,setActProg]=useState(0);
+  // actProg state replaced by actProgRef for perf
   const[pinnedSkill,setPinnedSkill]=useState(null);
   const[gatherCounts,setGatherCounts]=useState({});
   const[lastActMap,setLastActMap]=useState({});
@@ -1284,7 +1248,6 @@ function GameUI({account,onLogout}){
   const[chatOpen,setChatOpen]=useState(true);
   const[rightTab,setRightTab]=useState("inventory");
   const[invFilter,setInvFilter]=useState("");
-  // ── Social ──
   const chatEndRef=useRef(null);
   const[chatMessages,setChatMessages]=useState([]);  // global chat
   const[chatInput,setChatInput]=useState("");
@@ -1424,7 +1387,6 @@ function GameUI({account,onLogout}){
   useEffect(()=>{loadFriends();loadClan();},[account.uid]);
   // Scroll chat to bottom when messages change
   useEffect(()=>{chatEndRef.current?.scrollIntoView({behavior:"smooth"})},[chatMessages,dmMessages,clanChat]);
-  // ── AUTOSAVE ──
   const saveRef=useRef(null);
   const dataLoaded=useRef(false); // don't save until load completes
 
@@ -1456,7 +1418,6 @@ function GameUI({account,onLogout}){
     window.addEventListener("beforeunload",handler);
     return()=>window.removeEventListener("beforeunload",handler);
   },[account?.uid,skills,inv,eq,gold,enh,researchPts,researched,structures,drones,achievements,lifeStats,blueprints,bpLog]);
-
 
   // Energy regen
   useEffect(()=>{const t=setInterval(()=>{setEnergy(e=>Math.min(maxEnergy,e+1*(1+(bonuses.energy_regen||0))))},1000);return()=>clearInterval(t)},[maxEnergy,bonuses.energy_regen]);
@@ -1506,7 +1467,8 @@ function GameUI({account,onLogout}){
   const addIt=useCallback((iid,q)=>setInv(p=>({...p,[iid]:(p[iid]||0)+q})),[]);
   const remIt=useCallback((iid,q)=>setInv(p=>{const c=p[iid]||0;if(c<=q){const n={...p};delete n[iid];return n}return{...p,[iid]:c-q}}),[]);
 
-  // Action tick
+  // Action tick — RAF drives progress bar, logic interval fires on completion only
+  const actProgRef=useRef(0);
   useEffect(()=>{
     if(!curAct)return;
     const sk=SKILLS.find(s=>s.id===curAct.sk);if(!sk)return;
@@ -1514,59 +1476,46 @@ function GameUI({account,onLogout}){
     const speedMult=sk.cat==="gather"?(1+(bonuses.gather_speed||0)):(1+(bonuses.prod_speed||0));
     const dur=(act.t*1000)/speedMult;
     let start=Date.now();
+    let rafId;
+    const rafLoop=()=>{actProgRef.current=Math.min(1,(Date.now()-start)/dur);rafId=requestAnimationFrame(rafLoop);};
+    rafId=requestAnimationFrame(rafLoop);
     const tick=setInterval(()=>{
-      const p=Math.min(1,(Date.now()-start)/dur);setActProg(p);
-      if(p>=1){
-        const ci=invRef.current;
-        if(act.inp&&!act.inp.every(i=>(ci[i.id]||0)>=i.q)){setCurAct(null);setActProg(0);return}
-        if(act.inp)act.inp.forEach(i=>remIt(i.id,i.q));
-        gainXp(sk.id,Math.floor(act.xp*(1+(sk.cat==="gather"?(bonuses.xp_bonus||0):0))));
-        if(act.out)act.out.forEach(i=>{
-          let qty=i.q;
-          if(sk.cat==="gather"){
-            qty=Math.floor(qty*(1+(bonuses.gather_yield||0)));
-            const skillYieldKey={kelp_farming:"cultiv_yield",deep_sea_mining:"mining_yield",abyss_fishing:"fishing_yield",crystal_diving:"crystal_yield",trench_exploration:"trench_yield"}[sk.id];
-            if(skillYieldKey&&bonuses[skillYieldKey])qty=Math.floor(qty*(1+(bonuses[skillYieldKey]||0)));
-          }
-          if(Math.random()<(bonuses.rare_chance||0))qty+=1;
-          addIt(i.id,qty);
-          // Track lifetime gathered items
-          if(sk.cat==="gather")setLifeStats(p=>({...p,totalGathered:(p.totalGathered||0)+qty,[i.id]:(p[i.id]||0)+qty}));
-        });
-        // Track session gather counts per action
-        if(sk.cat==="gather")setGatherCounts(p=>({...p,[act.id]:(p[act.id]||0)+1}));
-        if(sk.cat==="prod")setLifeStats(p=>({...p,crafts:(p.crafts||0)+1}));
-        // Utility skill bonus effects
-        if(sk.cat==="utility"&&act.util){
-          const u=act.util;
-          if(u.type==="gold")setGold(g=>g+u.val);
-          if(u.type==="rp")setResearchPts(p=>p+u.val);
-        }
-        // Blueprint drop chance (gather only — rare)
+      if((Date.now()-start)<dur)return;
+      const ci=invRef.current;
+      if(act.inp&&!act.inp.every(i=>(ci[i.id]||0)>=i.q)){setCurAct(null);actProgRef.current=0;return}
+      if(act.inp)act.inp.forEach(i=>remIt(i.id,i.q));
+      gainXp(sk.id,Math.floor(act.xp*(1+(sk.cat==="gather"?(bonuses.xp_bonus||0):0))));
+      if(act.out)act.out.forEach(i=>{
+        let qty=i.q;
         if(sk.cat==="gather"){
-          const bonusChance=(bonuses.rare_chance||0)*0.3;
-          BP_DROPS.forEach(drop=>{
-            if(Math.random()<drop.rarity+bonusChance){
-              const avail=drop.pool.filter(id=>!blueprints.includes(id));
-              if(avail.length>0){
-                const chosen=avail[Math.floor(Math.random()*avail.length)];
-                setBlueprints(p=>[...p,chosen]);
-                  setLifeStats(p=>({...p,blueprintsFound:(p.blueprintsFound||0)+1}));
-                const bp=BLUEPRINTS.find(b=>b.id===chosen);
-                if(bp){
-                  setBpLog(p=>[...p.slice(-20),"📘 Blueprint unlocked: "+bp.name]);
-                  setNewAch({id:"_bp",name:"Blueprint Found!",desc:bp.name,icon:"📘",reward:{}});
-                  setTimeout(()=>setNewAch(n=>n?.id==="_bp"?null:n),4000);
-                }
-              }
-            }
-          });
+          qty=Math.floor(qty*(1+(bonuses.gather_yield||0)));
+          const skillYieldKey={kelp_farming:"cultiv_yield",deep_sea_mining:"mining_yield",abyss_fishing:"fishing_yield",crystal_diving:"crystal_yield",trench_exploration:"trench_yield"}[sk.id];
+          if(skillYieldKey&&bonuses[skillYieldKey])qty=Math.floor(qty*(1+(bonuses[skillYieldKey]||0)));
         }
-        start=Date.now();setActProg(0);
-        // Auto-restart: curAct stays set, loop continues automatically
+        if(Math.random()<(bonuses.rare_chance||0))qty+=1;
+        addIt(i.id,qty);
+        if(sk.cat==="gather")setLifeStats(p=>({...p,totalGathered:(p.totalGathered||0)+qty,[i.id]:(p[i.id]||0)+qty}));
+      });
+      if(sk.cat==="gather")setGatherCounts(p=>({...p,[act.id]:(p[act.id]||0)+1}));
+      if(sk.cat==="prod")setLifeStats(p=>({...p,crafts:(p.crafts||0)+1}));
+      if(sk.cat==="utility"&&act.util){const u=act.util;if(u.type==="gold")setGold(g=>g+u.val);if(u.type==="rp")setResearchPts(p=>p+u.val);}
+      if(sk.cat==="gather"){
+        const bonusChance=(bonuses.rare_chance||0)*0.3;
+        BP_DROPS.forEach(drop=>{
+          if(Math.random()<drop.rarity+bonusChance){
+            const avail=drop.pool.filter(id=>!blueprints.includes(id));
+            if(avail.length>0){
+              const chosen=avail[Math.floor(Math.random()*avail.length)];
+              setBlueprints(p=>[...p,chosen]);setLifeStats(p=>({...p,blueprintsFound:(p.blueprintsFound||0)+1}));
+              const bp=BLUEPRINTS.find(b=>b.id===chosen);
+              if(bp){setBpLog(p=>[...p.slice(-20),"📘 Blueprint unlocked: "+bp.name]);setNewAch({id:"_bp",name:"Blueprint Found!",desc:bp.name,icon:"📘",reward:{}});setTimeout(()=>setNewAch(n=>n?.id==="_bp"?null:n),4000);}
+            }
+          }
+        });
       }
-    },100);
-    return()=>clearInterval(tick);
+      start=Date.now();actProgRef.current=0;
+    },250);
+    return()=>{clearInterval(tick);cancelAnimationFrame(rafId);};
   },[curAct,gainXp,addIt,remIt,bonuses,blueprints]);
 
   // Combat tick
@@ -1646,7 +1595,7 @@ function GameUI({account,onLogout}){
     return()=>clearInterval(tick);
   },[zoneId,cbt,pStats,gainXp,food,remIt,bonuses]);
 
-  const startAct=useCallback((skId,actId)=>{setZoneId(null);setCbt(null);setCurAct({sk:skId,act:actId});setActProg(0);setActSkill(skId);setLastActMap(p=>({...p,[skId]:actId}));},[]);
+  const startAct=useCallback((skId,actId)=>{setZoneId(null);setCbt(null);setCurAct({sk:skId,act:actId});actProgRef.current=0;setActSkill(skId);setLastActMap(p=>({...p,[skId]:actId}));},[]);
   const startZone=useCallback((zid)=>{const z=ZONES.find(x=>x.id===zid);if(!z)return;setCurAct(null);setZoneId(zid);const m=z.mobs[0];setCbt({mob:m,mhp:m.hp,php:pStats.hp,mxhp:pStats.hp,kills:0,boss:false});setClog(["📡 Entered "+z.name+"...","⚠️ "+z.mobs.length+" mob types · "+(z.elites||[]).length+" elites · 2 bosses"])},[pStats]);
   const stopZone=useCallback(()=>{setZoneId(null);setCbt(null)},[]);
   const equipIt=useCallback((iid)=>{const it=ITEMS[iid];if(!it||!it.eq||(inv[iid]||0)<=0)return;const cur=eq[it.eq];if(cur)addIt(cur,1);remIt(iid,1);setEq(p=>({...p,[it.eq]:iid}))},[inv,eq,addIt,remIt]);
@@ -1755,8 +1704,6 @@ function GameUI({account,onLogout}){
     const allSkillIds=[...SKILLS.map(s=>s.id),...CSUBS.map(c=>c.id),"enhancing"];
     return allSkillIds.reduce((mx,sid)=>Math.max(mx,sl(sid).lv),0);
   },[sl]);
-
-  // ─── SOCIAL: Global Chat ───────────────────────────────
   useEffect(()=>{
     let unsub;
     (async()=>{
@@ -1783,8 +1730,6 @@ function GameUI({account,onLogout}){
       });
     }catch(e){console.error("sendChat:",e)}
   },[chatInput,account]);
-
-  // ─── SOCIAL: Direct Messages ──────────────────────────
   const loadDm=useCallback(async(target)=>{
     setDmTarget(target);setDmMessages([]);
     try{
@@ -1808,8 +1753,6 @@ function GameUI({account,onLogout}){
       setDmMessages(p=>[...p,msg]);
     }catch(e){console.error("sendDm:",e)}
   },[dmInput,dmTarget,account]);
-
-  // ─── SOCIAL: Friends ──────────────────────────────────
   const loadFriends=useCallback(async()=>{
     try{
       const {doc:fdoc,getDoc:fget,collection,getDocs,query,where}=await import("firebase/firestore");
@@ -1891,8 +1834,6 @@ function GameUI({account,onLogout}){
       setFriends(p=>p.filter(f=>f.uid!==uid));
     }catch(e){console.error("removeFriend:",e)}
   },[account.uid]);
-
-  // ─── SOCIAL: Clans ────────────────────────────────────
   const loadClan=useCallback(async()=>{
     try{
       const {doc:fdoc,getDoc:fget,collection,getDocs,query,where,orderBy}=await import("firebase/firestore");
@@ -2361,7 +2302,6 @@ function GameUI({account,onLogout}){
         </div>
       )}
 
-
       {/* ===== MOBILE UI ===== */}
       {isMobile&&(()=>{
         // Mobile page mapping: mobileTab drives what page content shows
@@ -2407,7 +2347,7 @@ function GameUI({account,onLogout}){
                   <div style={{flex:1,minWidth:0,display:"flex",alignItems:"center",gap:6,background:C.card,borderRadius:6,padding:"4px 8px",border:"1px solid "+C.border}}>
                     <span style={{fontSize:12,flexShrink:0}}>{sk?.icon}</span>
                     <div style={{flex:1,height:4,borderRadius:2,background:C.bg,overflow:"hidden"}}>
-                      <div style={{width:actProg*100+"%",height:"100%",background:"linear-gradient(90deg,"+C.accD+","+C.acc+")",transition:"width 0.1s linear"}}/>
+                      {actProgRef&&<ProgBar progRef={actProgRef} height="100%" radius={0} color={"linear-gradient(90deg,"+C.accD+","+C.acc+")"}/>}
                     </div>
                     <span onClick={()=>{setCurAct(null);setActProg(0)}} style={{fontSize:11,color:C.bad,fontWeight:700,cursor:"pointer",flexShrink:0}}>■</span>
                   </div>
@@ -2974,7 +2914,7 @@ function GameUI({account,onLogout}){
                 <span>{sk?sk.icon:""} {sk?sk.name:""} — {act?act.name:""}</span>
                 <span onClick={()=>{setCurAct(null);setActProg(0)}} style={{color:C.bad,cursor:"pointer",fontWeight:700,letterSpacing:1}}>■ STOP</span>
               </div>
-              <div style={{height:7,borderRadius:4,background:C.bg,overflow:"hidden"}}><div style={{width:actProg*100+"%",height:"100%",borderRadius:4,background:"linear-gradient(90deg,"+C.acc+","+C.ok+")",transition:"width 0.1s linear",boxShadow:GLOW_STYLE}}/></div>
+              <div style={{height:7,borderRadius:4,background:C.bg,overflow:"hidden"}}>{actProgRef&&<ProgBar progRef={actProgRef} height="100%" radius={4} color={"linear-gradient(90deg,"+C.acc+","+C.ok+")"} glow={GLOW_STYLE}/>}</div>
             </div>
           );})()}
           {/* Combat bar */}
@@ -4711,7 +4651,7 @@ function GameUI({account,onLogout}){
                             <span style={{fontSize:12,color:C.white,fontFamily:FONT_BODY,fontWeight:600}}>{sk?.icon} {sk?.name} — {act?.name}</span>
                           </div>
                           <div style={{height:4,borderRadius:2,background:C.bg,overflow:"hidden"}}>
-                            <div style={{width:actProg*100+"%",height:"100%",background:"linear-gradient(90deg,"+C.accD+","+C.acc+")",borderRadius:2,transition:"width 0.1s linear"}}/>
+                            {actProgRef&&<ProgBar progRef={actProgRef} height="100%" radius={2} color={"linear-gradient(90deg,"+C.accD+","+C.acc+")"}/>}
                           </div>
                         </div>
                       );

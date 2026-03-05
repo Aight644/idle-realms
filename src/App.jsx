@@ -1194,6 +1194,7 @@ function GameUI({account,onLogout}){
   const[mobileTab,setMobileTab]=useState("skills"); // skills|combat|bag|chat|more
   const[actSkill,setActSkill]=useState("kelp_farming");
   const[gearCat,setGearCat]=useState("combat");
+  const[prodTab,setProdTab]=useState("material");
   const[tooltip,setTooltip]=useState(null);// {iid, x, y}
   const[npcCat,setNpcCat]=useState("all");
   const[npcLog,setNpcLog]=useState([]);
@@ -2977,37 +2978,9 @@ function GameUI({account,onLogout}){
                     boxShadow:"0 0 8px "+(s.mastered?C.gold:skData.color)}}/>
                 </div>
                 {s.mastered&&<div style={{fontSize:10,color:C.gold,fontFamily:FONT_BODY,marginBottom:20,textAlign:"center",letterSpacing:1}}>★ This skill is fully mastered. All operations are available.</div>}
-                {/* Skill act renderer — shared ActRow component */}
+                {/* Skill act renderer — MWI-style slot tabs for prod gear skills */}
                 {(()=>{
-                  const isProd=skData.cat==="prod";
-                  const isGatherSkill=skData.cat==="gather";
                   const isGearProdSkill=["fabrication","relic_forging","gear_crafting"].includes(skData.id);
-
-                  // For gear prod skills: split refining acts vs gear acts
-                  const isGearAct=(act)=>{
-                    if(skData.id==="gear_crafting")return!!act.gearCat;
-                    return act.id.startsWith("tb_")||act.id.startsWith("vc_");
-                  };
-                  const refineActs=isGearProdSkill?allActs.filter(a=>!isGearAct(a)):[];
-                  const gearActs=isGearProdSkill?allActs.filter(a=>isGearAct(a)):[];
-
-                  const gearCatDefs={
-                    gear_crafting:[
-                      {id:"combat",label:"⚔️ Combat",color:"#f87171"},
-                      {id:"cultivation",label:"🌿 Cultivation",color:"#00c285"},
-                      {id:"mining",label:"⛏️ Mining",color:"#7b61ff"},
-                      {id:"fishing",label:"🎣 Fishing",color:"#00d4ff"},
-                      {id:"crystal",label:"💎 Crystal",color:"#a78bfa"},
-                      {id:"trench",label:"🗺️ Trench",color:"#38bdf8"},
-                    ],
-                    fabrication:[{id:"gear",label:"⚔️ Tidebreaker — Melee",color:"#ffd60a"}],
-                    relic_forging:[{id:"gear",label:"🪄 Voidcaller — Magic",color:"#e11d48"}],
-                  };
-                  const activeCats=gearCatDefs[skData.id]||[];
-                  const activeGearCatId=skData.id==="gear_crafting"?gearCat:"gear";
-                  const visibleGearActs=skData.id==="gear_crafting"
-                    ?gearActs.filter(a=>a.gearCat===activeGearCatId)
-                    :gearActs;
 
                   const ActRow=({act})=>{
                     if(!act||!act.name)return null;
@@ -3050,61 +3023,112 @@ function GameUI({account,onLogout}){
                     );
                   };
 
-                  // ── GATHERING & non-gear prod (bio_lab, exploration): clean flat list ──
-                  if(!isGearProdSkill) return(
-                    <>{allActs.map(act=><ActRow key={act.id} act={act}/>)}</>
-                  );
+                  // Gathering / Bio Lab / Exploration — flat list, no tabs
+                  if(!isGearProdSkill) return <>{allActs.map(act=><ActRow key={act.id} act={act}/>)}</>;
 
-                  // ── GEAR PRODUCTION SKILLS: Refining first, then tiered gear sets ──
+                  // Gear production skills — MWI-style slot tabs
+                  // Determine tabs based on what acts exist for this skill
+                  const getActSlot=(act)=>{
+                    const outId=act.out&&act.out[0]?.id;
+                    if(!outId)return"material";
+                    const it=ITEMS[outId];
+                    if(!it||!it.eq)return"material";
+                    return it.eq; // weapon / head / body / hands / feet / shield / tool / ring / neck
+                  };
+
+                  // For gear_crafting: acts already have gearCat; use gearCat filter first
+                  const filteredActs=skData.id==="gear_crafting"
+                    ?allActs.filter(a=>!a.gearCat||a.gearCat===gearCat)
+                    :allActs;
+
+                  // Build tab list dynamically from acts present
+                  const slotMeta={
+                    material:{label:"Material",icon:"🔧"},
+                    weapon:  {label:"Weapon",  icon:"⚔️"},
+                    head:    {label:"Head",    icon:"⛑️"},
+                    body:    {label:"Body",    icon:"🔵"},
+                    hands:   {label:"Hands",   icon:"🧤"},
+                    feet:    {label:"Feet",    icon:"👢"},
+                    shield:  {label:"Shield",  icon:"🛡️"},
+                    tool:    {label:"Tool",    icon:"🛠️"},
+                    ring:    {label:"Ring",    icon:"💍"},
+                    neck:    {label:"Neck",    icon:"📿"},
+                  };
+                  const slotOrder=["material","weapon","head","body","hands","feet","shield","tool","ring","neck"];
+                  const presentSlots=[...new Set(filteredActs.map(getActSlot))].sort((a,b)=>slotOrder.indexOf(a)-slotOrder.indexOf(b));
+
+                  // For gear_crafting show set-type tabs above slot tabs
+                  const gcSets=[
+                    {id:"combat",label:"⚔️ Combat"},{id:"cultivation",label:"🌿 Cultivation"},
+                    {id:"mining",label:"⛏️ Mining"},{id:"fishing",label:"🎣 Fishing"},
+                    {id:"crystal",label:"💎 Crystal"},{id:"trench",label:"🗺️ Trench"},
+                  ];
+
+                  // Active slot tab — reset to "material" when switching skills
+                  const activeSlot=presentSlots.includes(prodTab)?prodTab:presentSlots[0]||"material";
+                  const tabActs=filteredActs.filter(a=>getActSlot(a)===activeSlot);
+
+                  // Tier grouping for gear tabs
                   const tiers=[
-                    {label:"T1",min:1,max:24,color:"#94a3b8"},
-                    {label:"T2",min:25,max:54,color:"#60a5fa"},
-                    {label:"T3",min:55,max:84,color:"#a78bfa"},
+                    {label:"T1",min:1, max:24, color:"#94a3b8"},
+                    {label:"T2",min:25,max:54, color:"#60a5fa"},
+                    {label:"T3",min:55,max:84, color:"#a78bfa"},
                     {label:"T4",min:85,max:120,color:"#fbbf24"},
                   ];
-                  return(<>
-                    {/* REFINING — input mats → crafting intermediates */}
-                    {refineActs.length>0&&(<>
-                      <div style={{fontSize:10,fontWeight:700,color:C.td,letterSpacing:2,marginBottom:10,paddingBottom:6,borderBottom:"1px solid "+C.border}}>
-                        🔩 REFINING
-                      </div>
-                      {refineActs.map(act=><ActRow key={act.id} act={act}/>)}
-                    </>)}
+                  const isMaterialTab=activeSlot==="material";
 
-                    {/* GEAR SETS — tiered by level */}
-                    {gearActs.length>0&&(
-                      <div style={{marginTop:refineActs.length>0?28:0}}>
-                        <div style={{fontSize:10,fontWeight:700,color:C.td,letterSpacing:2,marginBottom:12,paddingBottom:6,borderBottom:"1px solid "+C.border}}>
-                          ⚔️ GEAR SETS
-                        </div>
-                        {/* Category tabs (gear_crafting has multiple, others have one) */}
-                        {activeCats.length>1&&(
-                          <div style={{display:"flex",gap:6,marginBottom:14,flexWrap:"wrap"}}>
-                            {activeCats.map(cat=>(
-                              <div key={cat.id} onClick={()=>setGearCat(cat.id)} style={{padding:"5px 13px",borderRadius:16,cursor:"pointer",fontSize:11,fontWeight:700,fontFamily:FONT,
-                                background:activeGearCatId===cat.id?"linear-gradient(90deg,"+C.accD+","+C.acc+")":C.card,
-                                color:activeGearCatId===cat.id?C.bg:C.td,
-                                border:"1px solid "+(activeGearCatId===cat.id?C.acc:C.border),transition:"all 0.15s"}}>
-                                {cat.label}
-                              </div>
-                            ))}
+                  return(<>
+                    {/* Gear Crafting: set-type row above slot tabs */}
+                    {skData.id==="gear_crafting"&&(
+                      <div style={{display:"flex",gap:5,flexWrap:"wrap",marginBottom:10}}>
+                        {gcSets.map(gs=>(
+                          <div key={gs.id} onClick={()=>setGearCat(gs.id)} style={{padding:"4px 12px",borderRadius:12,cursor:"pointer",fontSize:11,fontWeight:700,fontFamily:FONT,
+                            background:gearCat===gs.id?skData.color+"30":C.card,
+                            border:"1px solid "+(gearCat===gs.id?skData.color:C.border),
+                            color:gearCat===gs.id?skData.color:C.td,transition:"all 0.12s"}}>
+                            {gs.label}
                           </div>
-                        )}
-                        {activeCats.length===1&&<div style={{fontSize:11,color:activeCats[0].color,fontWeight:700,marginBottom:12,fontFamily:FONT}}>{activeCats[0].label}</div>}
-                        {tiers.map(tier=>{
-                          const tierActs=visibleGearActs.filter(a=>a.lv>=tier.min&&a.lv<=tier.max);
-                          if(!tierActs.length)return null;
-                          return(
-                            <div key={tier.label} style={{marginBottom:20}}>
-                              <div style={{fontSize:9,fontWeight:700,color:tier.color,letterSpacing:2,marginBottom:8,display:"flex",alignItems:"center",gap:6}}>
-                                <span style={{padding:"2px 8px",borderRadius:4,background:tier.color+"20",border:"1px solid "+tier.color+"40"}}>{tier.label}</span>
-                                <span style={{color:C.td}}>Lv {tier.min}–{tier.max}</span>
-                              </div>
-                              {tierActs.map(act=><ActRow key={act.id} act={act}/>)}
-                            </div>
-                          );
-                        })}
+                        ))}
                       </div>
+                    )}
+
+                    {/* MWI-style slot tab bar */}
+                    <div style={{display:"flex",gap:0,marginBottom:20,borderBottom:"2px solid "+C.border,overflowX:"auto"}}>
+                      {presentSlots.map(slot=>{
+                        const meta=slotMeta[slot]||{label:slot,icon:"📦"};
+                        const active=activeSlot===slot;
+                        return(
+                          <div key={slot} onClick={()=>setProdTab(slot)} style={{padding:"9px 16px",cursor:"pointer",fontFamily:FONT,fontSize:11,fontWeight:700,
+                            whiteSpace:"nowrap",userSelect:"none",position:"relative",transition:"all 0.12s",
+                            color:active?skData.color:C.td,
+                            background:active?skData.color+"12":"transparent",
+                            borderBottom:active?"2px solid "+skData.color:"2px solid transparent",
+                            marginBottom:"-2px"}}>
+                            {meta.icon} {meta.label}
+                          </div>
+                        );
+                      })}
+                    </div>
+
+                    {/* Tab content */}
+                    {isMaterialTab?(
+                      // Material tab — flat list (refining chain)
+                      tabActs.map(act=><ActRow key={act.id} act={act}/>)
+                    ):(
+                      // Gear tabs — grouped by tier
+                      tiers.map(tier=>{
+                        const ta=tabActs.filter(a=>a.lv>=tier.min&&a.lv<=tier.max);
+                        if(!ta.length)return null;
+                        return(
+                          <div key={tier.label} style={{marginBottom:20}}>
+                            <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:8}}>
+                              <span style={{fontSize:9,fontWeight:700,color:tier.color,padding:"2px 8px",borderRadius:4,background:tier.color+"20",border:"1px solid "+tier.color+"40",letterSpacing:2}}>{tier.label}</span>
+                              <span style={{fontSize:9,color:C.td,fontFamily:FONT}}>Lv {tier.min}–{tier.max}</span>
+                            </div>
+                            {ta.map(act=><ActRow key={act.id} act={act}/>)}
+                          </div>
+                        );
+                      })
                     )}
                   </>);
                 })()}

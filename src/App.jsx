@@ -1180,7 +1180,7 @@ function ActRow({act,skColor,inv,curAct,startAct,skId,s,tipProps,C,FONT,FONT_BOD
   const bpColor=bpMeta?BP_RARITY_COLOR[bpMeta.rarity]:"#ffd60a";
   return(
     <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"12px 16px",borderRadius:8,
-      backgroundImage:skImg?"linear-gradient(90deg,rgba(10,22,40,0.82),rgba(10,22,40,0.65)), url("+skImg+")":undefined,
+      backgroundImage:skImg?"linear-gradient(90deg,rgba(10,22,40,0.55),rgba(10,22,40,0.35)), url("+skImg+")":undefined,
       backgroundSize:skImg?"cover":undefined,backgroundPosition:skImg?"center":undefined,
       background:skImg?undefined:isAct?"linear-gradient(90deg,"+C.ok+"18,"+C.card+")":isBp?"linear-gradient(135deg,"+bpColor+"10,"+C.card+")":C.card,
       border:"2px solid "+(isAct?C.ok+"60":isBp?bpColor+"50":skImg?skColor+"40":C.border),

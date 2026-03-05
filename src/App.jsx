@@ -1194,16 +1194,16 @@ function ActRow({act,skColor,inv,curAct,startAct,skId,s,tipProps,C,FONT,FONT_BOD
       boxShadow:isBp?"0 0 10px "+bpColor+"18":"none"}}>
       <div style={{flex:1,minWidth:0}}>
         <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:3}}>
-          <div style={{fontSize:13,fontWeight:700,color:isAct?C.ok:isBp?bpColor:"#ffffff",fontFamily:FONT,letterSpacing:0.8,textShadow:skImg?"0 1px 4px rgba(0,0,0,0.9)":"none"}}>{act.name}</div>
-          <div style={{fontSize:9,color:skImg?"#ffffff":C.td,fontFamily:FONT,textShadow:skImg?"0 1px 3px rgba(0,0,0,0.9)":"none"}}>Lv {act.lv} · +{act.xp} XP · {act.t}s</div>
+          <div style={{fontSize:13,fontWeight:700,color:isAct?C.ok:isBp?bpColor:"#ffffff",fontFamily:FONT,letterSpacing:0.8,textShadow:skImg?"0 2px 6px rgba(0,0,0,1),0 1px 3px rgba(0,0,0,1)":"none"}}>{act.name}</div>
+          <div style={{fontSize:9,color:skImg?"#ffffff":C.td,fontFamily:FONT,textShadow:skImg?"0 2px 6px rgba(0,0,0,1)":"none"}}>Lv {act.lv} · +{act.xp} XP · {act.t}s</div>
           {isBp&&<div style={{fontSize:9,padding:"2px 6px",borderRadius:5,background:bpColor+"25",border:"1px solid "+bpColor+"60",color:bpColor,fontWeight:700}}>📘 BP</div>}
         </div>
         <div style={{fontSize:11,color:skImg?"#ffffff":C.ts,fontFamily:FONT_BODY,display:"flex",alignItems:"center",gap:3,flexWrap:"wrap"}}>
           {act.inp&&<>{act.inp.map(i=>{const it=ITEMS[i.id];const has=(inv[i.id]||0)>=i.q;return(
-            <span key={i.id} {...tp(i.id)} style={{color:has?C.ts:"#f87171",marginRight:2,cursor:"help"}}>{it?.i||""}{i.q} {it?.n||i.id}</span>
-          );})}<span style={{color:C.td,margin:"0 2px"}}>→</span></>}
+            <span key={i.id} {...tp(i.id)} style={{color:has?(skImg?"#ffffff":C.ts):"#f87171",marginRight:2,cursor:"help",textShadow:skImg?"0 1px 3px rgba(0,0,0,0.9)":"none"}}>{it?.i||""}{i.q} {it?.n||i.id}</span>
+          );})}<span style={{color:skImg?"rgba(255,255,255,0.7)":C.td,margin:"0 2px"}}>→</span></>}
           {act.out&&act.out.map(i=>{const it=ITEMS[i.id];const isGear=it?.eq&&it.eq!=="tool";return(
-            <span key={i.id} {...tp(i.id)} style={{color:isGear?skColor:C.ts,fontWeight:isGear?700:400,borderBottom:isGear?"1px dashed "+skColor+"50":"none",cursor:"help"}}>
+            <span key={i.id} {...tp(i.id)} style={{color:isGear?skColor:(skImg?"#ffffff":C.ts),fontWeight:isGear?700:400,borderBottom:isGear?"1px dashed "+skColor+"50":"none",cursor:"help",textShadow:skImg?"0 1px 3px rgba(0,0,0,0.9)":"none"}}>
               {it?.i||""} {it?.n||i.id}{i.q>1?" ×"+i.q:""}
             </span>
           );})}

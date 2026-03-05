@@ -664,22 +664,15 @@ const SKILLS=[
     {id:"te4",name:"Ancient Ruin Dig",   lv:60, xp:85,t:18, out:[{id:"ancient_fragment",q:1}]},
     {id:"te5",name:"Abyss Silt Trench",  lv:85, xp:170,t:24, out:[{id:"abyss_silt",q:1}]},
     {id:"te6",name:"Lost Relic Vault",   lv:110,xp:310,t:30, out:[{id:"ancient_relic",q:1}]}]},
-  // ── Fabrication: materials, components, weapons ──
+  // ── Fabrication: materials + tech components ──
   {id:"fabrication",name:"Fabrication",icon:"🔧",color:"#ffd60a",cat:"prod",acts:[
-    // Materials
     {id:"ce1",name:"Coral Blocks",       lv:1, xp:13, t:11,inp:[{id:"soft_coral",q:3}],                                                      out:[{id:"coral_blocks",q:1}]},
-    {id:"ce2",name:"Reinforced Alloy",   lv:10,xp:30, t:13,inp:[{id:"shell_fragments",q:5},{id:"trench_stone",q:3}],                         out:[{id:"reinforced_alloy",q:1}]},
-    {id:"oa1",name:"Thermal Steel",      lv:15,xp:37, t:14,inp:[{id:"thermal_ore",q:4},{id:"salt_crystals",q:3}],                            out:[{id:"reinforced_alloy",q:1}]},
-    {id:"ce3",name:"Pressure Glass",     lv:20,xp:78, t:19,inp:[{id:"salt_crystals",q:4},{id:"thermal_ore",q:2}],                            out:[{id:"pressure_glass",q:1}]},
-    // Weapons
-    {id:"pe1",name:"Basic Harpoon",      lv:1, xp:77, t:19,inp:[{id:"trench_stone",q:5},{id:"sea_fiber",q:3}],                               out:[{id:"basic_harpoon",q:1}]},
-    {id:"pe4",name:"Pulse Harpoon",      lv:15,xp:67, t:18,inp:[{id:"pressure_glass",q:2},{id:"enzyme_compound",q:2}],                       out:[{id:"pulse_harpoon",q:1}]},
-    {id:"sf2",name:"Shock Harpoon",      lv:30,xp:121,t:25,inp:[{id:"pressure_glass",q:4},{id:"enzyme_compound",q:3}],                       out:[{id:"shock_harpoon",q:1}]},
-    {id:"sf3",name:"Thermal Lance",      lv:40,xp:280,t:35,inp:[{id:"thermal_ore",q:8},{id:"abyss_crystal",q:2}],                            out:[{id:"thermal_lance",q:1}]},
-    // Tech Components (from Deep Tech)
     {id:"ar1",name:"Ore Processing",     lv:1, xp:20, t:12,inp:[{id:"trench_stone",q:8}],                                                    out:[{id:"drone_processor",q:1}]},
+    {id:"ce2",name:"Reinforced Alloy",   lv:10,xp:30, t:13,inp:[{id:"shell_fragments",q:5},{id:"trench_stone",q:3}],                         out:[{id:"reinforced_alloy",q:1}]},
     {id:"dc1",name:"Basic Processor",    lv:10,xp:86, t:20,inp:[{id:"trench_stone",q:5},{id:"thermal_ore",q:3}],                             out:[{id:"drone_processor",q:1}]},
     {id:"ar2",name:"Crystal Refinement", lv:15,xp:40, t:15,inp:[{id:"abyss_crystal",q:2}],                                                   out:[{id:"pressure_reactor",q:1}]},
+    {id:"oa1",name:"Thermal Steel",      lv:15,xp:37, t:14,inp:[{id:"thermal_ore",q:4},{id:"salt_crystals",q:3}],                            out:[{id:"reinforced_alloy",q:1}]},
+    {id:"ce3",name:"Pressure Glass",     lv:20,xp:78, t:19,inp:[{id:"salt_crystals",q:4},{id:"thermal_ore",q:2}],                            out:[{id:"pressure_glass",q:1}]},
     {id:"dc2",name:"Pressure Reactor",   lv:20,xp:60, t:17,inp:[{id:"pressure_glass",q:3},{id:"enzyme_compound",q:2}],                       out:[{id:"pressure_reactor",q:1}]},
     {id:"dc3",name:"Depth Pendant",      lv:30,xp:116,t:24,inp:[{id:"abyss_crystal",q:1},{id:"ocean_fiber",q:4}],                            out:[{id:"depth_pendant",q:1}]},
     {id:"es2",name:"Pressure Conduit",   lv:40,xp:76, t:19,inp:[{id:"pressure_glass",q:2},{id:"reinforced_alloy",q:3}],                      out:[{id:"pressure_reactor",q:1},{id:"drone_processor",q:1}]}]},
@@ -734,15 +727,19 @@ const SKILLS=[
 
   // ── Cultivation Gear ──
   {id:"gear_crafting",name:"Gear Crafting",icon:"🛠️",color:"#f59e0b",cat:"prod",acts:[
-    // ── Combat Gear (from Fabrication) ──
+    // ── Combat Gear ──
+    {id:"pe1",gearCat:"combat",name:"Basic Harpoon",   lv:1, xp:77, t:19,inp:[{id:"trench_stone",q:5},{id:"sea_fiber",q:3}],                                   out:[{id:"basic_harpoon",q:1}]},
     {id:"ce4",gearCat:"combat",name:"Coral Helm",      lv:5, xp:53, t:16,inp:[{id:"coral_blocks",q:8},{id:"shell_fragments",q:5}],                              out:[{id:"coral_helm",q:1}]},
     {id:"pe2",gearCat:"combat",name:"Pressure Helm",   lv:10,xp:91, t:21,inp:[{id:"pressure_glass",q:2},{id:"reinforced_alloy",q:4}],                          out:[{id:"pressure_helm",q:1}]},
     {id:"ce5",gearCat:"combat",name:"Shell Shield",    lv:12,xp:90, t:21,inp:[{id:"coral_blocks",q:12},{id:"reinforced_alloy",q:3}],                            out:[{id:"shell_shield",q:1}]},
     {id:"ce6",gearCat:"combat",name:"Coral Suit",      lv:15,xp:132,t:26,inp:[{id:"coral_blocks",q:15},{id:"reinforced_alloy",q:5}],                            out:[{id:"coral_suit",q:1}]},
+    {id:"pe4",gearCat:"combat",name:"Pulse Harpoon",   lv:15,xp:67, t:18,inp:[{id:"pressure_glass",q:2},{id:"enzyme_compound",q:2}],                           out:[{id:"pulse_harpoon",q:1}]},
     {id:"pe3",gearCat:"combat",name:"Pressure Suit",   lv:20,xp:168,t:31,inp:[{id:"pressure_glass",q:3},{id:"reinforced_alloy",q:8}],                          out:[{id:"pressure_suit",q:1}]},
     {id:"pe5",gearCat:"combat",name:"Depth Gloves",    lv:30,xp:60, t:17,inp:[{id:"ocean_fiber",q:6},{id:"reinforced_alloy",q:2}],                             out:[{id:"depth_gloves",q:1}]},
+    {id:"sf2",gearCat:"combat",name:"Shock Harpoon",   lv:30,xp:121,t:25,inp:[{id:"pressure_glass",q:4},{id:"enzyme_compound",q:3}],                           out:[{id:"shock_harpoon",q:1}]},
     {id:"pe6",gearCat:"combat",name:"Pressure Boots",  lv:35,xp:75, t:19,inp:[{id:"ocean_fiber",q:8},{id:"coral_blocks",q:2}],                                 out:[{id:"pressure_boots",q:1}]},
     {id:"sf1",gearCat:"combat",name:"Void Ring",       lv:40,xp:47, t:15,inp:[{id:"coral_blocks",q:10},{id:"ocean_fiber",q:5}],                                out:[{id:"void_ring",q:1}]},
+    {id:"sf3",gearCat:"combat",name:"Thermal Lance",   lv:40,xp:280,t:35,inp:[{id:"thermal_ore",q:8},{id:"abyss_crystal",q:2}],                                out:[{id:"thermal_lance",q:1}]},
     {id:"sf4",gearCat:"combat",name:"Abyss Armor",     lv:50,xp:137,t:27,inp:[{id:"reinforced_alloy",q:15},{id:"pressure_glass",q:6},{id:"abyss_crystal",q:3}],out:[{id:"abyss_armor",q:1}]},
     // ── Cultivation ──
     {id:"cg1",gearCat:"cultivation",name:"Kelp Rake",         lv:5, xp:28,t:12, inp:[{id:"kelp",q:10},{id:"ocean_fiber",q:5}],                               out:[{id:"kelp_rake",q:1}]},

@@ -345,10 +345,10 @@ const BLUEPRINTS = [
     source:"Deep Signal Beacon",
   },
   {
-    id:"bp_ancient_armor", skillId:"relic_forging", icon:"👑", rarity:"legendary",
+    id:"bp_ancient_armor", skillId:"gear_crafting", icon:"👑", rarity:"legendary",
     name:"Ancient Emperor Armor",
     desc:"Blueprints for the ancient emperor's armor — the pinnacle of defense.",
-    act:{id:"rf10",name:"Emperor Armor",lv:110,xp:450,t:60,inp:[{id:"ancient_processor",q:3},{id:"void_essence",q:3},{id:"leviathan_bone",q:8},{id:"alien_bio_tissue",q:4}],out:[{id:"leviathan_armor",q:1},{id:"ancient_helm",q:1}]},
+    act:{id:"rf10",gearCat:"combat",name:"Emperor Armor",lv:110,xp:450,t:60,inp:[{id:"ancient_processor",q:3},{id:"void_essence",q:3},{id:"leviathan_bone",q:8},{id:"alien_bio_tissue",q:4}],out:[{id:"leviathan_armor",q:1},{id:"ancient_helm",q:1}]},
     source:"Crystal Vein Exposed",
   },
   {

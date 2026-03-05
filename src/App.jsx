@@ -3044,8 +3044,8 @@ function GameUI({account,onLogout}){
                   const isGearProdSkill=["fabrication","relic_forging","gear_crafting"].includes(skData.id);
 
                   // Pass all needed context as props to standalone ActRow
-                  const arProps={skColor:skData.color,inv,curAct,startAct,skId:skData.id,s,tipProps,C,FONT,FONT_BODY,ITEMS,BLUEPRINTS,BP_DROPS,BP_RARITY_COLOR,GLOW_OK,GLOW_STYLE,skImg:SKILL_IMAGES[act.id]};
-                  const AR=({act})=><ActRow key={skData.id+"-"+act.id} act={act} {...arProps}/>;
+                  const arProps={skColor:skData.color,inv,curAct,startAct,skId:skData.id,s,tipProps,C,FONT,FONT_BODY,ITEMS,BLUEPRINTS,BP_DROPS,BP_RARITY_COLOR,GLOW_OK,GLOW_STYLE};
+                  const AR=({act})=><ActRow key={skData.id+"-"+act.id} act={act} {...arProps} skImg={SKILL_IMAGES[act.id]}/>;
 
                   // Gathering / Bio Lab / Exploration — flat list, no tabs
                   if(!isGearProdSkill) return <>{allActs.map(act=><AR key={skData.id+"-"+act.id} act={act}/>)}</>;

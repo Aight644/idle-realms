@@ -284,7 +284,7 @@ const DRONE_TYPES = [
     action: "explore",
     outputs: [{ id: "abyss_crystal", q: 1, chance: 0.2 }, { id: "thermal_ore", q: 2, chance: 0.5 }, { id: "trench_stone", q: 3, chance: 0.8 }],
     interval: 25000,
-    xpSkill: "deep_tech",
+    xpSkill: "fabrication",
     xpAmt: 8,
   },
 ];
@@ -338,7 +338,7 @@ const BLUEPRINTS = [
     source:"Deep Signal Beacon",
   },
   {
-    id:"bp_void_reactor", skillId:"deep_tech", icon:"⚡", rarity:"legendary",
+    id:"bp_void_reactor", skillId:"fabrication", icon:"⚡", rarity:"legendary",
     name:"Void Reactor Blueprint",
     desc:"Harness void energy to produce massive amounts of pressure reactors.",
     act:{id:"es5",name:"Void Reactor Synthesis",lv:100,xp:200,t:60,inp:[{id:"void_essence",q:2},{id:"thermal_core",q:1},{id:"abyss_crystal",q:5}],out:[{id:"pressure_reactor",q:5},{id:"drone_processor",q:1}]},
@@ -664,22 +664,25 @@ const SKILLS=[
     {id:"te4",name:"Ancient Ruin Dig",   lv:60, xp:85,t:18, out:[{id:"ancient_fragment",q:1}]},
     {id:"te5",name:"Abyss Silt Trench",  lv:85, xp:170,t:24, out:[{id:"abyss_silt",q:1}]},
     {id:"te6",name:"Lost Relic Vault",   lv:110,xp:310,t:30, out:[{id:"ancient_relic",q:1}]}]},
-  // ── Fabrication: materials → weapons, armor, structural components ──
+  // ── Fabrication: materials, components, weapons ──
   {id:"fabrication",name:"Fabrication",icon:"🔧",color:"#ffd60a",cat:"prod",acts:[
-    {id:"ce1",name:"Coral Blocks",       lv:1, xp:13, t:11,inp:[{id:"soft_coral",q:3}],                                              out:[{id:"coral_blocks",q:1}]},
-    {id:"ce2",name:"Reinforced Alloy",   lv:10,xp:30, t:13,inp:[{id:"shell_fragments",q:5},{id:"trench_stone",q:3}],                 out:[{id:"reinforced_alloy",q:1}]},
-    {id:"ce3",name:"Pressure Glass",     lv:20,xp:78, t:19,inp:[{id:"salt_crystals",q:4},{id:"thermal_ore",q:2}],                    out:[{id:"pressure_glass",q:1}]},
-    {id:"ce4",name:"Coral Helm",         lv:5, xp:53, t:16,inp:[{id:"coral_blocks",q:8},{id:"shell_fragments",q:5}],                 out:[{id:"coral_helm",q:1}]},
-    {id:"ce5",name:"Shell Shield",       lv:12,xp:90, t:21,inp:[{id:"coral_blocks",q:12},{id:"reinforced_alloy",q:3}],               out:[{id:"shell_shield",q:1}]},
-    {id:"ce6",name:"Coral Suit",         lv:15,xp:132,t:26,inp:[{id:"coral_blocks",q:15},{id:"reinforced_alloy",q:5}],               out:[{id:"coral_suit",q:1}]},
-    {id:"pe1",name:"Basic Harpoon",      lv:1, xp:77, t:19,inp:[{id:"trench_stone",q:5},{id:"sea_fiber",q:3}],                       out:[{id:"basic_harpoon",q:1}]},
-    {id:"pe2",name:"Pressure Helm",      lv:10,xp:91, t:21,inp:[{id:"pressure_glass",q:2},{id:"reinforced_alloy",q:4}],              out:[{id:"pressure_helm",q:1}]},
-    {id:"pe4",name:"Pulse Harpoon",      lv:15,xp:67, t:18,inp:[{id:"pressure_glass",q:2},{id:"enzyme_compound",q:2}],               out:[{id:"pulse_harpoon",q:1}]},
-    {id:"pe3",name:"Pressure Suit",      lv:20,xp:168,t:31,inp:[{id:"pressure_glass",q:3},{id:"reinforced_alloy",q:8}],              out:[{id:"pressure_suit",q:1}]},
-    {id:"sf2",name:"Shock Harpoon",      lv:30,xp:121,t:25,inp:[{id:"pressure_glass",q:4},{id:"enzyme_compound",q:3}],               out:[{id:"shock_harpoon",q:1}]},
-    {id:"sf3",name:"Thermal Lance",      lv:40,xp:280,t:35,inp:[{id:"thermal_ore",q:8},{id:"abyss_crystal",q:2}],                    out:[{id:"thermal_lance",q:1}]},
-    {id:"sf1",name:"Void Ring",          lv:45,xp:47, t:15,inp:[{id:"coral_blocks",q:10},{id:"ocean_fiber",q:5}],                    out:[{id:"void_ring",q:1}]},
-    {id:"sf4",name:"Abyss Armor",        lv:55,xp:137,t:27,inp:[{id:"reinforced_alloy",q:15},{id:"pressure_glass",q:6},{id:"abyss_crystal",q:3}],out:[{id:"abyss_armor",q:1}]}]},
+    // Materials
+    {id:"ce1",name:"Coral Blocks",       lv:1, xp:13, t:11,inp:[{id:"soft_coral",q:3}],                                                      out:[{id:"coral_blocks",q:1}]},
+    {id:"ce2",name:"Reinforced Alloy",   lv:10,xp:30, t:13,inp:[{id:"shell_fragments",q:5},{id:"trench_stone",q:3}],                         out:[{id:"reinforced_alloy",q:1}]},
+    {id:"oa1",name:"Thermal Steel",      lv:15,xp:37, t:14,inp:[{id:"thermal_ore",q:4},{id:"salt_crystals",q:3}],                            out:[{id:"reinforced_alloy",q:1}]},
+    {id:"ce3",name:"Pressure Glass",     lv:20,xp:78, t:19,inp:[{id:"salt_crystals",q:4},{id:"thermal_ore",q:2}],                            out:[{id:"pressure_glass",q:1}]},
+    // Weapons
+    {id:"pe1",name:"Basic Harpoon",      lv:1, xp:77, t:19,inp:[{id:"trench_stone",q:5},{id:"sea_fiber",q:3}],                               out:[{id:"basic_harpoon",q:1}]},
+    {id:"pe4",name:"Pulse Harpoon",      lv:15,xp:67, t:18,inp:[{id:"pressure_glass",q:2},{id:"enzyme_compound",q:2}],                       out:[{id:"pulse_harpoon",q:1}]},
+    {id:"sf2",name:"Shock Harpoon",      lv:30,xp:121,t:25,inp:[{id:"pressure_glass",q:4},{id:"enzyme_compound",q:3}],                       out:[{id:"shock_harpoon",q:1}]},
+    {id:"sf3",name:"Thermal Lance",      lv:40,xp:280,t:35,inp:[{id:"thermal_ore",q:8},{id:"abyss_crystal",q:2}],                            out:[{id:"thermal_lance",q:1}]},
+    // Tech Components (from Deep Tech)
+    {id:"ar1",name:"Ore Processing",     lv:1, xp:20, t:12,inp:[{id:"trench_stone",q:8}],                                                    out:[{id:"drone_processor",q:1}]},
+    {id:"dc1",name:"Basic Processor",    lv:10,xp:86, t:20,inp:[{id:"trench_stone",q:5},{id:"thermal_ore",q:3}],                             out:[{id:"drone_processor",q:1}]},
+    {id:"ar2",name:"Crystal Refinement", lv:15,xp:40, t:15,inp:[{id:"abyss_crystal",q:2}],                                                   out:[{id:"pressure_reactor",q:1}]},
+    {id:"dc2",name:"Pressure Reactor",   lv:20,xp:60, t:17,inp:[{id:"pressure_glass",q:3},{id:"enzyme_compound",q:2}],                       out:[{id:"pressure_reactor",q:1}]},
+    {id:"dc3",name:"Depth Pendant",      lv:30,xp:116,t:24,inp:[{id:"abyss_crystal",q:1},{id:"ocean_fiber",q:4}],                            out:[{id:"depth_pendant",q:1}]},
+    {id:"es2",name:"Pressure Conduit",   lv:40,xp:76, t:19,inp:[{id:"pressure_glass",q:2},{id:"reinforced_alloy",q:3}],                      out:[{id:"pressure_reactor",q:1},{id:"drone_processor",q:1}]}]},
 
   // ── Bio Lab: consumables, potions, brews, refined materials ──
   {id:"bio_lab",name:"Bio Lab",icon:"🧪",color:"#00ffb3",cat:"prod",acts:[
@@ -694,18 +697,6 @@ const SKILLS=[
     {id:"dc4",name:"Bioluminescent Brew",lv:35,xp:75, t:19,inp:[{id:"luminescent_gel",q:2},{id:"glowfish",q:4}],                     out:[{id:"bioluminescent_drink",q:1}]},
     {id:"oa2",name:"Void Elixir",        lv:40,xp:100,t:22,inp:[{id:"abyss_crystal",q:2},{id:"enzyme_compound",q:2}],                out:[{id:"void_elixir",q:1}]},
     {id:"oa4",name:"Bio Stim Mk2",       lv:50,xp:95, t:21,inp:[{id:"luminescent_gel",q:3},{id:"pressure_tonic",q:1}],               out:[{id:"bio_stim",q:1}]}]},
-
-  // ── Deep Tech: processors, reactors, tech components ──
-  {id:"deep_tech",name:"Deep Tech",icon:"🔬",color:"#f472b6",cat:"prod",acts:[
-    {id:"ar1",name:"Ore Processing",     lv:1, xp:20, t:12,inp:[{id:"trench_stone",q:8}],                                            out:[{id:"drone_processor",q:1}]},
-    {id:"dc1",name:"Basic Processor",    lv:10,xp:86, t:20,inp:[{id:"trench_stone",q:5},{id:"thermal_ore",q:3}],                     out:[{id:"drone_processor",q:1}]},
-    {id:"ar2",name:"Crystal Refinement", lv:15,xp:40, t:15,inp:[{id:"abyss_crystal",q:2}],                                           out:[{id:"pressure_reactor",q:1}]},
-    {id:"dc2",name:"Pressure Reactor",   lv:20,xp:60, t:17,inp:[{id:"pressure_glass",q:3},{id:"enzyme_compound",q:2}],               out:[{id:"pressure_reactor",q:1}]},
-    {id:"oa1",name:"Thermal Steel",      lv:25,xp:37, t:14,inp:[{id:"thermal_ore",q:4},{id:"salt_crystals",q:3}],                    out:[{id:"reinforced_alloy",q:1}]},
-    {id:"dc3",name:"Depth Pendant",      lv:30,xp:116,t:24,inp:[{id:"abyss_crystal",q:1},{id:"ocean_fiber",q:4}],                    out:[{id:"depth_pendant",q:1}]},
-    {id:"es2",name:"Pressure Conduit",   lv:40,xp:76, t:19,inp:[{id:"pressure_glass",q:2},{id:"reinforced_alloy",q:3}],              out:[{id:"pressure_reactor",q:1},{id:"drone_processor",q:1}]},
-    {id:"pe5",name:"Depth Gloves",       lv:45,xp:137,t:27,inp:[{id:"ocean_fiber",q:6}],                                             out:[{id:"depth_gloves",q:1}]},
-    {id:"pe6",name:"Pressure Boots",     lv:50,xp:189,t:33,inp:[{id:"ocean_fiber",q:8},{id:"coral_blocks",q:2}],                     out:[{id:"pressure_boots",q:1}]}]},
 
   // ── Exploration: navigation, scanning, archaeology, cartography, logistics ──
   {id:"exploration",name:"Exploration",icon:"🧭",color:"#38bdf8",cat:"utility",acts:[
@@ -742,7 +733,17 @@ const SKILLS=[
     {id:"rf8",name:"Void Amulet",lv:50,xp:269,t:35,inp:[{id:"void_pearl",q:2},{id:"abyss_crystal",q:4},{id:"black_coral",q:2}],out:[{id:"void_amulet",q:1}]}]},
 
   // ── Cultivation Gear ──
-  {id:"gear_crafting",name:"Gear Crafting",icon:"🔧",color:"#f59e0b",cat:"prod",acts:[
+  {id:"gear_crafting",name:"Gear Crafting",icon:"🛠️",color:"#f59e0b",cat:"prod",acts:[
+    // ── Combat Gear (from Fabrication) ──
+    {id:"ce4",gearCat:"combat",name:"Coral Helm",      lv:5, xp:53, t:16,inp:[{id:"coral_blocks",q:8},{id:"shell_fragments",q:5}],                              out:[{id:"coral_helm",q:1}]},
+    {id:"pe2",gearCat:"combat",name:"Pressure Helm",   lv:10,xp:91, t:21,inp:[{id:"pressure_glass",q:2},{id:"reinforced_alloy",q:4}],                          out:[{id:"pressure_helm",q:1}]},
+    {id:"ce5",gearCat:"combat",name:"Shell Shield",    lv:12,xp:90, t:21,inp:[{id:"coral_blocks",q:12},{id:"reinforced_alloy",q:3}],                            out:[{id:"shell_shield",q:1}]},
+    {id:"ce6",gearCat:"combat",name:"Coral Suit",      lv:15,xp:132,t:26,inp:[{id:"coral_blocks",q:15},{id:"reinforced_alloy",q:5}],                            out:[{id:"coral_suit",q:1}]},
+    {id:"pe3",gearCat:"combat",name:"Pressure Suit",   lv:20,xp:168,t:31,inp:[{id:"pressure_glass",q:3},{id:"reinforced_alloy",q:8}],                          out:[{id:"pressure_suit",q:1}]},
+    {id:"pe5",gearCat:"combat",name:"Depth Gloves",    lv:30,xp:60, t:17,inp:[{id:"ocean_fiber",q:6},{id:"reinforced_alloy",q:2}],                             out:[{id:"depth_gloves",q:1}]},
+    {id:"pe6",gearCat:"combat",name:"Pressure Boots",  lv:35,xp:75, t:19,inp:[{id:"ocean_fiber",q:8},{id:"coral_blocks",q:2}],                                 out:[{id:"pressure_boots",q:1}]},
+    {id:"sf1",gearCat:"combat",name:"Void Ring",       lv:40,xp:47, t:15,inp:[{id:"coral_blocks",q:10},{id:"ocean_fiber",q:5}],                                out:[{id:"void_ring",q:1}]},
+    {id:"sf4",gearCat:"combat",name:"Abyss Armor",     lv:50,xp:137,t:27,inp:[{id:"reinforced_alloy",q:15},{id:"pressure_glass",q:6},{id:"abyss_crystal",q:3}],out:[{id:"abyss_armor",q:1}]},
     // ── Cultivation ──
     {id:"cg1",gearCat:"cultivation",name:"Kelp Rake",         lv:5, xp:28,t:12, inp:[{id:"kelp",q:10},{id:"ocean_fiber",q:5}],                               out:[{id:"kelp_rake",q:1}]},
     {id:"cg2",gearCat:"cultivation",name:"Tide Harvester",    lv:25,xp:55,t:15, inp:[{id:"soft_coral",q:8},{id:"tide_sap",q:4},{id:"ocean_fiber",q:8}],      out:[{id:"tide_harvester",q:1}]},
@@ -1112,7 +1113,7 @@ function GameUI({account,onLogout}){
   const[isMobile,setIsMobile]=useState(()=>window.innerWidth<768);
   const[mobileTab,setMobileTab]=useState("skills"); // skills|combat|bag|chat|more
   const[actSkill,setActSkill]=useState("kelp_farming");
-  const[gearCat,setGearCat]=useState("cultivation");
+  const[gearCat,setGearCat]=useState("combat");
   const[tooltip,setTooltip]=useState(null);// {iid, x, y}
   const[npcCat,setNpcCat]=useState("all");
   const[npcLog,setNpcLog]=useState([]);
@@ -2354,6 +2355,7 @@ function GameUI({account,onLogout}){
                                 {sk.id==="gear_crafting"&&(
                                   <div style={{display:"flex",gap:5,flexWrap:"wrap",marginBottom:4}}>
                                     {[
+                                      {id:"combat",     label:"⚔️"},
                                       {id:"cultivation",label:"🌿"},
                                       {id:"mining",     label:"⛏️"},
                                       {id:"fishing",    label:"🎣"},
@@ -2907,6 +2909,7 @@ function GameUI({account,onLogout}){
                 {skData.id==="gear_crafting"&&(
                   <div style={{display:"flex",gap:6,marginBottom:16,flexWrap:"wrap"}}>
                     {[
+                      {id:"combat",     label:"⚔️ Combat"},
                       {id:"cultivation",label:"🌿 Cultivation"},
                       {id:"mining",     label:"⛏️ Mining"},
                       {id:"fishing",    label:"🎣 Fishing"},

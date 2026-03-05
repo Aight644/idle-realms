@@ -1403,13 +1403,37 @@ function GameUI({account,onLogout}){
       if(d.blueprints)setBlueprints(d.blueprints);
       if(d.bpLog)setBpLog(d.bpLog);
       if(d.tutorialDone)setTutorialDone(true);
+      // Restore active skill action
+      if(d.curAct){setCurAct(d.curAct);setActSkill(d.curAct.sk);}
       // Offline progress — up to 8 hours
       if(d.ts){
         const away=Math.min(Date.now()-d.ts, 8*60*60*1000); // cap at 8h
         if(away>60000){ // only if away > 1 min
-          const gains={items:{},rp:0,gold:0};
+          const gains={items:{},rp:0,gold:0,xp:{}};
           const savedDrones=d.drones||{};
           const savedStructures=d.structures||{};
+          // Active skill offline progress
+          if(d.curAct){
+            const offSk=SKILLS.find(s=>s.id===d.curAct.sk);
+            const offAct=offSk?.acts?.find(a=>a.id===d.curAct.act);
+            if(offAct&&offAct.t>0){
+              const cycles=Math.floor(away/(offAct.t*1000));
+              if(cycles>0){
+                // Items
+                if(offAct.out){
+                  offAct.out.forEach(o=>{
+                    const qty=o.q*cycles;
+                    gains.items[o.id]=(gains.items[o.id]||0)+qty;
+                    setInv(p=>({...p,[o.id]:(p[o.id]||0)+qty}));
+                  });
+                }
+                // XP
+                const xpGained=offAct.xp*cycles;
+                gains.xp[d.curAct.sk]=(gains.xp[d.curAct.sk]||0)+xpGained;
+                setSkills(p=>({...p,[d.curAct.sk]:(p[d.curAct.sk]||0)+xpGained}));
+              }
+            }
+          }
           // Drone passive gains
           DRONE_TYPES.forEach(dt=>{
             const count=savedDrones[dt.id]||0;if(!count)return;
@@ -1435,7 +1459,7 @@ function GameUI({account,onLogout}){
           // RP trickle
           const rpGained=Math.floor((away/10000));
           if(rpGained>0){gains.rp=rpGained;setResearchPts(p=>p+rpGained)}
-          const hasGains=Object.keys(gains.items).length>0||gains.rp>0||gains.gold>0;
+          const hasGains=Object.keys(gains.items).length>0||gains.rp>0||gains.gold>0||Object.keys(gains.xp||{}).length>0;
           if(hasGains)setOfflineGains({away,gains});
         }
       }
@@ -1459,6 +1483,7 @@ function GameUI({account,onLogout}){
       skills,inv,eq,gold,enh,researchPts,researched,
       structures,drones,achievements,lifeStats,
       blueprints,bpLog:bpLog.slice(-50),ts:Date.now(),
+      curAct,
     };
     try{localStorage.setItem("idle_save_"+account.uid,JSON.stringify(save));}catch{}
     // Debounce Firestore write to 5s
@@ -1473,7 +1498,7 @@ function GameUI({account,onLogout}){
   useEffect(()=>{
     const handler=()=>{
       if(!account?.uid||!dataLoaded.current)return;
-      const save={skills,inv,eq,gold,enh,researchPts,researched,structures,drones,achievements,lifeStats,blueprints,bpLog:bpLog.slice(-50),ts:Date.now()};
+      const save={skills,inv,eq,gold,enh,researchPts,researched,structures,drones,achievements,lifeStats,blueprints,bpLog:bpLog.slice(-50),ts:Date.now(),curAct};
       try{localStorage.setItem("idle_save_"+account.uid,JSON.stringify(save));}catch{}
     };
     window.addEventListener("beforeunload",handler);
@@ -2340,7 +2365,7 @@ function GameUI({account,onLogout}){
               <div style={{fontSize:40,marginBottom:8}}>🌊</div>
               <div style={{fontSize:14,fontWeight:700,color:C.acc,letterSpacing:2,marginBottom:4,fontFamily:FONT}}>WELCOME BACK</div>
               <div style={{fontSize:11,color:C.ts,fontFamily:FONT_BODY}}>
-                Away for {offlineGains.away>=3600000?(offlineGains.away/3600000).toFixed(1)+"h":(offlineGains.away/60000).toFixed(0)+"m"} · Your drones kept working!
+                Away for {offlineGains.away>=3600000?(offlineGains.away/3600000).toFixed(1)+"h":(offlineGains.away/60000).toFixed(0)+"m"} · Your skills and drones kept working!
               </div>
             </div>
             <div style={{padding:"12px 16px",borderRadius:8,background:C.acc+"10",border:"1px solid "+C.acc+"30",marginBottom:16}}>
@@ -2355,6 +2380,16 @@ function GameUI({account,onLogout}){
                 ))}
                 {offlineGains.gains.gold>0&&<div style={{display:"flex",alignItems:"center",gap:8,fontSize:11,fontFamily:FONT_BODY}}><span>◈</span><span style={{color:C.gold,fontWeight:700}}>+{fmt(offlineGains.gains.gold)}</span><span style={{color:C.ts}}>Credits</span></div>}
                 {offlineGains.gains.rp>0&&<div style={{display:"flex",alignItems:"center",gap:8,fontSize:11,fontFamily:FONT_BODY}}><span>🔬</span><span style={{color:C.purp,fontWeight:700}}>+{fmt(offlineGains.gains.rp)}</span><span style={{color:C.ts}}>Research Points</span></div>}
+                {Object.entries(offlineGains?.gains?.xp||{}).map(([skId,xp])=>{
+                  const sk=SKILLS.find(s=>s.id===skId);
+                  return xp>0?(
+                    <div key={skId} style={{display:"flex",alignItems:"center",gap:8,fontSize:11,fontFamily:FONT_BODY}}>
+                      <span>{sk?.icon||"⭐"}</span>
+                      <span style={{color:C.ok,fontWeight:700}}>+{fmt(Math.floor(xp))}</span>
+                      <span style={{color:C.ts}}>{sk?.name||skId} XP</span>
+                    </div>
+                  ):null;
+                })}
               </div>
             </div>
             <div onClick={()=>setOfflineGains(null)} style={{padding:"11px 0",borderRadius:8,background:"linear-gradient(90deg,"+C.accD+","+C.acc+")",color:C.bg,fontSize:12,fontWeight:700,textAlign:"center",cursor:"pointer",letterSpacing:2,fontFamily:FONT,boxShadow:GLOW_STYLE}}>

@@ -2783,22 +2783,50 @@ function GameUI({account,onLogout}){
                           </div>
                         ))}
                       </div>
-                      <div style={{display:"flex",flexWrap:"wrap",gap:6}}>
-                        {Object.entries(inv).filter(([id,qty])=>qty>0&&ITEMS[id]).map(([id,qty])=>{
-                          const it=ITEMS[id];
+                      {/* Item cell helper */}
+                      {(()=>{
+                        const ItemCell=({id,qty})=>{
+                          const it=ITEMS[id];if(!it)return null;
                           const rareColor=it.rarity==="rare"?C.gold:it.rarity==="uncommon"?C.purp:null;
+                          const isEq=Object.values(eq).includes(id);
+                          const isTool=it.eq==="tool";
+                          const borderCol=isEq?(isTool?"#f59e0b":C.acc):rareColor?rareColor+"50":it.eq?(isTool?"#f59e0b40":C.acc+"40"):C.border;
+                          const bgCol=isEq?(isTool?"#f59e0b15":C.acc+"15"):rareColor?rareColor+"18":it.eq?(isTool?"#f59e0b08":C.acc+"08"):C.card;
                           return(
-                            <div key={id} onClick={it.eq?()=>setSelItem(id):undefined} onMouseEnter={!it.eq?e=>showTip(e,id):undefined} onMouseLeave={!it.eq?hideTip:undefined}
-                              style={{position:"relative",width:58,height:58,borderRadius:8,background:rareColor?rareColor+"18":it.eq?C.acc+"12":C.card,border:"1px solid "+(Object.values(eq).includes(id)?C.acc:rareColor?rareColor+"50":it.eq?C.acc+"40":C.border),display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:1,cursor:it.eq?"pointer":"default"}}>
+                            <div onClick={it.eq?()=>setSelItem(id):undefined} onMouseEnter={!it.eq?e=>showTip(e,id):undefined} onMouseLeave={!it.eq?hideTip:undefined}
+                              style={{position:"relative",width:58,height:58,borderRadius:8,background:bgCol,border:"1px solid "+borderCol,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:1,cursor:it.eq?"pointer":"default"}}>
                               <span style={{fontSize:24,lineHeight:1}}>{it.i||"📦"}</span>
-                              <span style={{fontSize:11,color:rareColor||C.ts,fontWeight:700,fontFamily:FONT}}>{qty>=1000?Math.floor(qty/1000)+"k":qty}</span>
+                              <span style={{fontSize:11,color:rareColor||(isTool&&isEq?"#f59e0b":C.ts),fontWeight:700,fontFamily:FONT}}>{qty>=1000?Math.floor(qty/1000)+"k":qty}</span>
                               {rareColor&&<div style={{position:"absolute",top:0,left:0,right:0,height:2,background:rareColor,borderRadius:"8px 8px 0 0"}}/>}
-                              {Object.values(eq).includes(id)&&<div style={{position:"absolute",bottom:2,right:3,fontSize:7,color:C.acc,fontWeight:700,fontFamily:FONT}}>ON</div>}
+                              {isEq&&<div style={{position:"absolute",bottom:2,right:3,fontSize:7,color:isTool?"#f59e0b":C.acc,fontWeight:700,fontFamily:FONT}}>ON</div>}
                             </div>
                           );
-                        })}
-                        {Object.keys(inv).filter(id=>inv[id]>0).length===0&&<div style={{fontSize:13,color:C.td,fontFamily:FONT_BODY,padding:"20px 0",width:"100%",textAlign:"center"}}>Cargo hold empty</div>}
-                      </div>
+                        };
+                        const materials=Object.entries(inv).filter(([id,qty])=>qty>0&&ITEMS[id]&&!ITEMS[id].eq);
+                        const gear=Object.entries(inv).filter(([id,qty])=>qty>0&&ITEMS[id]&&ITEMS[id].eq&&ITEMS[id].eq!=="tool");
+                        const tools=Object.entries(inv).filter(([id,qty])=>qty>0&&ITEMS[id]&&ITEMS[id].eq==="tool");
+                        return(<>
+                          {gear.length>0&&<>
+                            <div style={{fontSize:9,fontWeight:700,color:C.acc,letterSpacing:2,marginBottom:4,marginTop:4,fontFamily:FONT}}>⚔️ GEAR <span style={{color:C.td,fontWeight:400}}>— tap to equip</span></div>
+                            <div style={{display:"flex",flexWrap:"wrap",gap:6,marginBottom:10}}>
+                              {gear.map(([id,qty])=><ItemCell key={id} id={id} qty={qty}/>)}
+                            </div>
+                          </>}
+                          {tools.length>0&&<>
+                            <div style={{fontSize:9,fontWeight:700,color:"#f59e0b",letterSpacing:2,marginBottom:4,fontFamily:FONT}}>🔧 TOOLS <span style={{color:C.td,fontWeight:400}}>— tap to equip</span></div>
+                            <div style={{display:"flex",flexWrap:"wrap",gap:6,marginBottom:10}}>
+                              {tools.map(([id,qty])=><ItemCell key={id} id={id} qty={qty}/>)}
+                            </div>
+                          </>}
+                          {materials.length>0&&<>
+                            <div style={{fontSize:9,fontWeight:700,color:C.td,letterSpacing:2,marginBottom:4,fontFamily:FONT}}>📦 MATERIALS</div>
+                            <div style={{display:"flex",flexWrap:"wrap",gap:6}}>
+                              {materials.map(([id,qty])=><ItemCell key={id} id={id} qty={qty}/>)}
+                            </div>
+                          </>}
+                          {Object.keys(inv).filter(id=>inv[id]>0).length===0&&<div style={{fontSize:13,color:C.td,fontFamily:FONT_BODY,padding:"20px 0",width:"100%",textAlign:"center"}}>Cargo hold empty</div>}
+                        </>);
+                      })()}
                     </div>
                   )}
                   {rightTab==="equipment"&&(

@@ -1244,6 +1244,7 @@ function GameUI({account,onLogout}){
   const[gold,setGold]=useState(0);
   const[enh,setEnh]=useState({});
   const[enhSel,setEnhSel]=useState(null);
+  const[selItem,setSelItem]=useState(null);
   const[curAct,setCurAct]=useState(null);
   // actProg state replaced by actProgRef for perf
   const[pinnedSkill,setPinnedSkill]=useState(null);
@@ -2390,6 +2391,59 @@ function GameUI({account,onLogout}){
           </div>
         </div>
       )}
+
+      {/* ===== ITEM EQUIP MODAL ===== */}
+      {selItem&&(()=>{
+        const it=ITEMS[selItem];if(!it)return null;
+        const setData=it.set?Object.values(SET_BONUSES).find(s=>s.pieces.includes(selItem)):null;
+        const isEquipped=Object.values(eq).includes(selItem);
+        const curEquipped=it.eq?eq[it.eq]:null;
+        const curIt=curEquipped?ITEMS[curEquipped]:null;
+        return(
+        <div style={{position:"fixed",inset:0,zIndex:1000,display:"flex",alignItems:"center",justifyContent:"center",background:"#00000088",backdropFilter:"blur(4px)"}} onClick={()=>setSelItem(null)}>
+          <div onClick={e=>e.stopPropagation()} style={{maxWidth:320,width:"90%",borderRadius:16,background:"linear-gradient(135deg,"+C.panel+","+C.card+")",border:"2px solid "+(setData?setData.color+"80":C.acc+"60"),boxShadow:"0 0 40px "+(setData?setData.color:C.acc)+"30",overflow:"hidden"}}>
+            {/* Header */}
+            <div style={{padding:"20px 20px 14px",background:(setData?setData.color:C.acc)+"15",borderBottom:"1px solid "+C.border}}>
+              <div style={{fontSize:36,marginBottom:6}}>{it.i}</div>
+              <div style={{fontSize:16,fontWeight:700,color:setData?setData.color:C.white,fontFamily:FONT}}>{it.n}</div>
+              <div style={{fontSize:10,color:C.ts,fontFamily:FONT_BODY,marginTop:2}}>{it.eq?.toUpperCase()} SLOT · ×{inv[selItem]||0} owned</div>
+              {setData&&<div style={{fontSize:10,color:setData.color,marginTop:4,fontFamily:FONT,letterSpacing:0.5}}>◈ {setData.name} Set</div>}
+            </div>
+            {/* Stats */}
+            {it.st&&<div style={{padding:"14px 20px",borderBottom:"1px solid "+C.border}}>
+              <div style={{fontSize:9,color:C.td,letterSpacing:2,marginBottom:8,fontFamily:FONT}}>STATS</div>
+              {Object.entries(it.st||{}).map(([k,v])=>(
+                <div key={k} style={{display:"flex",justifyContent:"space-between",fontSize:11,fontFamily:FONT_BODY,padding:"2px 0"}}>
+                  <span style={{color:C.ts}}>{fmtStat(k,0).split("+")[0].trim()}</span>
+                  <span style={{color:C.ok,fontWeight:700}}>+{v}</span>
+                </div>
+              ))}
+            </div>}
+            {/* Currently equipped comparison */}
+            {curIt&&<div style={{padding:"10px 20px",borderBottom:"1px solid "+C.border,background:C.bg}}>
+              <div style={{fontSize:9,color:C.td,letterSpacing:2,marginBottom:6,fontFamily:FONT}}>CURRENTLY EQUIPPED</div>
+              <div style={{fontSize:12,color:C.ts,fontFamily:FONT}}>{curIt.i} {curIt.n}</div>
+            </div>}
+            {/* Actions */}
+            <div style={{padding:"14px 20px",display:"flex",flexDirection:"column",gap:8}}>
+              {it.eq&&!isEquipped&&(inv[selItem]||0)>0&&(
+                <div onClick={()=>{equipIt(selItem);setSelItem(null);}} style={{padding:"12px",borderRadius:8,background:"linear-gradient(90deg,"+C.accD+","+C.acc+")",color:C.bg,fontSize:12,fontWeight:700,cursor:"pointer",textAlign:"center",letterSpacing:1,fontFamily:FONT,boxShadow:GLOW_STYLE}}>
+                  ⚔️ EQUIP
+                </div>
+              )}
+              {isEquipped&&(
+                <div onClick={()=>{unequipIt(it.eq);setSelItem(null);}} style={{padding:"12px",borderRadius:8,background:C.bad+"20",border:"1px solid "+C.bad+"50",color:C.bad,fontSize:12,fontWeight:700,cursor:"pointer",textAlign:"center",letterSpacing:1,fontFamily:FONT}}>
+                  ✕ UNEQUIP
+                </div>
+              )}
+              <div onClick={()=>setSelItem(null)} style={{padding:"10px",borderRadius:8,background:C.card,border:"1px solid "+C.border,color:C.ts,fontSize:11,cursor:"pointer",textAlign:"center",fontFamily:FONT}}>
+                CLOSE
+              </div>
+            </div>
+          </div>
+        </div>
+        );
+      })()}
 
       {/* ===== OFFLINE GAINS MODAL ===== */}
       {offlineGains&&(
@@ -4666,18 +4720,20 @@ function GameUI({account,onLogout}){
                 {/* Equipment section */}
                 {Object.entries(inv).some(([id])=>ITEMS[id]&&ITEMS[id].eq)&&(
                   <div style={{marginBottom:16}}>
-                    <div style={{fontSize:11,fontWeight:700,color:C.acc,letterSpacing:2,marginBottom:8}}>🗡️ EQUIPMENT</div>
+                    <div style={{fontSize:11,fontWeight:700,color:C.acc,letterSpacing:2,marginBottom:8}}>🗡️ EQUIPMENT <span style={{color:C.td,fontWeight:400,fontSize:9}}>— click item to equip</span></div>
                     <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:6}}>
-                      {Object.entries(inv).filter(([id])=>ITEMS[id]&&ITEMS[id].eq).map(([id,qty])=>{const it=ITEMS[id];
+                      {Object.entries(inv).filter(([id])=>ITEMS[id]&&ITEMS[id].eq&&(inv[id]||0)>0).map(([id,qty])=>{const it=ITEMS[id];
                         const setData=it.set?Object.values(SET_BONUSES).find(s=>s.pieces.includes(id)):null;
+                        const isEquipped=Object.values(eq).includes(id);
                         return(
-                        <div key={id} onMouseEnter={e=>showTip(e,id)} onMouseLeave={hideTip}
-                          style={{padding:"10px 12px",borderRadius:6,background:C.card,border:"1px solid "+(setData?setData.color+"50":C.acc+"30"),boxShadow:GLOW_STYLE,position:"relative",cursor:"pointer"}}>
-                          <div style={{fontSize:12,fontWeight:700,color:setData?setData.color:C.white,fontFamily:FONT}}>{it.i} {it.n}</div>
+                        <div key={id} onClick={()=>setSelItem(id)}
+                          style={{padding:"10px 12px",borderRadius:6,background:isEquipped?C.acc+"15":C.card,border:"2px solid "+(isEquipped?C.acc:setData?setData.color+"50":C.border),cursor:"pointer",transition:"all 0.15s",position:"relative"}}>
+                          <div style={{fontSize:18,marginBottom:4}}>{it.i}</div>
+                          <div style={{fontSize:11,fontWeight:700,color:setData?setData.color:C.white,fontFamily:FONT,lineHeight:1.2}}>{it.n}</div>
                           <div style={{fontSize:9,color:C.ts,fontFamily:FONT_BODY,marginTop:2}}>×{qty}</div>
-                          {it.st&&<div style={{fontSize:9,color:C.td,marginTop:2,fontFamily:FONT_BODY,lineHeight:1.5}}>{Object.entries(it.st||{}).map(([k,v])=><span key={k} style={{display:"block"}}>{fmtStat(k,v)}</span>)}</div>}
+                          {isEquipped&&<div style={{position:"absolute",top:6,right:6,fontSize:8,color:C.acc,fontWeight:700,fontFamily:FONT}}>ON</div>}
+                          {it.st&&<div style={{fontSize:9,color:C.td,marginTop:4,fontFamily:FONT_BODY,lineHeight:1.5}}>{Object.entries(it.st||{}).slice(0,2).map(([k,v])=><span key={k} style={{display:"block"}}>{fmtStat(k,v)}</span>)}</div>}
                           {setData&&<div style={{fontSize:8,color:setData.color,marginTop:3,fontFamily:FONT,letterSpacing:0.5}}>◈ {setData.name}</div>}
-                          <div onClick={()=>equipIt(id)} style={{marginTop:6,padding:"4px 0",borderRadius:4,background:"linear-gradient(90deg,"+C.accD+","+C.acc+")",color:C.bg,fontSize:9,fontWeight:700,cursor:"pointer",textAlign:"center",letterSpacing:1,fontFamily:FONT}}>EQUIP</div>
                         </div>
                       );})}
                     </div>

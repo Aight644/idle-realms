@@ -46,9 +46,9 @@ function fmt(n){if(n>=1e9)return(n/1e9).toFixed(1)+"B";if(n>=1e6)return(n/1e6).t
 // ===================== RESEARCH TREE =====================
 const RESEARCH_TREE = {
   agriculture: [
-    {id:"ag1",name:"Kelp Growth I",    icon:"🌿",tier:1,cost:50,  prereqs:[],      desc:"Kelp yield +25%",          effect:{kelp_yield:0.25}},
+    {id:"ag1",name:"Kelp Growth I",    icon:"🌿",tier:1,cost:50,  prereqs:[],      desc:"Kelp yield +25%",          effect:{cultiv_yield:0.25}},
     {id:"ag2",name:"Ocean Fertilizers",icon:"💧",tier:2,cost:120, prereqs:["ag1"], desc:"All gather yield +15%",     effect:{gather_yield:0.15}},
-    {id:"ag3",name:"Kelp Growth II",   icon:"🌾",tier:3,cost:250, prereqs:["ag2"], desc:"Kelp yield +50% total",     effect:{kelp_yield:0.25}},
+    {id:"ag3",name:"Kelp Growth II",   icon:"🌾",tier:3,cost:250, prereqs:["ag2"], desc:"Kelp yield +50% total",     effect:{cultiv_yield:0.25}},
     {id:"ag4",name:"Advanced Hydroponics",icon:"🏭",tier:4,cost:500,prereqs:["ag3"],desc:"Gather speed +20%",        effect:{gather_speed:0.20}},
   ],
   energy: [
@@ -558,11 +558,11 @@ const ITEMS={
   leviathan_ring:{n:"Leviathan Ring",i:"🔘",eq:"ring",st:{atk:10,mag:10,hp:20}},
   void_amulet:{n:"Void Amulet",i:"🌑",eq:"neck",st:{def:12,hp:25,mag:12}},
 
-  // ── Cultivation Tools (kelp_yield) ──
+  // ── Cultivation Tools (cultiv_yield) ──
   kelp_rake:{n:"Kelp Rake",i:"🌿",eq:"tool",st:{gather_yield:0.05,gather_speed:0.03}},
   tide_harvester:{n:"Tide Harvester",i:"🌊",eq:"tool",st:{gather_yield:0.10,gather_speed:0.06}},
-  spore_collector:{n:"Spore Collector",i:"🌱",eq:"tool",st:{gather_yield:0.18,gather_speed:0.10,kelp_yield:0.10}},
-  void_tendril:{n:"Void Tendril",i:"🌑",eq:"tool",st:{gather_yield:0.28,gather_speed:0.15,kelp_yield:0.20}},
+  spore_collector:{n:"Spore Collector",i:"🌱",eq:"tool",st:{gather_yield:0.18,gather_speed:0.10,cultiv_yield:0.10}},
+  void_tendril:{n:"Void Tendril",i:"🌑",eq:"tool",st:{gather_yield:0.28,gather_speed:0.15,cultiv_yield:0.20}},
 
   // ── Mining Tools (gather_speed heavy) ──
   reef_pick:{n:"Reef Pick",i:"⛏️",eq:"tool",st:{gather_speed:0.06,gather_yield:0.03}},
@@ -589,34 +589,34 @@ const ITEMS={
   ancient_probe:{n:"Ancient Probe",i:"🏺",eq:"tool",st:{rare_chance:0.16,gather_yield:0.20}},
 
   // ── Cultivation Armor Set ──
-  kelp_hood:{n:"Kelp Hood",i:"🍃",eq:"head",st:{def:8,hp:18,kelp_yield:0.05}},
-  kelp_suit:{n:"Kelp Suit",i:"🌿",eq:"body",st:{def:14,hp:32,gather_yield:0.05}},
-  kelp_gloves:{n:"Kelp Gloves",i:"🧤",eq:"hands",st:{def:4,hp:8,gather_speed:0.03}},
-  kelp_boots:{n:"Kelp Boots",i:"👟",eq:"feet",st:{def:5,hp:10}},
+  kelp_hood:{n:"Kelp Hood",i:"🍃",eq:"head",set:"kelp",st:{rare_chance:0.04}},
+  kelp_suit:{n:"Kelp Suit",i:"🌿",eq:"body",set:"kelp",st:{cultiv_yield:0.10,xp_bonus:0.08}},
+  kelp_gloves:{n:"Kelp Gloves",i:"🧤",eq:"hands",set:"kelp",st:{gather_speed:0.06}},
+  kelp_boots:{n:"Kelp Boots",i:"👟",eq:"feet",set:"kelp",st:{cultiv_yield:0.08}},
 
   // ── Mining Armor Set ──
-  ore_helm:{n:"Ore Helm",i:"⛑️",eq:"head",st:{def:16,hp:20}},
-  ore_vest:{n:"Ore Vest",i:"🪨",eq:"body",st:{def:28,hp:40}},
-  ore_gauntlets:{n:"Ore Gauntlets",i:"🦾",eq:"hands",st:{def:10,hp:12,gather_speed:0.04}},
-  ore_treads:{n:"Ore Treads",i:"🥾",eq:"feet",st:{def:8,hp:14}},
+  ore_helm:{n:"Ore Helm",i:"⛑️",eq:"head",set:"ore",st:{rare_chance:0.05}},
+  ore_vest:{n:"Ore Vest",i:"🪨",eq:"body",set:"ore",st:{mining_yield:0.10,xp_bonus:0.08}},
+  ore_gauntlets:{n:"Ore Gauntlets",i:"🦾",eq:"hands",set:"ore",st:{gather_speed:0.08}},
+  ore_treads:{n:"Ore Treads",i:"🥾",eq:"feet",set:"ore",st:{mining_yield:0.08}},
 
   // ── Fishing Armor Set ──
-  scale_mask:{n:"Scale Mask",i:"🐡",eq:"head",st:{def:10,hp:16,rare_chance:0.02}},
-  scale_suit:{n:"Scale Suit",i:"🦈",eq:"body",st:{def:18,hp:30,gather_yield:0.04}},
-  scale_fins:{n:"Scale Fins",i:"🫧",eq:"hands",st:{def:5,hp:10}},
-  scale_boots:{n:"Scale Boots",i:"🐚",eq:"feet",st:{def:6,hp:12,gather_speed:0.03}},
+  scale_mask:{n:"Scale Mask",i:"🐡",eq:"head",set:"scale",st:{rare_chance:0.05}},
+  scale_suit:{n:"Scale Suit",i:"🦈",eq:"body",set:"scale",st:{fishing_yield:0.10,xp_bonus:0.08}},
+  scale_fins:{n:"Scale Fins",i:"🫧",eq:"hands",set:"scale",st:{gather_speed:0.07}},
+  scale_boots:{n:"Scale Boots",i:"🐚",eq:"feet",set:"scale",st:{fishing_yield:0.08}},
 
   // ── Crystal Armor Set ──
-  crystal_visor:{n:"Crystal Visor",i:"💎",eq:"head",st:{def:12,hp:18,crystal_yield:0.08}},
-  crystal_suit:{n:"Crystal Suit",i:"🔮",eq:"body",st:{def:20,hp:28,mag:8}},
-  crystal_gloves:{n:"Crystal Gloves",i:"🔹",eq:"hands",st:{def:6,hp:8,mag:4}},
-  crystal_fins:{n:"Crystal Fins",i:"💠",eq:"feet",st:{def:7,hp:10}},
+  crystal_visor:{n:"Crystal Visor",i:"💎",eq:"head",set:"crystal",st:{rare_chance:0.06}},
+  crystal_suit:{n:"Crystal Suit",i:"🔮",eq:"body",set:"crystal",st:{crystal_yield:0.14,xp_bonus:0.10}},
+  crystal_gloves:{n:"Crystal Gloves",i:"🔹",eq:"hands",set:"crystal",st:{gather_speed:0.08}},
+  crystal_fins:{n:"Crystal Fins",i:"💠",eq:"feet",set:"crystal",st:{crystal_yield:0.10}},
 
   // ── Trench Armor Set ──
-  explorer_helm:{n:"Explorer Helm",i:"🪖",eq:"head",st:{def:14,hp:24,rare_chance:0.03}},
-  explorer_suit:{n:"Explorer Suit",i:"🗺️",eq:"body",st:{def:22,hp:45,rare_chance:0.03}},
-  explorer_gloves:{n:"Explorer Gloves",i:"🧩",eq:"hands",st:{def:7,hp:12}},
-  explorer_boots:{n:"Explorer Boots",i:"👢",eq:"feet",st:{def:9,hp:16,gather_yield:0.04}},
+  explorer_helm:{n:"Explorer Helm",i:"🪖",eq:"head",set:"explorer",st:{rare_chance:0.08}},
+  explorer_suit:{n:"Explorer Suit",i:"🗺️",eq:"body",set:"explorer",st:{trench_yield:0.12,xp_bonus:0.10}},
+  explorer_gloves:{n:"Explorer Gloves",i:"🧩",eq:"hands",set:"explorer",st:{gather_speed:0.09}},
+  explorer_boots:{n:"Explorer Boots",i:"👢",eq:"feet",set:"explorer",st:{trench_yield:0.10}},
 };
 
 // ===================== SKILLS =====================
@@ -964,6 +964,60 @@ const ZONES=[
   },
 ];
 
+// Set bonuses: pieces = items in set, bonuses at 2pc and 4pc
+const SET_BONUSES={
+  kelp:{
+    name:"Kelp Cultivator",color:"#00c285",
+    pieces:["kelp_gloves","kelp_boots","kelp_hood","kelp_suit"],
+    bonuses:{
+      2:{label:"Cultivator's Flow",stats:{gather_speed:0.10,cultiv_yield:0.08},desc:"Faster hands, richer harvest across all cultivation"},
+      4:{label:"Verdant Mastery",stats:{cultiv_yield:0.20,rare_chance:0.05,xp_bonus:0.10},desc:"Every cultivation action yields more of everything"},
+    },
+  },
+  ore:{
+    name:"Deep Ore Miner",color:"#7b61ff",
+    pieces:["ore_gauntlets","ore_treads","ore_helm","ore_vest"],
+    bonuses:{
+      2:{label:"Iron Will",stats:{gather_speed:0.10,mining_yield:0.08},desc:"Faster strikes, more ore from every vein"},
+      4:{label:"Vein Sense",stats:{mining_yield:0.20,rare_chance:0.06,xp_bonus:0.10},desc:"Every mining action extracts more from the deep rock"},
+    },
+  },
+  scale:{
+    name:"Abyss Fisher",color:"#00d4ff",
+    pieces:["scale_fins","scale_boots","scale_mask","scale_suit"],
+    bonuses:{
+      2:{label:"Current Rider",stats:{gather_speed:0.10,fishing_yield:0.08},desc:"Flow with the current, pull more from every cast"},
+      4:{label:"Deep Angler",stats:{fishing_yield:0.20,rare_chance:0.08,xp_bonus:0.10},desc:"Every fishing action draws more from the abyss"},
+    },
+  },
+  crystal:{
+    name:"Crystal Diver",color:"#a78bfa",
+    pieces:["crystal_gloves","crystal_fins","crystal_visor","crystal_suit"],
+    bonuses:{
+      2:{label:"Resonance",stats:{gather_speed:0.08,crystal_yield:0.12},desc:"In tune with the crystals — all dives yield more"},
+      4:{label:"Void Attunement",stats:{crystal_yield:0.25,rare_chance:0.10,xp_bonus:0.12},desc:"Every crystal action echoes through the void"},
+    },
+  },
+  explorer:{
+    name:"Trench Explorer",color:"#38bdf8",
+    pieces:["explorer_gloves","explorer_boots","explorer_helm","explorer_suit"],
+    bonuses:{
+      2:{label:"Pathfinder",stats:{gather_speed:0.08,trench_yield:0.10},desc:"Every trench expedition uncovers more"},
+      4:{label:"Ancient Bond",stats:{trench_yield:0.22,rare_chance:0.12,xp_bonus:0.12},desc:"The ancient trench yields all its secrets to you"},
+    },
+  },
+};
+
+const STAT_LABELS={
+  cultiv_yield:"Cultivation Yield",mining_yield:"Mining Yield",fishing_yield:"Fishing Yield",crystal_yield:"Crystal Yield",trench_yield:"Trench Yield",xp_bonus:"XP Bonus",
+  gather_speed:"Gather Speed",gather_yield:"Gather Yield",rare_chance:"Rare Chance",
+  def:"Defence",hp:"HP",atk:"Attack",mag:"Magic",rng:"Range",
+};
+const fmtStat=(k,v)=>{
+  const pctKeys=new Set(["gather_speed","gather_yield","rare_chance","cultiv_yield","crystal_yield","atk_pct","def_pct"]);
+  return (STAT_LABELS[k]||k)+": +"+(pctKeys.has(k)?Math.round(v*100)+"%":v);
+};
+
 const ESLOTS=[
   {id:"head",n:"Head",i:"⛑️"},{id:"body",n:"Body",i:"🔵"},{id:"hands",n:"Hands",i:"🧤"},{id:"feet",n:"Feet",i:"👢"},
   {id:"weapon",n:"Weapon",i:"🗡️"},{id:"shield",n:"Shield",i:"🛡️"},{id:"neck",n:"Neck",i:"📿"},{id:"ring",n:"Ring",i:"💍"},
@@ -1058,6 +1112,7 @@ function GameUI({account,onLogout}){
   const[mobileTab,setMobileTab]=useState("skills"); // skills|combat|bag|chat|more
   const[actSkill,setActSkill]=useState("kelp_farming");
   const[gearCat,setGearCat]=useState("cultivation");
+  const[tooltip,setTooltip]=useState(null);// {iid, x, y}
   // Top bar
   const[energy,setEnergy]=useState(100);
   const[pressure,setPressure]=useState(0);
@@ -1154,7 +1209,7 @@ function GameUI({account,onLogout}){
 
   // Aggregate research bonuses
   const bonuses=useMemo(()=>{
-    const b={kelp_yield:0,gather_yield:0,gather_speed:0,energy_regen:0,max_energy:0,atk_pct:0,def_pct:0,combat_xp:0,boss_drop:0,prod_speed:0,gold_pct:0,xp_pct:0,rare_chance:0,crystal_yield:0,rp_gen:0,pressure_resist:0,drone_efficiency:0};
+    const b={cultiv_yield:0,gather_yield:0,gather_speed:0,energy_regen:0,max_energy:0,atk_pct:0,def_pct:0,combat_xp:0,boss_drop:0,prod_speed:0,gold_pct:0,xp_pct:0,rare_chance:0,crystal_yield:0,rp_gen:0,pressure_resist:0,drone_efficiency:0};
     ALL_RESEARCH.forEach(r=>{if(researched[r.id]&&r.effect)Object.entries(r.effect).forEach(([k,v])=>{b[k]=(b[k]||0)+v})});
     // Structure bonuses (per level)
     STRUCTURES.forEach(st=>{const lv=structures[st.id]||0;if(lv>0){if(st.bonus)Object.entries(st.bonus).forEach(([k,v])=>{b[k]=(b[k]||0)+v*lv});if(st.bonusExtra)Object.entries(st.bonusExtra).forEach(([k,v])=>{b[k]=(b[k]||0)+v*lv})}});
@@ -1165,8 +1220,13 @@ function GameUI({account,onLogout}){
       if(lv>0)b[bk]=(b[bk]||0)+lv*0.02;
     });
     // Equipment gather bonuses (tools + armor with gather stats)
-    const gatherKeys=new Set(["gather_yield","gather_speed","kelp_yield","crystal_yield","rare_chance"]);
+    const gatherKeys=new Set(["gather_yield","gather_speed","cultiv_yield","mining_yield","fishing_yield","crystal_yield","trench_yield","rare_chance","xp_bonus"]);
     ESLOTS.forEach(slot=>{const iid=eq[slot.id];if(iid){const it=ITEMS[iid];if(it?.st)Object.entries(it.st).forEach(([k,v])=>{if(gatherKeys.has(k))b[k]=(b[k]||0)+v})}});
+    // Set bonuses
+    Object.values(SET_BONUSES).forEach(set=>{
+      const count=set.pieces.filter(pid=>Object.values(eq).includes(pid)).length;
+      [2,4].forEach(threshold=>{if(count>=threshold&&set.bonuses[threshold])Object.entries(set.bonuses[threshold].stats).forEach(([k,v])=>{b[k]=(b[k]||0)+v})});
+    });
     return b;
   },[researched,structures,skills]);
 
@@ -1296,10 +1356,14 @@ function GameUI({account,onLogout}){
         const ci=invRef.current;
         if(act.inp&&!act.inp.every(i=>(ci[i.id]||0)>=i.q)){setCurAct(null);setActProg(0);return}
         if(act.inp)act.inp.forEach(i=>remIt(i.id,i.q));
-        gainXp(sk.id,act.xp);
+        gainXp(sk.id,Math.floor(act.xp*(1+(sk.cat==="gather"?(bonuses.xp_bonus||0):0))));
         if(act.out)act.out.forEach(i=>{
           let qty=i.q;
-          if(sk.cat==="gather"){qty=Math.floor(qty*(1+(bonuses.gather_yield||0)));if(i.id==="kelp")qty=Math.floor(qty*(1+(bonuses.kelp_yield||0)));if(i.id==="abyss_crystal")qty=Math.floor(qty*(1+(bonuses.crystal_yield||0)))}
+          if(sk.cat==="gather"){
+            qty=Math.floor(qty*(1+(bonuses.gather_yield||0)));
+            const skillYieldKey={kelp_farming:"cultiv_yield",deep_sea_mining:"mining_yield",abyss_fishing:"fishing_yield",crystal_diving:"crystal_yield",trench_exploration:"trench_yield"}[sk.id];
+            if(skillYieldKey&&bonuses[skillYieldKey])qty=Math.floor(qty*(1+(bonuses[skillYieldKey]||0)));
+          }
           if(Math.random()<(bonuses.rare_chance||0))qty+=1;
           addIt(i.id,qty);
           // Track lifetime gathered items
@@ -1915,10 +1979,75 @@ function GameUI({account,onLogout}){
     );
   };
 
+  // Tooltip helpers
+  const showTip=(e,iid)=>{const r=e.currentTarget.getBoundingClientRect();setTooltip({iid,x:r.left+r.width/2,y:r.top});};
+  const hideTip=()=>setTooltip(null);
+
+  // Render item tooltip content
+  const renderTooltip=()=>{
+    if(!tooltip)return null;
+    const it=ITEMS[tooltip.iid];if(!it)return null;
+    const setEntry=it.set?Object.entries(SET_BONUSES).find(([,s])=>s.pieces.includes(tooltip.iid)):null;
+    const setData=setEntry?setEntry[1]:null;
+    const equippedCount=setData?setData.pieces.filter(pid=>Object.values(eq).includes(pid)).length:0;
+    return(
+      <div onMouseLeave={hideTip} style={{position:"fixed",left:Math.min(tooltip.x,window.innerWidth-220),top:Math.max(8,tooltip.y-8),transform:"translate(-50%,-100%)",
+        background:"#0d1b2a",border:"1px solid "+(setData?setData.color+"80":C.acc+"60"),borderRadius:10,padding:"12px 14px",
+        zIndex:9999,minWidth:200,maxWidth:220,boxShadow:"0 8px 32px #000a",pointerEvents:"none"}}>
+        {/* Item name */}
+        <div style={{display:"flex",alignItems:"center",gap:7,marginBottom:8}}>
+          <span style={{fontSize:20}}>{it.i}</span>
+          <div>
+            <div style={{fontSize:12,fontWeight:700,color:setData?setData.color:C.white,fontFamily:FONT,letterSpacing:0.5}}>{it.n}</div>
+            {it.eq&&<div style={{fontSize:9,color:C.td,fontFamily:FONT,letterSpacing:1}}>{it.eq.toUpperCase()}</div>}
+          </div>
+        </div>
+        {/* Stats */}
+        {it.st&&Object.keys(it.st).length>0&&(
+          <div style={{marginBottom:setData?8:0}}>
+            <div style={{fontSize:9,color:C.td,fontFamily:FONT,letterSpacing:1,marginBottom:4}}>STATS</div>
+            {Object.entries(it.st).map(([k,v])=>(
+              <div key={k} style={{display:"flex",justifyContent:"space-between",fontSize:11,fontFamily:FONT_BODY,marginBottom:2}}>
+                <span style={{color:C.ts}}>{STAT_LABELS[k]||k}</span>
+                <span style={{color:C.ok,fontWeight:700}}>+{["gather_speed","gather_yield","rare_chance","cultiv_yield","crystal_yield"].includes(k)?Math.round(v*100)+"%":v}</span>
+              </div>
+            ))}
+          </div>
+        )}
+        {/* Set bonus */}
+        {setData&&(
+          <div style={{borderTop:"1px solid "+setData.color+"30",paddingTop:8,marginTop:4}}>
+            <div style={{fontSize:9,color:setData.color,fontFamily:FONT,letterSpacing:1,marginBottom:6}}>{setData.name.toUpperCase()} SET</div>
+            {[2,4].map(n=>{
+              const bonus=setData.bonuses[n];if(!bonus)return null;
+              const active=equippedCount>=n;
+              return(
+                <div key={n} style={{marginBottom:6,opacity:active?1:0.45}}>
+                  <div style={{display:"flex",alignItems:"center",gap:5,marginBottom:3}}>
+                    <span style={{fontSize:9,fontWeight:700,padding:"1px 6px",borderRadius:8,background:active?setData.color+"30":"#ffffff10",color:active?setData.color:C.td,fontFamily:FONT}}>{n}pc</span>
+                    <span style={{fontSize:10,fontWeight:700,color:active?setData.color:C.td,fontFamily:FONT_BODY}}>{bonus.label}</span>
+                    {active&&<span style={{fontSize:9,color:C.ok}}>✓</span>}
+                  </div>
+                  {Object.entries(bonus.stats).map(([k,v])=>(
+                    <div key={k} style={{display:"flex",justifyContent:"space-between",fontSize:10,fontFamily:FONT_BODY,paddingLeft:8}}>
+                      <span style={{color:C.ts}}>{STAT_LABELS[k]||k}</span>
+                      <span style={{color:active?C.ok:C.td,fontWeight:700}}>+{["gather_speed","gather_yield","rare_chance","cultiv_yield","crystal_yield"].includes(k)?Math.round(v*100)+"%":v}</span>
+                    </div>
+                  ))}
+                </div>
+              );
+            })}
+            <div style={{fontSize:9,color:C.td,fontFamily:FONT_BODY,marginTop:4}}>{equippedCount}/{setData.pieces.length} pieces equipped</div>
+          </div>
+        )}
+      </div>
+    );
+  };
+
   return(
     <div style={{width:"100%",height:"100vh",display:"flex",flexDirection:"column",fontFamily:FONT,background:C.bg,color:C.text,overflow:"hidden"}}>
+      {renderTooltip()}
 
-      {/* ===== MODALS (shared) ===== */}
       {showTutorial&&(()=>{
         const step=TUTORIAL_STEPS[tutorialStep];
         const isLast=tutorialStep===TUTORIAL_STEPS.length-1;
@@ -2326,12 +2455,15 @@ function GameUI({account,onLogout}){
                     <div style={{display:"flex",flexDirection:"column",gap:6}}>
                       {ESLOTS.map(slot=>{
                         const iid=eq[slot.id];const it=iid?ITEMS[iid]:null;const el=iid?(enh[iid]||0):0;
+                        const setData=it?.set?Object.values(SET_BONUSES).find(s=>s.pieces.includes(iid)):null;
                         return(
-                          <div key={slot.id} style={{display:"flex",alignItems:"center",gap:10,padding:"12px 14px",borderRadius:8,background:it?"linear-gradient(90deg,"+C.acc+"10,"+C.card+")":C.card,border:"1px solid "+(it?C.acc+"40":C.border)}}>
-                            <div style={{width:44,height:44,borderRadius:8,background:C.bg,border:"1px solid "+C.border,display:"flex",alignItems:"center",justifyContent:"center",fontSize:22,flexShrink:0}}>{it?it.i:slot.i}</div>
+                          <div key={slot.id} onMouseEnter={iid?e=>showTip(e,iid):null} onMouseLeave={hideTip}
+                            style={{display:"flex",alignItems:"center",gap:10,padding:"12px 14px",borderRadius:8,background:it?"linear-gradient(90deg,"+(setData?setData.color:C.acc)+"10,"+C.card+")":C.card,border:"1px solid "+(setData?setData.color+"50":it?C.acc+"40":C.border),cursor:it?"pointer":"default"}}>
+                            <div style={{width:44,height:44,borderRadius:8,background:C.bg,border:"1px solid "+(setData?setData.color+"40":C.border),display:"flex",alignItems:"center",justifyContent:"center",fontSize:22,flexShrink:0}}>{it?it.i:slot.i}</div>
                             <div style={{flex:1}}>
                               <div style={{fontSize:12,color:C.td,fontFamily:FONT_BODY}}>{slot.n}</div>
-                              <div style={{fontSize:13,color:it?C.white:C.td,fontWeight:600,fontFamily:FONT_BODY}}>{it?(it.n+(el>0?" +"+el:"")):"— empty —"}</div>
+                              <div style={{fontSize:13,color:setData?setData.color:it?C.white:C.td,fontWeight:600,fontFamily:FONT_BODY}}>{it?(it.n+(el>0?" +"+el:"")):"— empty —"}</div>
+                              {it?.st&&<div style={{fontSize:10,color:C.ts,fontFamily:FONT_BODY,marginTop:2}}>{Object.entries(it.st).map(([k,v])=>fmtStat(k,v)).join(" · ")}</div>}
                             </div>
                           </div>
                         );
@@ -3858,11 +3990,33 @@ function GameUI({account,onLogout}){
             {page==="equipment"&&(
               <div style={{}}>
                 <div style={{fontSize:14,fontWeight:700,color:C.white,marginBottom:16,letterSpacing:2}}>EQUIPMENT LOADOUT</div>
+                {/* Active set bonuses summary */}
+                {(()=>{const active=Object.values(SET_BONUSES).filter(s=>s.pieces.filter(p=>Object.values(eq).includes(p)).length>=2);
+                  if(!active.length)return null;
+                  return(<div style={{marginBottom:14,display:"flex",flexWrap:"wrap",gap:6}}>
+                    {active.map(s=>{const n=s.pieces.filter(p=>Object.values(eq).includes(p)).length;const b=s.bonuses[n>=4?4:2];return(
+                      <div key={s.name} style={{padding:"4px 10px",borderRadius:16,background:s.color+"20",border:"1px solid "+s.color+"60",fontSize:10,color:s.color,fontFamily:FONT,fontWeight:700}}>
+                        {n>=4?"★":"◑"} {s.name} {n}pc — {b.label}
+                      </div>);})}</div>);})()}
                 <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
-                  {ESLOTS.map(slot=>{const iid=eq[slot.id];const it=iid?ITEMS[iid]:null;const el=iid?(enh[iid]||0):0;return(
-                    <div key={slot.id} style={{padding:"12px 14px",borderRadius:8,background:C.card,border:"1px solid "+(it?C.acc+"40":C.border),boxShadow:it?GLOW_STYLE:"none"}}>
-                      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:6}}><span style={{fontSize:10,color:C.ts,fontFamily:FONT_BODY}}>{slot.i} {slot.n}</span>{it&&<span onClick={()=>unequipIt(slot.id)} style={{fontSize:9,color:C.bad,cursor:"pointer",fontFamily:FONT,letterSpacing:1}}>REMOVE</span>}</div>
-                      {it?(<div><div style={{fontSize:12,fontWeight:700,color:C.white,fontFamily:FONT}}>{it.i} {it.n}{el>0?" +"+el:""}</div>{it.st&&<div style={{fontSize:10,color:C.ts,marginTop:3,fontFamily:FONT_BODY}}>{Object.entries(it.st).map(e=>e[0].toUpperCase()+": +"+Math.floor(e[1]*(1+el*0.08))).join(" · ")}</div>}</div>):(<div style={{fontSize:11,color:C.td,fontFamily:FONT_BODY}}>— Empty Slot —</div>)}
+                  {ESLOTS.map(slot=>{const iid=eq[slot.id];const it=iid?ITEMS[iid]:null;const el=iid?(enh[iid]||0):0;
+                    const setData=it?.set?Object.values(SET_BONUSES).find(s=>s.pieces.includes(iid)):null;
+                    return(
+                    <div key={slot.id} onMouseEnter={iid?e=>showTip(e,iid):null} onMouseLeave={hideTip}
+                      style={{padding:"12px 14px",borderRadius:8,background:C.card,border:"1px solid "+(setData?setData.color+"50":it?C.acc+"40":C.border),boxShadow:it?GLOW_STYLE:"none",cursor:it?"pointer":"default",transition:"border-color 0.15s"}}>
+                      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:6}}>
+                        <span style={{fontSize:10,color:C.ts,fontFamily:FONT_BODY}}>{slot.i} {slot.n}</span>
+                        {it&&<span onClick={()=>unequipIt(slot.id)} style={{fontSize:9,color:C.bad,cursor:"pointer",fontFamily:FONT,letterSpacing:1}}>REMOVE</span>}
+                      </div>
+                      {it?(
+                        <div>
+                          <div style={{fontSize:12,fontWeight:700,color:setData?setData.color:C.white,fontFamily:FONT}}>{it.i} {it.n}{el>0?" +"+el:""}</div>
+                          {it.st&&<div style={{fontSize:10,color:C.ts,marginTop:4,fontFamily:FONT_BODY,lineHeight:1.6}}>
+                            {Object.entries(it.st).map(([k,v])=><span key={k} style={{display:"block"}}>{fmtStat(k,Math.floor(typeof v==="number"&&v<1?v:(v*(1+el*0.08))))}</span>)}
+                          </div>}
+                          {setData&&<div style={{fontSize:9,color:setData.color,marginTop:4,fontFamily:FONT,letterSpacing:0.5}}>◈ {setData.name}</div>}
+                        </div>
+                      ):(<div style={{fontSize:11,color:C.td,fontFamily:FONT_BODY}}>— Empty Slot —</div>)}
                     </div>
                   );})}
                 </div>
@@ -3913,11 +4067,15 @@ function GameUI({account,onLogout}){
                   <div style={{marginBottom:16}}>
                     <div style={{fontSize:11,fontWeight:700,color:C.acc,letterSpacing:2,marginBottom:8}}>🗡️ EQUIPMENT</div>
                     <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:6}}>
-                      {Object.entries(inv).filter(([id])=>ITEMS[id]&&ITEMS[id].eq).map(([id,qty])=>{const it=ITEMS[id];return(
-                        <div key={id} style={{padding:"10px 12px",borderRadius:6,background:C.card,border:"1px solid "+C.acc+"30",boxShadow:GLOW_STYLE}}>
-                          <div style={{fontSize:12,fontWeight:700,color:C.white,fontFamily:FONT}}>{it.i} {it.n}</div>
+                      {Object.entries(inv).filter(([id])=>ITEMS[id]&&ITEMS[id].eq).map(([id,qty])=>{const it=ITEMS[id];
+                        const setData=it.set?Object.values(SET_BONUSES).find(s=>s.pieces.includes(id)):null;
+                        return(
+                        <div key={id} onMouseEnter={e=>showTip(e,id)} onMouseLeave={hideTip}
+                          style={{padding:"10px 12px",borderRadius:6,background:C.card,border:"1px solid "+(setData?setData.color+"50":C.acc+"30"),boxShadow:GLOW_STYLE,position:"relative",cursor:"pointer"}}>
+                          <div style={{fontSize:12,fontWeight:700,color:setData?setData.color:C.white,fontFamily:FONT}}>{it.i} {it.n}</div>
                           <div style={{fontSize:9,color:C.ts,fontFamily:FONT_BODY,marginTop:2}}>×{qty}</div>
-                          {it.st&&<div style={{fontSize:9,color:C.td,marginTop:2,fontFamily:FONT_BODY}}>{Object.entries(it.st).map(([k,v])=>k+"+"+v).join(" ")}</div>}
+                          {it.st&&<div style={{fontSize:9,color:C.td,marginTop:2,fontFamily:FONT_BODY,lineHeight:1.5}}>{Object.entries(it.st).map(([k,v])=><span key={k} style={{display:"block"}}>{fmtStat(k,v)}</span>)}</div>}
+                          {setData&&<div style={{fontSize:8,color:setData.color,marginTop:3,fontFamily:FONT,letterSpacing:0.5}}>◈ {setData.name}</div>}
                           <div onClick={()=>equipIt(id)} style={{marginTop:6,padding:"4px 0",borderRadius:4,background:"linear-gradient(90deg,"+C.accD+","+C.acc+")",color:C.bg,fontSize:9,fontWeight:700,cursor:"pointer",textAlign:"center",letterSpacing:1,fontFamily:FONT}}>EQUIP</div>
                         </div>
                       );})}

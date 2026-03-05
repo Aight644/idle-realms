@@ -2824,7 +2824,7 @@ function GameUI({account,onLogout}){
                               {materials.map(([id,qty])=><ItemCell key={id} id={id} qty={qty}/>)}
                             </div>
                           </>}
-                          {Object.keys(inv).filter(id=>inv[id]>0).length===0&&<div style={{fontSize:13,color:C.td,fontFamily:FONT_BODY,padding:"20px 0",width:"100%",textAlign:"center"}}>Cargo hold empty</div>}
+                          {Object.keys(inv).filter(id=>inv[id]>0).length===0&&<div style={{fontSize:13,color:C.td,fontFamily:FONT_BODY,padding:"20px 0",width:"100%",textAlign:"center"}}>No items yet</div>}
                         </>);
                       })()}
                     </div>
@@ -4767,7 +4767,7 @@ function GameUI({account,onLogout}){
             {page==="inventory"&&(
               <div style={{maxWidth:760}}>
                 <div style={{fontSize:14,fontWeight:700,color:C.white,marginBottom:16,letterSpacing:2}}>CARGO HOLD</div>
-                {Object.entries(inv).length===0&&<div style={{fontSize:12,color:C.td,fontFamily:FONT_BODY}}>Cargo hold is empty. Begin gathering operations!</div>}
+                {Object.entries(inv).length===0&&<div style={{fontSize:12,color:C.td,fontFamily:FONT_BODY}}>No items yet. Begin gathering operations!</div>}
 
                 {/* Rare items section */}
                 {Object.entries(inv).some(([id])=>ITEMS[id]&&ITEMS[id].rare)&&(
@@ -4957,7 +4957,7 @@ function GameUI({account,onLogout}){
                       </div>
                     );
                   })}
-                  {allItems.length===0&&<div style={{fontSize:12,color:C.td,fontFamily:FONT_BODY,padding:"16px 0",textAlign:"center"}}>Cargo hold empty</div>}
+                  {allItems.length===0&&<div style={{fontSize:12,color:C.td,fontFamily:FONT_BODY,padding:"16px 0",textAlign:"center"}}>No items yet</div>}
                 </div>
               );
             })()}

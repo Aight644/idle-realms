@@ -498,7 +498,7 @@ const ITEMS={
   // ── New gathering drops ──
   tide_sap:{n:"Tide Sap",i:"🟢",s:1,v:45},
   kelp_spores:{n:"Kelp Spores",i:"🌱",s:1,v:80},
-  void_kelp:{n:"Void Kelp",i:"🌑",s:1,v:180,v:2},
+  void_kelp:{n:"Void Kelp",i:"🌑",s:1,v:180},
   phosphor_scales:{n:"Phosphor Scales",i:"🐡",s:1,v:20},
   deepsea_roe:{n:"Deepsea Roe",i:"🟡",s:1,v:35},
   void_fin:{n:"Void Fin",i:"🌊",s:1,v:120},

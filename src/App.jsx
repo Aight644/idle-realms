@@ -1255,7 +1255,20 @@ function GameUI({account,onLogout}){
   },[eq,sl,enh,bonuses]);
 
   // Load
-  useEffect(()=>{(async()=>{try{const snap=await getDoc(doc(db,"doc_saves",account.uid));if(snap.exists()){const d=snap.data();if(d.skills)setSkills(d.skills);if(d.inv)setInv(d.inv);if(d.eq)setEq(d.eq);if(d.gold)setGold(d.gold);if(d.enh)setEnh(d.enh);if(d.researchPts)setResearchPts(d.researchPts);if(d.researched)setResearched(d.researched);if(d.structures)setStructures(d.structures);if(d.drones)setDrones(d.drones);
+  useEffect(()=>{(async()=>{try{
+    // Try localStorage first (most up-to-date — written on every change)
+    let d=null;
+    try{
+      const ls=localStorage.getItem("idle_save_"+account.uid);
+      if(ls)d=JSON.parse(ls);
+    }catch{}
+    // Fall back to Firestore if no local save
+    if(!d){
+      const snap=await getDoc(doc(db,"doc_saves",account.uid));
+      if(snap.exists())d=snap.data();
+    }
+    if(d){
+      if(d.skills)setSkills(d.skills);if(d.inv)setInv(d.inv);if(d.eq)setEq(d.eq);if(d.gold)setGold(d.gold);if(d.enh)setEnh(d.enh);if(d.researchPts)setResearchPts(d.researchPts);if(d.researched)setResearched(d.researched);if(d.structures)setStructures(d.structures);if(d.drones)setDrones(d.drones);
       if(d.achievements)setAchievements(d.achievements);if(d.lifeStats)setLifeStats(p=>({...p,...d.lifeStats}));
       if(d.blueprints)setBlueprints(d.blueprints);
       if(d.bpLog)setBpLog(d.bpLog);
@@ -1304,23 +1317,46 @@ function GameUI({account,onLogout}){
   useEffect(()=>{loadFriends();loadClan();},[account.uid]);
   // Scroll chat to bottom when messages change
   useEffect(()=>{chatEndRef.current?.scrollIntoView({behavior:"smooth"})},[chatMessages,dmMessages,clanChat]);
-  // ── AUTOSAVE ── debounced 10s, writes all game state to Firestore
+  // ── AUTOSAVE ──
   const saveRef=useRef(null);
+
+  // Build save object
+  const buildSave=useCallback(()=>({
+    skills,inv,eq,gold,enh,researchPts,researched,
+    structures,drones,achievements,lifeStats,blueprints,
+    bpLog:bpLog.slice(-50),ts:Date.now(),
+  }),[skills,inv,eq,gold,enh,researchPts,researched,structures,drones,achievements,lifeStats,blueprints,bpLog]);
+
+  // Write to both localStorage (instant) and Firestore (cloud)
+  const saveNow=useCallback(async()=>{
+    if(!account?.uid)return;
+    const save=buildSave();
+    // localStorage — synchronous, survives refresh instantly
+    try{localStorage.setItem("idle_save_"+account.uid,JSON.stringify(save));}catch{}
+    // Firestore — async cloud backup
+    try{await setDoc(doc(db,"doc_saves",account.uid),save);}
+    catch(e){console.error("cloud save failed:",e)}
+  },[account?.uid,buildSave]);
+
+  // Debounced autosave — 3s after last change
   useEffect(()=>{
     if(!account?.uid)return;
+    // Always write localStorage immediately (sync, no data loss on refresh)
+    try{localStorage.setItem("idle_save_"+account.uid,JSON.stringify(buildSave()));}catch{}
+    // Debounce the Firestore write
     if(saveRef.current)clearTimeout(saveRef.current);
     saveRef.current=setTimeout(async()=>{
-      try{
-        await setDoc(doc(db,"doc_saves",account.uid),{
-          skills,inv,eq,gold,enh,researchPts,researched,
-          structures,drones,achievements,lifeStats,blueprints,
-          bpLog:bpLog.slice(-50),ts:Date.now(),
-        });
-      }catch(e){console.error("autosave failed:",e)}
-    },10000);
-    return()=>{if(saveRef.current)clearTimeout(saveRef.current)};
+      try{await setDoc(doc(db,"doc_saves",account.uid),buildSave());}
+      catch(e){console.error("cloud save failed:",e)}
+    },5000);
   },[skills,inv,eq,gold,enh,researchPts,researched,structures,drones,achievements,lifeStats,blueprints,bpLog]);
 
+  // Save on tab close
+  useEffect(()=>{
+    const handler=()=>saveNow();
+    window.addEventListener("beforeunload",handler);
+    return()=>window.removeEventListener("beforeunload",handler);
+  },[saveNow]);
 
 
   // Energy regen

@@ -2330,20 +2330,21 @@ function GameUI({account,onLogout}){
             </div>
             {/* DEV CHEAT */}
             <div onClick={()=>{
-              // Max all skills
+              // Max all skills — skills stored as raw XP, need 15792971 for lv120
+              const MAX_XP=15792971;
               const maxSkills={};
-              [...SKILLS,...CSUBS].forEach(s=>{maxSkills[s.id]={lv:99,xp:0,mastered:false};});
-              setSkills(p=>({...p,...maxSkills}));
-              // Give all items x999
+              [...SKILLS,...CSUBS].forEach(s=>{maxSkills[s.id]=MAX_XP;});
+              setSkills(maxSkills);
+              // Give all items x999 including equipment
               const allItems={};
-              Object.keys(ITEMS).forEach(id=>{if(!ITEMS[id].eq)allItems[id]=999;});
-              setInv(p=>({...p,...allItems}));
+              Object.keys(ITEMS).forEach(id=>{allItems[id]=999;});
+              setInv(allItems);
               // Max gold and RP
-              setGold(g=>g+9999999);
-              setResearchPts(p=>p+99999);
+              setGold(9999999);
+              setResearchPts(99999);
               // Unlock all blueprints
               setBlueprints(BLUEPRINTS.map(b=>b.id));
-              addLog("🧪 DEV: Everything maxed!");
+              setClog(p=>[...p.slice(-20),"🧪 DEV: Everything maxed!"]);
               setShowSettings(false);
             }} style={{padding:"10px",borderRadius:8,background:"#ff000015",border:"1px solid #ff000040",color:"#ff6666",fontSize:11,fontWeight:700,cursor:"pointer",textAlign:"center",letterSpacing:1,fontFamily:FONT,marginBottom:8}}>
               🧪 DEV: GIVE EVERYTHING

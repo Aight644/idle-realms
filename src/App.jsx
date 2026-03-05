@@ -1195,10 +1195,10 @@ function ActRow({act,skColor,inv,curAct,startAct,skId,s,tipProps,C,FONT,FONT_BOD
       <div style={{flex:1,minWidth:0}}>
         <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:3}}>
           <div style={{fontSize:13,fontWeight:700,color:isAct?C.ok:isBp?bpColor:C.white,fontFamily:FONT,letterSpacing:0.8}}>{act.name}</div>
-          <div style={{fontSize:9,color:C.td,fontFamily:FONT}}>Lv {act.lv} · +{act.xp} XP · {act.t}s</div>
+          <div style={{fontSize:9,color:skImg?"rgba(255,255,255,0.75)":C.td,fontFamily:FONT}}>Lv {act.lv} · +{act.xp} XP · {act.t}s</div>
           {isBp&&<div style={{fontSize:9,padding:"2px 6px",borderRadius:5,background:bpColor+"25",border:"1px solid "+bpColor+"60",color:bpColor,fontWeight:700}}>📘 BP</div>}
         </div>
-        <div style={{fontSize:11,color:C.ts,fontFamily:FONT_BODY,display:"flex",alignItems:"center",gap:3,flexWrap:"wrap"}}>
+        <div style={{fontSize:11,color:skImg?"rgba(255,255,255,0.85)":C.ts,fontFamily:FONT_BODY,display:"flex",alignItems:"center",gap:3,flexWrap:"wrap"}}>
           {act.inp&&<>{act.inp.map(i=>{const it=ITEMS[i.id];const has=(inv[i.id]||0)>=i.q;return(
             <span key={i.id} {...tp(i.id)} style={{color:has?C.ts:"#f87171",marginRight:2,cursor:"help"}}>{it?.i||""}{i.q} {it?.n||i.id}</span>
           );})}<span style={{color:C.td,margin:"0 2px"}}>→</span></>}

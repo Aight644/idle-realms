@@ -12,6 +12,19 @@ import { doc, setDoc, getDoc } from 'firebase/firestore';
 const FONT = "'Orbitron', 'Segoe UI', system-ui, sans-serif";
 const FONT_BODY = FONT;
 
+const SKILL_IMAGES={
+  kelp_farming:       "https://images.unsplash.com/photo-1518020382113-a7e8fc38eac9?w=800&q=80",
+  deep_mining:        "https://images.unsplash.com/photo-1504701954957-2010ec3bcec1?w=800&q=80",
+  bioluminescent_fishing: "https://images.unsplash.com/photo-1544552866-d3ed42536cfd?w=800&q=80",
+  crystal_diving:     "https://images.unsplash.com/photo-1682687982501-1e58ab814714?w=800&q=80",
+  trench_exploration: "https://images.unsplash.com/photo-1559825481-12a05cc00344?w=800&q=80",
+  exploration:        "https://images.unsplash.com/photo-1551244072-5d12893278bc?w=800&q=80",
+  fabrication:        "https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?w=800&q=80",
+  bio_lab:            "https://images.unsplash.com/photo-1532187863486-abf9dbad1b69?w=800&q=80",
+  relic_forging:      "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=800&q=80",
+  gear_crafting:      "https://images.unsplash.com/photo-1504328345606-18bbc8c9d7d1?w=800&q=80",
+};
+
 // Cross-platform tap: instant on touch, normal onClick on mouse
 const tap=(fn)=>({
   onPointerDown:(e)=>{if(e.pointerType==="touch"){e.preventDefault();fn(e);}},
@@ -1164,7 +1177,7 @@ function ProgBar({progRef,height=7,radius=4,bg,color,glow}){
 }
 
 // Standalone ActRow — must be outside GameUI to prevent React remount-on-render
-function ActRow({act,skColor,inv,curAct,startAct,skId,s,tipProps,C,FONT,FONT_BODY,ITEMS,BLUEPRINTS,BP_DROPS,BP_RARITY_COLOR,GLOW_OK,GLOW_STYLE}){
+function ActRow({act,skColor,inv,curAct,startAct,skId,s,tipProps,C,FONT,FONT_BODY,ITEMS,BLUEPRINTS,BP_DROPS,BP_RARITY_COLOR,GLOW_OK,GLOW_STYLE,skImg}){
   if(!act||!act.name)return null;
   const tp=tipProps||(()=>({}));
   const locked=s.lv<act.lv&&!s.mastered;
@@ -1175,10 +1188,17 @@ function ActRow({act,skColor,inv,curAct,startAct,skId,s,tipProps,C,FONT,FONT_BOD
   const bpColor=bpMeta?BP_RARITY_COLOR[bpMeta.rarity]:"#ffd60a";
   return(
     <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"12px 16px",borderRadius:8,
-      background:isAct?"linear-gradient(90deg,"+C.ok+"18,"+C.card+")":isBp?"linear-gradient(135deg,"+bpColor+"10,"+C.card+")":C.card,
+      backgroundImage:skImg?"url("+skImg+")":undefined,
+      backgroundSize:"cover",backgroundPosition:"center",
+      background:skImg?undefined:isAct?"linear-gradient(90deg,"+C.ok+"18,"+C.card+")":isBp?"linear-gradient(135deg,"+bpColor+"10,"+C.card+")":C.card,
       border:"2px solid "+(isAct?C.ok+"60":isBp?bpColor+"50":C.border),
       marginBottom:8,opacity:locked?0.32:1,transition:"all 0.15s",
-      boxShadow:isBp?"0 0 10px "+bpColor+"18":"none"}}>
+      boxShadow:isBp?"0 0 10px "+bpColor+"18":"none",
+      overflow:"hidden",position:"relative"}}>
+      {skImg&&<div style={{position:"absolute",inset:0,borderRadius:8,
+        background:isAct?"linear-gradient(90deg,"+C.ok+"55,#0a1628dd)":"linear-gradient(90deg,#0a162899,#0a1628cc)",
+        pointerEvents:"none"}}/>}
+      <div style={{position:"relative",zIndex:1,display:"contents"}}>
       <div style={{flex:1,minWidth:0}}>
         <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:3}}>
           <div style={{fontSize:13,fontWeight:700,color:isAct?C.ok:isBp?bpColor:C.white,fontFamily:FONT,letterSpacing:0.8}}>{act.name}</div>
@@ -1220,6 +1240,7 @@ function ActRow({act,skColor,inv,curAct,startAct,skId,s,tipProps,C,FONT,FONT_BOD
         background:isAct?"linear-gradient(90deg,"+C.okD+","+C.ok+")":canDo?"linear-gradient(90deg,"+C.accD+","+C.acc+")":C.card,
         color:C.bg,fontSize:11,fontWeight:700,cursor:canDo?"pointer":"default",opacity:canDo?1:0.35,letterSpacing:0.8,fontFamily:FONT,
         boxShadow:isAct?GLOW_OK:canDo?GLOW_STYLE:"none"}}>{isAct?"ACTIVE":"START"}</div>}
+      </div>
     </div>
   );
 }
@@ -3031,7 +3052,7 @@ function GameUI({account,onLogout}){
                   const isGearProdSkill=["fabrication","relic_forging","gear_crafting"].includes(skData.id);
 
                   // Pass all needed context as props to standalone ActRow
-                  const arProps={skColor:skData.color,inv,curAct,startAct,skId:skData.id,s,tipProps,C,FONT,FONT_BODY,ITEMS,BLUEPRINTS,BP_DROPS,BP_RARITY_COLOR,GLOW_OK,GLOW_STYLE};
+                  const arProps={skColor:skData.color,inv,curAct,startAct,skId:skData.id,s,tipProps,C,FONT,FONT_BODY,ITEMS,BLUEPRINTS,BP_DROPS,BP_RARITY_COLOR,GLOW_OK,GLOW_STYLE,skImg:SKILL_IMAGES[skData.id]};
                   const AR=({act})=><ActRow key={skData.id+"-"+act.id} act={act} {...arProps}/>;
 
                   // Gathering / Bio Lab / Exploration — flat list, no tabs

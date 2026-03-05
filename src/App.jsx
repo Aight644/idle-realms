@@ -1245,6 +1245,7 @@ function GameUI({account,onLogout}){
   const[enh,setEnh]=useState({});
   const[enhSel,setEnhSel]=useState(null);
   const[selItem,setSelItem]=useState(null);
+  const[sellModal,setSellModal]=useState(null); // {id, qty}
   const[selSlot,setSelSlot]=useState(null);
   const[curAct,setCurAct]=useState(null);
   // actProg state replaced by actProgRef for perf
@@ -1699,6 +1700,10 @@ function GameUI({account,onLogout}){
   const startAct=useCallback((skId,actId)=>{setZoneId(null);setCbt(null);setCurAct({sk:skId,act:actId});actProgRef.current=0;setActSkill(skId);setLastActMap(p=>({...p,[skId]:actId}));},[]);
   const startZone=useCallback((zid)=>{const z=ZONES.find(x=>x.id===zid);if(!z)return;setCurAct(null);setZoneId(zid);const m=z.mobs[0];setCbt({mob:m,mhp:m.hp,php:pStats.hp,mxhp:pStats.hp,kills:0,boss:false});setClog(["📡 Entered "+z.name+"...","⚠️ "+z.mobs.length+" mob types · "+(z.elites||[]).length+" elites · 2 bosses"])},[pStats]);
   const stopZone=useCallback(()=>{setZoneId(null);setCbt(null)},[]);
+  const doSell=useCallback((id,qty=1)=>{
+    const it=ITEMS[id];if(!it?.v||qty<=0)return;
+    remIt(id,qty);setGold(g=>g+it.v*qty);
+  },[remIt]);
   const equipIt=useCallback((iid)=>{const it=ITEMS[iid];if(!it||!it.eq||(inv[iid]||0)<=0)return;const cur=eq[it.eq];if(cur)addIt(cur,1);remIt(iid,1);setEq(p=>({...p,[it.eq]:iid}))},[inv,eq,addIt,remIt]);
   const unequipIt=useCallback((sid)=>{const iid=eq[sid];if(!iid)return;addIt(iid,1);setEq(p=>{const n={...p};delete n[sid];return n})},[eq,addIt]);
   const doEnh=useCallback((sid)=>{const iid=eq[sid];if(!iid)return;const cl=enh[iid]||0;if(cl>=20)return;const cost=Math.floor(50*Math.pow(1.5,cl));if(gold<cost)return;setGold(g=>g-cost);gainXp("enhancing",20+cl*5);const sr=Math.max(0.2,0.8-cl*0.05);if(Math.random()<sr){setEnh(p=>({...p,[iid]:cl+1}));setClog(p=>[...p.slice(-20),"✨ "+ITEMS[iid].n+" upgraded to +"+(cl+1)+"!"])}else{setEnh(p=>({...p,[iid]:0}));setClog(p=>[...p.slice(-20),"💥 Upgrade failed! "+ITEMS[iid].n+" reset to +0"])}},[eq,enh,gold,gainXp]);
@@ -2451,8 +2456,51 @@ function GameUI({account,onLogout}){
                   ✕ UNEQUIP
                 </div>
               )}
+              {it.v&&(inv[selItem]||0)>0&&(
+                <div onClick={()=>{setSellModal({id:selItem,qty:1});setSelItem(null);}} style={{padding:"12px",borderRadius:8,background:C.gold+"20",border:"1px solid "+C.gold+"50",color:C.gold,fontSize:12,fontWeight:700,cursor:"pointer",textAlign:"center",letterSpacing:1,fontFamily:FONT}}>
+                  ◈ SELL
+                </div>
+              )}
               <div onClick={()=>setSelItem(null)} style={{padding:"10px",borderRadius:8,background:C.card,border:"1px solid "+C.border,color:C.ts,fontSize:11,cursor:"pointer",textAlign:"center",fontFamily:FONT}}>
                 CLOSE
+              </div>
+            </div>
+          </div>
+        </div>
+        );
+      })()}
+
+      {/* ===== SELL MODAL ===== */}
+      {sellModal&&(()=>{
+        const it=ITEMS[sellModal.id];if(!it)return null;
+        const owned=inv[sellModal.id]||0;
+        const earn=it.v*(sellModal.qty||1);
+        return(
+        <div style={{position:"fixed",inset:0,zIndex:1001,display:"flex",alignItems:"center",justifyContent:"center",background:"#00000088",backdropFilter:"blur(4px)"}} onClick={()=>setSellModal(null)}>
+          <div onClick={e=>e.stopPropagation()} style={{maxWidth:300,width:"90%",borderRadius:16,background:"linear-gradient(135deg,"+C.panel+","+C.card+")",border:"2px solid "+C.gold+"60",overflow:"hidden"}}>
+            <div style={{padding:"20px 20px 14px",background:C.gold+"12",borderBottom:"1px solid "+C.border,textAlign:"center"}}>
+              <div style={{fontSize:36,marginBottom:6}}>{it.i}</div>
+              <div style={{fontSize:16,fontWeight:700,color:C.white,fontFamily:FONT}}>{it.n}</div>
+              <div style={{fontSize:10,color:C.ts,marginTop:2,fontFamily:FONT_BODY}}>Base value: <span style={{color:C.gold,fontWeight:700}}>◈{it.v}</span> each · Owned: ×{owned}</div>
+            </div>
+            <div style={{padding:"16px 20px"}}>
+              <div style={{fontSize:9,color:C.td,letterSpacing:2,marginBottom:8,fontFamily:FONT}}>QUANTITY</div>
+              <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:12}}>
+                <div onClick={()=>setSellModal(m=>({...m,qty:Math.max(1,m.qty-1)}))} style={{width:32,height:32,borderRadius:6,background:C.card,border:"1px solid "+C.border,display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",fontSize:16,color:C.white,fontWeight:700}}>−</div>
+                <input type="number" min="1" max={owned} value={sellModal.qty}
+                  onChange={e=>setSellModal(m=>({...m,qty:Math.max(1,Math.min(owned,parseInt(e.target.value)||1))}))}
+                  style={{flex:1,padding:"6px",borderRadius:6,background:C.card,border:"1px solid "+C.border,color:C.white,fontSize:14,fontWeight:700,textAlign:"center",outline:"none",fontFamily:FONT}}/>
+                <div onClick={()=>setSellModal(m=>({...m,qty:owned}))} style={{padding:"0 10px",height:32,borderRadius:6,background:C.card,border:"1px solid "+C.border,display:"flex",alignItems:"center",cursor:"pointer",fontSize:10,color:C.ts,fontFamily:FONT,fontWeight:700}}>MAX</div>
+                <div onClick={()=>setSellModal(m=>({...m,qty:Math.min(owned,m.qty+1)}))} style={{width:32,height:32,borderRadius:6,background:C.card,border:"1px solid "+C.border,display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",fontSize:16,color:C.white,fontWeight:700}}>+</div>
+              </div>
+              <div style={{textAlign:"center",fontSize:13,color:C.gold,fontWeight:700,fontFamily:FONT,marginBottom:14}}>
+                You will receive: <span style={{fontSize:16}}>◈{fmt(earn)}</span>
+              </div>
+              <div onClick={()=>{doSell(sellModal.id,sellModal.qty);setSellModal(null);}} style={{padding:"12px",borderRadius:8,background:"linear-gradient(90deg,"+C.warn+"cc,"+C.gold+")",color:"#000",fontSize:12,fontWeight:700,cursor:"pointer",textAlign:"center",letterSpacing:1,fontFamily:FONT,marginBottom:8}}>
+                ◈ SELL ×{sellModal.qty}
+              </div>
+              <div onClick={()=>setSellModal(null)} style={{padding:"10px",borderRadius:8,background:C.card,border:"1px solid "+C.border,color:C.ts,fontSize:11,cursor:"pointer",textAlign:"center",fontFamily:FONT}}>
+                CANCEL
               </div>
             </div>
           </div>
@@ -3082,7 +3130,7 @@ function GameUI({account,onLogout}){
                 </div>
               );})}
               {/* Page nav icons */}
-              {[{id:"combat",i:"⚔️"},{id:"research",i:"🔬"},{id:"structures",i:"🏗️"},{id:"drones",i:"🤖"},{id:"market",i:"🏪"},{id:"npc_shop",i:"🐙"},{id:"achievements",i:"🏆"},{id:"blueprints",i:"📘"},{id:"equipment",i:"🗡️"},{id:"inventory",i:"🎒"},{id:"social",i:"💬"}].map(n=>(
+              {[{id:"combat",i:"⚔️"},{id:"research",i:"🔬"},{id:"structures",i:"🏗️"},{id:"drones",i:"🤖"},{id:"market",i:"🏪"},{id:"achievements",i:"🏆"},{id:"blueprints",i:"📘"},{id:"equipment",i:"🗡️"},{id:"inventory",i:"🎒"},{id:"social",i:"💬"}].map(n=>(
                 <div key={n.id} onClick={()=>setPage(n.id)} title={n.id} style={{width:36,height:36,borderRadius:6,display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",background:page===n.id?C.acc+"25":C.card,border:"1px solid "+(page===n.id?C.acc+"60":C.border),fontSize:16}}>
                   {n.i}
                 </div>
@@ -3145,7 +3193,6 @@ function GameUI({account,onLogout}){
                 <NavItem id="structures"   icon="🏗️" label="Structures"/>
                 <NavItem id="drones"       icon="🤖" label="Drone Fleet"/>
                 <NavItem id="market"       icon="🏪" label="Marketplace"/>
-                <NavItem id="npc_shop"     icon="🐙" label="NPC Shop"/>
                 <NavItem id="achievements" icon="🏆" label="Achievements"/>
                 <NavItem id="blueprints"   icon="📘" label="Blueprints"   badge={blueprints.length>0?blueprints.length:null}/>
                 <NavItem id="stats"        icon="📊" label="Stats & Profile"/>
@@ -4940,7 +4987,7 @@ function GameUI({account,onLogout}){
                             const isTool=it.eq==="tool";
                             const accentCol=isTool?"#f59e0b":C.acc;
                             return(
-                              <div key={id} onClick={cat.equip?()=>setSelItem(id):undefined} {...(!cat.equip?tipProps(id):{})}
+                              <div key={id} onClick={cat.equip?()=>setSelItem(id):ITEMS[id]?.v?()=>setSellModal({id,qty:1}):undefined} {...(!cat.equip&&!ITEMS[id]?.v?tipProps(id):{})}
                                 style={{position:"relative",width:52,height:52,borderRadius:6,
                                   background:isEq?accentCol+"18":rareColor?rareColor+"18":C.card,
                                   border:"1px solid "+(isEq?accentCol:rareColor?rareColor+"50":cat.equip?accentCol+"30":C.border),

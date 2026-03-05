@@ -1194,16 +1194,16 @@ function ActRow({act,skColor,inv,curAct,startAct,skId,s,tipProps,C,FONT,FONT_BOD
       boxShadow:isBp?"0 0 10px "+bpColor+"18":"none"}}>
       <div style={{flex:1,minWidth:0}}>
         <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:3}}>
-          <div style={{fontSize:13,fontWeight:700,color:isAct?C.ok:isBp?bpColor:"#ffffff",fontFamily:FONT,letterSpacing:0.8,textShadow:skImg?"0 2px 6px rgba(0,0,0,1),0 1px 3px rgba(0,0,0,1)":"none"}}>{act.name}</div>
-          <div style={{fontSize:9,color:skImg?"#ffffff":C.td,fontFamily:FONT,textShadow:skImg?"0 2px 6px rgba(0,0,0,1)":"none"}}>Lv {act.lv} · +{act.xp} XP · {act.t}s</div>
+          <div style={{fontSize:15,fontWeight:700,color:isAct?C.ok:isBp?bpColor:"#ffffff",fontFamily:FONT,letterSpacing:0.8,textShadow:skImg?"0 2px 6px rgba(0,0,0,1),0 1px 3px rgba(0,0,0,1)":"none"}}>{act.name}</div>
+          <div style={{fontSize:11,color:skImg?"#ffffff":"#a0b4c8",fontFamily:FONT,textShadow:skImg?"0 2px 6px rgba(0,0,0,1)":"none"}}>Lv {act.lv} · +{act.xp} XP · {act.t}s</div>
           {isBp&&<div style={{fontSize:9,padding:"2px 6px",borderRadius:5,background:bpColor+"25",border:"1px solid "+bpColor+"60",color:bpColor,fontWeight:700}}>📘 BP</div>}
         </div>
-        <div style={{fontSize:11,color:skImg?"#ffffff":C.ts,fontFamily:FONT_BODY,display:"flex",alignItems:"center",gap:3,flexWrap:"wrap"}}>
+        <div style={{fontSize:12,color:skImg?"#ffffff":"#c8dde8",fontFamily:FONT_BODY,display:"flex",alignItems:"center",gap:3,flexWrap:"wrap",marginTop:4}}>
           {act.inp&&<>{act.inp.map(i=>{const it=ITEMS[i.id];const has=(inv[i.id]||0)>=i.q;return(
-            <span key={i.id} {...tp(i.id)} style={{color:has?(skImg?"#ffffff":C.ts):"#f87171",marginRight:2,cursor:"help",textShadow:skImg?"0 1px 3px rgba(0,0,0,0.9)":"none"}}>{it?.i||""}{i.q} {it?.n||i.id}</span>
+            <span key={i.id} {...tp(i.id)} style={{color:has?(skImg?"#ffffff":"#c8dde8"):"#f87171",marginRight:2,cursor:"help",textShadow:skImg?"0 1px 3px rgba(0,0,0,0.9)":"none"}}>{it?.i||""}{i.q} {it?.n||i.id}</span>
           );})}<span style={{color:skImg?"rgba(255,255,255,0.7)":C.td,margin:"0 2px"}}>→</span></>}
           {act.out&&act.out.map(i=>{const it=ITEMS[i.id];const isGear=it?.eq&&it.eq!=="tool";return(
-            <span key={i.id} {...tp(i.id)} style={{color:isGear?skColor:(skImg?"#ffffff":C.ts),fontWeight:isGear?700:400,borderBottom:isGear?"1px dashed "+skColor+"50":"none",cursor:"help",textShadow:skImg?"0 1px 3px rgba(0,0,0,0.9)":"none"}}>
+            <span key={i.id} {...tp(i.id)} style={{color:isGear?skColor:(skImg?"#ffffff":"#c8dde8"),fontWeight:isGear?700:400,borderBottom:isGear?"1px dashed "+skColor+"50":"none",cursor:"help",textShadow:skImg?"0 1px 3px rgba(0,0,0,0.9)":"none"}}>
               {it?.i||""} {it?.n||i.id}{i.q>1?" ×"+i.q:""}
             </span>
           );})}
@@ -1227,11 +1227,11 @@ function ActRow({act,skColor,inv,curAct,startAct,skId,s,tipProps,C,FONT,FONT_BOD
             </div>
           ):null;
         })()}
-        {locked&&<div style={{fontSize:10,color:C.bad,marginTop:2,fontFamily:FONT_BODY}}>🔒 Requires Level {act.lv}</div>}
+        {locked&&<div style={{fontSize:11,color:"#f87171",marginTop:4,fontFamily:FONT_BODY}}>🔒 Requires Level {act.lv}</div>}
       </div>
-      {!locked&&<div onClick={()=>{if(canDo)startAct(skId,act.id)}} style={{padding:"9px 20px",borderRadius:8,marginLeft:12,flexShrink:0,
+      {!locked&&<div onClick={()=>{if(canDo)startAct(skId,act.id)}} style={{padding:"12px 28px",borderRadius:8,marginLeft:16,flexShrink:0,
         background:isAct?"linear-gradient(90deg,"+C.okD+","+C.ok+")":canDo?"linear-gradient(90deg,"+C.accD+","+C.acc+")":C.card,
-        color:C.bg,fontSize:11,fontWeight:700,cursor:canDo?"pointer":"default",opacity:canDo?1:0.35,letterSpacing:0.8,fontFamily:FONT,
+        color:C.bg,fontSize:13,fontWeight:700,cursor:canDo?"pointer":"default",opacity:canDo?1:0.35,letterSpacing:1,fontFamily:FONT,
         boxShadow:isAct?GLOW_OK:canDo?GLOW_STYLE:"none"}}>{isAct?"ACTIVE":"START"}</div>}
     </div>
   );

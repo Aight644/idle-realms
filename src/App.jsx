@@ -2807,7 +2807,8 @@ function GameUI({account,onLogout}){
                         const iid=eq[slot.id];const it=iid?ITEMS[iid]:null;const el=iid?(enh[iid]||0):0;
                         const setData=it?.set?Object.values(SET_BONUSES).find(s=>s.pieces.includes(iid)):null;
                         return(
-                          <div key={slot.id} onClick={()=>setSelSlot(selSlot===slot.id?null:slot.id)} onMouseEnter={iid?e=>showTip(e,iid):null} onMouseLeave={hideTip}
+                          <React.Fragment key={slot.id}>
+                          <div onClick={()=>setSelSlot(selSlot===slot.id?null:slot.id)} onMouseEnter={iid?e=>showTip(e,iid):null} onMouseLeave={hideTip}
                             style={{display:"flex",alignItems:"center",gap:10,padding:"12px 14px",borderRadius:8,background:selSlot===slot.id?C.acc+"20":it?"linear-gradient(90deg,"+(setData?setData.color:C.acc)+"10,"+C.card+")":C.card,border:"1px solid "+(selSlot===slot.id?C.acc:setData?setData.color+"50":it?C.acc+"40":C.border),cursor:"pointer"}}>
                             <div style={{width:44,height:44,borderRadius:8,background:C.bg,border:"1px solid "+(setData?setData.color+"40":C.border),display:"flex",alignItems:"center",justifyContent:"center",fontSize:22,flexShrink:0}}>{it?it.i:slot.i}</div>
                             <div style={{flex:1}}>
@@ -2838,6 +2839,7 @@ function GameUI({account,onLogout}){
                               </div>
                             </div>
                           )}
+                          </React.Fragment>
                         );
                       })}
                     </div>

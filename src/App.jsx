@@ -4871,7 +4871,8 @@ function GameUI({account,onLogout}){
           {/* Tab bar — Inventory | Equipment | Stats | Loadout */}
           <div style={{display:"flex",flexShrink:0,background:C.bg,borderBottom:"1px solid "+C.border}}>
             {[
-                            {id:"equipment", label:"Equipment"},
+              {id:"inventory", label:"Inventory"},
+              {id:"equipment", label:"Equipment"},
               {id:"stats",     label:"Stats"},
               {id:"loadout",   label:"Loadout"},
             ].map(t=>(
@@ -4900,11 +4901,11 @@ function GameUI({account,onLogout}){
               const q=invFilter.toLowerCase();
               const allItems=Object.entries(inv).filter(([id,qty])=>qty>0&&ITEMS[id]&&(!q||ITEMS[id].n.toLowerCase().includes(q)));
               const cats=[
-                {label:"Currencies",  items:allItems.filter(([id])=>ITEMS[id].type==="currency"||id==="gold")},
-                {label:"Equipment",   items:allItems.filter(([id])=>ITEMS[id].eq)},
-                {label:"Food",        items:allItems.filter(([id])=>ITEMS[id].food)},
-                {label:"Rare Mats",   items:allItems.filter(([id])=>ITEMS[id].rarity==="rare"||ITEMS[id].rarity==="uncommon")},
-                {label:"Resources",   items:allItems.filter(([id])=>{const it=ITEMS[id];return it.s&&!it.eq&&!it.food&&!it.rarity&&it.type!=="currency"&&id!=="gold";})},
+                {label:"⚔️ Gear",      items:allItems.filter(([id])=>ITEMS[id].eq&&ITEMS[id].eq!=="tool"), equip:true},
+                {label:"🔧 Tools",     items:allItems.filter(([id])=>ITEMS[id].eq==="tool"), equip:true},
+                {label:"💉 Food",      items:allItems.filter(([id])=>ITEMS[id].food)},
+                {label:"✨ Rare Mats", items:allItems.filter(([id])=>ITEMS[id].rarity==="rare"||ITEMS[id].rarity==="uncommon")},
+                {label:"📦 Resources", items:allItems.filter(([id])=>{const it=ITEMS[id];return it.s&&!it.eq&&!it.food&&!it.rarity&&it.type!=="currency"&&id!=="gold";})},
               ];
               // Add gold manually to currencies
               const goldEntry=[["gold",gold]];
@@ -4935,11 +4936,20 @@ function GameUI({account,onLogout}){
                           {cat.items.map(([id,qty])=>{
                             const it=ITEMS[id];
                             const rareColor=it.rarity==="rare"?C.gold:it.rarity==="uncommon"?C.purp:null;
+                            const isEq=Object.values(eq).includes(id);
+                            const isTool=it.eq==="tool";
+                            const accentCol=isTool?"#f59e0b":C.acc;
                             return(
-                              <div key={id} {...tipProps(id)} style={{position:"relative",width:52,height:52,borderRadius:6,background:rareColor?rareColor+"18":C.card,border:"1px solid "+(rareColor?rareColor+"50":C.border),display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:1,flexShrink:0,overflow:"hidden"}}>
+                              <div key={id} onClick={cat.equip?()=>setSelItem(id):undefined} {...(!cat.equip?tipProps(id):{})}
+                                style={{position:"relative",width:52,height:52,borderRadius:6,
+                                  background:isEq?accentCol+"18":rareColor?rareColor+"18":C.card,
+                                  border:"1px solid "+(isEq?accentCol:rareColor?rareColor+"50":cat.equip?accentCol+"30":C.border),
+                                  display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:1,flexShrink:0,overflow:"hidden",
+                                  cursor:cat.equip?"pointer":"default"}}>
                                 <span style={{fontSize:22,lineHeight:1}}>{it.i||"📦"}</span>
-                                <span style={{fontSize:10,color:rareColor||C.ts,fontWeight:700,fontFamily:FONT}}>{qty>=1e6?(qty/1e6).toFixed(1)+"M":qty>=1000?Math.floor(qty/1000)+"k":qty}</span>
+                                <span style={{fontSize:10,color:isEq?accentCol:rareColor||C.ts,fontWeight:700,fontFamily:FONT}}>{qty>=1e6?(qty/1e6).toFixed(1)+"M":qty>=1000?Math.floor(qty/1000)+"k":qty}</span>
                                 {rareColor&&<div style={{position:"absolute",top:0,left:0,right:0,height:2,background:rareColor}}/>}
+                                {isEq&&<div style={{position:"absolute",bottom:1,right:3,fontSize:7,color:accentCol,fontWeight:700,fontFamily:FONT}}>ON</div>}
                               </div>
                             );
                           })}

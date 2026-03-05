@@ -2328,6 +2328,26 @@ function GameUI({account,onLogout}){
             <div onClick={()=>{setShowSettings(false);setTutorialStep(0);setShowTutorial(true)}} style={{padding:"10px",borderRadius:8,background:C.card,border:"1px solid "+C.border,color:C.acc,fontSize:11,fontWeight:700,cursor:"pointer",textAlign:"center",letterSpacing:1,fontFamily:FONT,marginBottom:8}}>
               ❓ REPLAY TUTORIAL
             </div>
+            {/* DEV CHEAT */}
+            <div onClick={()=>{
+              // Max all skills
+              const maxSkills={};
+              [...SKILLS,...CSUBS].forEach(s=>{maxSkills[s.id]={lv:99,xp:0,mastered:false};});
+              setSkills(p=>({...p,...maxSkills}));
+              // Give all items x999
+              const allItems={};
+              Object.keys(ITEMS).forEach(id=>{if(!ITEMS[id].eq)allItems[id]=999;});
+              setInv(p=>({...p,...allItems}));
+              // Max gold and RP
+              setGold(g=>g+9999999);
+              setResearchPts(p=>p+99999);
+              // Unlock all blueprints
+              setBlueprints(BLUEPRINTS.map(b=>b.id));
+              addLog("🧪 DEV: Everything maxed!");
+              setShowSettings(false);
+            }} style={{padding:"10px",borderRadius:8,background:"#ff000015",border:"1px solid #ff000040",color:"#ff6666",fontSize:11,fontWeight:700,cursor:"pointer",textAlign:"center",letterSpacing:1,fontFamily:FONT,marginBottom:8}}>
+              🧪 DEV: GIVE EVERYTHING
+            </div>
             {/* Logout */}
             <div onClick={()=>{setShowSettings(false);setShowLogoutConfirm(true)}} style={{padding:"10px",borderRadius:8,background:C.bad+"15",border:"1px solid "+C.bad+"40",color:C.bad,fontSize:11,fontWeight:700,cursor:"pointer",textAlign:"center",letterSpacing:1,fontFamily:FONT,marginBottom:12}}>
               ◉ LOGOUT

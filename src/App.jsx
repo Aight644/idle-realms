@@ -1180,12 +1180,13 @@ function ActRow({act,skColor,inv,curAct,startAct,skId,s,tipProps,C,FONT,FONT_BOD
   const bpColor=bpMeta?BP_RARITY_COLOR[bpMeta.rarity]:"#ffd60a";
   return(
     <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"12px 16px",borderRadius:8,
-      backgroundImage:skImg?"linear-gradient(90deg,rgba(10,22,40,0.55),rgba(10,22,40,0.35)), url("+skImg+")":undefined,
+      background:skImg
+        ?"linear-gradient(90deg,rgba(10,22,40,0.55),rgba(10,22,40,0.35)), url("+skImg+")"
+        :isAct?"linear-gradient(90deg,"+C.ok+"18,"+C.card+")":isBp?"linear-gradient(135deg,"+bpColor+"10,"+C.card+")":C.card,
       backgroundSize:skImg?"cover":undefined,backgroundPosition:skImg?"center":undefined,
-      background:skImg?undefined:isAct?"linear-gradient(90deg,"+C.ok+"18,"+C.card+")":isBp?"linear-gradient(135deg,"+bpColor+"10,"+C.card+")":C.card,
-      border:"2px solid "+(isAct?C.ok+"60":isBp?bpColor+"50":skImg?skColor+"40":C.border),
+      border:"2px solid "+(isAct?C.ok+"60":isBp?bpColor+"50":C.border),
       marginBottom:8,opacity:locked?0.32:1,transition:"all 0.15s",
-      boxShadow:isBp?"0 0 10px "+bpColor+"18":skImg?"0 0 12px "+skColor+"30":"none"}}>
+      boxShadow:isBp?"0 0 10px "+bpColor+"18":"none"}}>
       <div style={{flex:1,minWidth:0}}>
         <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:3}}>
           <div style={{fontSize:13,fontWeight:700,color:isAct?C.ok:isBp?bpColor:C.white,fontFamily:FONT,letterSpacing:0.8}}>{act.name}</div>

@@ -2204,7 +2204,7 @@ function GameUI({account,onLogout}){
         {/* Set bonus */}
         {setData&&(
           <div style={{borderTop:"1px solid "+setData.color+"30",paddingTop:8,marginTop:4}}>
-            <div style={{fontSize:9,color:setData.color,fontFamily:FONT,letterSpacing:1,marginBottom:6}}>{setData.name.toUpperCase()} SET</div>
+            <div style={{fontSize:9,color:setData.color,fontFamily:FONT,letterSpacing:1,marginBottom:6}}>{(setData?.name||"").toUpperCase()} SET</div>
             {[2,4].map(n=>{
               const bonus=setData.bonuses[n];if(!bonus)return null;
               const active=equippedCount>=n;
@@ -3025,7 +3025,7 @@ function GameUI({account,onLogout}){
                   <span style={{fontSize:36,filter:"drop-shadow(0 0 10px "+skData.color+")"}}>{skData.icon}</span>
                   <div style={{flex:1}}>
                     <div style={{display:"flex",alignItems:"center",gap:10}}>
-                      <div style={{fontSize:20,fontWeight:700,color:C.white,letterSpacing:2}}>{skData.name.toUpperCase()}</div>
+                      <div style={{fontSize:20,fontWeight:700,color:C.white,letterSpacing:2}}>{(skData?.name||"").toUpperCase()}</div>
                       {s.mastered&&<div style={{fontSize:9,fontWeight:700,padding:"3px 10px",borderRadius:10,background:"linear-gradient(90deg,"+C.gold+","+C.warn+")",color:C.bg,letterSpacing:2}}>★ MASTERED</div>}
                     </div>
                     <div style={{fontSize:11,color:C.ts,marginTop:2,fontFamily:FONT_BODY}}>
@@ -3174,7 +3174,7 @@ function GameUI({account,onLogout}){
                           <div style={{display:"flex",alignItems:"center",gap:8}}>
                             <span style={{fontSize:18,filter:"grayscale(1)"}}>{bp.icon}</span>
                             <div>
-                              <div style={{fontSize:10,fontWeight:700,color:C.td,fontFamily:FONT}}>??? BLUEPRINT ({bp.rarity.toUpperCase()})</div>
+                              <div style={{fontSize:10,fontWeight:700,color:C.td,fontFamily:FONT}}>??? BLUEPRINT ({(bp.rarity||"").toUpperCase()})</div>
                               <div style={{fontSize:9,color:C.td,fontFamily:FONT_BODY}}>Found via: {bp.source}</div>
                             </div>
                           </div>
@@ -3298,7 +3298,7 @@ function GameUI({account,onLogout}){
                         <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:10}}>
                           <span style={{fontSize:28,filter:lv>0?"drop-shadow(0 0 8px "+col+")":"none"}}>{st.icon}</span>
                           <div style={{flex:1}}>
-                            <div style={{fontSize:12,fontWeight:700,color:lv>0?col:C.white,fontFamily:FONT,letterSpacing:1}}>{st.name.toUpperCase()}</div>
+                            <div style={{fontSize:12,fontWeight:700,color:lv>0?col:C.white,fontFamily:FONT,letterSpacing:1}}>{(st?.name||"").toUpperCase()}</div>
                             <div style={{fontSize:10,color:C.ts,fontFamily:FONT_BODY,marginTop:1}}>{st.desc}</div>
                           </div>
                           {lv>0&&(
@@ -3414,7 +3414,7 @@ function GameUI({account,onLogout}){
                         <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:10}}>
                           <span style={{fontSize:28,filter:deployed>0?"drop-shadow(0 0 8px "+col+")":"none",animation:deployed>0?"pulse 2s infinite":"none"}}>{dt.icon}</span>
                           <div style={{flex:1}}>
-                            <div style={{fontSize:12,fontWeight:700,color:deployed>0?col:C.white,fontFamily:FONT,letterSpacing:1}}>{dt.name.toUpperCase()}</div>
+                            <div style={{fontSize:12,fontWeight:700,color:deployed>0?col:C.white,fontFamily:FONT,letterSpacing:1}}>{(dt?.name||"").toUpperCase()}</div>
                             <div style={{fontSize:10,color:C.ts,fontFamily:FONT_BODY,marginTop:1}}>{dt.desc}</div>
                           </div>
                           {/* Deployed counter */}
@@ -3875,7 +3875,7 @@ function GameUI({account,onLogout}){
                                     <div style={{fontSize:11,fontWeight:700,color:unlocked?col:C.td,fontFamily:FONT,letterSpacing:0.5}}>
                                       {unlocked?bp.name:"??? Blueprint"}
                                     </div>
-                                    <div style={{fontSize:8,padding:"1px 6px",borderRadius:6,background:col+"20",border:"1px solid "+col+"50",color:col,fontWeight:700,letterSpacing:1}}>{bp.rarity.toUpperCase()}</div>
+                                    <div style={{fontSize:8,padding:"1px 6px",borderRadius:6,background:col+"20",border:"1px solid "+col+"50",color:col,fontWeight:700,letterSpacing:1}}>{(bp.rarity||"").toUpperCase()}</div>
                                   </div>
                                   {unlocked?(
                                     <>
@@ -3887,7 +3887,7 @@ function GameUI({account,onLogout}){
                                         → {bp.act.out.map(o=>(ITEMS[o.id]?.i||"")+" "+(ITEMS[o.id]?.n||o.id)+" ×"+o.q).join(", ")}
                                       </div>}
                                       <div onClick={()=>{setActSkill(bp.skillId);setPage("skills")}} style={{marginTop:8,padding:"4px 10px",borderRadius:6,background:col+"20",border:"1px solid "+col+"50",color:col,fontSize:9,fontWeight:700,cursor:"pointer",display:"inline-block",fontFamily:FONT,letterSpacing:1}}>
-                                        VIEW IN {sk?.name?.toUpperCase()||"SKILL"} →
+                                        VIEW IN {(sk?.name||"SKILL").toUpperCase()} →
                                       </div>
                                     </>
                                   ):(
@@ -4350,7 +4350,7 @@ function GameUI({account,onLogout}){
                       <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:10}}>
                         <div>
                           <div style={{fontSize:18,fontWeight:700,color:isAct?C.bad:C.white,fontFamily:FONT,letterSpacing:1,marginBottom:3}}>
-                            {zone.icon} {zone.name.toUpperCase()}
+                            {zone.icon} {(zone?.name||"").toUpperCase()}
                           </div>
                           <div style={{fontSize:12,color:C.ts,fontFamily:FONT_BODY}}>
                             Depth Rank {zone.lv}+ · {zone.mobs.length} mobs · {(zone.elites||[]).length} elites · 2 bosses

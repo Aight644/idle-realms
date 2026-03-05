@@ -488,6 +488,7 @@ const ITEMS={
   glowfish:{n:"Glowfish",i:"🐟",s:1,v:8}, salt_crystals:{n:"Salt Crystals",i:"🔷",s:1,v:28},
   shell_fragments:{n:"Shell Fragments",i:"🐚",s:1,v:14}, thermal_ore:{n:"Thermal Ore",i:"🔶",s:1,v:55},
   abyss_crystal:{n:"Abyss Crystal",i:"💎",s:1,v:12}, ocean_fiber:{n:"Ocean Fiber",i:"🧵",s:1,v:65},
+  sea_fiber:{n:"Sea Fiber",i:"🪢",s:1,v:4},
   sea_mushrooms:{n:"Sea Mushrooms",i:"🍄",s:1,v:22}, trench_stone:{n:"Trench Stone",i:"🪨",s:1,v:5},
   coral_blocks:{n:"Coral Blocks",i:"🟦",s:1,v:10}, reinforced_alloy:{n:"Reinforced Alloy",i:"⚙️",s:1,v:45},
   biofuel:{n:"Biofuel",i:"🟩",s:1,v:18}, pressure_glass:{n:"Pressure Glass",i:"🔮",s:1,v:40},
@@ -659,7 +660,7 @@ const SKILLS=[
 
   // ── Trench Exploration: ocean_fiber → deep_moss → sediment_core → ancient_fragment → abyss_silt → ancient_relic ──
   {id:"trench_exploration",name:"Trench Exploration",icon:"🗺️",color:"#38bdf8",cat:"gather",acts:[
-    {id:"te1",name:"Shallow Survey",     lv:1,  xp:5,t:20, out:[{id:"ocean_fiber",q:1}]},
+    {id:"te1",name:"Shallow Survey",     lv:1,  xp:5,t:20, out:[{id:"sea_fiber",q:1}]},
     {id:"te2",name:"Deep Moss Bed",      lv:20, xp:15,t:25, out:[{id:"deep_moss",q:1}]},
     {id:"te3",name:"Sediment Core",      lv:40, xp:35,t:30, out:[{id:"sediment_core",q:1}]},
     {id:"te4",name:"Ancient Ruin Dig",   lv:60, xp:65,t:35, out:[{id:"ancient_fragment",q:1}]},
@@ -788,7 +789,7 @@ const SKILLS=[
     {id:"xg7",gearCat:"crystal",name:"Crystal Gloves",        lv:25,xp:30,t:22, inp:[{id:"abyss_crystal",q:6},{id:"raw_quartz",q:6}],                        out:[{id:"crystal_gloves",q:1}]},
     {id:"xg8",gearCat:"crystal",name:"Crystal Fins",          lv:45,xp:55,t:28, inp:[{id:"raw_quartz",q:8},{id:"abyss_crystal",q:6},{id:"silt_crystal",q:3}], out:[{id:"crystal_fins",q:1}]},
     // ── Trench ──
-    {id:"tg1",gearCat:"trench",name:"Sediment Brush",         lv:10,xp:30,t:28, inp:[{id:"ocean_fiber",q:8},{id:"deep_moss",q:6}],                           out:[{id:"sediment_brush",q:1}]},
+    {id:"tg1",gearCat:"trench",name:"Sediment Brush",         lv:10,xp:30,t:28, inp:[{id:"sea_fiber",q:12},{id:"deep_moss",q:6}],                           out:[{id:"sediment_brush",q:1}]},
     {id:"tg2",gearCat:"trench",name:"Ruin Scanner",           lv:30,xp:60,t:42, inp:[{id:"sediment_core",q:5},{id:"deep_moss",q:8},{id:"trench_stone",q:10}], out:[{id:"ruin_scanner",q:1}]},
     {id:"tg3",gearCat:"trench",name:"Fragment Extractor",     lv:60,xp:110,t:55, inp:[{id:"ancient_fragment",q:4},{id:"sediment_core",q:8},{id:"abyss_crystal",q:2}], out:[{id:"fragment_extractor",q:1}]},
     {id:"tg4",gearCat:"trench",name:"Ancient Probe",          lv:90,xp:200,t:60,inp:[{id:"abyss_silt",q:5},{id:"ancient_fragment",q:8},{id:"void_essence",q:1}], out:[{id:"ancient_probe",q:1}]},

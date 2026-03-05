@@ -484,33 +484,33 @@ const ACHIEVEMENT_CATS = {
 
 // ===================== ITEMS =====================
 const ITEMS={
-  kelp:{n:"Kelp",i:"🌿",s:1}, soft_coral:{n:"Soft Coral",i:"🪸",s:1},
-  glowfish:{n:"Glowfish",i:"🐟",s:1}, salt_crystals:{n:"Salt Crystals",i:"🔷",s:1},
-  shell_fragments:{n:"Shell Fragments",i:"🐚",s:1}, thermal_ore:{n:"Thermal Ore",i:"🔶",s:1},
-  abyss_crystal:{n:"Abyss Crystal",i:"💎",s:1}, ocean_fiber:{n:"Ocean Fiber",i:"🧵",s:1},
-  sea_mushrooms:{n:"Sea Mushrooms",i:"🍄",s:1}, trench_stone:{n:"Trench Stone",i:"🪨",s:1},
-  coral_blocks:{n:"Coral Blocks",i:"🟦",s:1}, reinforced_alloy:{n:"Reinforced Alloy",i:"⚙️",s:1},
-  biofuel:{n:"Biofuel",i:"🟩",s:1}, pressure_glass:{n:"Pressure Glass",i:"🔮",s:1},
-  enzyme_compound:{n:"Enzyme Compound",i:"🧪",s:1}, luminescent_gel:{n:"Luminescent Gel",i:"✨",s:1},
-  drone_processor:{n:"Drone Processor",i:"📡",s:1}, pressure_reactor:{n:"Pressure Reactor",i:"⚡",s:1},
-  coral_cutter:{n:"Coral Cutter",i:"🔪",s:1}, deep_drill:{n:"Deep Drill",i:"🔩",s:1},
-  artifact_scanner:{n:"Artifact Scanner",i:"📟",s:1},
+  kelp:{n:"Kelp",i:"🌿",s:1,v:2}, soft_coral:{n:"Soft Coral",i:"🪸",s:1,v:6},
+  glowfish:{n:"Glowfish",i:"🐟",s:1,v:7}, salt_crystals:{n:"Salt Crystals",i:"🔷",s:1,v:10},
+  shell_fragments:{n:"Shell Fragments",i:"🐚",s:1,v:5}, thermal_ore:{n:"Thermal Ore",i:"🔶",s:1,v:18},
+  abyss_crystal:{n:"Abyss Crystal",i:"💎",s:1,v:16}, ocean_fiber:{n:"Ocean Fiber",i:"🧵",s:1,v:4},
+  sea_mushrooms:{n:"Sea Mushrooms",i:"🍄",s:1,v:5}, trench_stone:{n:"Trench Stone",i:"🪨",s:1,v:3},
+  coral_blocks:{n:"Coral Blocks",i:"🟦",s:1,v:8}, reinforced_alloy:{n:"Reinforced Alloy",i:"⚙️",s:1,v:35},
+  biofuel:{n:"Biofuel",i:"🟩",s:1,v:15}, pressure_glass:{n:"Pressure Glass",i:"🔮",s:1,v:30},
+  enzyme_compound:{n:"Enzyme Compound",i:"🧪",s:1,v:40}, luminescent_gel:{n:"Luminescent Gel",i:"✨",s:1,v:32},
+  drone_processor:{n:"Drone Processor",i:"📡",s:1,v:75}, pressure_reactor:{n:"Pressure Reactor",i:"⚡",s:1,v:90},
+  coral_cutter:{n:"Coral Cutter",i:"🔪",s:1,v:22}, deep_drill:{n:"Deep Drill",i:"🔩",s:1,v:28},
+  artifact_scanner:{n:"Artifact Scanner",i:"📟",s:1,v:55},
   // ── New gathering drops ──
-  tide_sap:{n:"Tide Sap",i:"🟢",s:1},
-  kelp_spores:{n:"Kelp Spores",i:"🌱",s:1},
-  void_kelp:{n:"Void Kelp",i:"🌑",s:1},
-  phosphor_scales:{n:"Phosphor Scales",i:"🐡",s:1},
-  deepsea_roe:{n:"Deepsea Roe",i:"🟡",s:1},
-  void_fin:{n:"Void Fin",i:"🌊",s:1},
-  magma_shard:{n:"Magma Shard",i:"🔴",s:1},
-  obsidian_ore:{n:"Obsidian Ore",i:"⬜",s:1},
-  silt_crystal:{n:"Silt Crystal",i:"🔹",s:1},
-  raw_quartz:{n:"Raw Quartz",i:"🔲",s:1},
-  ether_dust:{n:"Ether Dust",i:"💫",s:1},
-  deep_moss:{n:"Deep Moss",i:"🌾",s:1},
-  sediment_core:{n:"Sediment Core",i:"🗜️",s:1},
-  ancient_fragment:{n:"Ancient Fragment",i:"🧩",s:1},
-  abyss_silt:{n:"Abyss Silt",i:"🔘",s:1},
+  tide_sap:{n:"Tide Sap",i:"🟢",s:1,v:14},
+  kelp_spores:{n:"Kelp Spores",i:"🌱",s:1,v:20},
+  void_kelp:{n:"Void Kelp",i:"🌑",s:1,v:65,v:2},
+  phosphor_scales:{n:"Phosphor Scales",i:"🐡",s:1,v:12},
+  deepsea_roe:{n:"Deepsea Roe",i:"🟡",s:1,v:22},
+  void_fin:{n:"Void Fin",i:"🌊",s:1,v:60},
+  magma_shard:{n:"Magma Shard",i:"🔴",s:1,v:28},
+  obsidian_ore:{n:"Obsidian Ore",i:"⬜",s:1,v:50},
+  silt_crystal:{n:"Silt Crystal",i:"🔹",s:1,v:25},
+  raw_quartz:{n:"Raw Quartz",i:"🔲",s:1,v:9},
+  ether_dust:{n:"Ether Dust",i:"💫",s:1,v:55},
+  deep_moss:{n:"Deep Moss",i:"🌾",s:1,v:6},
+  sediment_core:{n:"Sediment Core",i:"🗜️",s:1,v:20},
+  ancient_fragment:{n:"Ancient Fragment",i:"🧩",s:1,v:45},
+  abyss_silt:{n:"Abyss Silt",i:"🔘",s:1,v:9},
   basic_harpoon:{n:"Basic Harpoon",i:"🗡️",eq:"weapon",st:{atk:8}},
   pulse_harpoon:{n:"Pulse Harpoon",i:"⚡",eq:"weapon",st:{atk:14,rng:4}},
   shock_harpoon:{n:"Shock Harpoon",i:"🌩️",eq:"weapon",st:{atk:18,rng:6}},
@@ -525,31 +525,31 @@ const ITEMS={
   shell_shield:{n:"Shell Shield",i:"🛡️",eq:"shield",st:{def:14,hp:18}},
   void_ring:{n:"Void Ring",i:"💍",eq:"ring",st:{atk:4,mag:4}},
   depth_pendant:{n:"Depth Pendant",i:"📿",eq:"neck",st:{def:5,hp:10}},
-  healing_serum:{n:"Healing Serum",i:"💉",s:1,food:1,heal:20},
-  kelp_broth:{n:"Kelp Broth",i:"🍵",s:1,food:1,heal:45},
-  pressure_tonic:{n:"Pressure Tonic",i:"⚗️",s:1,food:1,heal:90},
-  bio_stim:{n:"Bio Stim",i:"💊",s:1,food:1,heal:65},
-  bioluminescent_drink:{n:"Bioluminescent Brew",i:"🫧",s:1,drink:1},
-  deep_extract:{n:"Deep Extract",i:"🧬",s:1,drink:1},
-  void_elixir:{n:"Void Elixir",i:"🌌",s:1,drink:1},
+  healing_serum:{n:"Healing Serum",i:"💉",s:1,v:18,food:1,heal:20},
+  kelp_broth:{n:"Kelp Broth",i:"🍵",s:1,v:35,food:1,heal:45},
+  pressure_tonic:{n:"Pressure Tonic",i:"⚗️",s:1,v:45,food:1,heal:90},
+  bio_stim:{n:"Bio Stim",i:"💊",s:1,v:55,food:1,heal:65},
+  bioluminescent_drink:{n:"Bioluminescent Brew",i:"🫧",s:1,v:20,drink:1},
+  deep_extract:{n:"Deep Extract",i:"🧬",s:1,v:35,drink:1},
+  void_elixir:{n:"Void Elixir",i:"🌌",s:1,v:80,drink:1},
   // ── Rare materials ──
-  leviathan_bone:{n:"Leviathan Bone",i:"🦴",s:1,rare:1},
-  ancient_relic:{n:"Ancient Relic Fragment",i:"🗿",s:1,rare:1},
-  void_pearl:{n:"Void Pearl",i:"🔵",s:1,rare:1},
-  alien_bio_tissue:{n:"Alien Bio Tissue",i:"🧫",s:1,rare:1},
-  thermal_core:{n:"Thermal Core",i:"🌋",s:1,rare:1},
-  black_coral:{n:"Black Coral",i:"🖤",s:1,rare:1},
-  ancient_processor:{n:"Ancient Processor",i:"🔲",s:1,rare:1},
-  void_essence:{n:"Void Essence",i:"🌀",s:1,rare:1},
+  leviathan_bone:{n:"Leviathan Bone",i:"🦴",s:1,v:220,rare:1},
+  ancient_relic:{n:"Ancient Relic Fragment",i:"🗿",s:1,v:180,rare:1},
+  void_pearl:{n:"Void Pearl",i:"🔵",s:1,v:90,rare:1},
+  alien_bio_tissue:{n:"Alien Bio Tissue",i:"🧫",s:1,v:200,rare:1},
+  thermal_core:{n:"Thermal Core",i:"🌋",s:1,v:100,rare:1},
+  black_coral:{n:"Black Coral",i:"🖤",s:1,v:150,rare:1},
+  ancient_processor:{n:"Ancient Processor",i:"🔲",s:1,v:170,rare:1},
+  void_essence:{n:"Void Essence",i:"🌀",s:1,v:160,rare:1},
   // ── Utility crafted items ──
-  nav_beacon:{n:"Navigation Beacon",i:"📍",s:1},
-  scan_report:{n:"Scan Report",i:"📋",s:1},
-  relic_shard:{n:"Relic Shard",i:"🧩",s:1},
-  ocean_chart:{n:"Ocean Chart",i:"🗺️",s:1},
-  supply_crate:{n:"Supply Crate",i:"📦",s:1,food:1,heal:150},
-  resonance_crystal:{n:"Resonance Crystal",i:"🔮",s:1},
-  ancient_data_chip:{n:"Ancient Data Chip",i:"💾",s:1},
-  void_map:{n:"Void Map",i:"🌌",s:1},
+  nav_beacon:{n:"Navigation Beacon",i:"📍",s:1,v:25},
+  scan_report:{n:"Scan Report",i:"📋",s:1,v:30},
+  relic_shard:{n:"Relic Shard",i:"🧩",s:1,v:40},
+  ocean_chart:{n:"Ocean Chart",i:"🗺️",s:1,v:35},
+  supply_crate:{n:"Supply Crate",i:"📦",s:1,v:120,food:1,heal:150},
+  resonance_crystal:{n:"Resonance Crystal",i:"🔮",s:1,v:55},
+  ancient_data_chip:{n:"Ancient Data Chip",i:"💾",s:1,v:130},
+  void_map:{n:"Void Map",i:"🌌",s:1,v:75},
   // ── Endgame equipment ──
   leviathan_spear:{n:"Leviathan Spear",i:"🔱",eq:"weapon",st:{atk:42,rng:12,mag:10}},
   leviathan_armor:{n:"Leviathan Armor",i:"🟠",eq:"body",st:{def:45,hp:100}},
@@ -965,6 +965,15 @@ const ZONES=[
 ];
 
 // Set bonuses: pieces = items in set, bonuses at 2pc and 4pc
+// NPC shop base buy prices (what the NPC pays you per item)
+const NPC_CATS=[
+  {id:"all",  label:"All",        icon:"🏷️"},
+  {id:"mat",  label:"Materials",  icon:"🪨"},
+  {id:"rare", label:"Rare",       icon:"✨"},
+  {id:"food", label:"Consumables",icon:"💊"},
+  {id:"eq",   label:"Equipment",  icon:"🗡️"},
+];
+
 const SET_BONUSES={
   kelp:{
     name:"Kelp Cultivator",color:"#00c285",
@@ -1113,6 +1122,8 @@ function GameUI({account,onLogout}){
   const[actSkill,setActSkill]=useState("kelp_farming");
   const[gearCat,setGearCat]=useState("cultivation");
   const[tooltip,setTooltip]=useState(null);// {iid, x, y}
+  const[npcCat,setNpcCat]=useState("all");
+  const[npcLog,setNpcLog]=useState([]);
   // Top bar
   const[energy,setEnergy]=useState(100);
   const[pressure,setPressure]=useState(0);
@@ -1992,18 +2003,30 @@ function GameUI({account,onLogout}){
     const setEntry=it.set?Object.entries(SET_BONUSES).find(([,s])=>s.pieces.includes(tooltip.iid)):null;
     const setData=setEntry?setEntry[1]:null;
     const equippedCount=setData?setData.pieces.filter(pid=>Object.values(eq).includes(pid)).length:0;
+    const npcPrice=it.v||null;
+    const inInv=inv[tooltip.iid]||0;
+    const itemType=it.eq?"Equipment":it.rare?"Rare Material":it.food?"Consumable":it.s?"Material":"Item";
     return(
       <div onMouseLeave={hideTip} style={{position:"fixed",left:Math.min(tooltip.x,window.innerWidth-220),top:Math.max(8,tooltip.y-8),transform:"translate(-50%,-100%)",
-        background:"#0d1b2a",border:"1px solid "+(setData?setData.color+"80":C.acc+"60"),borderRadius:10,padding:"12px 14px",
+        background:"#0d1b2a",border:"1px solid "+(setData?setData.color+"80":it.rare?C.gold+"80":C.acc+"60"),borderRadius:10,padding:"12px 14px",
         zIndex:9999,minWidth:200,maxWidth:220,boxShadow:"0 8px 32px #000a",pointerEvents:"none"}}>
-        {/* Item name */}
-        <div style={{display:"flex",alignItems:"center",gap:7,marginBottom:8}}>
-          <span style={{fontSize:20}}>{it.i}</span>
+        {/* Item name + type */}
+        <div style={{display:"flex",alignItems:"center",gap:7,marginBottom:6}}>
+          <span style={{fontSize:22,filter:it.rare?"drop-shadow(0 0 6px "+C.gold+")":"none"}}>{it.i}</span>
           <div>
-            <div style={{fontSize:12,fontWeight:700,color:setData?setData.color:C.white,fontFamily:FONT,letterSpacing:0.5}}>{it.n}</div>
-            {it.eq&&<div style={{fontSize:9,color:C.td,fontFamily:FONT,letterSpacing:1}}>{it.eq.toUpperCase()}</div>}
+            <div style={{fontSize:13,fontWeight:700,color:setData?setData.color:it.rare?C.gold:C.white,fontFamily:FONT,letterSpacing:0.5}}>{it.n}</div>
+            <div style={{fontSize:9,color:C.td,fontFamily:FONT,letterSpacing:1}}>{itemType.toUpperCase()}{it.eq?" · "+it.eq.toUpperCase():""}</div>
           </div>
         </div>
+        {/* Inventory count */}
+        {inInv>0&&<div style={{fontSize:10,color:C.ts,fontFamily:FONT_BODY,marginBottom:6}}>In inventory: <span style={{color:C.text,fontWeight:700}}>×{fmt(inInv)}</span></div>}
+        {/* NPC sell price */}
+        {npcPrice&&(
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"4px 8px",borderRadius:6,background:"#1a2a1a",border:"1px solid #2a4a2a",marginBottom:it.st?8:0}}>
+            <span style={{fontSize:10,color:"#6ee7b7",fontFamily:FONT_BODY}}>🏪 NPC buys for</span>
+            <span style={{fontSize:11,fontWeight:700,color:C.gold,fontFamily:FONT}}>◈ {npcPrice} each</span>
+          </div>
+        )}
         {/* Stats */}
         {it.st&&Object.keys(it.st).length>0&&(
           <div style={{marginBottom:setData?8:0}}>
@@ -2011,7 +2034,7 @@ function GameUI({account,onLogout}){
             {Object.entries(it.st).map(([k,v])=>(
               <div key={k} style={{display:"flex",justifyContent:"space-between",fontSize:11,fontFamily:FONT_BODY,marginBottom:2}}>
                 <span style={{color:C.ts}}>{STAT_LABELS[k]||k}</span>
-                <span style={{color:C.ok,fontWeight:700}}>+{["gather_speed","gather_yield","rare_chance","cultiv_yield","crystal_yield"].includes(k)?Math.round(v*100)+"%":v}</span>
+                <span style={{color:C.ok,fontWeight:700}}>+{["gather_speed","gather_yield","rare_chance","cultiv_yield","mining_yield","fishing_yield","crystal_yield","trench_yield","xp_bonus"].includes(k)?Math.round(v*100)+"%":v}</span>
               </div>
             ))}
           </div>
@@ -2327,8 +2350,8 @@ function GameUI({account,onLogout}){
                                           <div style={{fontSize:11,color:C.ts,fontFamily:FONT_BODY,display:"flex",alignItems:"center",gap:4,flexWrap:"wrap"}}>
                                             <span>+{act.xp} XP · {act.t}s · </span>
                                             {act.out.map(o=>{const it=ITEMS[o.id];const hasStats=it?.st&&Object.keys(it.st).length>0;return(
-                                              <span key={o.id} onMouseEnter={hasStats?e=>showTip(e,o.id):null} onMouseLeave={hasStats?hideTip:null}
-                                                style={{color:hasStats?sk.color:C.ts,fontWeight:hasStats?700:400,cursor:hasStats?"help":"default",borderBottom:hasStats?"1px dashed "+sk.color+"60":"none"}}>
+                                              <span key={o.id} {...tipProps(o.id)}
+                                                style={{color:hasStats?sk.color:C.ts,fontWeight:hasStats?700:400,borderBottom:hasStats?"1px dashed "+sk.color+"60":"none"}}>
                                                 {it?.i||"📦"} {it?.n||o.id}
                                               </span>
                                             );})}
@@ -2338,8 +2361,8 @@ function GameUI({account,onLogout}){
                                           <div style={{fontSize:11,color:C.td,fontFamily:FONT_BODY,display:"flex",alignItems:"center",gap:4,flexWrap:"wrap"}}>
                                             <span>🔒 Lv {act.lv} · </span>
                                             {act.out.map(o=>{const it=ITEMS[o.id];const hasStats=it?.st&&Object.keys(it.st).length>0;return(
-                                              <span key={o.id} onMouseEnter={hasStats?e=>showTip(e,o.id):null} onMouseLeave={hasStats?hideTip:null}
-                                                style={{color:hasStats?"#ffffff40":C.td,cursor:hasStats?"help":"default",borderBottom:hasStats?"1px dashed #ffffff20":"none"}}>
+                                              <span key={o.id} {...tipProps(o.id)}
+                                                style={{color:hasStats?"#ffffff40":C.td,borderBottom:hasStats?"1px dashed #ffffff20":"none"}}>
                                                 {it?.i||"📦"} {it?.n||o.id}
                                               </span>
                                             );})}
@@ -2694,7 +2717,7 @@ function GameUI({account,onLogout}){
                 </div>
               );})}
               {/* Page nav icons */}
-              {[{id:"combat",i:"⚔️"},{id:"research",i:"🔬"},{id:"structures",i:"🏗️"},{id:"drones",i:"🤖"},{id:"market",i:"🏪"},{id:"achievements",i:"🏆"},{id:"blueprints",i:"📘"},{id:"equipment",i:"🗡️"},{id:"inventory",i:"🎒"},{id:"social",i:"💬"}].map(n=>(
+              {[{id:"combat",i:"⚔️"},{id:"research",i:"🔬"},{id:"structures",i:"🏗️"},{id:"drones",i:"🤖"},{id:"market",i:"🏪"},{id:"npc_shop",i:"🐙"},{id:"achievements",i:"🏆"},{id:"blueprints",i:"📘"},{id:"equipment",i:"🗡️"},{id:"inventory",i:"🎒"},{id:"social",i:"💬"}].map(n=>(
                 <div key={n.id} onClick={()=>setPage(n.id)} title={n.id} style={{width:36,height:36,borderRadius:6,display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",background:page===n.id?C.acc+"25":C.card,border:"1px solid "+(page===n.id?C.acc+"60":C.border),fontSize:16}}>
                   {n.i}
                 </div>
@@ -2757,6 +2780,7 @@ function GameUI({account,onLogout}){
                 <NavItem id="structures"   icon="🏗️" label="Structures"/>
                 <NavItem id="drones"       icon="🤖" label="Drone Fleet"/>
                 <NavItem id="market"       icon="🏪" label="Marketplace"/>
+                <NavItem id="npc_shop"     icon="🐙" label="NPC Shop"/>
                 <NavItem id="achievements" icon="🏆" label="Achievements"/>
                 <NavItem id="blueprints"   icon="📘" label="Blueprints"   badge={blueprints.length>0?blueprints.length:null}/>
                 <NavItem id="stats"        icon="📊" label="Stats & Profile"/>
@@ -2884,8 +2908,8 @@ function GameUI({account,onLogout}){
                       <div style={{fontSize:12,color:C.ts,fontFamily:FONT_BODY,display:"flex",alignItems:"center",gap:4,flexWrap:"wrap"}}>
                         <span>+{act.xp} XP · {act.t}s{act.inp&&<>{" · Needs: "}{act.inp.map(i=><span key={i.id} {...tipProps(i.id)} style={{marginRight:3}}>{(ITEMS[i.id]?ITEMS[i.id].i:"")+i.q}</span>)}</>} →</span>
                         {act.out&&act.out.map(i=>{const it=ITEMS[i.id];const hasStats=it?.st&&Object.keys(it.st).length>0;return(
-                          <span key={i.id} onMouseEnter={hasStats?e=>showTip(e,i.id):null} onMouseLeave={hasStats?hideTip:null}
-                            style={{color:hasStats?skData.color:C.ts,fontWeight:hasStats?700:400,cursor:hasStats?"help":"default",borderBottom:hasStats?"1px dashed "+skData.color+"60":"none"}}>
+                          <span key={i.id} {...tipProps(i.id)}
+                            style={{color:hasStats?skData.color:C.ts,fontWeight:hasStats?700:400,borderBottom:hasStats?"1px dashed "+skData.color+"60":"none"}}>
                             {it?.i||""} {it?.n||i.id}
                           </span>
                         );})}
@@ -3356,6 +3380,130 @@ function GameUI({account,onLogout}){
                         );
                       })}
                     </div>
+                  </div>
+                )}
+              </div>
+            );})()}
+
+            {/* ===== NPC SHOP PAGE ===== */}
+            {page==="npc_shop"&&(()=>{
+              // Only items in inventory that have a base value (v) set
+              const shopItems=Object.entries(inv)
+                .filter(([id,qty])=>qty>0&&ITEMS[id]?.v)
+                .sort((a,b)=>(ITEMS[b[0]].v||0)-(ITEMS[a[0]].v||0));
+
+              const npcCatFilter=(id)=>{
+                const it=ITEMS[id];
+                if(npcCat==="all")return true;
+                if(npcCat==="mat")return it.s&&!it.rare&&!it.food&&!it.eq;
+                if(npcCat==="rare")return !!it.rare;
+                if(npcCat==="food")return !!it.food;
+                if(npcCat==="eq")return !!it.eq;
+                return true;
+              };
+              const visible=shopItems.filter(([id])=>npcCatFilter(id));
+              const totalVal=visible.reduce((s,[id,qty])=>s+ITEMS[id].v*qty,0);
+
+              const doSell=(id,qty)=>{
+                const it=ITEMS[id]; if(!it?.v||qty<=0)return;
+                remIt(id,qty);
+                setGold(g=>g+it.v*qty);
+                setNpcLog(l=>[{id,qty,earn:it.v*qty},...l.slice(0,19)]);
+              };
+              const doSellAll=()=>{
+                let total=0;
+                visible.forEach(([id,qty])=>{const it=ITEMS[id];if(it?.v){remIt(id,qty);total+=it.v*qty;}});
+                setGold(g=>g+total);
+                setNpcLog(l=>[{id:"_all",qty:visible.length,earn:total},...l.slice(0,19)]);
+              };
+
+              return(
+              <div style={{maxWidth:760}}>
+                {/* Header */}
+                <div style={{display:"flex",alignItems:"baseline",gap:12,marginBottom:16}}>
+                  <div style={{fontSize:20,fontWeight:700,color:C.white,letterSpacing:2}}>🐙 NPC SHOP</div>
+                  <div style={{fontSize:11,color:C.ts,fontFamily:FONT_BODY}}>Fixed base prices — sell your items back to the game</div>
+                  <div style={{marginLeft:"auto",fontSize:14,fontWeight:700,color:C.gold,fontFamily:FONT}}>◈ {fmt(gold)}</div>
+                </div>
+
+                {/* Category tabs */}
+                <div style={{display:"flex",gap:5,marginBottom:12}}>
+                  {NPC_CATS.map(cat=>(
+                    <div key={cat.id} onClick={()=>setNpcCat(cat.id)} style={{padding:"5px 14px",borderRadius:6,cursor:"pointer",fontSize:10,fontWeight:700,fontFamily:FONT,letterSpacing:1,
+                      background:npcCat===cat.id?C.acc+"30":C.card,
+                      color:npcCat===cat.id?C.acc:C.td,
+                      border:"1px solid "+(npcCat===cat.id?C.acc+"80":C.border)}}>
+                      {cat.icon} {cat.label}
+                    </div>
+                  ))}
+                </div>
+
+                {/* Sell-all bar */}
+                {visible.length>0&&(
+                  <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"8px 14px",borderRadius:8,background:C.card,border:"1px solid "+C.border,marginBottom:12}}>
+                    <span style={{fontSize:11,color:C.ts,fontFamily:FONT_BODY}}>
+                      {visible.length} items · <span style={{color:C.gold,fontWeight:700}}>◈ {fmt(totalVal)}</span> total
+                    </span>
+                    <div onClick={doSellAll} style={{padding:"5px 16px",borderRadius:6,background:"linear-gradient(90deg,"+C.warn+"cc,"+C.gold+")",color:"#000",fontSize:10,fontWeight:700,cursor:"pointer",letterSpacing:1,fontFamily:FONT}}>
+                      SELL ALL
+                    </div>
+                  </div>
+                )}
+
+                {/* Item rows — MWI style: icon · name · qty · value · sell button */}
+                {visible.length===0?(
+                  <div style={{padding:"48px 0",textAlign:"center",color:C.td,fontFamily:FONT_BODY,fontSize:12}}>
+                    <div style={{fontSize:36,marginBottom:10}}>🐙</div>
+                    Nothing to sell. Get out there and gather!
+                  </div>
+                ):(
+                  <div style={{display:"flex",flexDirection:"column",gap:2}}>
+                    {/* Column header */}
+                    <div style={{display:"grid",gridTemplateColumns:"36px 1fr 80px 80px 90px 90px",gap:8,padding:"4px 10px",fontSize:9,color:C.td,fontFamily:FONT,letterSpacing:1,marginBottom:2}}>
+                      <span/>
+                      <span>ITEM</span>
+                      <span style={{textAlign:"right"}}>OWNED</span>
+                      <span style={{textAlign:"right"}}>VALUE EA.</span>
+                      <span style={{textAlign:"right"}}>TOTAL</span>
+                      <span/>
+                    </div>
+                    {visible.map(([id,qty])=>{
+                      const it=ITEMS[id];
+                      return(
+                        <div key={id} style={{display:"grid",gridTemplateColumns:"36px 1fr 80px 80px 90px 90px",gap:8,alignItems:"center",
+                          padding:"8px 10px",borderRadius:6,background:C.card,border:"1px solid "+C.border,
+                          borderLeft:"3px solid "+(it.rare?C.gold:it.food?C.ok:it.eq?C.acc:C.border)}}>
+                          {/* Icon */}
+                          <span {...tipProps(id)} style={{fontSize:20,textAlign:"center",filter:it.rare?"drop-shadow(0 0 5px "+C.gold+")":"none"}}>{it.i}</span>
+                          {/* Name */}
+                          <div style={{fontWeight:700,fontSize:12,color:it.rare?C.gold:C.white,fontFamily:FONT,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{it.n}</div>
+                          {/* Owned qty */}
+                          <div style={{textAlign:"right",fontSize:12,color:C.text,fontFamily:FONT}}>×{fmt(qty)}</div>
+                          {/* Value each */}
+                          <div style={{textAlign:"right",fontSize:12,color:C.gold,fontFamily:FONT,fontWeight:700}}>◈{it.v}</div>
+                          {/* Total */}
+                          <div style={{textAlign:"right",fontSize:11,color:C.ts,fontFamily:FONT_BODY}}>◈{fmt(it.v*qty)}</div>
+                          {/* Sell button */}
+                          <div onClick={()=>doSell(id,qty)} style={{padding:"5px 0",borderRadius:5,background:"linear-gradient(90deg,"+C.accD+","+C.acc+")",color:C.bg,
+                            fontSize:10,fontWeight:700,textAlign:"center",cursor:"pointer",letterSpacing:1,fontFamily:FONT}}>
+                            SELL ALL
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+
+                {/* Recent sales */}
+                {npcLog.length>0&&(
+                  <div style={{marginTop:20,paddingTop:16,borderTop:"1px solid "+C.border}}>
+                    <div style={{fontSize:9,fontWeight:700,color:C.td,letterSpacing:2,marginBottom:8}}>RECENT SALES</div>
+                    {npcLog.map((l,i)=>(
+                      <div key={i} style={{display:"flex",justifyContent:"space-between",fontSize:11,color:C.ts,fontFamily:FONT_BODY,padding:"3px 0",opacity:1-i*0.04}}>
+                        <span>{l.id==="_all"?"Sold "+l.qty+" item types":(ITEMS[l.id]?.i||"")+" "+(ITEMS[l.id]?.n||l.id)+" ×"+l.qty}</span>
+                        <span style={{color:C.gold,fontWeight:700}}>+◈{fmt(l.earn)}</span>
+                      </div>
+                    ))}
                   </div>
                 )}
               </div>

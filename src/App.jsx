@@ -1230,6 +1230,7 @@ function GameUI({account,onLogout}){
   const[eq,setEq]=useState({});
   const[gold,setGold]=useState(0);
   const[enh,setEnh]=useState({});
+  const[enhSel,setEnhSel]=useState(null);
   const[curAct,setCurAct]=useState(null);
   // actProg state replaced by actProgRef for perf
   const[pinnedSkill,setPinnedSkill]=useState(null);
@@ -4416,21 +4417,147 @@ function GameUI({account,onLogout}){
             )}
 
             {/* ENHANCING PAGE */}
-            {page==="enhancing"&&(
-              <div style={{}}>
-                <div style={{fontSize:14,fontWeight:700,color:C.white,marginBottom:4,letterSpacing:2}}>EQUIPMENT UPGRADE LAB</div>
-                <div style={{fontSize:11,color:C.ts,marginBottom:4,fontFamily:FONT_BODY}}>Level {sl("enhancing").lv} — {fmt(sl("enhancing").xp)} / {fmt(sl("enhancing").need)} XP</div>
-                <div style={{height:6,borderRadius:3,background:C.card,overflow:"hidden",marginBottom:16}}><div style={{width:(sl("enhancing").xp/sl("enhancing").need)*100+"%",height:"100%",borderRadius:3,background:C.warn,boxShadow:"0 0 6px "+C.warn}}/></div>
-                <div style={{fontSize:10,color:C.ts,marginBottom:16,fontFamily:FONT_BODY}}>Upgrade equipment stats. Failed attempts reset to +0!</div>
-                {ESLOTS.map(slot=>{const iid=eq[slot.id];if(!iid)return null;const it=ITEMS[iid];const cl=enh[iid]||0;const cost=Math.floor(50*Math.pow(1.5,cl));const rate=Math.max(20,Math.floor((0.8-cl*0.05)*100));return(
-                  <div key={slot.id} {...tipProps(iid)} style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"12px 16px",borderRadius:8,background:C.card,border:"1px solid "+C.border,marginBottom:8}}>
-                    <div><div style={{fontSize:12,fontWeight:700,color:C.white,fontFamily:FONT}}>{it.i} {it.n} +{cl}</div><div style={{fontSize:10,color:C.ts,marginTop:2,fontFamily:FONT_BODY}}>Success: {rate}% · Cost: ◈{fmt(cost)}</div></div>
-                    <div onClick={()=>doEnh(slot.id)} style={{padding:"7px 18px",borderRadius:6,background:gold>=cost&&cl<20?"linear-gradient(90deg,"+C.warn+"cc,"+C.gold+")":C.card,color:gold>=cost&&cl<20?C.bg:C.td,fontSize:10,fontWeight:700,cursor:gold>=cost&&cl<20?"pointer":"default",opacity:gold>=cost&&cl<20?1:0.4,letterSpacing:1,fontFamily:FONT,boxShadow:gold>=cost&&cl<20?"0 0 8px "+C.gold+"55":"none"}}>UPGRADE</div>
+            {page==="enhancing"&&(()=>{
+              const enhSlots=ESLOTS.map(slot=>({slot,iid:eq[slot.id]})).filter(x=>x.iid);
+              const selSlot=enhSlots.find(x=>x.slot.id===(enhSel||enhSlots[0]?.slot.id));
+              const selIid=selSlot?.iid;
+              const selIt=selIid?ITEMS[selIid]:null;
+              const selCl=selIid?(enh[selIid]||0):0;
+              const selCost=Math.floor(50*Math.pow(1.5,selCl));
+              const selRate=Math.max(20,Math.floor((0.8-selCl*0.05)*100));
+              const canUpgrade=selIid&&gold>=selCost&&selCl<20;
+              return(
+              <div style={{maxWidth:600}}>
+                {/* Header */}
+                <div style={{marginBottom:16}}>
+                  <div style={{fontSize:14,fontWeight:700,color:C.warn,letterSpacing:2,marginBottom:4}}>⚡ UPGRADE LAB</div>
+                  <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:6}}>
+                    <div style={{fontSize:11,color:C.ts,fontFamily:FONT_BODY}}>Lab Lv {sl("enhancing").lv}</div>
+                    <div style={{flex:1,height:5,borderRadius:3,background:C.card,overflow:"hidden"}}>
+                      <div style={{width:(sl("enhancing").xp/(sl("enhancing").need||1))*100+"%",height:"100%",borderRadius:3,background:C.warn,transition:"width 0.3s"}}/>
+                    </div>
+                    <div style={{fontSize:10,color:C.warn,fontFamily:FONT,fontWeight:700}}>{fmt(sl("enhancing").xp)}/{fmt(sl("enhancing").need)}</div>
                   </div>
-                );}).filter(Boolean)}
-                {!Object.values(eq).some(Boolean)&&<div style={{fontSize:12,color:C.td,padding:20,textAlign:"center",fontFamily:FONT_BODY}}>Equip items first to upgrade them</div>}
+                  <div style={{fontSize:10,color:"#f87171",fontFamily:FONT_BODY}}>⚠ Failed upgrades reset to +0. Higher levels have lower success rates.</div>
+                </div>
+
+                {enhSlots.length===0?(
+                  <div style={{padding:40,textAlign:"center",background:C.card,borderRadius:12,border:"1px dashed "+C.border}}>
+                    <div style={{fontSize:28,marginBottom:8}}>🗡️</div>
+                    <div style={{fontSize:12,color:C.td,fontFamily:FONT_BODY}}>No equipment found. Equip gear in the Equipment tab first.</div>
+                  </div>
+                ):(
+                  <div style={{display:"flex",gap:16}}>
+                    {/* Left — slot picker */}
+                    <div style={{width:160,flexShrink:0}}>
+                      <div style={{fontSize:9,fontWeight:700,color:C.td,letterSpacing:2,marginBottom:8}}>EQUIPPED GEAR</div>
+                      {enhSlots.map(({slot,iid})=>{
+                        const it=ITEMS[iid];const cl=enh[iid]||0;
+                        const isSel=(enhSel||enhSlots[0]?.slot.id)===slot.id;
+                        const col=cl>=15?"#ffd60a":cl>=10?"#c084fc":cl>=5?C.ok:C.border;
+                        return(
+                          <div key={slot.id} onClick={()=>setEnhSel(slot.id)}
+                            style={{padding:"10px 12px",borderRadius:8,background:isSel?"linear-gradient(135deg,"+C.warn+"18,"+C.card+")":C.card,
+                            border:"2px solid "+(isSel?C.warn:col+"60"),marginBottom:6,cursor:"pointer",transition:"all 0.15s"}}>
+                            <div style={{fontSize:18,marginBottom:2}}>{it.i}</div>
+                            <div style={{fontSize:10,fontWeight:700,color:isSel?C.warn:C.white,fontFamily:FONT,lineHeight:1.2}}>{it.n}</div>
+                            <div style={{fontSize:9,color:col,fontFamily:FONT,fontWeight:700,marginTop:2}}>+{cl}{cl>=20?" MAX":""}</div>
+                          </div>
+                        );
+                      })}
+                    </div>
+
+                    {/* Right — upgrade panel */}
+                    {selIt&&(
+                      <div style={{flex:1}}>
+                        {/* Item card */}
+                        <div style={{padding:"16px 20px",borderRadius:12,background:"linear-gradient(135deg,"+C.warn+"12,"+C.card+")",
+                          border:"2px solid "+C.warn+"50",marginBottom:12,boxShadow:"0 0 20px "+C.warn+"15"}}>
+                          <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:12}}>
+                            <div style={{fontSize:36,filter:"drop-shadow(0 0 10px "+C.warn+")"}}>{selIt.i}</div>
+                            <div>
+                              <div style={{fontSize:14,fontWeight:700,color:C.warn,fontFamily:FONT}}>{selIt.n}</div>
+                              <div style={{fontSize:11,color:C.ts,fontFamily:FONT_BODY}}>{selSlot?.slot.label}</div>
+                            </div>
+                            <div style={{marginLeft:"auto",textAlign:"center"}}>
+                              <div style={{fontSize:28,fontWeight:700,color:selCl>=15?"#ffd60a":selCl>=10?"#c084fc":selCl>=5?C.ok:C.white,fontFamily:FONT,lineHeight:1}}>+{selCl}</div>
+                              <div style={{fontSize:9,color:C.td,fontFamily:FONT_BODY}}>{selCl>=20?"MAX LEVEL":"Enhancement"}</div>
+                            </div>
+                          </div>
+
+                          {/* Enhancement level bar */}
+                          <div style={{marginBottom:12}}>
+                            <div style={{display:"flex",gap:3}}>
+                              {Array.from({length:20},(_,i)=>{
+                                const filled=i<selCl;
+                                const col=i>=14?"#ffd60a":i>=9?"#c084fc":i>=4?C.ok:C.acc;
+                                return <div key={i} style={{flex:1,height:6,borderRadius:2,background:filled?col:C.bg,boxShadow:filled?"0 0 4px "+col+"80":"none",transition:"all 0.2s"}}/>;
+                              })}
+                            </div>
+                            <div style={{display:"flex",justifyContent:"space-between",fontSize:8,color:C.td,fontFamily:FONT,marginTop:3}}>
+                              <span>+0</span><span style={{color:C.ok}}>+5</span><span style={{color:"#c084fc"}}>+10</span><span style={{color:"#ffd60a"}}>+15</span><span>+20</span>
+                            </div>
+                          </div>
+
+                          {/* Stats */}
+                          {selIt.st&&(
+                            <div style={{display:"flex",flexWrap:"wrap",gap:4,marginBottom:8}}>
+                              {Object.entries(selIt.st||{}).map(([k,v])=>{
+                                const base=v;const boosted=typeof v==="number"?Math.floor(v*(1+selCl*0.08)):v;
+                                return(
+                                  <div key={k} style={{padding:"3px 8px",borderRadius:5,background:C.bg,border:"1px solid "+C.border,fontSize:9,fontFamily:FONT_BODY}}>
+                                    <span style={{color:C.ts}}>{STAT_LABELS[k]||k}: </span>
+                                    <span style={{color:C.ok,fontWeight:700}}>{typeof base==="number"&&base<1?"+"+Math.round(boosted*100)+"%":"+"+boosted}</span>
+                                    {selCl>0&&typeof base==="number"&&<span style={{color:C.gold,fontSize:8}}> (base {base<1?"+"+Math.round(base*100)+"%":"+"+base})</span>}
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Upgrade info + button */}
+                        <div style={{padding:"14px 16px",borderRadius:10,background:C.card,border:"1px solid "+C.border,marginBottom:12}}>
+                          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8,marginBottom:12}}>
+                            <div style={{textAlign:"center"}}>
+                              <div style={{fontSize:9,color:C.td,fontFamily:FONT,letterSpacing:1,marginBottom:3}}>COST</div>
+                              <div style={{fontSize:14,fontWeight:700,color:gold>=selCost?C.gold:"#f87171",fontFamily:FONT}}>◈{fmt(selCost)}</div>
+                            </div>
+                            <div style={{textAlign:"center"}}>
+                              <div style={{fontSize:9,color:C.td,fontFamily:FONT,letterSpacing:1,marginBottom:3}}>SUCCESS</div>
+                              <div style={{fontSize:14,fontWeight:700,color:selRate>=60?C.ok:selRate>=40?C.warn:"#f87171",fontFamily:FONT}}>{selRate}%</div>
+                            </div>
+                            <div style={{textAlign:"center"}}>
+                              <div style={{fontSize:9,color:C.td,fontFamily:FONT,letterSpacing:1,marginBottom:3}}>NEXT</div>
+                              <div style={{fontSize:14,fontWeight:700,color:C.white,fontFamily:FONT}}>{selCl>=20?"—":"+"+(selCl+1)}</div>
+                            </div>
+                          </div>
+                          <div onClick={()=>{if(canUpgrade)doEnh(selSlot.slot.id)}}
+                            style={{width:"100%",padding:"12px 0",borderRadius:8,textAlign:"center",fontFamily:FONT,fontSize:12,fontWeight:700,letterSpacing:1,
+                            background:canUpgrade?"linear-gradient(90deg,"+C.warn+"cc,"+C.gold+")":C.bg,
+                            color:canUpgrade?C.bg:C.td,cursor:canUpgrade?"pointer":"default",
+                            opacity:selCl>=20?0.4:1,
+                            boxShadow:canUpgrade?"0 0 16px "+C.gold+"55":"none",
+                            border:"1px solid "+(canUpgrade?C.gold+"80":C.border),transition:"all 0.15s"}}>
+                            {selCl>=20?"MAX LEVEL REACHED":canUpgrade?"⚡ UPGRADE TO +"+(selCl+1):"NOT ENOUGH ◈"}
+                          </div>
+                        </div>
+
+                        {/* Upgrade log */}
+                        {clog.filter(l=>l.includes("upgraded")||l.includes("reset")).length>0&&(
+                          <div style={{padding:"10px 14px",borderRadius:8,background:C.card,border:"1px solid "+C.border}}>
+                            <div style={{fontSize:9,color:C.td,letterSpacing:2,fontFamily:FONT,marginBottom:6}}>UPGRADE LOG</div>
+                            {clog.filter(l=>l.includes("upgraded")||l.includes("reset")||l.includes("💥")||l.includes("✨")).slice(-5).reverse().map((l,i)=>(
+                              <div key={i} style={{fontSize:10,fontFamily:FONT_BODY,color:l.includes("💥")?"#f87171":C.ok,marginBottom:2}}>{l}</div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
-            )}
+            );})()}
 
             {/* INVENTORY PAGE */}
             {page==="inventory"&&(

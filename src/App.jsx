@@ -1174,6 +1174,48 @@ function ProgBar({progRef,height=7,radius=4,bg,color,glow}){
   );
 }
 
+// Standalone ActRow — must be outside GameUI to prevent React remount-on-render
+function ActRow({act,skColor,inv,curAct,startAct,skId,s,tipProps,C,FONT,FONT_BODY,ITEMS,BLUEPRINTS,BP_RARITY_COLOR,GLOW_OK,GLOW_STYLE}){
+  if(!act||!act.name)return null;
+  const locked=s.lv<act.lv&&!s.mastered;
+  const canDo=!locked&&(!act.inp||act.inp.every(i=>(inv[i.id]||0)>=i.q));
+  const isAct=curAct&&curAct.act===act.id&&curAct.sk===skId;
+  const isBp=!!act._blueprint;
+  const bpMeta=isBp?BLUEPRINTS.find(b=>b.id===act._blueprint):null;
+  const bpColor=bpMeta?BP_RARITY_COLOR[bpMeta.rarity]:"#ffd60a";
+  return(
+    <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"12px 16px",borderRadius:8,
+      background:isAct?"linear-gradient(90deg,"+C.ok+"18,"+C.card+")":isBp?"linear-gradient(135deg,"+bpColor+"10,"+C.card+")":C.card,
+      border:"2px solid "+(isAct?C.ok+"60":isBp?bpColor+"50":C.border),
+      marginBottom:8,opacity:locked?0.32:1,transition:"all 0.15s",
+      boxShadow:isBp?"0 0 10px "+bpColor+"18":"none"}}>
+      <div style={{flex:1,minWidth:0}}>
+        <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:3}}>
+          <div style={{fontSize:13,fontWeight:700,color:isAct?C.ok:isBp?bpColor:C.white,fontFamily:FONT,letterSpacing:0.8}}>{act.name}</div>
+          <div style={{fontSize:9,color:C.td,fontFamily:FONT}}>Lv {act.lv} · +{act.xp} XP · {act.t}s</div>
+          {isBp&&<div style={{fontSize:9,padding:"2px 6px",borderRadius:5,background:bpColor+"25",border:"1px solid "+bpColor+"60",color:bpColor,fontWeight:700}}>📘 BP</div>}
+        </div>
+        <div style={{fontSize:11,color:C.ts,fontFamily:FONT_BODY,display:"flex",alignItems:"center",gap:3,flexWrap:"wrap"}}>
+          {act.inp&&<>{act.inp.map(i=>{const it=ITEMS[i.id];const has=(inv[i.id]||0)>=i.q;return(
+            <span key={i.id} style={{color:has?C.ts:"#f87171",marginRight:2}}>{it?.i||""}{i.q} {it?.n||i.id}</span>
+          );})}<span style={{color:C.td,margin:"0 2px"}}>→</span></>}
+          {act.out&&act.out.map(i=>{const it=ITEMS[i.id];const isGear=it?.eq&&it.eq!=="tool";return(
+            <span key={i.id} style={{color:isGear?skColor:C.ts,fontWeight:isGear?700:400,borderBottom:isGear?"1px dashed "+skColor+"50":"none"}}>
+              {it?.i||""} {it?.n||i.id}{i.q>1?" ×"+i.q:""}
+            </span>
+          );})}
+        </div>
+        {act.util&&<div style={{fontSize:10,color:"#38bdf8",marginTop:2,fontFamily:FONT_BODY}}>{act.desc}</div>}
+        {locked&&<div style={{fontSize:10,color:C.bad,marginTop:2,fontFamily:FONT_BODY}}>🔒 Requires Level {act.lv}</div>}
+      </div>
+      {!locked&&<div onClick={()=>{if(canDo)startAct(skId,act.id)}} style={{padding:"9px 20px",borderRadius:8,marginLeft:12,flexShrink:0,
+        background:isAct?"linear-gradient(90deg,"+C.okD+","+C.ok+")":canDo?"linear-gradient(90deg,"+C.accD+","+C.acc+")":C.card,
+        color:C.bg,fontSize:11,fontWeight:700,cursor:canDo?"pointer":"default",opacity:canDo?1:0.35,letterSpacing:0.8,fontFamily:FONT,
+        boxShadow:isAct?GLOW_OK:canDo?GLOW_STYLE:"none"}}>{isAct?"ACTIVE":"START"}</div>}
+    </div>
+  );
+}
+
 function GameUI({account,onLogout}){
   const[skills,setSkills]=useState({});
   const[inv,setInv]=useState({});
@@ -2982,49 +3024,13 @@ function GameUI({account,onLogout}){
                 {(()=>{
                   const isGearProdSkill=["fabrication","relic_forging","gear_crafting"].includes(skData.id);
 
-                  const ActRow=({act})=>{
-                    if(!act||!act.name)return null;
-                    const locked=s.lv<act.lv&&!s.mastered;
-                    const canDo=!locked&&(!act.inp||act.inp.every(i=>(inv[i.id]||0)>=i.q));
-                    const isAct=curAct&&curAct.act===act.id;
-                    const isBp=!!act._blueprint;
-                    const bpMeta=isBp?BLUEPRINTS.find(b=>b.id===act._blueprint):null;
-                    const bpColor=bpMeta?BP_RARITY_COLOR[bpMeta.rarity]:C.gold;
-                    return(
-                      <div key={act.id} style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"12px 16px",borderRadius:8,
-                        background:isAct?"linear-gradient(90deg,"+C.ok+"18,"+C.card+")":isBp?"linear-gradient(135deg,"+bpColor+"10,"+C.card+")":C.card,
-                        border:"2px solid "+(isAct?C.ok+"60":isBp?bpColor+"50":C.border),
-                        marginBottom:8,opacity:locked?0.32:1,transition:"all 0.15s",
-                        boxShadow:isBp?"0 0 10px "+bpColor+"18":"none"}}>
-                        <div style={{flex:1,minWidth:0}}>
-                          <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:3}}>
-                            <div style={{fontSize:13,fontWeight:700,color:isAct?C.ok:isBp?bpColor:C.white,fontFamily:FONT,letterSpacing:0.8}}>{act.name}</div>
-                            <div style={{fontSize:9,color:C.td,fontFamily:FONT}}>Lv {act.lv} · +{act.xp} XP · {act.t}s</div>
-                            {isBp&&<div style={{fontSize:9,padding:"2px 6px",borderRadius:5,background:bpColor+"25",border:"1px solid "+bpColor+"60",color:bpColor,fontWeight:700}}>📘 BP</div>}
-                          </div>
-                          <div style={{fontSize:11,color:C.ts,fontFamily:FONT_BODY,display:"flex",alignItems:"center",gap:3,flexWrap:"wrap"}}>
-                            {act.inp&&<>{act.inp.map(i=>{const it=ITEMS[i.id];const has=(inv[i.id]||0)>=i.q;return(
-                              <span key={i.id} {...tipProps(i.id)} style={{color:has?C.ts:C.bad,marginRight:2}}>{it?.i||""}{i.q} {it?.n||i.id}</span>
-                            );})}<span style={{color:C.td,margin:"0 2px"}}>→</span></>}
-                            {act.out&&act.out.map(i=>{const it=ITEMS[i.id];const isGear=it?.eq&&it.eq!=="tool";return(
-                              <span key={i.id} {...tipProps(i.id)} style={{color:isGear?skData.color:C.ts,fontWeight:isGear?700:400,borderBottom:isGear?"1px dashed "+skData.color+"50":"none"}}>
-                                {it?.i||""} {it?.n||i.id}{i.q>1?" ×"+i.q:""}
-                              </span>
-                            );})}
-                          </div>
-                          {act.util&&<div style={{fontSize:10,color:"#38bdf8",marginTop:2,fontFamily:FONT_BODY}}>{act.desc}</div>}
-                          {locked&&<div style={{fontSize:10,color:C.bad,marginTop:2,fontFamily:FONT_BODY}}>🔒 Requires Level {act.lv}</div>}
-                        </div>
-                        {!locked&&<div onClick={()=>{if(canDo)startAct(skData.id,act.id)}} style={{padding:"9px 20px",borderRadius:8,marginLeft:12,flexShrink:0,
-                          background:isAct?"linear-gradient(90deg,"+C.okD+","+C.ok+")":canDo?"linear-gradient(90deg,"+C.accD+","+C.acc+")":C.card,
-                          color:C.bg,fontSize:11,fontWeight:700,cursor:canDo?"pointer":"default",opacity:canDo?1:0.35,letterSpacing:0.8,fontFamily:FONT,
-                          boxShadow:isAct?GLOW_OK:canDo?GLOW_STYLE:"none"}}>{isAct?"ACTIVE":"START"}</div>}
-                      </div>
-                    );
-                  };
+                  // Pass all needed context as props to standalone ActRow
+                  const arProps={skColor:skData.color,inv,curAct,startAct,skId:skData.id,s,tipProps,C,FONT,FONT_BODY,ITEMS,BLUEPRINTS,BP_RARITY_COLOR,GLOW_OK,GLOW_STYLE};
+                  const AR=({act})=><ActRow key={skData.id+"-"+act.id} act={act} {...arProps}/>;
 
                   // Gathering / Bio Lab / Exploration — flat list, no tabs
-                  if(!isGearProdSkill) return <>{allActs.map(act=><ActRow key={act.id} act={act}/>)}</>;
+                  if(!isGearProdSkill) return <>{allActs.map(act=><AR key={skData.id+"-"+act.id} act={act}/>)}</>;
+
 
                   // Gear production skills — MWI-style slot tabs
                   // Determine tabs based on what acts exist for this skill
@@ -3113,7 +3119,7 @@ function GameUI({account,onLogout}){
                     {/* Tab content */}
                     {isMaterialTab?(
                       // Material tab — flat list (refining chain)
-                      tabActs.map(act=><ActRow key={act.id} act={act}/>)
+                      tabActs.map(act=><AR key={skData.id+"-"+act.id} act={act}/>)
                     ):(
                       // Gear tabs — grouped by tier
                       tiers.map(tier=>{
@@ -3125,7 +3131,7 @@ function GameUI({account,onLogout}){
                               <span style={{fontSize:9,fontWeight:700,color:tier.color,padding:"2px 8px",borderRadius:4,background:tier.color+"20",border:"1px solid "+tier.color+"40",letterSpacing:2}}>{tier.label}</span>
                               <span style={{fontSize:9,color:C.td,fontFamily:FONT}}>Lv {tier.min}–{tier.max}</span>
                             </div>
-                            {ta.map(act=><ActRow key={act.id} act={act}/>)}
+                            {ta.map(act=><AR key={skData.id+"-"+act.id} act={act}/>)}
                           </div>
                         );
                       })

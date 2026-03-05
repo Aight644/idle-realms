@@ -10,7 +10,7 @@ import {
 import { doc, setDoc, getDoc } from 'firebase/firestore';
 
 const FONT = "'Orbitron', 'Segoe UI', system-ui, sans-serif";
-const FONT_BODY = "'Inter', system-ui, sans-serif";
+const FONT_BODY = FONT;
 
 // Cross-platform tap: instant on touch, normal onClick on mouse
 const tap=(fn)=>({

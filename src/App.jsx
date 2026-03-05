@@ -12,6 +12,10 @@ import { doc, setDoc, getDoc } from 'firebase/firestore';
 const FONT = "'Orbitron', 'Segoe UI', system-ui, sans-serif";
 const FONT_BODY = FONT;
 
+const SKILL_IMAGES={
+  kelp_farming: "/images/skills/kelp_farming.png",
+};
+
 
 // Cross-platform tap: instant on touch, normal onClick on mouse
 const tap=(fn)=>({
@@ -1165,7 +1169,7 @@ function ProgBar({progRef,height=7,radius=4,bg,color,glow}){
 }
 
 // Standalone ActRow — must be outside GameUI to prevent React remount-on-render
-function ActRow({act,skColor,inv,curAct,startAct,skId,s,tipProps,C,FONT,FONT_BODY,ITEMS,BLUEPRINTS,BP_DROPS,BP_RARITY_COLOR,GLOW_OK,GLOW_STYLE}){
+function ActRow({act,skColor,inv,curAct,startAct,skId,s,tipProps,C,FONT,FONT_BODY,ITEMS,BLUEPRINTS,BP_DROPS,BP_RARITY_COLOR,GLOW_OK,GLOW_STYLE,skImg}){
   if(!act||!act.name)return null;
   const tp=tipProps||(()=>({}));
   const locked=s.lv<act.lv&&!s.mastered;
@@ -1176,10 +1180,12 @@ function ActRow({act,skColor,inv,curAct,startAct,skId,s,tipProps,C,FONT,FONT_BOD
   const bpColor=bpMeta?BP_RARITY_COLOR[bpMeta.rarity]:"#ffd60a";
   return(
     <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"12px 16px",borderRadius:8,
-      background:isAct?"linear-gradient(90deg,"+C.ok+"18,"+C.card+")":isBp?"linear-gradient(135deg,"+bpColor+"10,"+C.card+")":C.card,
-      border:"2px solid "+(isAct?C.ok+"60":isBp?bpColor+"50":C.border),
+      backgroundImage:skImg?"linear-gradient(90deg,rgba(10,22,40,0.82),rgba(10,22,40,0.65)), url("+skImg+")":undefined,
+      backgroundSize:skImg?"cover":undefined,backgroundPosition:skImg?"center":undefined,
+      background:skImg?undefined:isAct?"linear-gradient(90deg,"+C.ok+"18,"+C.card+")":isBp?"linear-gradient(135deg,"+bpColor+"10,"+C.card+")":C.card,
+      border:"2px solid "+(isAct?C.ok+"60":isBp?bpColor+"50":skImg?skColor+"40":C.border),
       marginBottom:8,opacity:locked?0.32:1,transition:"all 0.15s",
-      boxShadow:isBp?"0 0 10px "+bpColor+"18":"none"}}>
+      boxShadow:isBp?"0 0 10px "+bpColor+"18":skImg?"0 0 12px "+skColor+"30":"none"}}>
       <div style={{flex:1,minWidth:0}}>
         <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:3}}>
           <div style={{fontSize:13,fontWeight:700,color:isAct?C.ok:isBp?bpColor:C.white,fontFamily:FONT,letterSpacing:0.8}}>{act.name}</div>
@@ -3032,7 +3038,7 @@ function GameUI({account,onLogout}){
                   const isGearProdSkill=["fabrication","relic_forging","gear_crafting"].includes(skData.id);
 
                   // Pass all needed context as props to standalone ActRow
-                  const arProps={skColor:skData.color,inv,curAct,startAct,skId:skData.id,s,tipProps,C,FONT,FONT_BODY,ITEMS,BLUEPRINTS,BP_DROPS,BP_RARITY_COLOR,GLOW_OK,GLOW_STYLE};
+                  const arProps={skColor:skData.color,inv,curAct,startAct,skId:skData.id,s,tipProps,C,FONT,FONT_BODY,ITEMS,BLUEPRINTS,BP_DROPS,BP_RARITY_COLOR,GLOW_OK,GLOW_STYLE,skImg:SKILL_IMAGES[skData.id]};
                   const AR=({act})=><ActRow key={skData.id+"-"+act.id} act={act} {...arProps}/>;
 
                   // Gathering / Bio Lab / Exploration — flat list, no tabs

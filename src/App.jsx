@@ -1311,6 +1311,7 @@ function GameUI({account,onLogout}){
       }
       // Show tutorial for new players (no prior save)
     }else{setShowTutorial(true)}
+    dataLoaded.current=true;
     }catch(e){console.error(e)}})()},[account.uid]);
 
   // Load social on mount
@@ -1319,44 +1320,36 @@ function GameUI({account,onLogout}){
   useEffect(()=>{chatEndRef.current?.scrollIntoView({behavior:"smooth"})},[chatMessages,dmMessages,clanChat]);
   // ── AUTOSAVE ──
   const saveRef=useRef(null);
+  const dataLoaded=useRef(false); // don't save until load completes
 
-  // Build save object
-  const buildSave=useCallback(()=>({
-    skills,inv,eq,gold,enh,researchPts,researched,
-    structures,drones,achievements,lifeStats,blueprints,
-    bpLog:bpLog.slice(-50),ts:Date.now(),
-  }),[skills,inv,eq,gold,enh,researchPts,researched,structures,drones,achievements,lifeStats,blueprints,bpLog]);
-
-  // Write to both localStorage (instant) and Firestore (cloud)
-  const saveNow=useCallback(async()=>{
-    if(!account?.uid)return;
-    const save=buildSave();
-    // localStorage — synchronous, survives refresh instantly
-    try{localStorage.setItem("idle_save_"+account.uid,JSON.stringify(save));}catch{}
-    // Firestore — async cloud backup
-    try{await setDoc(doc(db,"doc_saves",account.uid),save);}
-    catch(e){console.error("cloud save failed:",e)}
-  },[account?.uid,buildSave]);
-
-  // Debounced autosave — 3s after last change
+  // Debounced autosave — only after data is loaded
   useEffect(()=>{
-    if(!account?.uid)return;
-    // Always write localStorage immediately (sync, no data loss on refresh)
-    try{localStorage.setItem("idle_save_"+account.uid,JSON.stringify(buildSave()));}catch{}
-    // Debounce the Firestore write
+    if(!account?.uid||!dataLoaded.current)return;
+    // Write to localStorage immediately — synchronous, survives any refresh
+    const save={
+      skills,inv,eq,gold,enh,researchPts,researched,
+      structures,drones,achievements,lifeStats,
+      blueprints,bpLog:bpLog.slice(-50),ts:Date.now(),
+    };
+    try{localStorage.setItem("idle_save_"+account.uid,JSON.stringify(save));}catch{}
+    // Debounce Firestore write to 5s
     if(saveRef.current)clearTimeout(saveRef.current);
     saveRef.current=setTimeout(async()=>{
-      try{await setDoc(doc(db,"doc_saves",account.uid),buildSave());}
-      catch(e){console.error("cloud save failed:",e)}
+      try{await setDoc(doc(db,"doc_saves",account.uid),save);}
+      catch(e){console.error("cloud save:",e)}
     },5000);
   },[skills,inv,eq,gold,enh,researchPts,researched,structures,drones,achievements,lifeStats,blueprints,bpLog]);
 
   // Save on tab close
   useEffect(()=>{
-    const handler=()=>saveNow();
+    const handler=()=>{
+      if(!account?.uid||!dataLoaded.current)return;
+      const save={skills,inv,eq,gold,enh,researchPts,researched,structures,drones,achievements,lifeStats,blueprints,bpLog:bpLog.slice(-50),ts:Date.now()};
+      try{localStorage.setItem("idle_save_"+account.uid,JSON.stringify(save));}catch{}
+    };
     window.addEventListener("beforeunload",handler);
     return()=>window.removeEventListener("beforeunload",handler);
-  },[saveNow]);
+  },[account?.uid,skills,inv,eq,gold,enh,researchPts,researched,structures,drones,achievements,lifeStats,blueprints,bpLog]);
 
 
   // Energy regen

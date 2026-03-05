@@ -1374,7 +1374,7 @@ function GameUI({account,onLogout}){
       if(snap.exists())d=snap.data();
     }
     if(d){
-      if(d.skills)setSkills(d.skills);if(d.inv)setInv(d.inv);if(d.eq)setEq(d.eq);if(d.gold)setGold(d.gold);if(d.enh)setEnh(d.enh);if(d.researchPts)setResearchPts(d.researchPts);if(d.researched)setResearched(d.researched);if(d.structures)setStructures(d.structures);if(d.drones)setDrones(d.drones);
+      if(d.skills)setSkills(d.skills);if(d.inv){const cleanInv={};Object.entries(d.inv).forEach(([k,v])=>{if(ITEMS[k])cleanInv[k]=v;});setInv(cleanInv);}if(d.eq){const cleanEq={};Object.entries(d.eq).forEach(([slot,iid])=>{if(ITEMS[iid])cleanEq[slot]=iid;});setEq(cleanEq);}if(d.gold)setGold(d.gold);if(d.enh){const cleanEnh={};Object.entries(d.enh).forEach(([k,v])=>{if(ITEMS[k])cleanEnh[k]=v;});setEnh(cleanEnh);}if(d.researchPts)setResearchPts(d.researchPts);if(d.researched)setResearched(d.researched);if(d.structures)setStructures(d.structures);if(d.drones)setDrones(d.drones);
       if(d.achievements)setAchievements(d.achievements);if(d.lifeStats)setLifeStats(p=>({...p,...d.lifeStats}));
       if(d.blueprints)setBlueprints(d.blueprints);
       if(d.bpLog)setBpLog(d.bpLog);
@@ -2168,7 +2168,7 @@ function GameUI({account,onLogout}){
           <span style={{fontSize:22,filter:it.rare?"drop-shadow(0 0 6px "+C.gold+")":"none"}}>{it.i}</span>
           <div>
             <div style={{fontSize:13,fontWeight:700,color:setData?setData.color:it.rare?C.gold:C.white,fontFamily:FONT,letterSpacing:0.5}}>{it.n}</div>
-            <div style={{fontSize:9,color:C.td,fontFamily:FONT,letterSpacing:1}}>{itemType.toUpperCase()}{it.eq?" · "+it.eq.toUpperCase():""}</div>
+            <div style={{fontSize:9,color:C.td,fontFamily:FONT,letterSpacing:1}}>{itemType.toUpperCase()}{it.eq?" · "+(it.eq||"").toUpperCase():""}</div>
           </div>
         </div>
         {/* Inventory count */}
@@ -2467,28 +2467,45 @@ function GameUI({account,onLogout}){
                                     {isPinned?"📌 PINNED — TAP TO UNPIN":"📌 PIN TO TOP"}
                                   </div>
                                 )}
-                                {/* Gear Crafting category pills (mobile) */}
+                                {/* Category pills for gear_crafting */}
                                 {sk.id==="gear_crafting"&&(
                                   <div style={{display:"flex",gap:5,flexWrap:"wrap",marginBottom:4}}>
                                     {[
-                                      {id:"combat",     label:"⚔️"},
-                                      {id:"cultivation",label:"🌿"},
-                                      {id:"mining",     label:"⛏️"},
-                                      {id:"fishing",    label:"🎣"},
-                                      {id:"crystal",    label:"💎"},
-                                      {id:"trench",     label:"🗺️"},
+                                      {id:"combat",label:"⚔️"},{id:"cultivation",label:"🌿"},
+                                      {id:"mining",label:"⛏️"},{id:"fishing",label:"🎣"},
+                                      {id:"crystal",label:"💎"},{id:"trench",label:"🗺️"},
                                     ].map(cat=>(
-                                      <div key={cat.id} {...tap(()=>setGearCat(cat.id))} style={{padding:"5px 10px",borderRadius:16,fontSize:11,fontWeight:700,fontFamily:FONT,
+                                      <div key={cat.id} {...tap(()=>setGearCat(cat.id))} style={{padding:"4px 9px",borderRadius:12,fontSize:11,fontWeight:700,fontFamily:FONT,
                                         background:gearCat===cat.id?sk.color+"30":C.card,
                                         border:"1px solid "+(gearCat===cat.id?sk.color:C.border),
-                                        color:gearCat===cat.id?sk.color:C.td,
-                                        cursor:"pointer",userSelect:"none"}}>
-                                        {cat.label} {cat.id.charAt(0).toUpperCase()+cat.id.slice(1)}
+                                        color:gearCat===cat.id?sk.color:C.td,cursor:"pointer",userSelect:"none"}}>
+                                        {cat.label}
                                       </div>
                                     ))}
                                   </div>
                                 )}
-                                {sk.acts.filter(act=>!act.gearCat||act.gearCat===gearCat).map(act=>{
+                                {/* For fab/relic: show section headers inline */}
+                                {(sk.id==="fabrication"||sk.id==="relic_forging")&&(
+                                  <div style={{display:"flex",gap:5,flexWrap:"wrap",marginBottom:4}}>
+                                    {[{id:"mat",label:"🔩 Refining"},{id:"gear",label:"⚔️ Gear Set"}].map(cat=>(
+                                      <div key={cat.id} {...tap(()=>setGearCat(cat.id==="mat"?"_mat":"_gear"))} style={{padding:"4px 9px",borderRadius:12,fontSize:11,fontWeight:700,fontFamily:FONT,
+                                        background:(gearCat===(cat.id==="mat"?"_mat":"_gear")||(!["_mat","_gear"].includes(gearCat)&&cat.id==="mat"))?sk.color+"30":C.card,
+                                        border:"1px solid "+sk.color+"40",color:sk.color,cursor:"pointer",userSelect:"none"}}>
+                                        {cat.label}
+                                      </div>
+                                    ))}
+                                  </div>
+                                )}
+                                {sk.acts.filter(act=>{
+                                  if(sk.id==="gear_crafting")return!!act.gearCat?act.gearCat===gearCat:true;
+                                  if(sk.id==="fabrication"||sk.id==="relic_forging"){
+                                    const isGear=act.id.startsWith("tb_")||act.id.startsWith("vc_");
+                                    if(gearCat==="_mat")return!isGear;
+                                    if(gearCat==="_gear")return isGear;
+                                    return!isGear; // default: show refining
+                                  }
+                                  return true;
+                                }).map(act=>{
                                   const canDo=s.lv>=act.lv;
                                   const isAct=curAct?.sk===sk.id&&curAct?.act===act.id;
                                   const isLast=lastActMap[sk.id]===act.id&&!isAct&&!running;
@@ -3020,65 +3037,148 @@ function GameUI({account,onLogout}){
                     boxShadow:"0 0 8px "+(s.mastered?C.gold:skData.color)}}/>
                 </div>
                 {s.mastered&&<div style={{fontSize:10,color:C.gold,fontFamily:FONT_BODY,marginBottom:20,textAlign:"center",letterSpacing:1}}>★ This skill is fully mastered. All operations are available.</div>}
-                <div style={{fontSize:11,fontWeight:700,color:C.td,marginBottom:12,letterSpacing:2}}>AVAILABLE OPERATIONS</div>
-                {/* Gear Crafting category picker */}
-                {skData.id==="gear_crafting"&&(
-                  <div style={{display:"flex",gap:6,marginBottom:16,flexWrap:"wrap"}}>
-                    {[
-                      {id:"combat",     label:"⚔️ Combat"},
-                      {id:"cultivation",label:"🌿 Cultivation"},
-                      {id:"mining",     label:"⛏️ Mining"},
-                      {id:"fishing",    label:"🎣 Fishing"},
-                      {id:"crystal",    label:"💎 Crystal"},
-                      {id:"trench",     label:"🗺️ Trench"},
-                    ].map(cat=>(
-                      <div key={cat.id} onClick={()=>setGearCat(cat.id)} style={{padding:"6px 14px",borderRadius:20,cursor:"pointer",fontSize:11,fontWeight:700,fontFamily:FONT,letterSpacing:0.5,
-                        background:gearCat===cat.id?"linear-gradient(90deg,"+C.accD+","+C.acc+")":C.card,
-                        color:gearCat===cat.id?C.bg:C.td,
-                        border:"1px solid "+(gearCat===cat.id?C.acc:C.border),
-                        transition:"all 0.15s"}}>
-                        {cat.label}
+                {/* MWI-style production layout: for prod skills with gear, show Refining first then gear sections */}
+                {(()=>{
+                  // Determine if this skill has a gear set
+                  const hasGearSets=["fabrication","relic_forging","gear_crafting"].includes(skData.id);
+                  // Gear crafting has multiple gear cats; others have one implicit set
+                  const gearCatDefs={
+                    gear_crafting:[
+                      {id:"combat",label:"⚔️ Combat",color:"#f87171"},
+                      {id:"cultivation",label:"🌿 Cultivation",color:"#00c285"},
+                      {id:"mining",label:"⛏️ Mining",color:"#7b61ff"},
+                      {id:"fishing",label:"🎣 Fishing",color:"#00d4ff"},
+                      {id:"crystal",label:"💎 Crystal",color:"#a78bfa"},
+                      {id:"trench",label:"🗺️ Trench",color:"#38bdf8"},
+                    ],
+                    fabrication:[{id:"gear",label:"⚔️ Tidebreaker — Melee Set",color:"#ffd60a"}],
+                    relic_forging:[{id:"gear",label:"🪄 Voidcaller — Magic Set",color:"#e11d48"}],
+                  };
+                  // Split acts: refining/materials (no gearCat or gearCat undefined for non-gear_crafting) vs gear
+                  const isGearAct=(act)=>{
+                    if(skData.id==="gear_crafting")return!!act.gearCat;
+                    // For fabrication/relic: acts whose id starts with tb_ or vc_ are gear
+                    return act.id.startsWith("tb_")||act.id.startsWith("vc_");
+                  };
+                  const matActs=allActs.filter(a=>!isGearAct(a));
+                  const gearActs=allActs.filter(a=>isGearAct(a));
+                  const activeCats=gearCatDefs[skData.id]||[];
+                  // Active gear cat for gear_crafting uses gearCat state; others always show
+                  const activeGearCatId=skData.id==="gear_crafting"?gearCat:"gear";
+                  const visibleGearActs=skData.id==="gear_crafting"
+                    ?gearActs.filter(a=>a.gearCat===activeGearCatId)
+                    :gearActs;
+
+                  const ActRow=({act})=>{
+                    if(!act||!act.name)return null;
+                    const locked=s.lv<act.lv&&!s.mastered;
+                    const canDo=!locked&&(!act.inp||act.inp.every(i=>(inv[i.id]||0)>=i.q));
+                    const isAct=curAct&&curAct.act===act.id;
+                    const isBp=!!act._blueprint;
+                    const bpMeta=isBp?BLUEPRINTS.find(b=>b.id===act._blueprint):null;
+                    const bpColor=bpMeta?BP_RARITY_COLOR[bpMeta.rarity]:C.gold;
+                    return(
+                      <div key={act.id} style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"12px 16px",borderRadius:8,
+                        background:isAct?"linear-gradient(90deg,"+C.ok+"18,"+C.card+")":isBp?"linear-gradient(135deg,"+bpColor+"10,"+C.card+")":C.card,
+                        border:"2px solid "+(isAct?C.ok+"60":isBp?bpColor+"50":C.border),
+                        marginBottom:8,opacity:locked?0.32:1,transition:"all 0.15s",
+                        boxShadow:isBp?"0 0 10px "+bpColor+"18":"none"}}>
+                        <div style={{flex:1,minWidth:0}}>
+                          <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:3}}>
+                            <div style={{fontSize:13,fontWeight:700,color:isAct?C.ok:isBp?bpColor:C.white,fontFamily:FONT,letterSpacing:0.8}}>{act.name}</div>
+                            <div style={{fontSize:9,color:C.td,fontFamily:FONT}}>Lv {act.lv} · +{act.xp} XP · {act.t}s</div>
+                            {isBp&&<div style={{fontSize:9,padding:"2px 6px",borderRadius:5,background:bpColor+"25",border:"1px solid "+bpColor+"60",color:bpColor,fontWeight:700}}>📘 BP</div>}
+                          </div>
+                          <div style={{fontSize:11,color:C.ts,fontFamily:FONT_BODY,display:"flex",alignItems:"center",gap:3,flexWrap:"wrap"}}>
+                            {act.inp&&<>{act.inp.map(i=>{const it=ITEMS[i.id];const has=(inv[i.id]||0)>=i.q;return(
+                              <span key={i.id} {...tipProps(i.id)} style={{color:has?C.ts:C.bad,marginRight:2}}>{it?.i||""}{i.q} {it?.n||i.id}</span>
+                            );})}
+                            <span style={{color:C.td,margin:"0 2px"}}>→</span>
+                            </>}
+                            {act.out&&act.out.map(i=>{const it=ITEMS[i.id];const isGear=it?.eq&&!it?.eq?.includes("tool");return(
+                              <span key={i.id} {...tipProps(i.id)} style={{color:isGear?skData.color:C.ts,fontWeight:isGear?700:400,borderBottom:isGear?"1px dashed "+skData.color+"50":"none"}}>
+                                {it?.i||""} {it?.n||i.id}{i.q>1?" ×"+i.q:""}
+                              </span>
+                            );})}
+                          </div>
+                          {act.util&&<div style={{fontSize:10,color:"#38bdf8",marginTop:2,fontFamily:FONT_BODY}}>{act.desc}</div>}
+                          {locked&&<div style={{fontSize:10,color:C.bad,marginTop:2,fontFamily:FONT_BODY}}>🔒 Requires Level {act.lv}</div>}
+                        </div>
+                        {!locked&&<div onClick={()=>{if(canDo)startAct(skData.id,act.id)}} style={{padding:"9px 20px",borderRadius:8,marginLeft:12,flexShrink:0,
+                          background:isAct?"linear-gradient(90deg,"+C.okD+","+C.ok+")":canDo?"linear-gradient(90deg,"+C.accD+","+C.acc+")":C.card,
+                          color:C.bg,fontSize:11,fontWeight:700,cursor:canDo?"pointer":"default",opacity:canDo?1:0.35,letterSpacing:0.8,fontFamily:FONT,
+                          boxShadow:isAct?GLOW_OK:canDo?GLOW_STYLE:"none"}}>{isAct?"ACTIVE":"START"}</div>}
                       </div>
-                    ))}
-                  </div>
-                )}
-                {allActs.filter(act=>!act.gearCat||act.gearCat===gearCat).map(act=>{
-                  const locked=s.lv<act.lv&&!s.mastered;
-                  const canDo=!locked&&(!act.inp||act.inp.every(i=>(inv[i.id]||0)>=i.q));
-                  const isAct=curAct&&curAct.act===act.id;
-                  const isBp=!!act._blueprint;
-                  const bpMeta=isBp?BLUEPRINTS.find(b=>b.id===act._blueprint):null;
-                  const bpColor=bpMeta?BP_RARITY_COLOR[bpMeta.rarity]:C.gold;
-                  return(
-                  <div key={act.id} style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"14px 18px",borderRadius:10,
-                    background:isAct?"linear-gradient(90deg,"+C.ok+"12,"+C.card+")":isBp?"linear-gradient(135deg,"+bpColor+"10,"+C.card+")":C.card,
-                    border:"2px solid "+(isAct?C.ok+"50":isBp?bpColor+"50":C.border),
-                    marginBottom:10,opacity:locked?0.35:1,transition:"all 0.2s",
-                    boxShadow:isBp?"0 0 12px "+bpColor+"20":"none"}}>
-                    <div style={{flex:1}}>
-                      <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:4}}>
-                        <div style={{fontSize:14,fontWeight:700,color:isAct?C.ok:isBp?bpColor:C.white,fontFamily:FONT,letterSpacing:1}}>{act.name.toUpperCase()}</div>
-                        {isBp&&<div style={{fontSize:9,padding:"2px 7px",borderRadius:6,background:bpColor+"25",border:"1px solid "+bpColor+"60",color:bpColor,fontWeight:700,letterSpacing:1}}>📘 BLUEPRINT</div>}
+                    );
+                  };
+
+                  return(<>
+                    {/* SECTION 1: Materials & Refining */}
+                    {matActs.length>0&&(<>
+                      <div style={{fontSize:10,fontWeight:700,color:C.td,letterSpacing:2,marginBottom:10,paddingBottom:6,borderBottom:"1px solid "+C.border}}>
+                        🔩 MATERIALS &amp; REFINING
                       </div>
-                      <div style={{fontSize:12,color:C.ts,fontFamily:FONT_BODY,display:"flex",alignItems:"center",gap:4,flexWrap:"wrap"}}>
-                        <span>+{act.xp} XP · {act.t}s{act.inp&&<>{" · Needs: "}{act.inp.map(i=><span key={i.id} {...tipProps(i.id)} style={{marginRight:3}}>{(ITEMS[i.id]?ITEMS[i.id].i:"")+i.q}</span>)}</>} →</span>
-                        {act.out&&act.out.map(i=>{const it=ITEMS[i.id];const hasStats=it?.st&&Object.keys(it.st).length>0;return(
-                          <span key={i.id} {...tipProps(i.id)}
-                            style={{color:hasStats?skData.color:C.ts,fontWeight:hasStats?700:400,borderBottom:hasStats?"1px dashed "+skData.color+"60":"none"}}>
-                            {it?.i||""} {it?.n||i.id}
-                          </span>
-                        );})}
+                      {matActs.map(act=><ActRow key={act.id} act={act}/>)}
+                    </>)}
+
+                    {/* SECTION 2: Gear Sets */}
+                    {hasGearSets&&gearActs.length>0&&(<>
+                      <div style={{marginTop:matActs.length>0?24:0,marginBottom:14}}>
+                        <div style={{fontSize:10,fontWeight:700,color:C.td,letterSpacing:2,marginBottom:12,paddingBottom:6,borderBottom:"1px solid "+C.border}}>
+                          ⚔️ GEAR SETS
+                        </div>
+                        {/* Category tabs */}
+                        {activeCats.length>1&&(
+                          <div style={{display:"flex",gap:6,marginBottom:14,flexWrap:"wrap"}}>
+                            {activeCats.map(cat=>(
+                              <div key={cat.id} onClick={()=>setGearCat(cat.id)} style={{padding:"5px 13px",borderRadius:16,cursor:"pointer",fontSize:11,fontWeight:700,fontFamily:FONT,
+                                background:activeGearCatId===cat.id?"linear-gradient(90deg,"+C.accD+","+C.acc+")":C.card,
+                                color:activeGearCatId===cat.id?C.bg:C.td,
+                                border:"1px solid "+(activeGearCatId===cat.id?C.acc:C.border),transition:"all 0.15s"}}>
+                                {cat.label}
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                        {activeCats.length===1&&(
+                          <div style={{fontSize:11,color:activeCats[0].color,fontWeight:700,marginBottom:10,fontFamily:FONT}}>
+                            {activeCats[0].label}
+                          </div>
+                        )}
+                        {/* Gear acts grouped by tier */}
+                        {(()=>{
+                          const tiers=[
+                            {label:"T1",min:1,max:24,color:"#94a3b8"},
+                            {label:"T2",min:25,max:54,color:"#60a5fa"},
+                            {label:"T3",min:55,max:84,color:"#a78bfa"},
+                            {label:"T4",min:85,max:120,color:"#fbbf24"},
+                          ];
+                          return tiers.map(tier=>{
+                            const tierActs=visibleGearActs.filter(a=>a.lv>=tier.min&&a.lv<=tier.max);
+                            if(!tierActs.length)return null;
+                            return(
+                              <div key={tier.label} style={{marginBottom:16}}>
+                                <div style={{fontSize:9,fontWeight:700,color:tier.color,letterSpacing:2,marginBottom:8,display:"flex",alignItems:"center",gap:6}}>
+                                  <span style={{padding:"2px 8px",borderRadius:4,background:tier.color+"20",border:"1px solid "+tier.color+"40"}}>{tier.label}</span>
+                                  <span style={{color:C.td}}>Lv {tier.min}–{tier.max}</span>
+                                </div>
+                                {tierActs.map(act=><ActRow key={act.id} act={act}/>)}
+                              </div>
+                            );
+                          });
+                        })()}
                       </div>
-                      {act.util&&<div style={{fontSize:11,color:"#38bdf8",marginTop:3,fontFamily:FONT_BODY}}>{act.desc||"Utility effect active"}</div>}
-                      {act.out&&act.out.some(o=>ITEMS[o.id]&&ITEMS[o.id].rare)&&<div style={{fontSize:11,color:C.gold,marginTop:2,fontFamily:FONT_BODY}}>✨ Produces rare material</div>}
-                      {locked&&<div style={{fontSize:11,color:C.bad,marginTop:2,fontFamily:FONT_BODY}}>Requires Level {act.lv}</div>}
-                    </div>
-                    {!locked&&<div onClick={()=>{if(canDo)startAct(skData.id,act.id)}} style={{padding:"10px 22px",borderRadius:8,marginLeft:14,flexShrink:0,
-                      background:isAct?"linear-gradient(90deg,"+C.okD+","+C.ok+")":canDo?"linear-gradient(90deg,"+C.accD+","+C.acc+")":C.card,
-                      color:C.bg,fontSize:12,fontWeight:700,cursor:canDo?"pointer":"default",opacity:canDo?1:0.35,letterSpacing:1,fontFamily:FONT,
-                      boxShadow:isAct?GLOW_OK:canDo?GLOW_STYLE:"none"}}>{isAct?"ACTIVE":"START"}</div>}
-                  </div>
-                );})}
+                    </>)}
+
+                    {/* Non-gear-skill: flat list (bio_lab, exploration, etc.) */}
+                    {!hasGearSets&&(<>
+                      <div style={{fontSize:10,fontWeight:700,color:C.td,letterSpacing:2,marginBottom:10,paddingBottom:6,borderBottom:"1px solid "+C.border}}>
+                        AVAILABLE OPERATIONS
+                      </div>
+                      {allActs.map(act=><ActRow key={act.id} act={act}/>)}
+                    </>)}
+                  </>);
+                })()}
                 {/* Blueprint teaser — locked blueprints for this skill */}
                 {availBps.length>0&&(
                   <div style={{marginTop:20}}>
@@ -4549,7 +4649,7 @@ function GameUI({account,onLogout}){
                           ?<div style={{fontSize:12,color:C.white,fontWeight:600,fontFamily:FONT_BODY}}>{it.n}{el>0&&<span style={{color:C.gold}}> +{el}</span>}</div>
                           :<div style={{fontSize:12,color:C.td,fontFamily:FONT_BODY}}>— empty —</div>
                         }
-                        {it?.st&&<div style={{fontSize:10,color:C.ts,fontFamily:FONT_BODY}}>{Object.entries(it.st).map(([k,v])=>k.toUpperCase()+":+"+Math.floor(v*(1+el*0.08))).join(" ")}</div>}
+                        {it?.st&&<div style={{fontSize:10,color:C.ts,fontFamily:FONT_BODY}}>{Object.entries(it.st).map(([k,v])=>(k||"").toUpperCase()+":+"+(typeof v==="number"?Math.floor(v*(1+el*0.08)):v)).join(" ")}</div>}
                       </div>
                     </div>
                   );

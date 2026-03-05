@@ -2347,7 +2347,9 @@ function GameUI({account,onLogout}){
               // Unlock all blueprints
               setBlueprints(BLUEPRINTS.map(b=>b.id));
               setClog(p=>[...p.slice(-20),"🧪 DEV: Everything maxed!"]);
+              console.log("DEV cheat: inv keys=",Object.keys(allItems).length,"eq items=",Object.keys(allItems).filter(id=>ITEMS[id]&&ITEMS[id].eq&&ITEMS[id].eq!=="tool").length,"tools=",Object.keys(allItems).filter(id=>ITEMS[id]&&ITEMS[id].eq==="tool").length);
               setShowSettings(false);
+              setPage("inventory");
             }} style={{padding:"10px",borderRadius:8,background:"#ff000015",border:"1px solid #ff000040",color:"#ff6666",fontSize:11,fontWeight:700,cursor:"pointer",textAlign:"center",letterSpacing:1,fontFamily:FONT,marginBottom:8}}>
               🧪 DEV: GIVE EVERYTHING
             </div>

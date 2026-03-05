@@ -4730,7 +4730,7 @@ function GameUI({account,onLogout}){
                 )}
 
                 {/* Equipment section */}
-                {Object.entries(inv).some(([id])=>ITEMS[id]&&ITEMS[id].eq)&&(
+                {Object.entries(inv).some(([id])=>ITEMS[id]&&ITEMS[id].eq&&ITEMS[id].eq!=="tool"&&(inv[id]||0)>0)&&(
                   <div style={{marginBottom:16}}>
                     <div style={{fontSize:11,fontWeight:700,color:C.acc,letterSpacing:2,marginBottom:8}}>🗡️ EQUIPMENT <span style={{color:C.td,fontWeight:400,fontSize:9}}>— click item to equip</span></div>
                     <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:6}}>

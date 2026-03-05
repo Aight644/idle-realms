@@ -284,7 +284,7 @@ const DRONE_TYPES = [
     action: "explore",
     outputs: [{ id: "abyss_crystal", q: 1, chance: 0.2 }, { id: "thermal_ore", q: 2, chance: 0.5 }, { id: "trench_stone", q: 3, chance: 0.8 }],
     interval: 25000,
-    xpSkill: "artifact_research",
+    xpSkill: "deep_tech",
     xpAmt: 8,
   },
 ];
@@ -324,7 +324,7 @@ const BLUEPRINTS = [
     source:"Lost Research Facility",
   },
   {
-    id:"bp_ancient_brew", skillId:"bio_synthesis", icon:"🧬", rarity:"epic",
+    id:"bp_ancient_brew", skillId:"bio_lab", icon:"🧬", rarity:"epic",
     name:"Ancient Healing Formula",
     desc:"A powerful healing formula recovered from a lost research facility.",
     act:{id:"bs5",name:"Ancient Healing Formula",lv:70,xp:133,t:26,inp:[{id:"alien_bio_tissue",q:1},{id:"void_pearl",q:1}],out:[{id:"pressure_tonic",q:3},{id:"bio_stim",q:1}]},
@@ -338,7 +338,7 @@ const BLUEPRINTS = [
     source:"Deep Signal Beacon",
   },
   {
-    id:"bp_void_reactor", skillId:"energy_systems", icon:"⚡", rarity:"legendary",
+    id:"bp_void_reactor", skillId:"deep_tech", icon:"⚡", rarity:"legendary",
     name:"Void Reactor Blueprint",
     desc:"Harness void energy to produce massive amounts of pressure reactors.",
     act:{id:"es5",name:"Void Reactor Synthesis",lv:100,xp:200,t:60,inp:[{id:"void_essence",q:2},{id:"thermal_core",q:1},{id:"abyss_crystal",q:5}],out:[{id:"pressure_reactor",q:5},{id:"drone_processor",q:1}]},
@@ -352,21 +352,21 @@ const BLUEPRINTS = [
     source:"Crystal Vein Exposed",
   },
   {
-    id:"bp_deep_scan", skillId:"scanning", icon:"📡", rarity:"rare",
+    id:"bp_deep_scan", skillId:"exploration", icon:"📡", rarity:"rare",
     name:"Deep Void Scanner",
     desc:"Scan deep void pockets for rare essence deposits.",
     act:{id:"sc5",name:"Void Pocket Scan",lv:75,xp:102,t:60,inp:[{id:"resonance_crystal",q:3},{id:"void_pearl",q:1}],out:[{id:"void_essence",q:1},{id:"ancient_data_chip",q:1}],util:{type:"rare",val:0.15},desc:"Scan void pockets. +15% rare drops."},
     source:"Ancient Submarine Wreck",
   },
   {
-    id:"bp_supply_mastery", skillId:"logistics", icon:"📦", rarity:"rare",
+    id:"bp_supply_mastery", skillId:"exploration", icon:"📦", rarity:"rare",
     name:"Void Supply Network",
     desc:"Build a void-powered supply network — extreme logistics efficiency.",
     act:{id:"lg5",name:"Void Supply Network",lv:80,xp:168,t:60,inp:[{id:"void_essence",q:1},{id:"ancient_data_chip",q:2}],out:[{id:"supply_crate",q:8}],util:{type:"gold",val:500},desc:"Void supply network. +500 credits per run."},
     source:"Ancient Submarine Wreck",
   },
   {
-    id:"bp_atlas_complete", skillId:"ocean_cartography", icon:"🗺️", rarity:"epic",
+    id:"bp_atlas_complete", skillId:"exploration", icon:"🗺️", rarity:"epic",
     name:"Void Realm Atlas",
     desc:"Chart the void realms beyond the known ocean — yields impossible resources.",
     act:{id:"oc5",name:"Void Realm Atlas",lv:100,xp:218,t:60,inp:[{id:"void_map",q:3},{id:"void_essence",q:2}],out:[{id:"void_map",q:5},{id:"ancient_relic",q:2}],util:{type:"yield",val:0.40},desc:"Void realm atlas. +40% all yields permanently."},
@@ -664,79 +664,72 @@ const SKILLS=[
     {id:"te4",name:"Ancient Ruin Dig",   lv:60, xp:85,t:18, out:[{id:"ancient_fragment",q:1}]},
     {id:"te5",name:"Abyss Silt Trench",  lv:85, xp:170,t:24, out:[{id:"abyss_silt",q:1}]},
     {id:"te6",name:"Lost Relic Vault",   lv:110,xp:310,t:30, out:[{id:"ancient_relic",q:1}]}]},
-  {id:"coral_engineering",name:"Coral Engineering",icon:"🔧",color:"#ffd60a",cat:"prod",acts:[
-    {id:"ce1",name:"Coral Blocks",lv:1,xp:13,t:11,inp:[{id:"soft_coral",q:3}],out:[{id:"coral_blocks",q:1}]},
-    {id:"ce2",name:"Reinforced Alloy",lv:10,xp:30,t:13,inp:[{id:"shell_fragments",q:5},{id:"trench_stone",q:3}],out:[{id:"reinforced_alloy",q:1}]},
-    {id:"ce3",name:"Pressure Glass",lv:20,xp:78,t:19,inp:[{id:"salt_crystals",q:4},{id:"thermal_ore",q:2}],out:[{id:"pressure_glass",q:1}]},
-    {id:"ce4",name:"Coral Helm",lv:5,xp:53,t:16,inp:[{id:"coral_blocks",q:8},{id:"shell_fragments",q:5}],out:[{id:"coral_helm",q:1}]},
-    {id:"ce5",name:"Shell Shield",lv:12,xp:90,t:21,inp:[{id:"coral_blocks",q:12},{id:"reinforced_alloy",q:3}],out:[{id:"shell_shield",q:1}]},
-    {id:"ce6",name:"Coral Suit",lv:15,xp:132,t:26,inp:[{id:"coral_blocks",q:15},{id:"reinforced_alloy",q:5}],out:[{id:"coral_suit",q:1}]}]},
-  {id:"bio_refining",name:"Bio Refining",icon:"🧪",color:"#00ffb3",cat:"prod",acts:[
-    {id:"br1",name:"Biofuel",lv:1,xp:10,t:11,inp:[{id:"kelp",q:5}],out:[{id:"biofuel",q:1}]},
-    {id:"br2",name:"Enzyme Compound",lv:10,xp:10,t:11,inp:[{id:"glowfish",q:3}],out:[{id:"enzyme_compound",q:1}]},
-    {id:"br3",name:"Luminescent Gel",lv:20,xp:27,t:13,inp:[{id:"glowfish",q:4},{id:"sea_mushrooms",q:2}],out:[{id:"luminescent_gel",q:1}]}]},
-  {id:"pressure_engineering",name:"Pressure Engineering",icon:"⚡",color:"#ff6b35",cat:"prod",acts:[
-    {id:"pe1",name:"Basic Harpoon",lv:1,xp:77,t:19,inp:[{id:"trench_stone",q:5},{id:"ocean_fiber",q:3}],out:[{id:"basic_harpoon",q:1}]},
-    {id:"pe2",name:"Pressure Helm",lv:10,xp:91,t:21,inp:[{id:"pressure_glass",q:2},{id:"reinforced_alloy",q:4}],out:[{id:"pressure_helm",q:1}]},
-    {id:"pe3",name:"Pressure Suit",lv:20,xp:168,t:31,inp:[{id:"pressure_glass",q:3},{id:"reinforced_alloy",q:8}],out:[{id:"pressure_suit",q:1}]},
-    {id:"pe4",name:"Pulse Harpoon",lv:15,xp:67,t:18,inp:[{id:"pressure_glass",q:2},{id:"enzyme_compound",q:2}],out:[{id:"pulse_harpoon",q:1}]},
-    {id:"pe5",name:"Depth Gloves",lv:5,xp:137,t:27,inp:[{id:"ocean_fiber",q:6}],out:[{id:"depth_gloves",q:1}]},
-    {id:"pe6",name:"Pressure Boots",lv:8,xp:189,t:33,inp:[{id:"ocean_fiber",q:8},{id:"coral_blocks",q:2}],out:[{id:"pressure_boots",q:1}]}]},
-  {id:"bio_synthesis",name:"Bio Synthesis",icon:"🧬",color:"#c084fc",cat:"prod",acts:[
-    {id:"bs1",name:"Healing Serum",lv:1,xp:24,t:13,inp:[{id:"sea_mushrooms",q:3}],out:[{id:"healing_serum",q:1}]},
-    {id:"bs2",name:"Kelp Broth",lv:10,xp:14,t:11,inp:[{id:"kelp",q:4},{id:"enzyme_compound",q:1}],out:[{id:"kelp_broth",q:1}]},
-    {id:"bs3",name:"Pressure Tonic",lv:25,xp:54,t:16,inp:[{id:"enzyme_compound",q:2},{id:"abyss_crystal",q:1}],out:[{id:"pressure_tonic",q:1}]},
-    {id:"bs4",name:"Bio Stim",lv:15,xp:55,t:16,inp:[{id:"luminescent_gel",q:2},{id:"sea_mushrooms",q:3}],out:[{id:"bio_stim",q:1}]}]},
-  {id:"artifact_research",name:"Artifact Research",icon:"🔬",color:"#ff9500",cat:"prod",acts:[
-    {id:"ar1",name:"Process Ore Sample",lv:1,xp:10,t:11,inp:[{id:"trench_stone",q:8}],out:[{id:"drone_processor",q:1}]},
-    {id:"ar2",name:"Crystal Refinement",lv:15,xp:40,t:15,inp:[{id:"abyss_crystal",q:2}],out:[{id:"pressure_reactor",q:1}]}]},
-  // --- New production skills ---
-  {id:"submersible_fabrication",name:"Submersible Fabrication",icon:"🚢",color:"#06b6d4",cat:"prod",acts:[
-    {id:"sf1",name:"Basic Frame",lv:1,xp:47,t:15,inp:[{id:"coral_blocks",q:10},{id:"ocean_fiber",q:5}],out:[{id:"void_ring",q:1}]},
-    {id:"sf2",name:"Shock Harpoon",lv:20,xp:121,t:25,inp:[{id:"pressure_glass",q:4},{id:"enzyme_compound",q:3}],out:[{id:"shock_harpoon",q:1}]},
-    {id:"sf3",name:"Thermal Lance",lv:40,xp:280,t:35,inp:[{id:"thermal_ore",q:8},{id:"abyss_crystal",q:2}],out:[{id:"thermal_lance",q:1}]},
-    {id:"sf4",name:"Abyss Armor",lv:55,xp:137,t:27,inp:[{id:"reinforced_alloy",q:15},{id:"pressure_glass",q:6},{id:"abyss_crystal",q:3}],out:[{id:"abyss_armor",q:1}]}]},
-  {id:"drone_construction",name:"Drone Construction",icon:"🤖",color:"#f472b6",cat:"prod",acts:[
-    {id:"dc1",name:"Basic Processor",lv:1,xp:86,t:20,inp:[{id:"trench_stone",q:5},{id:"thermal_ore",q:3}],out:[{id:"drone_processor",q:1}]},
-    {id:"dc2",name:"Pressure Reactor",lv:15,xp:60,t:17,inp:[{id:"pressure_glass",q:3},{id:"enzyme_compound",q:2}],out:[{id:"pressure_reactor",q:1}]},
-    {id:"dc3",name:"Depth Pendant",lv:10,xp:116,t:24,inp:[{id:"abyss_crystal",q:1},{id:"ocean_fiber",q:4}],out:[{id:"depth_pendant",q:1}]},
-    {id:"dc4",name:"Bioluminescent Brew",lv:25,xp:182,t:32,inp:[{id:"luminescent_gel",q:2},{id:"glowfish",q:4}],out:[{id:"bioluminescent_drink",q:1}]}]},
-  {id:"ocean_architecture",name:"Ocean Architecture",icon:"🏗️",color:"#34d399",cat:"prod",acts:[
-    {id:"oa1",name:"Thermal Steel",lv:10,xp:37,t:14,inp:[{id:"thermal_ore",q:4},{id:"salt_crystals",q:3}],out:[{id:"reinforced_alloy",q:1}]},
-    {id:"oa2",name:"Void Elixir",lv:30,xp:151,t:28,inp:[{id:"abyss_crystal",q:2},{id:"enzyme_compound",q:2}],out:[{id:"void_elixir",q:1}]},
-    {id:"oa3",name:"Deep Extract",lv:20,xp:350,t:35,inp:[{id:"sea_mushrooms",q:5},{id:"glowfish",q:3}],out:[{id:"deep_extract",q:1}]},
-    {id:"oa4",name:"Bio Stim Mk2",lv:45,xp:69,t:18,inp:[{id:"luminescent_gel",q:3},{id:"pressure_tonic",q:1}],out:[{id:"bio_stim",q:1}]}]},
-  {id:"energy_systems",name:"Energy Systems",icon:"⚡",color:"#facc15",cat:"prod",acts:[
-    {id:"es1",name:"Biofuel Refined",lv:5,xp:27,t:13,inp:[{id:"kelp",q:8},{id:"sea_mushrooms",q:2}],out:[{id:"biofuel",q:1}]},
-    {id:"es2",name:"Pressure Conduit",lv:20,xp:76,t:19,inp:[{id:"pressure_glass",q:2},{id:"reinforced_alloy",q:3}],out:[{id:"pressure_reactor",q:1},{id:"drone_processor",q:1}]},
-    {id:"es3",name:"Kelp Broth Premium",lv:15,xp:47,t:15,inp:[{id:"kelp",q:6},{id:"enzyme_compound",q:2}],out:[{id:"kelp_broth",q:1}]},
-    {id:"es4",name:"Pressure Tonic Mk2",lv:40,xp:92,t:21,inp:[{id:"abyss_crystal",q:1},{id:"enzyme_compound",q:3},{id:"luminescent_gel",q:2}],out:[{id:"pressure_tonic",q:1}]}]},
-  // ── Utility Skills ──
-  {id:"navigation",name:"Navigation",icon:"🧭",color:"#38bdf8",cat:"utility",acts:[
-    {id:"nv1",name:"Chart Reef Currents",lv:1,xp:20,t:12,out:[{id:"nav_beacon",q:1}],util:{type:"speed",val:0.05},desc:"Map reef currents. +5% gather speed this session."},
-    {id:"nv2",name:"Map Twilight Lanes",lv:15,xp:40,t:14,inp:[{id:"nav_beacon",q:1}],out:[{id:"ocean_chart",q:1}],util:{type:"speed",val:0.10},desc:"Chart twilight lanes. +10% gather speed."},
-    {id:"nv3",name:"Deep Trench Routes",lv:35,xp:75,t:18,inp:[{id:"ocean_chart",q:1}],out:[{id:"void_map",q:1}],util:{type:"speed",val:0.15},desc:"Map deep trench routes. +15% gather speed."},
-    {id:"nv4",name:"Void Cartography",lv:60,xp:140,t:22,inp:[{id:"void_map",q:1},{id:"abyss_crystal",q:2}],out:[{id:"void_map",q:2}],util:{type:"speed",val:0.20},desc:"Chart void passages. +20% gather speed permanently."}]},
-  {id:"scanning",name:"Scanning",icon:"📡",color:"#22d3ee",cat:"utility",acts:[
-    {id:"sc1",name:"Bio Scan",lv:1,xp:20,t:12,out:[{id:"scan_report",q:1}],util:{type:"rare",val:0.03},desc:"Scan for lifeforms. +3% discovery chance."},
-    {id:"sc2",name:"Deep Resonance Scan",lv:20,xp:45,t:15,inp:[{id:"scan_report",q:1}],out:[{id:"resonance_crystal",q:1}],util:{type:"rare",val:0.05},desc:"Detect rare nodes. +5% rare drop chance."},
-    {id:"sc3",name:"Void Signal Trace",lv:40,xp:90,t:20,inp:[{id:"resonance_crystal",q:1},{id:"drone_processor",q:1}],out:[{id:"resonance_crystal",q:2}],util:{type:"rare",val:0.08},desc:"Trace void signals. +8% rare drops."},
-    {id:"sc4",name:"Ancient Frequency Lock",lv:65,xp:180,t:25,inp:[{id:"resonance_crystal",q:2},{id:"ancient_processor",q:1}],out:[{id:"ancient_data_chip",q:1}],util:{type:"rare",val:0.12},desc:"Lock ancient frequencies. +12% rare drops."}]},
-  {id:"archaeology",name:"Archaeology",icon:"🏺",color:"#fb923c",cat:"utility",acts:[
-    {id:"ac1",name:"Surface Excavation",lv:1,xp:25,t:12,out:[{id:"relic_shard",q:1}],util:{type:"rp",val:5},desc:"Excavate reef surface. Gain RP and relics."},
-    {id:"ac2",name:"Ancient Wreck Dive",lv:20,xp:55,t:16,inp:[{id:"relic_shard",q:2}],out:[{id:"ancient_relic",q:1}],util:{type:"rp",val:15},desc:"Dive ancient wrecks. Recover artifact fragments."},
-    {id:"ac3",name:"Relic Reconstruction",lv:40,xp:110,t:22,inp:[{id:"ancient_relic",q:2},{id:"abyss_crystal",q:1}],out:[{id:"ancient_processor",q:1}],util:{type:"rp",val:30},desc:"Reconstruct ancient tech. +30 RP per action."},
-    {id:"ac4",name:"Ancient Core Extraction",lv:70,xp:220,t:28,inp:[{id:"ancient_processor",q:1},{id:"thermal_core",q:1}],out:[{id:"ancient_data_chip",q:2}],util:{type:"rp",val:80},desc:"Extract ancient cores. Massive RP gain."}]},
-  {id:"ocean_cartography",name:"Ocean Cartography",icon:"🗺️",color:"#a78bfa",cat:"utility",acts:[
-    {id:"oc1",name:"Reef Survey",lv:1,xp:22,t:12,out:[{id:"ocean_chart",q:1}],util:{type:"yield",val:0.05},desc:"Survey reef zones. +5% resource yield."},
-    {id:"oc2",name:"Abyss Mapping",lv:25,xp:50,t:15,inp:[{id:"ocean_chart",q:1}],out:[{id:"ocean_chart",q:2}],util:{type:"yield",val:0.10},desc:"Map abyssal regions. +10% resource yield."},
-    {id:"oc3",name:"Void Region Chart",lv:50,xp:100,t:22,inp:[{id:"ocean_chart",q:2},{id:"void_pearl",q:1}],out:[{id:"void_map",q:1}],util:{type:"yield",val:0.15},desc:"Chart void regions. +15% resource yield."},
-    {id:"oc4",name:"Complete Ocean Atlas",lv:80,xp:220,t:28,inp:[{id:"void_map",q:2},{id:"ancient_relic",q:1}],out:[{id:"void_map",q:3}],util:{type:"yield",val:0.25},desc:"Complete the ocean atlas. +25% all yield."}]},
-  {id:"logistics",name:"Logistics",icon:"📦",color:"#34d399",cat:"utility",acts:[
-    {id:"lg1",name:"Supply Cache",lv:1,xp:31,t:13,inp:[{id:"kelp",q:5},{id:"sea_mushrooms",q:3}],out:[{id:"supply_crate",q:1}],util:{type:"gold",val:10},desc:"Pack supply cache. Creates healing crates."},
-    {id:"lg2",name:"Trade Bundle",lv:15,xp:26,t:13,inp:[{id:"kelp",q:8},{id:"glowfish",q:5}],out:[{id:"supply_crate",q:2}],util:{type:"gold",val:25},desc:"Bundle for trade. +25 bonus credits."},
-    {id:"lg3",name:"Efficiency Protocol",lv:35,xp:84,t:20,inp:[{id:"drone_processor",q:1},{id:"supply_crate",q:1}],out:[{id:"supply_crate",q:3}],util:{type:"gold",val:50},desc:"Optimize logistics. +50 bonus credits per action."},
-    {id:"lg4",name:"Deep Supply Network",lv:60,xp:168,t:31,inp:[{id:"ancient_data_chip",q:1},{id:"supply_crate",q:2}],out:[{id:"supply_crate",q:5}],util:{type:"gold",val:120},desc:"Build deep supply network. Major credit bonus."}]},
+  // ── Fabrication: materials → weapons, armor, structural components ──
+  {id:"fabrication",name:"Fabrication",icon:"🔧",color:"#ffd60a",cat:"prod",acts:[
+    {id:"ce1",name:"Coral Blocks",       lv:1, xp:13, t:11,inp:[{id:"soft_coral",q:3}],                                              out:[{id:"coral_blocks",q:1}]},
+    {id:"ce2",name:"Reinforced Alloy",   lv:10,xp:30, t:13,inp:[{id:"shell_fragments",q:5},{id:"trench_stone",q:3}],                 out:[{id:"reinforced_alloy",q:1}]},
+    {id:"ce3",name:"Pressure Glass",     lv:20,xp:78, t:19,inp:[{id:"salt_crystals",q:4},{id:"thermal_ore",q:2}],                    out:[{id:"pressure_glass",q:1}]},
+    {id:"ce4",name:"Coral Helm",         lv:5, xp:53, t:16,inp:[{id:"coral_blocks",q:8},{id:"shell_fragments",q:5}],                 out:[{id:"coral_helm",q:1}]},
+    {id:"ce5",name:"Shell Shield",       lv:12,xp:90, t:21,inp:[{id:"coral_blocks",q:12},{id:"reinforced_alloy",q:3}],               out:[{id:"shell_shield",q:1}]},
+    {id:"ce6",name:"Coral Suit",         lv:15,xp:132,t:26,inp:[{id:"coral_blocks",q:15},{id:"reinforced_alloy",q:5}],               out:[{id:"coral_suit",q:1}]},
+    {id:"pe1",name:"Basic Harpoon",      lv:1, xp:77, t:19,inp:[{id:"trench_stone",q:5},{id:"sea_fiber",q:3}],                       out:[{id:"basic_harpoon",q:1}]},
+    {id:"pe2",name:"Pressure Helm",      lv:10,xp:91, t:21,inp:[{id:"pressure_glass",q:2},{id:"reinforced_alloy",q:4}],              out:[{id:"pressure_helm",q:1}]},
+    {id:"pe4",name:"Pulse Harpoon",      lv:15,xp:67, t:18,inp:[{id:"pressure_glass",q:2},{id:"enzyme_compound",q:2}],               out:[{id:"pulse_harpoon",q:1}]},
+    {id:"pe3",name:"Pressure Suit",      lv:20,xp:168,t:31,inp:[{id:"pressure_glass",q:3},{id:"reinforced_alloy",q:8}],              out:[{id:"pressure_suit",q:1}]},
+    {id:"sf2",name:"Shock Harpoon",      lv:30,xp:121,t:25,inp:[{id:"pressure_glass",q:4},{id:"enzyme_compound",q:3}],               out:[{id:"shock_harpoon",q:1}]},
+    {id:"sf3",name:"Thermal Lance",      lv:40,xp:280,t:35,inp:[{id:"thermal_ore",q:8},{id:"abyss_crystal",q:2}],                    out:[{id:"thermal_lance",q:1}]},
+    {id:"sf1",name:"Void Ring",          lv:45,xp:47, t:15,inp:[{id:"coral_blocks",q:10},{id:"ocean_fiber",q:5}],                    out:[{id:"void_ring",q:1}]},
+    {id:"sf4",name:"Abyss Armor",        lv:55,xp:137,t:27,inp:[{id:"reinforced_alloy",q:15},{id:"pressure_glass",q:6},{id:"abyss_crystal",q:3}],out:[{id:"abyss_armor",q:1}]}]},
+
+  // ── Bio Lab: consumables, potions, brews, refined materials ──
+  {id:"bio_lab",name:"Bio Lab",icon:"🧪",color:"#00ffb3",cat:"prod",acts:[
+    {id:"br1",name:"Biofuel",            lv:1, xp:10, t:11,inp:[{id:"kelp",q:5}],                                                    out:[{id:"biofuel",q:1}]},
+    {id:"bs1",name:"Healing Serum",      lv:1, xp:24, t:13,inp:[{id:"sea_mushrooms",q:3}],                                           out:[{id:"healing_serum",q:1}]},
+    {id:"br2",name:"Enzyme Compound",    lv:10,xp:10, t:11,inp:[{id:"glowfish",q:3}],                                                out:[{id:"enzyme_compound",q:1}]},
+    {id:"bs2",name:"Kelp Broth",         lv:10,xp:14, t:11,inp:[{id:"kelp",q:4},{id:"enzyme_compound",q:1}],                         out:[{id:"kelp_broth",q:1}]},
+    {id:"br3",name:"Luminescent Gel",    lv:20,xp:27, t:13,inp:[{id:"glowfish",q:4},{id:"sea_mushrooms",q:2}],                       out:[{id:"luminescent_gel",q:1}]},
+    {id:"oa3",name:"Deep Extract",       lv:20,xp:72, t:18,inp:[{id:"sea_mushrooms",q:5},{id:"glowfish",q:3}],                       out:[{id:"deep_extract",q:1}]},
+    {id:"bs3",name:"Pressure Tonic",     lv:25,xp:54, t:16,inp:[{id:"enzyme_compound",q:2},{id:"abyss_crystal",q:1}],                out:[{id:"pressure_tonic",q:1}]},
+    {id:"bs4",name:"Bio Stim",           lv:30,xp:55, t:16,inp:[{id:"luminescent_gel",q:2},{id:"sea_mushrooms",q:3}],                out:[{id:"bio_stim",q:1}]},
+    {id:"dc4",name:"Bioluminescent Brew",lv:35,xp:75, t:19,inp:[{id:"luminescent_gel",q:2},{id:"glowfish",q:4}],                     out:[{id:"bioluminescent_drink",q:1}]},
+    {id:"oa2",name:"Void Elixir",        lv:40,xp:100,t:22,inp:[{id:"abyss_crystal",q:2},{id:"enzyme_compound",q:2}],                out:[{id:"void_elixir",q:1}]},
+    {id:"oa4",name:"Bio Stim Mk2",       lv:50,xp:95, t:21,inp:[{id:"luminescent_gel",q:3},{id:"pressure_tonic",q:1}],               out:[{id:"bio_stim",q:1}]}]},
+
+  // ── Deep Tech: processors, reactors, tech components ──
+  {id:"deep_tech",name:"Deep Tech",icon:"🔬",color:"#f472b6",cat:"prod",acts:[
+    {id:"ar1",name:"Ore Processing",     lv:1, xp:20, t:12,inp:[{id:"trench_stone",q:8}],                                            out:[{id:"drone_processor",q:1}]},
+    {id:"dc1",name:"Basic Processor",    lv:10,xp:86, t:20,inp:[{id:"trench_stone",q:5},{id:"thermal_ore",q:3}],                     out:[{id:"drone_processor",q:1}]},
+    {id:"ar2",name:"Crystal Refinement", lv:15,xp:40, t:15,inp:[{id:"abyss_crystal",q:2}],                                           out:[{id:"pressure_reactor",q:1}]},
+    {id:"dc2",name:"Pressure Reactor",   lv:20,xp:60, t:17,inp:[{id:"pressure_glass",q:3},{id:"enzyme_compound",q:2}],               out:[{id:"pressure_reactor",q:1}]},
+    {id:"oa1",name:"Thermal Steel",      lv:25,xp:37, t:14,inp:[{id:"thermal_ore",q:4},{id:"salt_crystals",q:3}],                    out:[{id:"reinforced_alloy",q:1}]},
+    {id:"dc3",name:"Depth Pendant",      lv:30,xp:116,t:24,inp:[{id:"abyss_crystal",q:1},{id:"ocean_fiber",q:4}],                    out:[{id:"depth_pendant",q:1}]},
+    {id:"es2",name:"Pressure Conduit",   lv:40,xp:76, t:19,inp:[{id:"pressure_glass",q:2},{id:"reinforced_alloy",q:3}],              out:[{id:"pressure_reactor",q:1},{id:"drone_processor",q:1}]},
+    {id:"pe5",name:"Depth Gloves",       lv:45,xp:137,t:27,inp:[{id:"ocean_fiber",q:6}],                                             out:[{id:"depth_gloves",q:1}]},
+    {id:"pe6",name:"Pressure Boots",     lv:50,xp:189,t:33,inp:[{id:"ocean_fiber",q:8},{id:"coral_blocks",q:2}],                     out:[{id:"pressure_boots",q:1}]}]},
+
+  // ── Exploration: navigation, scanning, archaeology, cartography, logistics ──
+  {id:"exploration",name:"Exploration",icon:"🧭",color:"#38bdf8",cat:"utility",acts:[
+    {id:"nv1",name:"Chart Reef Currents",  lv:1, xp:20,t:12,out:[{id:"nav_beacon",q:1}],util:{type:"speed",val:0.05},desc:"+5% gather speed."},
+    {id:"ac1",name:"Surface Excavation",   lv:1, xp:25,t:12,out:[{id:"relic_shard",q:1}],util:{type:"rp",val:5},desc:"Excavate reef. Gain RP + relics."},
+    {id:"sc1",name:"Bio Scan",             lv:1, xp:20,t:12,out:[{id:"scan_report",q:1}],util:{type:"rare",val:0.03},desc:"+3% rare drop chance."},
+    {id:"oc1",name:"Reef Survey",          lv:1, xp:22,t:12,out:[{id:"ocean_chart",q:1}],util:{type:"yield",val:0.05},desc:"+5% resource yield."},
+    {id:"lg1",name:"Supply Cache",         lv:1, xp:31,t:13,inp:[{id:"kelp",q:5},{id:"sea_mushrooms",q:3}],out:[{id:"supply_crate",q:1}],util:{type:"gold",val:10},desc:"Pack supply cache."},
+    {id:"nv2",name:"Map Twilight Lanes",   lv:15,xp:40,t:14,inp:[{id:"nav_beacon",q:1}],out:[{id:"ocean_chart",q:1}],util:{type:"speed",val:0.10},desc:"+10% gather speed."},
+    {id:"lg2",name:"Trade Bundle",         lv:15,xp:26,t:13,inp:[{id:"kelp",q:8},{id:"glowfish",q:5}],out:[{id:"supply_crate",q:2}],util:{type:"gold",val:25},desc:"+25 bonus credits."},
+    {id:"sc2",name:"Deep Resonance Scan",  lv:20,xp:45,t:15,inp:[{id:"scan_report",q:1}],out:[{id:"resonance_crystal",q:1}],util:{type:"rare",val:0.05},desc:"+5% rare drops."},
+    {id:"oc2",name:"Abyss Mapping",        lv:25,xp:50,t:15,inp:[{id:"ocean_chart",q:1}],out:[{id:"ocean_chart",q:2}],util:{type:"yield",val:0.10},desc:"+10% resource yield."},
+    {id:"ac2",name:"Ancient Wreck Dive",   lv:25,xp:55,t:16,inp:[{id:"relic_shard",q:2}],out:[{id:"ancient_relic",q:1}],util:{type:"rp",val:15},desc:"Recover artifact fragments."},
+    {id:"nv3",name:"Deep Trench Routes",   lv:35,xp:75,t:18,inp:[{id:"ocean_chart",q:1}],out:[{id:"void_map",q:1}],util:{type:"speed",val:0.15},desc:"+15% gather speed."},
+    {id:"lg3",name:"Efficiency Protocol",  lv:35,xp:84,t:20,inp:[{id:"drone_processor",q:1},{id:"supply_crate",q:1}],out:[{id:"supply_crate",q:3}],util:{type:"gold",val:50},desc:"+50 bonus credits."},
+    {id:"sc3",name:"Void Signal Trace",    lv:40,xp:90,t:20,inp:[{id:"resonance_crystal",q:1},{id:"drone_processor",q:1}],out:[{id:"resonance_crystal",q:2}],util:{type:"rare",val:0.08},desc:"+8% rare drops."},
+    {id:"ac3",name:"Relic Reconstruction", lv:45,xp:110,t:22,inp:[{id:"ancient_relic",q:2},{id:"abyss_crystal",q:1}],out:[{id:"ancient_processor",q:1}],util:{type:"rp",val:30},desc:"+30 RP per action."},
+    {id:"oc3",name:"Void Region Chart",    lv:50,xp:100,t:22,inp:[{id:"ocean_chart",q:2},{id:"void_pearl",q:1}],out:[{id:"void_map",q:1}],util:{type:"yield",val:0.15},desc:"+15% resource yield."},
+    {id:"nv4",name:"Void Cartography",     lv:60,xp:140,t:22,inp:[{id:"void_map",q:1},{id:"abyss_crystal",q:2}],out:[{id:"void_map",q:2}],util:{type:"speed",val:0.20},desc:"+20% gather speed."},
+    {id:"lg4",name:"Deep Supply Network",  lv:60,xp:168,t:31,inp:[{id:"ancient_data_chip",q:1},{id:"supply_crate",q:2}],out:[{id:"supply_crate",q:5}],util:{type:"gold",val:120},desc:"+120 bonus credits."},
+    {id:"sc4",name:"Ancient Freq Lock",    lv:65,xp:180,t:25,inp:[{id:"resonance_crystal",q:2},{id:"ancient_processor",q:1}],out:[{id:"ancient_data_chip",q:1}],util:{type:"rare",val:0.12},desc:"+12% rare drops."},
+    {id:"ac4",name:"Ancient Core Extract", lv:70,xp:220,t:28,inp:[{id:"ancient_processor",q:1},{id:"thermal_core",q:1}],out:[{id:"ancient_data_chip",q:2}],util:{type:"rp",val:80},desc:"+80 RP per action."},
+    {id:"oc4",name:"Complete Ocean Atlas", lv:80,xp:220,t:28,inp:[{id:"void_map",q:2},{id:"ancient_relic",q:1}],out:[{id:"void_map",q:3}],util:{type:"yield",val:0.25},desc:"+25% all yield."}]},
+
   // ── Endgame / Rare Crafting ──
   {id:"relic_forging",name:"Relic Forging",icon:"⚗️",color:"#e11d48",cat:"prod",acts:[
     {id:"rf1",name:"Void Pearl Extract",lv:30,xp:72,t:19,inp:[{id:"abyss_crystal",q:3},{id:"luminescent_gel",q:4}],out:[{id:"void_pearl",q:1}]},
@@ -1224,11 +1217,9 @@ function GameUI({account,onLogout}){
     // Structure bonuses (per level)
     STRUCTURES.forEach(st=>{const lv=structures[st.id]||0;if(lv>0){if(st.bonus)Object.entries(st.bonus).forEach(([k,v])=>{b[k]=(b[k]||0)+v*lv});if(st.bonusExtra)Object.entries(st.bonusExtra).forEach(([k,v])=>{b[k]=(b[k]||0)+v*lv})}});
     // Utility skill passive bonuses (scale with skill level)
-    const utilMap={navigation:"gather_speed",scanning:"rare_chance",ocean_cartography:"gather_yield"};
-    Object.entries(utilMap).forEach(([sid,bk])=>{
-      const lv=Math.floor(((skills[sid]||0)/100));// level from raw xp via sl() would cause circular dep, use raw estimate
-      if(lv>0)b[bk]=(b[bk]||0)+lv*0.02;
-    });
+    // Exploration skill passively boosts speed, rare chance, and yield (1/3 each)
+    {const lv=Math.floor((skills["exploration"]||0)/100);
+    if(lv>0){b.gather_speed=(b.gather_speed||0)+lv*0.015;b.rare_chance=(b.rare_chance||0)+lv*0.015;b.gather_yield=(b.gather_yield||0)+lv*0.015;}}
     // Equipment gather bonuses (tools + armor with gather stats)
     const gatherKeys=new Set(["gather_yield","gather_speed","cultiv_yield","mining_yield","fishing_yield","crystal_yield","trench_yield","rare_chance","xp_bonus"]);
     ESLOTS.forEach(slot=>{const iid=eq[slot.id];if(iid){const it=ITEMS[iid];if(it?.st)Object.entries(it.st).forEach(([k,v])=>{if(gatherKeys.has(k))b[k]=(b[k]||0)+v})}});

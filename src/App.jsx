@@ -674,7 +674,6 @@ const SKILLS=[
     {id:"oa1",name:"Thermal Steel",      lv:15,xp:37, t:14,inp:[{id:"thermal_ore",q:4},{id:"salt_crystals",q:3}],                            out:[{id:"reinforced_alloy",q:1}]},
     {id:"ce3",name:"Pressure Glass",     lv:20,xp:78, t:19,inp:[{id:"salt_crystals",q:4},{id:"thermal_ore",q:2}],                            out:[{id:"pressure_glass",q:1}]},
     {id:"dc2",name:"Pressure Reactor",   lv:20,xp:60, t:17,inp:[{id:"pressure_glass",q:3},{id:"enzyme_compound",q:2}],                       out:[{id:"pressure_reactor",q:1}]},
-    {id:"dc3",name:"Depth Pendant",      lv:30,xp:116,t:24,inp:[{id:"abyss_crystal",q:1},{id:"ocean_fiber",q:4}],                            out:[{id:"depth_pendant",q:1}]},
     {id:"es2",name:"Pressure Conduit",   lv:40,xp:76, t:19,inp:[{id:"pressure_glass",q:2},{id:"reinforced_alloy",q:3}],                      out:[{id:"pressure_reactor",q:1},{id:"drone_processor",q:1}]}]},
 
   // ── Bio Lab: consumables, potions, brews, refined materials ──
@@ -719,11 +718,7 @@ const SKILLS=[
     {id:"rf1",name:"Void Pearl Extract",lv:30,xp:72,t:19,inp:[{id:"abyss_crystal",q:3},{id:"luminescent_gel",q:4}],out:[{id:"void_pearl",q:1}]},
     {id:"rf2",name:"Black Coral Harvest",lv:45,xp:149,t:28,inp:[{id:"coral_blocks",q:15},{id:"thermal_ore",q:5}],out:[{id:"black_coral",q:1}]},
     {id:"rf3",name:"Thermal Core Forge",lv:55,xp:350,t:35,inp:[{id:"thermal_ore",q:15},{id:"pressure_glass",q:5},{id:"abyss_crystal",q:2}],out:[{id:"thermal_core",q:1}]},
-    {id:"rf4",name:"Alien Tissue Culture",lv:65,xp:299,t:35,inp:[{id:"enzyme_compound",q:8},{id:"luminescent_gel",q:6},{id:"void_pearl",q:1}],out:[{id:"alien_bio_tissue",q:1}]},
-    {id:"rf5",name:"Leviathan Spear",lv:70,xp:320,t:35,inp:[{id:"leviathan_bone",q:3},{id:"thermal_core",q:2},{id:"ancient_processor",q:1}],out:[{id:"leviathan_spear",q:1}]},
-    {id:"rf6",name:"Leviathan Armor",lv:75,xp:350,t:35,inp:[{id:"leviathan_bone",q:5},{id:"alien_bio_tissue",q:2},{id:"black_coral",q:3}],out:[{id:"leviathan_armor",q:1}]},
-    {id:"rf7",name:"Ancient Helm",lv:60,xp:350,t:35,inp:[{id:"ancient_relic",q:3},{id:"void_pearl",q:2},{id:"reinforced_alloy",q:10}],out:[{id:"ancient_helm",q:1}]},
-    {id:"rf8",name:"Void Amulet",lv:50,xp:269,t:35,inp:[{id:"void_pearl",q:2},{id:"abyss_crystal",q:4},{id:"black_coral",q:2}],out:[{id:"void_amulet",q:1}]}]},
+    {id:"rf4",name:"Alien Tissue Culture",lv:65,xp:299,t:35,inp:[{id:"enzyme_compound",q:8},{id:"luminescent_gel",q:6},{id:"void_pearl",q:1}],out:[{id:"alien_bio_tissue",q:1}]}]},
 
   // ── Cultivation Gear ──
   {id:"gear_crafting",name:"Gear Crafting",icon:"🛠️",color:"#f59e0b",cat:"prod",acts:[
@@ -737,10 +732,15 @@ const SKILLS=[
     {id:"pe3",gearCat:"combat",name:"Pressure Suit",   lv:20,xp:168,t:31,inp:[{id:"pressure_glass",q:3},{id:"reinforced_alloy",q:8}],                          out:[{id:"pressure_suit",q:1}]},
     {id:"pe5",gearCat:"combat",name:"Depth Gloves",    lv:30,xp:60, t:17,inp:[{id:"ocean_fiber",q:6},{id:"reinforced_alloy",q:2}],                             out:[{id:"depth_gloves",q:1}]},
     {id:"sf2",gearCat:"combat",name:"Shock Harpoon",   lv:30,xp:121,t:25,inp:[{id:"pressure_glass",q:4},{id:"enzyme_compound",q:3}],                           out:[{id:"shock_harpoon",q:1}]},
+    {id:"dc3",gearCat:"combat",name:"Depth Pendant",    lv:30,xp:116,t:24,inp:[{id:"abyss_crystal",q:1},{id:"ocean_fiber",q:4}],                            out:[{id:"depth_pendant",q:1}]},
     {id:"pe6",gearCat:"combat",name:"Pressure Boots",  lv:35,xp:75, t:19,inp:[{id:"ocean_fiber",q:8},{id:"coral_blocks",q:2}],                                 out:[{id:"pressure_boots",q:1}]},
     {id:"sf1",gearCat:"combat",name:"Void Ring",       lv:40,xp:47, t:15,inp:[{id:"coral_blocks",q:10},{id:"ocean_fiber",q:5}],                                out:[{id:"void_ring",q:1}]},
     {id:"sf3",gearCat:"combat",name:"Thermal Lance",   lv:40,xp:280,t:35,inp:[{id:"thermal_ore",q:8},{id:"abyss_crystal",q:2}],                                out:[{id:"thermal_lance",q:1}]},
     {id:"sf4",gearCat:"combat",name:"Abyss Armor",     lv:50,xp:137,t:27,inp:[{id:"reinforced_alloy",q:15},{id:"pressure_glass",q:6},{id:"abyss_crystal",q:3}],out:[{id:"abyss_armor",q:1}]},
+    {id:"rf8",gearCat:"combat",name:"Void Amulet",      lv:50,xp:269,t:35,inp:[{id:"void_pearl",q:2},{id:"abyss_crystal",q:4},{id:"black_coral",q:2}],          out:[{id:"void_amulet",q:1}]},
+    {id:"rf7",gearCat:"combat",name:"Ancient Helm",     lv:60,xp:350,t:35,inp:[{id:"ancient_relic",q:3},{id:"void_pearl",q:2},{id:"reinforced_alloy",q:10}],    out:[{id:"ancient_helm",q:1}]},
+    {id:"rf5",gearCat:"combat",name:"Leviathan Spear",  lv:70,xp:320,t:35,inp:[{id:"leviathan_bone",q:3},{id:"thermal_core",q:2},{id:"ancient_processor",q:1}], out:[{id:"leviathan_spear",q:1}]},
+    {id:"rf6",gearCat:"combat",name:"Leviathan Armor",  lv:75,xp:350,t:35,inp:[{id:"leviathan_bone",q:5},{id:"alien_bio_tissue",q:2},{id:"black_coral",q:3}],   out:[{id:"leviathan_armor",q:1}]},
     // ── Cultivation ──
     {id:"cg1",gearCat:"cultivation",name:"Kelp Rake",         lv:5, xp:28,t:12, inp:[{id:"kelp",q:10},{id:"ocean_fiber",q:5}],                               out:[{id:"kelp_rake",q:1}]},
     {id:"cg2",gearCat:"cultivation",name:"Tide Harvester",    lv:25,xp:55,t:15, inp:[{id:"soft_coral",q:8},{id:"tide_sap",q:4},{id:"ocean_fiber",q:8}],      out:[{id:"tide_harvester",q:1}]},

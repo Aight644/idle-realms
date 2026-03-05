@@ -1245,6 +1245,7 @@ function GameUI({account,onLogout}){
   const[enh,setEnh]=useState({});
   const[enhSel,setEnhSel]=useState(null);
   const[selItem,setSelItem]=useState(null);
+  const[selSlot,setSelSlot]=useState(null);
   const[curAct,setCurAct]=useState(null);
   // actProg state replaced by actProgRef for perf
   const[pinnedSkill,setPinnedSkill]=useState(null);
@@ -2787,10 +2788,12 @@ function GameUI({account,onLogout}){
                           const it=ITEMS[id];
                           const rareColor=it.rarity==="rare"?C.gold:it.rarity==="uncommon"?C.purp:null;
                           return(
-                            <div key={id} {...tipProps(id)} style={{position:"relative",width:58,height:58,borderRadius:8,background:rareColor?rareColor+"18":C.card,border:"1px solid "+(rareColor?rareColor+"50":C.border),display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:1}}>
+                            <div key={id} onClick={it.eq?()=>setSelItem(id):undefined} onMouseEnter={!it.eq?e=>showTip(e,id):undefined} onMouseLeave={!it.eq?hideTip:undefined}
+                              style={{position:"relative",width:58,height:58,borderRadius:8,background:rareColor?rareColor+"18":it.eq?C.acc+"12":C.card,border:"1px solid "+(Object.values(eq).includes(id)?C.acc:rareColor?rareColor+"50":it.eq?C.acc+"40":C.border),display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:1,cursor:it.eq?"pointer":"default"}}>
                               <span style={{fontSize:24,lineHeight:1}}>{it.i||"📦"}</span>
                               <span style={{fontSize:11,color:rareColor||C.ts,fontWeight:700,fontFamily:FONT}}>{qty>=1000?Math.floor(qty/1000)+"k":qty}</span>
                               {rareColor&&<div style={{position:"absolute",top:0,left:0,right:0,height:2,background:rareColor,borderRadius:"8px 8px 0 0"}}/>}
+                              {Object.values(eq).includes(id)&&<div style={{position:"absolute",bottom:2,right:3,fontSize:7,color:C.acc,fontWeight:700,fontFamily:FONT}}>ON</div>}
                             </div>
                           );
                         })}
@@ -2804,15 +2807,37 @@ function GameUI({account,onLogout}){
                         const iid=eq[slot.id];const it=iid?ITEMS[iid]:null;const el=iid?(enh[iid]||0):0;
                         const setData=it?.set?Object.values(SET_BONUSES).find(s=>s.pieces.includes(iid)):null;
                         return(
-                          <div key={slot.id} onMouseEnter={iid?e=>showTip(e,iid):null} onMouseLeave={hideTip}
-                            style={{display:"flex",alignItems:"center",gap:10,padding:"12px 14px",borderRadius:8,background:it?"linear-gradient(90deg,"+(setData?setData.color:C.acc)+"10,"+C.card+")":C.card,border:"1px solid "+(setData?setData.color+"50":it?C.acc+"40":C.border),cursor:it?"pointer":"default"}}>
+                          <div key={slot.id} onClick={()=>setSelSlot(selSlot===slot.id?null:slot.id)} onMouseEnter={iid?e=>showTip(e,iid):null} onMouseLeave={hideTip}
+                            style={{display:"flex",alignItems:"center",gap:10,padding:"12px 14px",borderRadius:8,background:selSlot===slot.id?C.acc+"20":it?"linear-gradient(90deg,"+(setData?setData.color:C.acc)+"10,"+C.card+")":C.card,border:"1px solid "+(selSlot===slot.id?C.acc:setData?setData.color+"50":it?C.acc+"40":C.border),cursor:"pointer"}}>
                             <div style={{width:44,height:44,borderRadius:8,background:C.bg,border:"1px solid "+(setData?setData.color+"40":C.border),display:"flex",alignItems:"center",justifyContent:"center",fontSize:22,flexShrink:0}}>{it?it.i:slot.i}</div>
                             <div style={{flex:1}}>
                               <div style={{fontSize:12,color:C.td,fontFamily:FONT_BODY}}>{slot.n}</div>
                               <div style={{fontSize:13,color:setData?setData.color:it?C.white:C.td,fontWeight:600,fontFamily:FONT_BODY}}>{it?(it.n+(el>0?" +"+el:"")):"— empty —"}</div>
                               {it?.st&&<div style={{fontSize:10,color:C.ts,fontFamily:FONT_BODY,marginTop:2}}>{Object.entries(it.st||{}).map(([k,v])=>fmtStat(k,v)).join(" · ")}</div>}
                             </div>
+                            {iid&&<span onClick={(e)=>{e.stopPropagation();unequipIt(slot.id);}} style={{fontSize:9,color:C.bad,cursor:"pointer",fontFamily:FONT,letterSpacing:1,flexShrink:0}}>✕</span>}
                           </div>
+                          {selSlot===slot.id&&(
+                            <div style={{marginTop:4,padding:"8px",borderRadius:8,background:C.bg,border:"1px solid "+C.acc+"40"}}>
+                              <div style={{fontSize:9,color:C.td,letterSpacing:2,marginBottom:6,fontFamily:FONT}}>SELECT ITEM FOR {slot.n.toUpperCase()}</div>
+                              <div style={{display:"flex",flexWrap:"wrap",gap:4}}>
+                                {Object.entries(inv).filter(([id,qty])=>ITEMS[id]&&ITEMS[id].eq===slot.id&&qty>0).map(([id])=>{
+                                  const sit=ITEMS[id];const isSel=eq[slot.id]===id;
+                                  return(
+                                  <div key={id} onClick={()=>{isSel?unequipIt(slot.id):equipIt(id);setSelSlot(null);}}
+                                    style={{padding:"6px 10px",borderRadius:6,background:isSel?C.acc+"30":C.card,border:"1px solid "+(isSel?C.acc:C.border),cursor:"pointer",display:"flex",alignItems:"center",gap:6}}>
+                                    <span style={{fontSize:16}}>{sit.i}</span>
+                                    <div>
+                                      <div style={{fontSize:10,fontWeight:700,color:isSel?C.acc:C.white,fontFamily:FONT}}>{sit.n}{isSel?" ✓":""}</div>
+                                      {sit.st&&<div style={{fontSize:9,color:C.td,fontFamily:FONT_BODY}}>{Object.entries(sit.st||{}).slice(0,2).map(([k,v])=>fmtStat(k,v)).join(" ")}</div>}
+                                    </div>
+                                  </div>
+                                );})}
+                                {Object.entries(inv).filter(([id,qty])=>ITEMS[id]&&ITEMS[id].eq===slot.id&&qty>0).length===0&&
+                                  <div style={{fontSize:10,color:C.td,fontFamily:FONT_BODY,padding:"4px"}}>No items available</div>}
+                              </div>
+                            </div>
+                          )}
                         );
                       })}
                     </div>
@@ -3096,7 +3121,6 @@ function GameUI({account,onLogout}){
                 <NavItem id="stats"        icon="📊" label="Stats & Profile"/>
                 <NavItem id="social"       icon="💬" label="Social"        badge={friendReqs.length>0?friendReqs.length:null}/>
                 <NavItem id="equipment"    icon="🗡️" label="Equipment"/>
-                <NavItem id="inventory"    icon="🎒" label="Inventory"/>
               </div>
           <div style={{flex:1}}/>
           <div onClick={()=>setShowLogoutConfirm(true)} style={{padding:"10px 12px",borderTop:"1px solid "+C.border,fontSize:10,color:C.td,cursor:"pointer",fontFamily:FONT_BODY,letterSpacing:1,display:"flex",alignItems:"center",gap:6}}>◉ LOGOUT</div>
@@ -4817,8 +4841,7 @@ function GameUI({account,onLogout}){
           {/* Tab bar — Inventory | Equipment | Stats | Loadout */}
           <div style={{display:"flex",flexShrink:0,background:C.bg,borderBottom:"1px solid "+C.border}}>
             {[
-              {id:"inventory", label:"Inventory"},
-              {id:"equipment", label:"Equipment"},
+                            {id:"equipment", label:"Equipment"},
               {id:"stats",     label:"Stats"},
               {id:"loadout",   label:"Loadout"},
             ].map(t=>(

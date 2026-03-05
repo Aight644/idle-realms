@@ -292,11 +292,13 @@ const DRONE_TYPES = [
 // ===================== BLUEPRINT DROPS =====================
 // Rare blueprint drops while gathering — no item/XP bonuses, just blueprint unlocks
 const BP_DROPS = [
-  { id:"drop_wreck",   rarity:0.004, pool:["bp_void_kelp","bp_leviathan_scale","bp_deep_scan","bp_supply_mastery"] },
-  { id:"drop_lab",     rarity:0.003, pool:["bp_void_crystal","bp_ancient_brew","bp_atlas_complete"] },
+  { id:"drop_wreck",   pool:["bp_void_kelp","bp_leviathan_scale"] },
+  { id:"drop_lab",     pool:["bp_void_crystal","bp_ancient_brew"] },
   { id:"drop_beacon",  rarity:0.002, pool:["bp_thermal_forge","bp_void_reactor"] },
   { id:"drop_vein",    rarity:0.003, pool:["bp_ancient_armor"] },
 ];
+
+
 
 // ===================== BLUEPRINTS =====================
 // Hidden skill actions unlocked rarely while gathering.
@@ -350,27 +352,6 @@ const BLUEPRINTS = [
     desc:"Blueprints for the ancient emperor's armor — the pinnacle of defense.",
     act:{id:"bp_rf10",gearCat:"combat",name:"Emperor Armor",lv:110,xp:450,t:60,inp:[{id:"ancient_processor",q:3},{id:"void_essence",q:3},{id:"leviathan_bone",q:8},{id:"alien_bio_tissue",q:4}],out:[{id:"leviathan_warplate",q:1},{id:"abyss_crown",q:1}]},
     source:"Crystal Vein Exposed",
-  },
-  {
-    id:"bp_deep_scan", skillId:"exploration", icon:"📡", rarity:"rare",
-    name:"Deep Void Scanner",
-    desc:"Scan deep void pockets for rare essence deposits.",
-    act:{id:"bp_sc5",name:"Void Pocket Scan",lv:75,xp:102,t:60,inp:[{id:"resonance_crystal",q:3},{id:"void_pearl",q:1}],out:[{id:"void_essence",q:1},{id:"ancient_data_chip",q:1}],util:{type:"rare",val:0.15},desc:"Scan void pockets. +15% rare drops."},
-    source:"Ancient Submarine Wreck",
-  },
-  {
-    id:"bp_supply_mastery", skillId:"exploration", icon:"📦", rarity:"rare",
-    name:"Void Supply Network",
-    desc:"Build a void-powered supply network — extreme logistics efficiency.",
-    act:{id:"bp_lg5",name:"Void Supply Network",lv:80,xp:168,t:60,inp:[{id:"void_essence",q:1},{id:"ancient_data_chip",q:2}],out:[{id:"supply_crate",q:8}],util:{type:"gold",val:500},desc:"Void supply network. +500 credits per run."},
-    source:"Ancient Submarine Wreck",
-  },
-  {
-    id:"bp_atlas_complete", skillId:"exploration", icon:"🗺️", rarity:"epic",
-    name:"Void Realm Atlas",
-    desc:"Chart the void realms beyond the known ocean — yields impossible resources.",
-    act:{id:"bp_oc5",name:"Void Realm Atlas",lv:100,xp:218,t:60,inp:[{id:"void_map",q:3},{id:"void_essence",q:2}],out:[{id:"void_map",q:5},{id:"ancient_relic",q:2}],util:{type:"yield",val:0.40},desc:"Void realm atlas. +40% all yields permanently."},
-    source:"Lost Research Facility",
   },
 ];
 
@@ -704,6 +685,11 @@ const SKILLS=[
     {id:"te4",name:"Ancient Ruin Dig",lv:60, xp:85,t:18, out:[{id:"ancient_fragment",q:1}]},
     {id:"te5",name:"Abyss Silt Trench",lv:85, xp:170,t:24, out:[{id:"abyss_silt",q:1}]},
     {id:"te6",name:"Lost Relic Vault",lv:110,xp:310,t:30, out:[{id:"ancient_relic",q:1}]}]},
+  {id:"exploration",name:"Exploration",icon:"🧭",color:"#38bdf8",cat:"gather",acts:[
+    {id:"ex1",name:"Survey Submarine Wreck", lv:1,  xp:30, t:60,  out:[{id:"kelp",q:1}],           dropId:"drop_wreck",  desc:"Search the ancient wreck for hidden blueprints."},
+    {id:"ex2",name:"Probe Research Facility",lv:25, xp:55, t:90,  inp:[{id:"nav_beacon",q:1}],      out:[{id:"soft_coral",q:1}], dropId:"drop_lab",    desc:"Infiltrate the lost facility. May uncover rare blueprints."},
+    {id:"ex3",name:"Follow Deep Signal",     lv:50, xp:90, t:120, inp:[{id:"resonance_crystal",q:2}],out:[{id:"abyss_crystal",q:1}], dropId:"drop_beacon", desc:"Track the beacon. Legendary blueprints await."},
+    {id:"ex4",name:"Excavate Crystal Vein",  lv:75, xp:140,t:150, inp:[{id:"abyss_crystal",q:3},{id:"void_essence",q:1}], out:[{id:"void_essence",q:1}], dropId:"drop_vein", desc:"Mine the exposed vein. The rarest blueprints hide here."}]},
   {id:"fabrication",name:"Fabrication",icon:"🔧",color:"#ffd60a",cat:"prod",acts:[
     {id:"fb1",name:"Grind Stone",        lv:1, xp:14, t:10,inp:[{id:"trench_stone",q:3}],                                     out:[{id:"stone_powder",q:1}]},
     {id:"fb2",name:"Crush Shells",       lv:10,xp:18, t:10,inp:[{id:"shell_fragments",q:3}],                                out:[{id:"shell_dust",q:1}]},
@@ -749,27 +735,6 @@ const SKILLS=[
     {id:"dc4",name:"Bioluminescent Brew",lv:35,xp:75, t:19,inp:[{id:"luminescent_gel",q:2},{id:"glowfish",q:4}],out:[{id:"bioluminescent_drink",q:1}]},
     {id:"oa2",name:"Void Elixir",lv:40,xp:100,t:22,inp:[{id:"abyss_crystal",q:2},{id:"enzyme_compound",q:2}],out:[{id:"void_elixir",q:1}]},
     {id:"oa4",name:"Bio Stim Mk2",lv:50,xp:95, t:21,inp:[{id:"luminescent_gel",q:3},{id:"pressure_tonic",q:1}],out:[{id:"bio_stim_mk2",q:1}]}]},
-  {id:"exploration",name:"Exploration",icon:"🧭",color:"#38bdf8",cat:"utility",acts:[
-    {id:"nv1",name:"Chart Reef Currents",lv:1, xp:20,t:12,out:[{id:"nav_beacon",q:1}],util:{type:"speed",val:0.05},desc:"+5% gather speed."},
-    {id:"ac1",name:"Surface Excavation",lv:1, xp:25,t:12,out:[{id:"relic_shard",q:1}],util:{type:"rp",val:5},desc:"Excavate reef. Gain RP + relics."},
-    {id:"sc1",name:"Bio Scan",lv:1, xp:20,t:12,out:[{id:"scan_report",q:1}],util:{type:"rare",val:0.03},desc:"+3% rare drop chance."},
-    {id:"oc1",name:"Reef Survey",lv:1, xp:22,t:12,out:[{id:"ocean_chart",q:1}],util:{type:"yield",val:0.05},desc:"+5% resource yield."},
-    {id:"lg1",name:"Supply Cache",lv:1, xp:31,t:13,inp:[{id:"kelp",q:5},{id:"sea_mushrooms",q:3}],out:[{id:"supply_crate",q:1}],util:{type:"gold",val:10},desc:"Pack supply cache."},
-    {id:"nv2",name:"Map Twilight Lanes",lv:15,xp:40,t:14,inp:[{id:"nav_beacon",q:1}],out:[{id:"ocean_chart",q:1}],util:{type:"speed",val:0.10},desc:"+10% gather speed."},
-    {id:"lg2",name:"Trade Bundle",lv:15,xp:26,t:13,inp:[{id:"kelp",q:8},{id:"glowfish",q:5}],out:[{id:"supply_crate",q:2}],util:{type:"gold",val:25},desc:"+25 bonus credits."},
-    {id:"sc2",name:"Deep Resonance Scan",lv:20,xp:45,t:15,inp:[{id:"scan_report",q:1}],out:[{id:"resonance_crystal",q:1}],util:{type:"rare",val:0.05},desc:"+5% rare drops."},
-    {id:"oc2",name:"Abyss Mapping",lv:25,xp:50,t:15,inp:[{id:"ocean_chart",q:1}],out:[{id:"ocean_chart",q:2}],util:{type:"yield",val:0.10},desc:"+10% resource yield."},
-    {id:"ac2",name:"Ancient Wreck Dive",lv:25,xp:55,t:16,inp:[{id:"relic_shard",q:2}],out:[{id:"ancient_relic",q:1}],util:{type:"rp",val:15},desc:"Recover artifact fragments."},
-    {id:"nv3",name:"Deep Trench Routes",lv:35,xp:75,t:18,inp:[{id:"ocean_chart",q:1}],out:[{id:"void_map",q:1}],util:{type:"speed",val:0.15},desc:"+15% gather speed."},
-    {id:"lg3",name:"Efficiency Protocol",lv:35,xp:84,t:20,inp:[{id:"drone_processor",q:1},{id:"supply_crate",q:1}],out:[{id:"supply_crate",q:3}],util:{type:"gold",val:50},desc:"+50 bonus credits."},
-    {id:"sc3",name:"Void Signal Trace",lv:40,xp:90,t:20,inp:[{id:"resonance_crystal",q:1},{id:"drone_processor",q:1}],out:[{id:"resonance_crystal",q:2}],util:{type:"rare",val:0.08},desc:"+8% rare drops."},
-    {id:"ac3",name:"Relic Reconstruction", lv:45,xp:110,t:22,inp:[{id:"ancient_relic",q:2},{id:"abyss_crystal",q:1}],out:[{id:"ancient_processor",q:1}],util:{type:"rp",val:30},desc:"+30 RP per action."},
-    {id:"oc3",name:"Void Region Chart",lv:50,xp:100,t:22,inp:[{id:"ocean_chart",q:2},{id:"void_pearl",q:1}],out:[{id:"void_map",q:1}],util:{type:"yield",val:0.15},desc:"+15% resource yield."},
-    {id:"nv4",name:"Void Cartography",lv:60,xp:140,t:22,inp:[{id:"void_map",q:1},{id:"abyss_crystal",q:2}],out:[{id:"void_map",q:2}],util:{type:"speed",val:0.20},desc:"+20% gather speed."},
-    {id:"lg4",name:"Deep Supply Network",lv:60,xp:168,t:31,inp:[{id:"ancient_data_chip",q:1},{id:"supply_crate",q:2}],out:[{id:"supply_crate",q:5}],util:{type:"gold",val:120},desc:"+120 bonus credits."},
-    {id:"sc4",name:"Ancient Freq Lock",lv:65,xp:180,t:25,inp:[{id:"resonance_crystal",q:2},{id:"ancient_processor",q:1}],out:[{id:"ancient_data_chip",q:1}],util:{type:"rare",val:0.12},desc:"+12% rare drops."},
-    {id:"ac4",name:"Ancient Core Extract", lv:70,xp:220,t:28,inp:[{id:"ancient_processor",q:1},{id:"thermal_core",q:1}],out:[{id:"ancient_data_chip",q:2}],util:{type:"rp",val:80},desc:"+80 RP per action."},
-    {id:"oc4",name:"Complete Ocean Atlas", lv:80,xp:220,t:28,inp:[{id:"void_map",q:2},{id:"ancient_relic",q:1}],out:[{id:"void_map",q:3}],util:{type:"yield",val:0.25},desc:"+25% all yield."}]},
   {id:"relic_forging",name:"Relic Forging",icon:"⚗️",color:"#e11d48",cat:"prod",acts:[
     {id:"vc_g1a",name:"Crystal Wand",lv:1, xp:28, t:12,inp:[{id:"abyss_crystal",q:6},{id:"raw_quartz",q:4}],out:[{id:"crystal_wand",q:1}]},
     {id:"vc_g1b",name:"Crystal Circlet",lv:1, xp:20, t:11,inp:[{id:"abyss_crystal",q:4},{id:"raw_quartz",q:3}],out:[{id:"crystal_circlet",q:1}]},
@@ -1230,7 +1195,7 @@ function ActRow({act,skColor,inv,curAct,startAct,skId,s,tipProps,C,FONT,FONT_BOD
             </span>
           );})}
         </div>
-        {act.util&&<div style={{fontSize:10,color:"#38bdf8",marginTop:2,fontFamily:FONT_BODY}}>{act.desc}</div>}
+        {(act.util||act.dropId)&&<div style={{fontSize:10,color:"#38bdf8",marginTop:2,fontFamily:FONT_BODY}}>{act.desc}</div>}
         {locked&&<div style={{fontSize:10,color:C.bad,marginTop:2,fontFamily:FONT_BODY}}>🔒 Requires Level {act.lv}</div>}
       </div>
       {!locked&&<div onClick={()=>{if(canDo)startAct(skId,act.id)}} style={{padding:"9px 20px",borderRadius:8,marginLeft:12,flexShrink:0,
@@ -1364,10 +1329,6 @@ function GameUI({account,onLogout}){
     ALL_RESEARCH.forEach(r=>{if(researched[r.id]&&r.effect)Object.entries(r.effect||{}).forEach(([k,v])=>{b[k]=(b[k]||0)+v})});
     // Structure bonuses (per level)
     STRUCTURES.forEach(st=>{const lv=structures[st.id]||0;if(lv>0){if(st.bonus)Object.entries(st.bonus).forEach(([k,v])=>{b[k]=(b[k]||0)+v*lv});if(st.bonusExtra)Object.entries(st.bonusExtra).forEach(([k,v])=>{b[k]=(b[k]||0)+v*lv})}});
-    // Utility skill passive bonuses (scale with skill level)
-    // Exploration skill passively boosts speed, rare chance, and yield (1/3 each)
-    {const lv=Math.floor((skills["exploration"]||0)/100);
-    if(lv>0){b.gather_speed=(b.gather_speed||0)+lv*0.015;b.rare_chance=(b.rare_chance||0)+lv*0.015;b.gather_yield=(b.gather_yield||0)+lv*0.015;}}
     // Equipment gather bonuses (tools + armor with gather stats)
     const gatherKeys=new Set(["gather_yield","gather_speed","cultiv_yield","mining_yield","fishing_yield","crystal_yield","trench_yield","rare_chance","xp_bonus"]);
     ESLOTS.forEach(slot=>{const iid=eq[slot.id];if(iid){const it=ITEMS[iid];if(it?.st)Object.entries(it.st||{}).forEach(([k,v])=>{if(gatherKeys.has(k))b[k]=(b[k]||0)+v})}});
@@ -1566,25 +1527,26 @@ function GameUI({account,onLogout}){
       });
       if(sk.cat==="gather")setGatherCounts(p=>({...p,[act.id]:(p[act.id]||0)+1}));
       if(sk.cat==="prod")setLifeStats(p=>({...p,crafts:(p.crafts||0)+1}));
-      if(sk.cat==="utility"&&act.util){const u=act.util;if(u.type==="gold")setGold(g=>g+u.val);if(u.type==="rp")setResearchPts(p=>p+u.val);}
-      if(sk.cat==="gather"){
-        const bonusChance=(bonuses.rare_chance||0)*0.3;
-        BP_DROPS.forEach(drop=>{
-          if(Math.random()<drop.rarity+bonusChance){
-            const avail=drop.pool.filter(id=>!blueprints.includes(id));
-            if(avail.length>0){
-              const chosen=avail[Math.floor(Math.random()*avail.length)];
-              setBlueprints(p=>[...p,chosen]);setLifeStats(p=>({...p,blueprintsFound:(p.blueprintsFound||0)+1}));
-              const bp=BLUEPRINTS.find(b=>b.id===chosen);
-              if(bp){setBpLog(p=>[...p.slice(-20),"📘 Blueprint unlocked: "+bp.name]);setNewAch({id:"_bp",name:"Blueprint Found!",desc:bp.name,icon:"📘",reward:{}});setTimeout(()=>setNewAch(n=>n?.id==="_bp"?null:n),4000);}
-            }
+      // Blueprint drops — exploration only
+      if(sk.id==="exploration"&&act.dropId){
+        const drop=BP_DROPS.find(d=>d.id===act.dropId);
+        if(drop){
+          const avail=drop.pool.filter(id=>!blueprints.includes(id));
+          if(avail.length>0&&Math.random()<0.40){
+            const chosen=avail[Math.floor(Math.random()*avail.length)];
+            setBlueprints(p=>[...p,chosen]);
+            setLifeStats(p=>({...p,blueprintsFound:(p.blueprintsFound||0)+1}));
+            const bp=BLUEPRINTS.find(b=>b.id===chosen);
+            if(bp){setBpLog(p=>[...p.slice(-20),"📘 Blueprint found: "+bp.name]);setNewAch({id:"_bp",name:"Blueprint Found!",desc:bp.name,icon:"📘",reward:{}});setTimeout(()=>setNewAch(n=>n?.id==="_bp"?null:n),4000);}
           }
-        });
+        }
       }
+
       start=Date.now();actProgRef.current=0;
     },250);
     return()=>{clearInterval(tick);cancelAnimationFrame(rafId);};
   },[curAct,gainXp,addIt,remIt,bonuses,blueprints]);
+
 
   // Combat tick
   useEffect(()=>{
@@ -2257,7 +2219,7 @@ function GameUI({account,onLogout}){
                 <div onClick={()=>{
                   if(isLast){setShowTutorial(false);setTutorialDone(true);setTutorialStep(0)}
                   else setTutorialStep(p=>p+1);
-                  if(step.highlight)setPage(step.highlight==="gather"||step.highlight==="prod"||step.highlight==="utility"?"skills":step.highlight);
+                  if(step.highlight)setPage(step.highlight==="gather"||step.highlight==="prod"?"skills":step.highlight);
                 }} style={{flex:2,padding:"10px 0",borderRadius:8,background:"linear-gradient(90deg,"+C.accD+","+C.acc+")",color:C.bg,fontSize:11,fontWeight:700,cursor:"pointer",textAlign:"center",letterSpacing:1,fontFamily:FONT,boxShadow:GLOW_STYLE}}>
                   {isLast?"✓ START PLAYING":"NEXT →"}
                 </div>
@@ -2911,7 +2873,7 @@ function GameUI({account,onLogout}){
                 const cats=[
                   {key:"gather",  label:"Gathering",  color:C.td},
                   {key:"prod",    label:"Production",  color:C.td},
-                  {key:"utility", label:"Utility",     color:"#38bdf8"},
+                  
                 ];
                 return cats.map(cat=>{
                   const skills=SKILLS.filter(s=>s.cat===cat.key&&filtered(s));
@@ -3819,8 +3781,8 @@ function GameUI({account,onLogout}){
             {page==="blueprints"&&(()=>{
               const totalBps=BLUEPRINTS.length;
               const unlockedBps=blueprints.length;
-              const cats=["gather","prod","utility"];
-              const catLabels={gather:"Gathering",prod:"Production",utility:"Utility"};
+              const cats=["gather","prod"];
+              const catLabels={gather:"Gathering",prod:"Production"};
               return(
               <div style={{}}>
                 {/* Header */}
@@ -3841,7 +3803,7 @@ function GameUI({account,onLogout}){
                 {unlockedBps===0&&(
                   <div style={{padding:"14px 16px",borderRadius:10,background:C.card,border:"1px dashed "+C.border,marginBottom:16,marginTop:12}}>
                     <div style={{fontSize:11,color:C.ts,fontFamily:FONT_BODY,lineHeight:1.6}}>
-                      📘 Blueprints are hidden recipes that unlock rarely while gathering. Each blueprint permanently adds a powerful new operation to that skill's action list.
+                      🧭 Blueprints are found exclusively through Exploration. Run exploration operations in the Skills tab to discover hidden recipes that permanently unlock powerful new actions.
                     </div>
                   </div>
                 )}
@@ -3908,19 +3870,22 @@ function GameUI({account,onLogout}){
 
                 {/* Discovery reminder */}
                 <div style={{padding:"12px 16px",borderRadius:8,background:C.card,border:"1px solid "+C.border,marginTop:8}}>
-                  <div style={{fontSize:11,fontWeight:700,color:C.acc,letterSpacing:2,marginBottom:6}}>HOW TO UNLOCK</div>
+                  <div style={{fontSize:11,fontWeight:700,color:"#38bdf8",letterSpacing:2,marginBottom:6}}>HOW TO FIND BLUEPRINTS</div>
                   <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:6}}>
                     {[
-                      {disc:"🚢 Ancient Submarine Wreck",bps:"Void Kelp, Leviathan Scale, Deep Scan, Supply Mastery"},
-                      {disc:"🏚️ Lost Research Facility",  bps:"Void Crystal, Ancient Brew, Atlas Complete"},
-                      {disc:"📡 Deep Signal Beacon",      bps:"Thermal Forge, Void Reactor (Legendary!)"},
-                      {disc:"💎 Crystal Vein Exposed",    bps:"Ancient Emperor Armor (Legendary!)"},
+                      {act:"🚢 Survey Submarine Wreck", lv:"Lv 1",  bps:"Void Kelp, Leviathan Scale"},
+                      {act:"🏚️ Probe Research Facility",lv:"Lv 25", bps:"Void Crystal, Ancient Brew"},
+                      {act:"📡 Follow Deep Signal",     lv:"Lv 50", bps:"Thermal Forge, Void Reactor"},
+                      {act:"💎 Excavate Crystal Vein",  lv:"Lv 75", bps:"Ancient Emperor Armor"},
                     ].map(row=>(
-                      <div key={row.disc} style={{fontSize:9,fontFamily:FONT_BODY}}>
-                        <div style={{color:C.gold,fontWeight:700,marginBottom:2}}>{row.disc}</div>
+                      <div key={row.act} style={{fontSize:9,fontFamily:FONT_BODY}}>
+                        <div style={{color:C.gold,fontWeight:700,marginBottom:2}}>{row.act} <span style={{color:C.td,fontWeight:400}}>({row.lv})</span></div>
                         <div style={{color:C.ts}}>{row.bps}</div>
                       </div>
                     ))}
+                  </div>
+                  <div onClick={()=>setPage("skills")} style={{marginTop:10,padding:"5px 12px",borderRadius:6,background:"#38bdf820",border:"1px solid #38bdf850",color:"#38bdf8",fontSize:9,fontWeight:700,cursor:"pointer",display:"inline-block",fontFamily:FONT,letterSpacing:1}}>
+                    GO TO EXPLORATION →
                   </div>
                 </div>
               </div>

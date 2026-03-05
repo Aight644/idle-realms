@@ -1971,7 +1971,7 @@ function GameUI({account,onLogout}){
     const it=ITEMS[id];if(!it||!qty)return null;
     const rareColor=it.rarity==="rare"?C.gold:it.rarity==="uncommon"?C.purp:null;
     return(
-      <div title={it.n+" ×"+fmt(qty)} style={{position:"relative",width:44,height:44,borderRadius:6,background:rareColor?rareColor+"18":C.bg,border:"1px solid "+(rareColor?rareColor+"60":C.border),display:"flex",alignItems:"center",justifyContent:"center",flexDirection:"column",cursor:"default",overflow:"hidden",flexShrink:0}}>
+      <div {...tipProps(id)} style={{position:"relative",width:44,height:44,borderRadius:6,background:rareColor?rareColor+"18":C.bg,border:"1px solid "+(rareColor?rareColor+"60":C.border),display:"flex",alignItems:"center",justifyContent:"center",flexDirection:"column",overflow:"hidden",flexShrink:0}}>
         <span style={{fontSize:18,lineHeight:1}}>{it.i||"📦"}</span>
         <span style={{fontSize:8,color:rareColor||C.ts,fontWeight:700,fontFamily:FONT,lineHeight:1,marginTop:1}}>{qty>=1000?Math.floor(qty/1000)+"k":qty}</span>
         {rareColor&&<div style={{position:"absolute",top:0,left:0,right:0,height:2,background:rareColor,opacity:0.7,borderRadius:"6px 6px 0 0"}}/>}
@@ -1982,6 +1982,8 @@ function GameUI({account,onLogout}){
   // Tooltip helpers
   const showTip=(e,iid)=>{const r=e.currentTarget.getBoundingClientRect();setTooltip({iid,x:r.left+r.width/2,y:r.top});};
   const hideTip=()=>setTooltip(null);
+  // tipProps(iid) — spread onto any element to get hover tooltip
+  const tipProps=(iid)=>iid&&ITEMS[iid]?{onMouseEnter:e=>showTip(e,iid),onMouseLeave:hideTip,style:{cursor:"help"}}:{};
 
   // Render item tooltip content
   const renderTooltip=()=>{
@@ -2167,9 +2169,9 @@ function GameUI({account,onLogout}){
               <div style={{display:"flex",flexDirection:"column",gap:4}}>
                 {Object.entries(offlineGains.gains.items).map(([id,qty])=>(
                   <div key={id} style={{display:"flex",alignItems:"center",gap:8,fontSize:11,fontFamily:FONT_BODY}}>
-                    <span>{ITEMS[id]?ITEMS[id].i:"📦"}</span>
+                    <span {...tipProps(id)}>{ITEMS[id]?ITEMS[id].i:"📦"}</span>
                     <span style={{color:C.ok,fontWeight:700}}>+{fmt(qty)}</span>
-                    <span style={{color:C.ts}}>{ITEMS[id]?ITEMS[id].n:id}</span>
+                    <span {...tipProps(id)} style={{color:C.ts}}>{ITEMS[id]?ITEMS[id].n:id}</span>
                   </div>
                 ))}
                 {offlineGains.gains.gold>0&&<div style={{display:"flex",alignItems:"center",gap:8,fontSize:11,fontFamily:FONT_BODY}}><span>◈</span><span style={{color:C.gold,fontWeight:700}}>+{fmt(offlineGains.gains.gold)}</span><span style={{color:C.ts}}>Credits</span></div>}
@@ -2323,12 +2325,24 @@ function GameUI({account,onLogout}){
                                         </div>
                                         {canDo?(
                                           <div style={{fontSize:11,color:C.ts,fontFamily:FONT_BODY,display:"flex",alignItems:"center",gap:4,flexWrap:"wrap"}}>
-                                            <span>+{act.xp} XP · {act.t}s · {act.out.map(o=>(ITEMS[o.id]?.i||"📦")+" "+(ITEMS[o.id]?.n||o.id)).join(", ")}</span>
+                                            <span>+{act.xp} XP · {act.t}s · </span>
+                                            {act.out.map(o=>{const it=ITEMS[o.id];const hasStats=it?.st&&Object.keys(it.st).length>0;return(
+                                              <span key={o.id} onMouseEnter={hasStats?e=>showTip(e,o.id):null} onMouseLeave={hasStats?hideTip:null}
+                                                style={{color:hasStats?sk.color:C.ts,fontWeight:hasStats?700:400,cursor:hasStats?"help":"default",borderBottom:hasStats?"1px dashed "+sk.color+"60":"none"}}>
+                                                {it?.i||"📦"} {it?.n||o.id}
+                                              </span>
+                                            );})}
                                             {count>0&&<span style={{color:sk.color,fontWeight:700}}>· ×{count}</span>}
                                           </div>
                                         ):(
-                                          <div style={{fontSize:11,color:C.td,fontFamily:FONT_BODY}}>
-                                            🔒 Lv {act.lv} · {act.out.map(o=>(ITEMS[o.id]?.i||"📦")+" "+(ITEMS[o.id]?.n||o.id)).join(", ")}
+                                          <div style={{fontSize:11,color:C.td,fontFamily:FONT_BODY,display:"flex",alignItems:"center",gap:4,flexWrap:"wrap"}}>
+                                            <span>🔒 Lv {act.lv} · </span>
+                                            {act.out.map(o=>{const it=ITEMS[o.id];const hasStats=it?.st&&Object.keys(it.st).length>0;return(
+                                              <span key={o.id} onMouseEnter={hasStats?e=>showTip(e,o.id):null} onMouseLeave={hasStats?hideTip:null}
+                                                style={{color:hasStats?"#ffffff40":C.td,cursor:hasStats?"help":"default",borderBottom:hasStats?"1px dashed #ffffff20":"none"}}>
+                                                {it?.i||"📦"} {it?.n||o.id}
+                                              </span>
+                                            );})}
                                           </div>
                                         )}
                                       </div>
@@ -2440,7 +2454,7 @@ function GameUI({account,onLogout}){
                           const it=ITEMS[id];
                           const rareColor=it.rarity==="rare"?C.gold:it.rarity==="uncommon"?C.purp:null;
                           return(
-                            <div key={id} title={it.n+" ×"+fmt(qty)} style={{position:"relative",width:58,height:58,borderRadius:8,background:rareColor?rareColor+"18":C.card,border:"1px solid "+(rareColor?rareColor+"50":C.border),display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:1}}>
+                            <div key={id} {...tipProps(id)} style={{position:"relative",width:58,height:58,borderRadius:8,background:rareColor?rareColor+"18":C.card,border:"1px solid "+(rareColor?rareColor+"50":C.border),display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:1}}>
                               <span style={{fontSize:24,lineHeight:1}}>{it.i||"📦"}</span>
                               <span style={{fontSize:11,color:rareColor||C.ts,fontWeight:700,fontFamily:FONT}}>{qty>=1000?Math.floor(qty/1000)+"k":qty}</span>
                               {rareColor&&<div style={{position:"absolute",top:0,left:0,right:0,height:2,background:rareColor,borderRadius:"8px 8px 0 0"}}/>}
@@ -2867,7 +2881,15 @@ function GameUI({account,onLogout}){
                         <div style={{fontSize:14,fontWeight:700,color:isAct?C.ok:isBp?bpColor:C.white,fontFamily:FONT,letterSpacing:1}}>{act.name.toUpperCase()}</div>
                         {isBp&&<div style={{fontSize:9,padding:"2px 7px",borderRadius:6,background:bpColor+"25",border:"1px solid "+bpColor+"60",color:bpColor,fontWeight:700,letterSpacing:1}}>📘 BLUEPRINT</div>}
                       </div>
-                      <div style={{fontSize:12,color:C.ts,fontFamily:FONT_BODY}}>+{act.xp} XP · {act.t}s{act.inp?" · Needs: "+act.inp.map(i=>(ITEMS[i.id]?ITEMS[i.id].i:"")+i.q).join(" "):""}  {act.out?" → "+act.out.map(i=>(ITEMS[i.id]?ITEMS[i.id].i:"")+" "+(ITEMS[i.id]?ITEMS[i.id].n:"")).join(", "):""}</div>
+                      <div style={{fontSize:12,color:C.ts,fontFamily:FONT_BODY,display:"flex",alignItems:"center",gap:4,flexWrap:"wrap"}}>
+                        <span>+{act.xp} XP · {act.t}s{act.inp&&<>{" · Needs: "}{act.inp.map(i=><span key={i.id} {...tipProps(i.id)} style={{marginRight:3}}>{(ITEMS[i.id]?ITEMS[i.id].i:"")+i.q}</span>)}</>} →</span>
+                        {act.out&&act.out.map(i=>{const it=ITEMS[i.id];const hasStats=it?.st&&Object.keys(it.st).length>0;return(
+                          <span key={i.id} onMouseEnter={hasStats?e=>showTip(e,i.id):null} onMouseLeave={hasStats?hideTip:null}
+                            style={{color:hasStats?skData.color:C.ts,fontWeight:hasStats?700:400,cursor:hasStats?"help":"default",borderBottom:hasStats?"1px dashed "+skData.color+"60":"none"}}>
+                            {it?.i||""} {it?.n||i.id}
+                          </span>
+                        );})}
+                      </div>
                       {act.util&&<div style={{fontSize:11,color:"#38bdf8",marginTop:3,fontFamily:FONT_BODY}}>{act.desc||"Utility effect active"}</div>}
                       {act.out&&act.out.some(o=>ITEMS[o.id]&&ITEMS[o.id].rare)&&<div style={{fontSize:11,color:C.gold,marginTop:2,fontFamily:FONT_BODY}}>✨ Produces rare material</div>}
                       {locked&&<div style={{fontSize:11,color:C.bad,marginTop:2,fontFamily:FONT_BODY}}>Requires Level {act.lv}</div>}
@@ -3047,7 +3069,7 @@ function GameUI({account,onLogout}){
                                 <span style={{padding:"2px 8px",borderRadius:4,background:gold>=cost.gold?C.gold+"20":C.bad+"20",border:"1px solid "+(gold>=cost.gold?C.gold+"40":C.bad+"40"),fontSize:10,color:gold>=cost.gold?C.gold:C.bad,fontFamily:FONT_BODY}}>◈ {fmt(cost.gold)}</span>
                               )}
                               {itemKeys.map(k=>{const have=(inv[k]||0)>=cost[k];return(
-                                <span key={k} style={{padding:"2px 8px",borderRadius:4,background:have?C.ok+"15":C.bad+"15",border:"1px solid "+(have?C.ok+"35":C.bad+"35"),fontSize:10,color:have?C.ok:C.bad,fontFamily:FONT_BODY}}>{ITEMS[k]?ITEMS[k].i:k} {cost[k]}<span style={{opacity:0.6}}> / {inv[k]||0}</span></span>
+                                <span key={k} {...tipProps(k)} style={{padding:"2px 8px",borderRadius:4,background:have?C.ok+"15":C.bad+"15",border:"1px solid "+(have?C.ok+"35":C.bad+"35"),fontSize:10,color:have?C.ok:C.bad,fontFamily:FONT_BODY}}>{ITEMS[k]?ITEMS[k].i:k} {cost[k]}<span style={{opacity:0.6}}> / {inv[k]||0}</span></span>
                               );})}
                             </div>
                           </div>
@@ -3149,7 +3171,7 @@ function GameUI({account,onLogout}){
                               <span style={{fontSize:10,color:C.gold,fontFamily:FONT_BODY}}>◈ {Math.floor(dt.goldPerKill*(1+(bonuses.gold_pct||0)))} · +{Math.floor(dt.xpAmt*(1+(bonuses.combat_xp||0)))} XP</span>
                             )}
                             {(dt.action==="gather"||dt.action==="explore")&&dt.outputs.filter(o=>o.id).map(o=>(
-                              <span key={o.id} style={{fontSize:10,color:C.text,fontFamily:FONT_BODY}}>
+                              <span key={o.id} {...tipProps(o.id)} style={{fontSize:10,color:C.text,fontFamily:FONT_BODY}}>
                                 {ITEMS[o.id]?ITEMS[o.id].i:""} {o.chance!==undefined?"~"+(o.chance*100).toFixed(0)+"%":""} {o.q}×
                               </span>
                             ))}
@@ -3166,7 +3188,7 @@ function GameUI({account,onLogout}){
                               <span style={{padding:"2px 8px",borderRadius:4,background:goldOk?C.gold+"20":C.bad+"20",border:"1px solid "+(goldOk?C.gold+"40":C.bad+"40"),fontSize:10,color:goldOk?C.gold:C.bad,fontFamily:FONT_BODY}}>◈ {fmt(cost.gold)}</span>
                             )}
                             {itemKeys.map(k=>{const have=(inv[k]||0)>=cost[k];return(
-                              <span key={k} style={{padding:"2px 8px",borderRadius:4,background:have?C.ok+"15":C.bad+"15",border:"1px solid "+(have?C.ok+"35":C.bad+"35"),fontSize:10,color:have?C.ok:C.bad,fontFamily:FONT_BODY}}>{ITEMS[k]?ITEMS[k].i:k} {cost[k]}<span style={{opacity:0.6}}> / {inv[k]||0}</span></span>
+                              <span key={k} {...tipProps(k)} style={{padding:"2px 8px",borderRadius:4,background:have?C.ok+"15":C.bad+"15",border:"1px solid "+(have?C.ok+"35":C.bad+"35"),fontSize:10,color:have?C.ok:C.bad,fontFamily:FONT_BODY}}>{ITEMS[k]?ITEMS[k].i:k} {cost[k]}<span style={{opacity:0.6}}> / {inv[k]||0}</span></span>
                             );})}
                           </div>
                         </div>
@@ -3236,7 +3258,7 @@ function GameUI({account,onLogout}){
                         const canBuy=gold>=order.price;
                         return(
                           <div key={order.id} style={{display:"flex",alignItems:"center",gap:12,padding:"12px 16px",borderRadius:8,background:C.card,border:"1px solid "+(canBuy?C.border:C.bad+"30")}}>
-                            <span style={{fontSize:20}}>{it?it.i:"📦"}</span>
+                            <span {...tipProps(order.itemId)} style={{fontSize:20}}>{it?it.i:"📦"}</span>
                             <div style={{flex:1}}>
                               <div style={{fontSize:12,fontWeight:700,color:C.white,fontFamily:FONT}}>{it?it.n:order.itemId} <span style={{color:C.ts,fontWeight:400,fontSize:10}}>×{order.qty}</span></div>
                               <div style={{fontSize:10,color:C.td,fontFamily:FONT_BODY}}>from <span style={{color:C.acc}}>{order.sellerName||"Unknown"}</span></div>
@@ -3267,7 +3289,7 @@ function GameUI({account,onLogout}){
                           {tradableItems.map(([id,qty])=>{
                             const it=ITEMS[id];
                             return(
-                              <div key={id} onClick={()=>setSellItem(id)} style={{padding:"8px 10px",borderRadius:6,background:sellItem===id?C.acc+"20":C.bg,border:"1px solid "+(sellItem===id?C.acc+"60":C.border),cursor:"pointer",transition:"all 0.15s"}}>
+                              <div key={id} {...tipProps(id)} onClick={()=>setSellItem(id)} style={{padding:"8px 10px",borderRadius:6,background:sellItem===id?C.acc+"20":C.bg,border:"1px solid "+(sellItem===id?C.acc+"60":C.border),cursor:"pointer",transition:"all 0.15s"}}>
                                 <div style={{fontSize:14}}>{it?it.i:"📦"}</div>
                                 <div style={{fontSize:9,color:sellItem===id?C.acc:C.ts,fontFamily:FONT_BODY,marginTop:2}}>{it?it.n:id}</div>
                                 <div style={{fontSize:9,color:C.td,fontFamily:FONT_BODY}}>×{qty}</div>
@@ -3322,7 +3344,7 @@ function GameUI({account,onLogout}){
                         const it=ITEMS[order.itemId];
                         return(
                           <div key={order.id} style={{display:"flex",alignItems:"center",gap:12,padding:"12px 16px",borderRadius:8,background:C.card,border:"1px solid "+C.acc+"30"}}>
-                            <span style={{fontSize:20}}>{it?it.i:"📦"}</span>
+                            <span {...tipProps(order.itemId)} style={{fontSize:20}}>{it?it.i:"📦"}</span>
                             <div style={{flex:1}}>
                               <div style={{fontSize:12,fontWeight:700,color:C.white,fontFamily:FONT}}>{it?it.n:order.itemId} <span style={{color:C.ts,fontWeight:400,fontSize:10}}>×{order.qty}</span></div>
                               <div style={{fontSize:10,color:C.gold,fontFamily:FONT_BODY}}>◈ {fmt(order.price)} · Listed</div>
@@ -3917,7 +3939,7 @@ function GameUI({account,onLogout}){
                   <div style={{fontSize:11,fontWeight:700,color:C.ts,marginBottom:10,letterSpacing:2}}>🍖 EMERGENCY RATIONS — auto-use below 40% HP</div>
                   <div style={{display:"flex",gap:8,flexWrap:"wrap"}}>
                     {Object.entries(inv).filter(e=>ITEMS[e[0]]&&ITEMS[e[0]].food).map(e=>{const id=e[0],qty=e[1];return(
-                      <div key={id} onClick={()=>setFood(id)} style={{padding:"8px 16px",borderRadius:8,background:food===id?C.ok+"20":C.bg,border:"2px solid "+(food===id?C.ok:C.border),cursor:"pointer",fontSize:13,color:C.text,fontFamily:FONT_BODY,boxShadow:food===id?GLOW_OK:"none",display:"flex",alignItems:"center",gap:6}}>
+                      <div key={id} {...tipProps(id)} onClick={()=>setFood(id)} style={{padding:"8px 16px",borderRadius:8,background:food===id?C.ok+"20":C.bg,border:"2px solid "+(food===id?C.ok:C.border),cursor:"pointer",fontSize:13,color:C.text,fontFamily:FONT_BODY,boxShadow:food===id?GLOW_OK:"none",display:"flex",alignItems:"center",gap:6}}>
                         <span style={{fontSize:18}}>{ITEMS[id].i}</span>
                         <span>{ITEMS[id].n}</span>
                         <span style={{color:C.td}}>×{qty}</span>
@@ -4031,7 +4053,7 @@ function GameUI({account,onLogout}){
                 <div style={{height:6,borderRadius:3,background:C.card,overflow:"hidden",marginBottom:16}}><div style={{width:(sl("enhancing").xp/sl("enhancing").need)*100+"%",height:"100%",borderRadius:3,background:C.warn,boxShadow:"0 0 6px "+C.warn}}/></div>
                 <div style={{fontSize:10,color:C.ts,marginBottom:16,fontFamily:FONT_BODY}}>Upgrade equipment stats. Failed attempts reset to +0!</div>
                 {ESLOTS.map(slot=>{const iid=eq[slot.id];if(!iid)return null;const it=ITEMS[iid];const cl=enh[iid]||0;const cost=Math.floor(50*Math.pow(1.5,cl));const rate=Math.max(20,Math.floor((0.8-cl*0.05)*100));return(
-                  <div key={slot.id} style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"12px 16px",borderRadius:8,background:C.card,border:"1px solid "+C.border,marginBottom:8}}>
+                  <div key={slot.id} {...tipProps(iid)} style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"12px 16px",borderRadius:8,background:C.card,border:"1px solid "+C.border,marginBottom:8}}>
                     <div><div style={{fontSize:12,fontWeight:700,color:C.white,fontFamily:FONT}}>{it.i} {it.n} +{cl}</div><div style={{fontSize:10,color:C.ts,marginTop:2,fontFamily:FONT_BODY}}>Success: {rate}% · Cost: ◈{fmt(cost)}</div></div>
                     <div onClick={()=>doEnh(slot.id)} style={{padding:"7px 18px",borderRadius:6,background:gold>=cost&&cl<20?"linear-gradient(90deg,"+C.warn+"cc,"+C.gold+")":C.card,color:gold>=cost&&cl<20?C.bg:C.td,fontSize:10,fontWeight:700,cursor:gold>=cost&&cl<20?"pointer":"default",opacity:gold>=cost&&cl<20?1:0.4,letterSpacing:1,fontFamily:FONT,boxShadow:gold>=cost&&cl<20?"0 0 8px "+C.gold+"55":"none"}}>UPGRADE</div>
                   </div>
@@ -4052,7 +4074,7 @@ function GameUI({account,onLogout}){
                     <div style={{fontSize:11,fontWeight:700,color:C.gold,letterSpacing:2,marginBottom:8}}>✨ RARE MATERIALS</div>
                     <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr 1fr",gap:6}}>
                       {Object.entries(inv).filter(([id])=>ITEMS[id]&&ITEMS[id].rare).map(([id,qty])=>{const it=ITEMS[id];return(
-                        <div key={id} style={{padding:"10px 12px",borderRadius:8,background:"linear-gradient(135deg,"+C.gold+"18,"+C.card+")",border:"2px solid "+C.gold+"50",boxShadow:"0 0 10px "+C.gold+"25",textAlign:"center"}}>
+                        <div key={id} {...tipProps(id)} style={{padding:"10px 12px",borderRadius:8,background:"linear-gradient(135deg,"+C.gold+"18,"+C.card+")",border:"2px solid "+C.gold+"50",boxShadow:"0 0 10px "+C.gold+"25",textAlign:"center"}}>
                           <div style={{fontSize:20,marginBottom:4,filter:"drop-shadow(0 0 6px "+C.gold+")"}}>{it.i}</div>
                           <div style={{fontSize:9,fontWeight:700,color:C.gold,fontFamily:FONT,letterSpacing:0.5}}>{it.n}</div>
                           <div style={{fontSize:11,color:C.text,fontWeight:700,fontFamily:FONT,marginTop:2}}>×{qty}</div>
@@ -4089,7 +4111,7 @@ function GameUI({account,onLogout}){
                     <div style={{fontSize:11,fontWeight:700,color:C.ok,letterSpacing:2,marginBottom:8}}>💉 CONSUMABLES</div>
                     <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:6}}>
                       {Object.entries(inv).filter(([id])=>ITEMS[id]&&ITEMS[id].food).map(([id,qty])=>{const it=ITEMS[id];return(
-                        <div key={id} style={{padding:"10px 12px",borderRadius:6,background:C.card,border:"1px solid "+C.ok+"30"}}>
+                        <div key={id} {...tipProps(id)} style={{padding:"10px 12px",borderRadius:6,background:C.card,border:"1px solid "+C.ok+"30"}}>
                           <div style={{fontSize:12,fontWeight:700,color:C.white,fontFamily:FONT}}>{it.i} {it.n}</div>
                           <div style={{fontSize:9,color:C.ok,fontFamily:FONT_BODY,marginTop:2}}>×{qty} · Heals {it.heal} HP</div>
                         </div>
@@ -4103,7 +4125,7 @@ function GameUI({account,onLogout}){
                   <div style={{fontSize:11,fontWeight:700,color:C.ts,letterSpacing:2,marginBottom:8}}>🪨 MATERIALS</div>
                   <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:6}}>
                     {Object.entries(inv).filter(([id,qty])=>ITEMS[id]&&ITEMS[id].s&&!ITEMS[id].rare&&!ITEMS[id].eq&&!ITEMS[id].food&&qty>0).map(([id,qty])=>{const it=ITEMS[id];return(
-                      <div key={id} style={{padding:"8px 12px",borderRadius:6,background:C.card,border:"1px solid "+C.border,display:"flex",alignItems:"center",gap:8}}>
+                      <div key={id} {...tipProps(id)} style={{padding:"8px 12px",borderRadius:6,background:C.card,border:"1px solid "+C.border,display:"flex",alignItems:"center",gap:8}}>
                         <span style={{fontSize:14}}>{it.i}</span>
                         <div style={{flex:1}}>
                           <div style={{fontSize:10,color:C.text,fontFamily:FONT_BODY}}>{it.n}</div>
@@ -4191,7 +4213,7 @@ function GameUI({account,onLogout}){
                             const it=ITEMS[id];
                             const rareColor=it.rarity==="rare"?C.gold:it.rarity==="uncommon"?C.purp:null;
                             return(
-                              <div key={id} title={it.n+" ×"+fmt(qty)} style={{position:"relative",width:52,height:52,borderRadius:6,background:rareColor?rareColor+"18":C.card,border:"1px solid "+(rareColor?rareColor+"50":C.border),display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:1,flexShrink:0,overflow:"hidden"}}>
+                              <div key={id} {...tipProps(id)} style={{position:"relative",width:52,height:52,borderRadius:6,background:rareColor?rareColor+"18":C.card,border:"1px solid "+(rareColor?rareColor+"50":C.border),display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:1,flexShrink:0,overflow:"hidden"}}>
                                 <span style={{fontSize:22,lineHeight:1}}>{it.i||"📦"}</span>
                                 <span style={{fontSize:10,color:rareColor||C.ts,fontWeight:700,fontFamily:FONT}}>{qty>=1e6?(qty/1e6).toFixed(1)+"M":qty>=1000?Math.floor(qty/1000)+"k":qty}</span>
                                 {rareColor&&<div style={{position:"absolute",top:0,left:0,right:0,height:2,background:rareColor}}/>}
@@ -4214,7 +4236,7 @@ function GameUI({account,onLogout}){
                 {ESLOTS.map(slot=>{
                   const iid=eq[slot.id];const it=iid?ITEMS[iid]:null;const el=iid?(enh[iid]||0):0;
                   return(
-                    <div key={slot.id} onClick={()=>it&&setPage("equipment")} style={{display:"flex",alignItems:"center",gap:10,padding:"7px 8px",borderRadius:8,background:it?"linear-gradient(90deg,"+C.acc+"10,"+C.card+")":C.card,border:"1px solid "+(it?C.acc+"40":C.border),marginBottom:6,cursor:it?"pointer":"default"}}>
+                    <div key={slot.id} {...(iid?tipProps(iid):{})} onClick={()=>it&&setPage("equipment")} style={{display:"flex",alignItems:"center",gap:10,padding:"7px 8px",borderRadius:8,background:it?"linear-gradient(90deg,"+C.acc+"10,"+C.card+")":C.card,border:"1px solid "+(it?C.acc+"40":C.border),marginBottom:6,cursor:it?"pointer":"default"}}>
                       <div style={{width:40,height:40,borderRadius:6,background:C.bg,border:"1px solid "+C.border,display:"flex",alignItems:"center",justifyContent:"center",fontSize:20,flexShrink:0}}>
                         {it?it.i:slot.i}
                       </div>

@@ -2351,6 +2351,18 @@ function GameUI({account,onLogout}){
             }} style={{padding:"10px",borderRadius:8,background:"#ff000015",border:"1px solid #ff000040",color:"#ff6666",fontSize:11,fontWeight:700,cursor:"pointer",textAlign:"center",letterSpacing:1,fontFamily:FONT,marginBottom:8}}>
               🧪 DEV: GIVE EVERYTHING
             </div>
+            {/* Wipe progress */}
+            <div onClick={()=>{
+              if(!window.confirm("⚠️ Wipe ALL progress? This cannot be undone!"))return;
+              setSkills({});setInv({});setEq({});setGold(0);setEnh({});
+              setResearchPts(0);setResearched({});setStructures({});setDrones({});
+              setAchievements({});setBlueprints([]);setBpLog([]);
+              setCurAct(null);setActProg(0);
+              try{localStorage.removeItem("idle_save_"+account.uid);}catch{}
+              setShowSettings(false);
+            }} style={{padding:"10px",borderRadius:8,background:"#ff000015",border:"1px solid #ff000040",color:"#ff4444",fontSize:11,fontWeight:700,cursor:"pointer",textAlign:"center",letterSpacing:1,fontFamily:FONT,marginBottom:8}}>
+              💀 WIPE ALL PROGRESS
+            </div>
             {/* Logout */}
             <div onClick={()=>{setShowSettings(false);setShowLogoutConfirm(true)}} style={{padding:"10px",borderRadius:8,background:C.bad+"15",border:"1px solid "+C.bad+"40",color:C.bad,fontSize:11,fontWeight:700,cursor:"pointer",textAlign:"center",letterSpacing:1,fontFamily:FONT,marginBottom:12}}>
               ◉ LOGOUT

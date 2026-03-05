@@ -662,6 +662,9 @@ const ITEMS={
   explorer_suit:{n:"Explorer Suit",i:"🗺️",eq:"body",set:"explorer",st:{trench_yield:0.12,xp_bonus:0.10}},
   explorer_gloves:{n:"Explorer Gloves",i:"🧩",eq:"hands",set:"explorer",st:{gather_speed:0.09}},
   explorer_boots:{n:"Explorer Boots",i:"👢",eq:"feet",set:"explorer",st:{trench_yield:0.10}},
+  leviathan_steel:{n:"Leviathan Steel",i:"⚙️",s:1,v:160},
+  void_resin:{n:"Void Resin",i:"🧪",s:1,v:160},
+  reinforced_alloy_mk2:{n:"Refined Alloy Mk2",i:"⚙️",s:1,v:145},
 };
 
 // ===================== SKILLS =====================
@@ -2174,7 +2177,7 @@ function GameUI({account,onLogout}){
           <span style={{fontSize:22,filter:it.rare?"drop-shadow(0 0 6px "+C.gold+")":"none"}}>{it.i}</span>
           <div>
             <div style={{fontSize:13,fontWeight:700,color:setData?setData.color:it.rare?C.gold:C.white,fontFamily:FONT,letterSpacing:0.5}}>{it.n}</div>
-            <div style={{fontSize:9,color:C.td,fontFamily:FONT,letterSpacing:1}}>{itemType.toUpperCase()}{it.eq?" · "+(it.eq||"").toUpperCase():""}</div>
+            <div style={{fontSize:9,color:C.td,fontFamily:FONT,letterSpacing:1}}>{(itemType||"").toUpperCase()}{it.eq?" · "+(it.eq||"").toUpperCase():""}</div>
           </div>
         </div>
         {/* Inventory count */}

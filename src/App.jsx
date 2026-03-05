@@ -1258,6 +1258,7 @@ function GameUI({account,onLogout}){
   useEffect(()=>{(async()=>{try{const snap=await getDoc(doc(db,"doc_saves",account.uid));if(snap.exists()){const d=snap.data();if(d.skills)setSkills(d.skills);if(d.inv)setInv(d.inv);if(d.eq)setEq(d.eq);if(d.gold)setGold(d.gold);if(d.enh)setEnh(d.enh);if(d.researchPts)setResearchPts(d.researchPts);if(d.researched)setResearched(d.researched);if(d.structures)setStructures(d.structures);if(d.drones)setDrones(d.drones);
       if(d.achievements)setAchievements(d.achievements);if(d.lifeStats)setLifeStats(p=>({...p,...d.lifeStats}));
       if(d.blueprints)setBlueprints(d.blueprints);
+      if(d.bpLog)setBpLog(d.bpLog);
       if(d.tutorialDone)setTutorialDone(true);
       // Offline progress — up to 8 hours
       if(d.ts){
@@ -1303,8 +1304,24 @@ function GameUI({account,onLogout}){
   useEffect(()=>{loadFriends();loadClan();},[account.uid]);
   // Scroll chat to bottom when messages change
   useEffect(()=>{chatEndRef.current?.scrollIntoView({behavior:"smooth"})},[chatMessages,dmMessages,clanChat]);
-  // Save
-  useEffect(()=>{const fn=()=>setIsMobile(window.innerWidth<768);window.addEventListener("resize",fn);return()=>window.removeEventListener("resize",fn)},[]);
+  // ── AUTOSAVE ── debounced 10s, writes all game state to Firestore
+  const saveRef=useRef(null);
+  useEffect(()=>{
+    if(!account?.uid)return;
+    if(saveRef.current)clearTimeout(saveRef.current);
+    saveRef.current=setTimeout(async()=>{
+      try{
+        await setDoc(doc(db,"doc_saves",account.uid),{
+          skills,inv,eq,gold,enh,researchPts,researched,
+          structures,drones,achievements,lifeStats,blueprints,
+          bpLog:bpLog.slice(-50),ts:Date.now(),
+        });
+      }catch(e){console.error("autosave failed:",e)}
+    },10000);
+    return()=>{if(saveRef.current)clearTimeout(saveRef.current)};
+  },[skills,inv,eq,gold,enh,researchPts,researched,structures,drones,achievements,lifeStats,blueprints,bpLog]);
+
+
 
   // Energy regen
   useEffect(()=>{const t=setInterval(()=>{setEnergy(e=>Math.min(maxEnergy,e+1*(1+(bonuses.energy_regen||0))))},1000);return()=>clearInterval(t)},[maxEnergy,bonuses.energy_regen]);

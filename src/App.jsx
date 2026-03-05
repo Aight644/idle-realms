@@ -1361,7 +1361,7 @@ function GameUI({account,onLogout}){
   // Aggregate research bonuses
   const bonuses=useMemo(()=>{
     const b={cultiv_yield:0,gather_yield:0,gather_speed:0,energy_regen:0,max_energy:0,atk_pct:0,def_pct:0,combat_xp:0,boss_drop:0,prod_speed:0,gold_pct:0,xp_pct:0,rare_chance:0,crystal_yield:0,rp_gen:0,pressure_resist:0,drone_efficiency:0};
-    ALL_RESEARCH.forEach(r=>{if(researched[r.id]&&r.effect)Object.entries(r.effect).forEach(([k,v])=>{b[k]=(b[k]||0)+v})});
+    ALL_RESEARCH.forEach(r=>{if(researched[r.id]&&r.effect)Object.entries(r.effect||{}).forEach(([k,v])=>{b[k]=(b[k]||0)+v})});
     // Structure bonuses (per level)
     STRUCTURES.forEach(st=>{const lv=structures[st.id]||0;if(lv>0){if(st.bonus)Object.entries(st.bonus).forEach(([k,v])=>{b[k]=(b[k]||0)+v*lv});if(st.bonusExtra)Object.entries(st.bonusExtra).forEach(([k,v])=>{b[k]=(b[k]||0)+v*lv})}});
     // Utility skill passive bonuses (scale with skill level)
@@ -1370,7 +1370,7 @@ function GameUI({account,onLogout}){
     if(lv>0){b.gather_speed=(b.gather_speed||0)+lv*0.015;b.rare_chance=(b.rare_chance||0)+lv*0.015;b.gather_yield=(b.gather_yield||0)+lv*0.015;}}
     // Equipment gather bonuses (tools + armor with gather stats)
     const gatherKeys=new Set(["gather_yield","gather_speed","cultiv_yield","mining_yield","fishing_yield","crystal_yield","trench_yield","rare_chance","xp_bonus"]);
-    ESLOTS.forEach(slot=>{const iid=eq[slot.id];if(iid){const it=ITEMS[iid];if(it?.st)Object.entries(it.st).forEach(([k,v])=>{if(gatherKeys.has(k))b[k]=(b[k]||0)+v})}});
+    ESLOTS.forEach(slot=>{const iid=eq[slot.id];if(iid){const it=ITEMS[iid];if(it?.st)Object.entries(it.st||{}).forEach(([k,v])=>{if(gatherKeys.has(k))b[k]=(b[k]||0)+v})}});
     // Set bonuses
     Object.values(SET_BONUSES).forEach(set=>{
       const count=set.pieces.filter(pid=>Object.values(eq).includes(pid)).length;
@@ -1385,7 +1385,7 @@ function GameUI({account,onLogout}){
     let s={hp:50,atk:1,def:0,mag:0,rng:0};
     s.hp+=sl("pressure_resistance").lv*2;s.atk+=sl("harpoon_mastery").lv+sl("combat_systems").lv;
     s.def+=sl("depth_shielding").lv;s.rng+=sl("sonic_weapons").lv;s.mag+=sl("leviathan_lore").lv;
-    ESLOTS.forEach(slot=>{const iid=eq[slot.id];if(iid){const it=ITEMS[iid];if(it&&it.st)Object.entries(it.st).forEach(([k,v])=>{const e=enh[iid]||0;s[k]=(s[k]||0)+Math.floor(v*(1+e*0.08))})}});
+    ESLOTS.forEach(slot=>{const iid=eq[slot.id];if(iid){const it=ITEMS[iid];if(it&&it.st)Object.entries(it.st||{}).forEach(([k,v])=>{const e=enh[iid]||0;s[k]=(s[k]||0)+Math.floor(v*(1+e*0.08))})}});
     if(bonuses.atk_pct)s.atk=Math.floor(s.atk*(1+bonuses.atk_pct));
     if(bonuses.def_pct)s.def=Math.floor(s.def*(1+bonuses.def_pct));
     return s;
@@ -2193,7 +2193,7 @@ function GameUI({account,onLogout}){
         {it.st&&Object.keys(it.st).length>0&&(
           <div style={{marginBottom:setData?8:0}}>
             <div style={{fontSize:9,color:C.td,fontFamily:FONT,letterSpacing:1,marginBottom:4}}>STATS</div>
-            {Object.entries(it.st).map(([k,v])=>(
+            {Object.entries(it.st||{}).map(([k,v])=>(
               <div key={k} style={{display:"flex",justifyContent:"space-between",fontSize:11,fontFamily:FONT_BODY,marginBottom:2}}>
                 <span style={{color:C.ts}}>{STAT_LABELS[k]||k}</span>
                 <span style={{color:C.ok,fontWeight:700}}>+{["gather_speed","gather_yield","rare_chance","cultiv_yield","mining_yield","fishing_yield","crystal_yield","trench_yield","xp_bonus"].includes(k)?Math.round(v*100)+"%":v}</span>
@@ -2215,7 +2215,7 @@ function GameUI({account,onLogout}){
                     <span style={{fontSize:10,fontWeight:700,color:active?setData.color:C.td,fontFamily:FONT_BODY}}>{bonus.label}</span>
                     {active&&<span style={{fontSize:9,color:C.ok}}>✓</span>}
                   </div>
-                  {Object.entries(bonus.stats).map(([k,v])=>(
+                  {Object.entries(bonus.stats||{}).map(([k,v])=>(
                     <div key={k} style={{display:"flex",justifyContent:"space-between",fontSize:10,fontFamily:FONT_BODY,paddingLeft:8}}>
                       <span style={{color:C.ts}}>{STAT_LABELS[k]||k}</span>
                       <span style={{color:active?C.ok:C.td,fontWeight:700}}>+{["gather_speed","gather_yield","rare_chance","cultiv_yield","crystal_yield"].includes(k)?Math.round(v*100)+"%":v}</span>
@@ -2352,7 +2352,7 @@ function GameUI({account,onLogout}){
             <div style={{padding:"12px 16px",borderRadius:8,background:C.acc+"10",border:"1px solid "+C.acc+"30",marginBottom:16}}>
               <div style={{fontSize:9,fontWeight:700,color:C.acc,marginBottom:8,letterSpacing:2}}>OFFLINE GAINS</div>
               <div style={{display:"flex",flexDirection:"column",gap:4}}>
-                {Object.entries(offlineGains.gains.items).map(([id,qty])=>(
+                {Object.entries(offlineGains?.gains?.items||{}).map(([id,qty])=>(
                   <div key={id} style={{display:"flex",alignItems:"center",gap:8,fontSize:11,fontFamily:FONT_BODY}}>
                     <span {...tipProps(id)}>{ITEMS[id]?ITEMS[id].i:"📦"}</span>
                     <span style={{color:C.ok,fontWeight:700}}>+{fmt(qty)}</span>
@@ -2679,7 +2679,7 @@ function GameUI({account,onLogout}){
                             <div style={{flex:1}}>
                               <div style={{fontSize:12,color:C.td,fontFamily:FONT_BODY}}>{slot.n}</div>
                               <div style={{fontSize:13,color:setData?setData.color:it?C.white:C.td,fontWeight:600,fontFamily:FONT_BODY}}>{it?(it.n+(el>0?" +"+el:"")):"— empty —"}</div>
-                              {it?.st&&<div style={{fontSize:10,color:C.ts,fontFamily:FONT_BODY,marginTop:2}}>{Object.entries(it.st).map(([k,v])=>fmtStat(k,v)).join(" · ")}</div>}
+                              {it?.st&&<div style={{fontSize:10,color:C.ts,fontFamily:FONT_BODY,marginTop:2}}>{Object.entries(it.st||{}).map(([k,v])=>fmtStat(k,v)).join(" · ")}</div>}
                             </div>
                           </div>
                         );
@@ -4421,7 +4421,7 @@ function GameUI({account,onLogout}){
                         <div>
                           <div style={{fontSize:12,fontWeight:700,color:setData?setData.color:C.white,fontFamily:FONT}}>{it.i} {it.n}{el>0?" +"+el:""}</div>
                           {it.st&&<div style={{fontSize:10,color:C.ts,marginTop:4,fontFamily:FONT_BODY,lineHeight:1.6}}>
-                            {Object.entries(it.st).map(([k,v])=><span key={k} style={{display:"block"}}>{fmtStat(k,Math.floor(typeof v==="number"&&v<1?v:(v*(1+el*0.08))))}</span>)}
+                            {Object.entries(it.st||{}).map(([k,v])=><span key={k} style={{display:"block"}}>{fmtStat(k,Math.floor(typeof v==="number"&&v<1?v:(v*(1+el*0.08))))}</span>)}
                           </div>}
                           {setData&&<div style={{fontSize:9,color:setData.color,marginTop:4,fontFamily:FONT,letterSpacing:0.5}}>◈ {setData.name}</div>}
                         </div>
@@ -4483,7 +4483,7 @@ function GameUI({account,onLogout}){
                           style={{padding:"10px 12px",borderRadius:6,background:C.card,border:"1px solid "+(setData?setData.color+"50":C.acc+"30"),boxShadow:GLOW_STYLE,position:"relative",cursor:"pointer"}}>
                           <div style={{fontSize:12,fontWeight:700,color:setData?setData.color:C.white,fontFamily:FONT}}>{it.i} {it.n}</div>
                           <div style={{fontSize:9,color:C.ts,fontFamily:FONT_BODY,marginTop:2}}>×{qty}</div>
-                          {it.st&&<div style={{fontSize:9,color:C.td,marginTop:2,fontFamily:FONT_BODY,lineHeight:1.5}}>{Object.entries(it.st).map(([k,v])=><span key={k} style={{display:"block"}}>{fmtStat(k,v)}</span>)}</div>}
+                          {it.st&&<div style={{fontSize:9,color:C.td,marginTop:2,fontFamily:FONT_BODY,lineHeight:1.5}}>{Object.entries(it.st||{}).map(([k,v])=><span key={k} style={{display:"block"}}>{fmtStat(k,v)}</span>)}</div>}
                           {setData&&<div style={{fontSize:8,color:setData.color,marginTop:3,fontFamily:FONT,letterSpacing:0.5}}>◈ {setData.name}</div>}
                           <div onClick={()=>equipIt(id)} style={{marginTop:6,padding:"4px 0",borderRadius:4,background:"linear-gradient(90deg,"+C.accD+","+C.acc+")",color:C.bg,fontSize:9,fontWeight:700,cursor:"pointer",textAlign:"center",letterSpacing:1,fontFamily:FONT}}>EQUIP</div>
                         </div>
@@ -4633,7 +4633,7 @@ function GameUI({account,onLogout}){
                           ?<div style={{fontSize:12,color:C.white,fontWeight:600,fontFamily:FONT_BODY}}>{it.n}{el>0&&<span style={{color:C.gold}}> +{el}</span>}</div>
                           :<div style={{fontSize:12,color:C.td,fontFamily:FONT_BODY}}>— empty —</div>
                         }
-                        {it?.st&&<div style={{fontSize:10,color:C.ts,fontFamily:FONT_BODY}}>{Object.entries(it.st).map(([k,v])=>(k||"").toUpperCase()+":+"+(typeof v==="number"?Math.floor(v*(1+el*0.08)):v)).join(" ")}</div>}
+                        {it?.st&&<div style={{fontSize:10,color:C.ts,fontFamily:FONT_BODY}}>{Object.entries(it.st||{}).map(([k,v])=>(k||"").toUpperCase()+":+"+(typeof v==="number"?Math.floor(v*(1+el*0.08)):v)).join(" ")}</div>}
                       </div>
                     </div>
                   );

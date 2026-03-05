@@ -13,7 +13,13 @@ const FONT = "'Orbitron', 'Segoe UI', system-ui, sans-serif";
 const FONT_BODY = FONT;
 
 const SKILL_IMAGES={
-  kelp_farming: "/images/skills/kelp_farming.png",
+  kf1:  "/images/skills/kelp_farming.png",
+  kf2:  "/images/skills/coral_fronds.png",
+  kf3:  "/images/skills/mushroom_patch.png",
+  kf4:  "/images/skills/tidal_sap.png",
+  kf5:  "/images/skills/spore_bed.png",
+  kf6:  "/images/skills/void_kelp_abyss.png",
+  bp_kf5: "/images/skills/void_kelp_grove.png",
 };
 
 
@@ -3038,7 +3044,7 @@ function GameUI({account,onLogout}){
                   const isGearProdSkill=["fabrication","relic_forging","gear_crafting"].includes(skData.id);
 
                   // Pass all needed context as props to standalone ActRow
-                  const arProps={skColor:skData.color,inv,curAct,startAct,skId:skData.id,s,tipProps,C,FONT,FONT_BODY,ITEMS,BLUEPRINTS,BP_DROPS,BP_RARITY_COLOR,GLOW_OK,GLOW_STYLE,skImg:SKILL_IMAGES[skData.id]};
+                  const arProps={skColor:skData.color,inv,curAct,startAct,skId:skData.id,s,tipProps,C,FONT,FONT_BODY,ITEMS,BLUEPRINTS,BP_DROPS,BP_RARITY_COLOR,GLOW_OK,GLOW_STYLE,skImg:SKILL_IMAGES[act.id]};
                   const AR=({act})=><ActRow key={skData.id+"-"+act.id} act={act} {...arProps}/>;
 
                   // Gathering / Bio Lab / Exploration — flat list, no tabs

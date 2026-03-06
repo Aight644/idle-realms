@@ -2353,9 +2353,7 @@ function GameUI({account,onLogout}){
               // Unlock all blueprints
               setBlueprints(BLUEPRINTS.map(b=>b.id));
               setClog(p=>[...p.slice(-20),"🧪 DEV: Everything maxed!"]);
-              console.log("DEV cheat: inv keys=",Object.keys(allItems).length,"eq items=",Object.keys(allItems).filter(id=>ITEMS[id]&&ITEMS[id].eq&&ITEMS[id].eq!=="tool").length,"tools=",Object.keys(allItems).filter(id=>ITEMS[id]&&ITEMS[id].eq==="tool").length);
               setShowSettings(false);
-              setPage("inventory");
             }} style={{padding:"10px",borderRadius:8,background:"#ff000015",border:"1px solid #ff000040",color:"#ff6666",fontSize:11,fontWeight:700,cursor:"pointer",textAlign:"center",letterSpacing:1,fontFamily:FONT,marginBottom:8}}>
               🧪 DEV: GIVE EVERYTHING
             </div>
@@ -4810,105 +4808,7 @@ function GameUI({account,onLogout}){
               </div>
             );})()}
 
-            {/* INVENTORY PAGE */}
-            {page==="inventory"&&(
-              <div style={{maxWidth:760}}>
-                <div style={{fontSize:14,fontWeight:700,color:C.white,marginBottom:16,letterSpacing:2}}>CARGO HOLD</div>
-                {Object.entries(inv).length===0&&<div style={{fontSize:12,color:C.td,fontFamily:FONT_BODY}}>No items yet. Begin gathering operations!</div>}
-
-                {/* Rare items section */}
-                {Object.entries(inv).some(([id])=>ITEMS[id]&&ITEMS[id].rare)&&(
-                  <div style={{marginBottom:16}}>
-                    <div style={{fontSize:11,fontWeight:700,color:C.gold,letterSpacing:2,marginBottom:8}}>✨ RARE MATERIALS</div>
-                    <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr 1fr",gap:6}}>
-                      {Object.entries(inv).filter(([id])=>ITEMS[id]&&ITEMS[id].rare).map(([id,qty])=>{const it=ITEMS[id];return(
-                        <div key={id} {...tipProps(id)} style={{padding:"10px 12px",borderRadius:8,background:"linear-gradient(135deg,"+C.gold+"18,"+C.card+")",border:"2px solid "+C.gold+"50",boxShadow:"0 0 10px "+C.gold+"25",textAlign:"center"}}>
-                          <div style={{fontSize:20,marginBottom:4,filter:"drop-shadow(0 0 6px "+C.gold+")"}}>{it.i}</div>
-                          <div style={{fontSize:9,fontWeight:700,color:C.gold,fontFamily:FONT,letterSpacing:0.5}}>{it.n}</div>
-                          <div style={{fontSize:11,color:C.text,fontWeight:700,fontFamily:FONT,marginTop:2}}>×{qty}</div>
-                        </div>
-                      );})}
-                    </div>
-                  </div>
-                )}
-
-                {/* Equipment section */}
-                {Object.entries(inv).some(([id])=>ITEMS[id]&&ITEMS[id].eq&&ITEMS[id].eq!=="tool"&&(inv[id]||0)>0)&&(
-                  <div style={{marginBottom:16}}>
-                    <div style={{fontSize:11,fontWeight:700,color:C.acc,letterSpacing:2,marginBottom:8}}>🗡️ EQUIPMENT <span style={{color:C.td,fontWeight:400,fontSize:9}}>— click item to equip</span></div>
-                    <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:6}}>
-                      {Object.entries(inv).filter(([id])=>ITEMS[id]&&ITEMS[id].eq&&ITEMS[id].eq!=="tool"&&(inv[id]||0)>0).map(([id,qty])=>{const it=ITEMS[id];
-                        const setData=it.set?Object.values(SET_BONUSES).find(s=>s.pieces.includes(id)):null;
-                        const isEquipped=Object.values(eq).includes(id);
-                        return(
-                        <div key={id} onClick={()=>setSelItem(id)}
-                          style={{padding:"10px 12px",borderRadius:6,background:isEquipped?C.acc+"15":C.card,border:"2px solid "+(isEquipped?C.acc:setData?setData.color+"50":C.border),cursor:"pointer",transition:"all 0.15s",position:"relative"}}>
-                          <div style={{fontSize:18,marginBottom:4}}>{it.i}</div>
-                          <div style={{fontSize:11,fontWeight:700,color:setData?setData.color:C.white,fontFamily:FONT,lineHeight:1.2}}>{it.n}</div>
-                          <div style={{fontSize:9,color:C.ts,fontFamily:FONT_BODY,marginTop:2}}>×{qty}</div>
-                          {isEquipped&&<div style={{position:"absolute",top:6,right:6,fontSize:8,color:C.acc,fontWeight:700,fontFamily:FONT}}>ON</div>}
-                          {it.st&&<div style={{fontSize:9,color:C.td,marginTop:4,fontFamily:FONT_BODY,lineHeight:1.5}}>{Object.entries(it.st||{}).slice(0,2).map(([k,v])=><span key={k} style={{display:"block"}}>{fmtStat(k,v)}</span>)}</div>}
-                          {setData&&<div style={{fontSize:8,color:setData.color,marginTop:3,fontFamily:FONT,letterSpacing:0.5}}>◈ {setData.name}</div>}
-                        </div>
-                      );})}
-                    </div>
-                  </div>
-                )}
-
-                {/* Tools section */}
-                {Object.entries(inv).some(([id])=>ITEMS[id]&&ITEMS[id].eq==="tool"&&(inv[id]||0)>0)&&(
-                  <div style={{marginBottom:16}}>
-                    <div style={{fontSize:11,fontWeight:700,color:"#f59e0b",letterSpacing:2,marginBottom:8}}>🔧 TOOLS <span style={{color:C.td,fontWeight:400,fontSize:9}}>— click to equip</span></div>
-                    <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:6}}>
-                      {Object.entries(inv).filter(([id])=>ITEMS[id]&&ITEMS[id].eq==="tool"&&(inv[id]||0)>0).map(([id,qty])=>{const it=ITEMS[id];
-                        const isEquipped=Object.values(eq).includes(id);
-                        return(
-                        <div key={id} onClick={()=>setSelItem(id)}
-                          style={{padding:"10px 12px",borderRadius:6,background:isEquipped?"#f59e0b15":C.card,border:"2px solid "+(isEquipped?"#f59e0b":"#f59e0b30"),cursor:"pointer",transition:"all 0.15s",position:"relative"}}>
-                          <div style={{fontSize:18,marginBottom:4}}>{it.i}</div>
-                          <div style={{fontSize:11,fontWeight:700,color:C.white,fontFamily:FONT,lineHeight:1.2}}>{it.n}</div>
-                          <div style={{fontSize:9,color:C.ts,fontFamily:FONT_BODY,marginTop:2}}>×{qty}</div>
-                          {isEquipped&&<div style={{position:"absolute",top:6,right:6,fontSize:8,color:"#f59e0b",fontWeight:700,fontFamily:FONT}}>ON</div>}
-                          {it.st&&<div style={{fontSize:9,color:C.td,marginTop:4,fontFamily:FONT_BODY,lineHeight:1.5}}>{Object.entries(it.st||{}).slice(0,2).map(([k,v])=><span key={k} style={{display:"block"}}>{fmtStat(k,v)}</span>)}</div>}
-                        </div>
-                      );})}
-                    </div>
-                  </div>
-                )}
-
-                {/* Consumables */}
-                {Object.entries(inv).some(([id])=>ITEMS[id]&&ITEMS[id].food)&&(
-                  <div style={{marginBottom:16}}>
-                    <div style={{fontSize:11,fontWeight:700,color:C.ok,letterSpacing:2,marginBottom:8}}>💉 CONSUMABLES</div>
-                    <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:6}}>
-                      {Object.entries(inv).filter(([id])=>ITEMS[id]&&ITEMS[id].food).map(([id,qty])=>{const it=ITEMS[id];return(
-                        <div key={id} {...tipProps(id)} style={{padding:"10px 12px",borderRadius:6,background:C.card,border:"1px solid "+C.ok+"30"}}>
-                          <div style={{fontSize:12,fontWeight:700,color:C.white,fontFamily:FONT}}>{it.i} {it.n}</div>
-                          <div style={{fontSize:9,color:C.ok,fontFamily:FONT_BODY,marginTop:2}}>×{qty} · Heals {it.heal} HP</div>
-                        </div>
-                      );})}
-                    </div>
-                  </div>
-                )}
-
-                {/* Materials */}
-                <div>
-                  <div style={{fontSize:11,fontWeight:700,color:C.ts,letterSpacing:2,marginBottom:8}}>🪨 MATERIALS</div>
-                  <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:6}}>
-                    {Object.entries(inv).filter(([id,qty])=>ITEMS[id]&&ITEMS[id].s&&!ITEMS[id].rare&&!ITEMS[id].eq&&!ITEMS[id].food&&qty>0).map(([id,qty])=>{const it=ITEMS[id];return(
-                      <div key={id} {...tipProps(id)} style={{padding:"8px 12px",borderRadius:6,background:C.card,border:"1px solid "+C.border,display:"flex",alignItems:"center",gap:8}}>
-                        <span style={{fontSize:14}}>{it.i}</span>
-                        <div style={{flex:1}}>
-                          <div style={{fontSize:10,color:C.text,fontFamily:FONT_BODY}}>{it.n}</div>
-                          <div style={{fontSize:10,fontWeight:700,color:C.acc,fontFamily:FONT}}>×{fmt(qty)}</div>
-                        </div>
-                      </div>
-                    );})}
-                  </div>
-                </div>
-              </div>
-            )}
-
+       
           </div>
         </div>
 

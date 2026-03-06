@@ -2285,17 +2285,17 @@ function GameUI({account,onLogout}){
   // MWI-style combat sub-skill row (same height as SkillNav)
   const CSubNav=({cs})=>{
     const s=sl(cs.id);
-    const pct=s.need>0?(s.xp/s.need)*100:0;
+    const pct=s.mastered?100:s.need>0?(s.xp/s.need)*100:0;
     return(
       <div style={{display:"flex",alignItems:"center",gap:6,padding:"4px 8px 4px 22px",cursor:"default"}}>
-        <span style={{fontSize:14,width:18,textAlign:"center",flexShrink:0}}>{cs.icon}</span>
+        <span style={{fontSize:14,width:18,textAlign:"center",flexShrink:0,filter:s.mastered?"drop-shadow(0 0 5px "+C.gold+")":"none"}}>{cs.icon}</span>
         <div style={{flex:1,minWidth:0}}>
           <div style={{display:"flex",justifyContent:"space-between",alignItems:"baseline",marginBottom:2}}>
-            <span style={{fontSize:12,color:C.ts,fontFamily:FONT_BODY,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{cs.name}</span>
-            <span style={{fontSize:11,color:C.ts,fontWeight:700,fontFamily:FONT,flexShrink:0,marginLeft:4}}>{pct.toFixed(2)+"% "+s.lv}</span>
+            <span style={{fontSize:12,color:s.mastered?C.gold:C.ts,fontFamily:FONT_BODY,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{cs.name}</span>
+            <span style={{fontSize:11,color:s.mastered?C.gold:C.ts,fontWeight:700,fontFamily:FONT,flexShrink:0,marginLeft:4}}>{s.mastered?"★":pct.toFixed(2)+"% "+s.lv}</span>
           </div>
           <div style={{height:3,borderRadius:2,background:C.bg,overflow:"hidden"}}>
-            <div style={{width:pct+"%",height:"100%",background:cs.color,borderRadius:2,transition:"width 0.3s"}}/>
+            <div style={{width:pct+"%",height:"100%",background:s.mastered?C.gold:cs.color,borderRadius:2,transition:"width 0.3s"}}/>
           </div>
         </div>
       </div>

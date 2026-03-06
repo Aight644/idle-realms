@@ -3295,13 +3295,13 @@ function GameUI({account,onLogout}){
                 <div style={{borderBottom:"1px solid "+C.border}}>
                   {!navSearch&&<div style={{padding:"5px 10px 2px",fontSize:9,fontWeight:700,color:C.td,textTransform:"uppercase",letterSpacing:2}}>Upgrading</div>}
                   <div onClick={()=>setPage("enhancing")} style={{display:"flex",alignItems:"center",gap:6,padding:"4px 8px 4px 6px",cursor:"pointer",background:page==="enhancing"?"linear-gradient(90deg,"+C.warn+"22,transparent)":"transparent",borderLeft:"3px solid "+(page==="enhancing"?C.warn:"transparent")}}>
-                    <span style={{fontSize:15,width:20,textAlign:"center",flexShrink:0}}>⚡</span>
+                    <span style={{fontSize:15,width:20,textAlign:"center",flexShrink:0,filter:sl("enhancing").mastered?"drop-shadow(0 0 5px "+C.gold+")":"none"}}>⚡</span>
                     <div style={{flex:1,minWidth:0}}>
                       <div style={{display:"flex",justifyContent:"space-between",alignItems:"baseline",marginBottom:2}}>
-                        <span style={{fontSize:12,color:page==="enhancing"?C.warn:C.text,fontFamily:FONT_BODY,fontWeight:page==="enhancing"?700:400}}>Upgrading</span>
-                        <span style={{fontSize:11,color:C.ts,fontWeight:700,fontFamily:FONT,flexShrink:0,marginLeft:4}}>{((sl("enhancing").xp/(sl("enhancing").need||1))*100).toFixed(2)+"% "+sl("enhancing").lv}</span>
+                        <span style={{fontSize:12,color:sl("enhancing").mastered?C.gold:page==="enhancing"?C.warn:C.text,fontFamily:FONT_BODY,fontWeight:page==="enhancing"||sl("enhancing").mastered?700:400}}>Upgrading</span>
+                        <span style={{fontSize:11,color:sl("enhancing").mastered?C.gold:C.ts,fontWeight:700,fontFamily:FONT,flexShrink:0,marginLeft:4}}>{sl("enhancing").mastered?"★ MAX":((sl("enhancing").xp/(sl("enhancing").need||1))*100).toFixed(2)+"% "+sl("enhancing").lv}</span>
                       </div>
-                      <div style={{height:3,borderRadius:2,background:C.bg,overflow:"hidden"}}><div style={{width:(sl("enhancing").xp/(sl("enhancing").need||1))*100+"%",height:"100%",background:C.warn,borderRadius:2}}/></div>
+                      <div style={{height:3,borderRadius:2,background:C.bg,overflow:"hidden"}}><div style={{width:sl("enhancing").mastered?"100%":(sl("enhancing").xp/(sl("enhancing").need||1))*100+"%",height:"100%",background:sl("enhancing").mastered?C.gold:C.warn,borderRadius:2}}/></div>
                     </div>
                   </div>
                 </div>
@@ -4828,13 +4828,16 @@ function GameUI({account,onLogout}){
               <div style={{maxWidth:600}}>
                 {/* Header */}
                 <div style={{marginBottom:16}}>
-                  <div style={{fontSize:14,fontWeight:700,color:C.warn,letterSpacing:2,marginBottom:4}}>⚡ UPGRADE LAB</div>
+                  <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:4}}>
+                    <div style={{fontSize:14,fontWeight:700,color:C.warn,letterSpacing:2}}>⚡ UPGRADE LAB</div>
+                    {sl("enhancing").mastered&&<div style={{fontSize:9,fontWeight:700,padding:"3px 10px",borderRadius:10,background:"linear-gradient(90deg,"+C.gold+","+C.warn+")",color:C.bg,letterSpacing:2}}>★ MASTERED</div>}
+                  </div>
                   <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:6}}>
-                    <div style={{fontSize:11,color:C.ts,fontFamily:FONT_BODY}}>Lab Lv {sl("enhancing").lv}</div>
+                    <div style={{fontSize:11,color:sl("enhancing").mastered?C.gold:C.ts,fontFamily:FONT_BODY}}>{sl("enhancing").mastered?"Level "+MAX_SKILL_LV+" — Maximum":"Lab Lv "+sl("enhancing").lv}</div>
                     <div style={{flex:1,height:5,borderRadius:3,background:C.card,overflow:"hidden"}}>
-                      <div style={{width:(sl("enhancing").xp/(sl("enhancing").need||1))*100+"%",height:"100%",borderRadius:3,background:C.warn,transition:"width 0.3s"}}/>
+                      <div style={{width:sl("enhancing").mastered?"100%":(sl("enhancing").xp/(sl("enhancing").need||1))*100+"%",height:"100%",borderRadius:3,background:sl("enhancing").mastered?"linear-gradient(90deg,"+C.gold+","+C.warn+")":C.warn,transition:"width 0.3s"}}/>
                     </div>
-                    <div style={{fontSize:10,color:C.warn,fontFamily:FONT,fontWeight:700}}>{fmt(sl("enhancing").xp)}/{fmt(sl("enhancing").need)}</div>
+                    {!sl("enhancing").mastered&&<div style={{fontSize:10,color:C.warn,fontFamily:FONT,fontWeight:700}}>{fmt(sl("enhancing").xp)}/{fmt(sl("enhancing").need)}</div>}
                   </div>
                   <div style={{fontSize:10,color:"#f87171",fontFamily:FONT_BODY}}>⚠ Failed upgrades reset to +0. Higher levels have lower success rates.</div>
                 </div>

@@ -2245,6 +2245,31 @@ function GameUI({account,onLogout}){
             <div onClick={()=>{setShowSettings(false);setTutorialStep(0);setShowTutorial(true)}} style={{padding:"10px",borderRadius:8,background:C.card,border:"1px solid "+C.border,color:C.acc,fontSize:11,fontWeight:700,cursor:"pointer",textAlign:"center",letterSpacing:1,fontFamily:FONT,marginBottom:8}}>
               ❓ REPLAY TUTORIAL
             </div>
+            {/* Dev Tools */}
+            <div style={{padding:"12px",borderRadius:8,background:C.bg,border:"1px solid "+C.border,marginBottom:12}}>
+              <div style={{fontSize:9,color:C.td,letterSpacing:2,marginBottom:8}}>DEV TOOLS</div>
+              <div style={{display:"flex",gap:6}}>
+                <div onClick={()=>{
+                  const mx=MAX_SKILL_XP;
+                  const allSk={};[...SKILLS.map(s=>s.id),...CSUBS.map(c=>c.id),"enhancing"].forEach(id=>{allSk[id]=mx});
+                  setSkills(allSk);
+                  const allInv={};Object.keys(ITEMS).forEach(k=>{if(ITEMS[k].s)allInv[k]=999});
+                  setInv(p=>({...p,...allInv}));
+                  setGold(g=>g+999999);setResearchPts(p=>p+9999);
+                  Object.values(BLUEPRINTS).forEach(bp=>{if(!blueprints.includes(bp.id))setBlueprints(p=>[...p,bp.id])});
+                }} style={{flex:1,padding:"8px",borderRadius:6,background:C.ok+"20",border:"1px solid "+C.ok+"40",color:C.ok,fontSize:10,fontWeight:700,cursor:"pointer",textAlign:"center",fontFamily:FONT,letterSpacing:1}}>
+                  🎁 GIVE ALL
+                </div>
+                <div onClick={()=>{
+                  const fresh={};[...SKILLS.map(s=>s.id),...CSUBS.map(c=>c.id),"enhancing"].forEach(id=>{fresh[id]=0});
+                  setSkills(fresh);setInv({});setEq({});setEnh({});setGold(0);setResearchPts(0);setResearched({});
+                  setStructures({});setDrones({});setAchievements({});setBlueprints([]);setBpLog([]);
+                  setLifeStats({totalGathered:0,kills:0,bossKills:0,totalGold:0,crafts:0,equippedSlots:0,researched:0,structures:0,dronesDeployed:0,blueprintsFound:0});
+                }} style={{flex:1,padding:"8px",borderRadius:6,background:C.bad+"20",border:"1px solid "+C.bad+"40",color:C.bad,fontSize:10,fontWeight:700,cursor:"pointer",textAlign:"center",fontFamily:FONT,letterSpacing:1}}>
+                  💀 WIPE ALL
+                </div>
+              </div>
+            </div>
             {/* Logout */}
             <div onClick={()=>{setShowSettings(false);setShowLogoutConfirm(true)}} style={{padding:"10px",borderRadius:8,background:C.bad+"15",border:"1px solid "+C.bad+"40",color:C.bad,fontSize:11,fontWeight:700,cursor:"pointer",textAlign:"center",letterSpacing:1,fontFamily:FONT,marginBottom:12}}>
               ◉ LOGOUT
@@ -4343,7 +4368,7 @@ function GameUI({account,onLogout}){
                 {/* Equipment upgrade cards */}
                 {ESLOTS.map(slot=>{
                   const iid=eq[slot.id];if(!iid)return null;
-                  const it=ITEMS[iid];const cl=enh[iid]||0;
+                  const it=ITEMS[iid];if(!it)return null;const cl=enh[iid]||0;
                   const tier=cl<20?ENH_TIERS[cl]:null;
                   const maxed=cl>=20;
                   const canAffordGold=tier?gold>=tier.gold:false;

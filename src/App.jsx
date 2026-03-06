@@ -1300,6 +1300,7 @@ function GameUI({account,onLogout}){
   const[enh,setEnh]=useState({});
   const[enhAnim,setEnhAnim]=useState(null);
   const[enhUseScroll,setEnhUseScroll]=useState({});
+  const[enhTarget,setEnhTarget]=useState({}); // {slotId: targetLevel} — auto-upgrade target per slot
   const[itemPopup,setItemPopup]=useState(null);
   const[enhSel,setEnhSel]=useState(null);
   const[selItem,setSelItem]=useState(null);
@@ -1795,6 +1796,31 @@ function GameUI({account,onLogout}){
       }
     }
   },[eq,enh,gold,inv,gainXp,remIt,enhUseScroll]);
+
+  // Auto-upgrade loop — attempts upgrade every 1.5s toward target level
+  useEffect(()=>{
+    const activeSlots=Object.entries(enhTarget).filter(([sid,target])=>{
+      const iid=eq[sid];if(!iid)return false;
+      const cl=enh[iid]||0;
+      return target>cl&&cl<20;
+    });
+    if(!activeSlots.length)return;
+    const timer=setInterval(()=>{
+      activeSlots.forEach(([sid,target])=>{
+        const iid=eq[sid];if(!iid)return;
+        const cl=enh[iid]||0;
+        if(cl>=target||cl>=20){
+          setEnhTarget(p=>{const n={...p};delete n[sid];return n;});
+          return;
+        }
+        const tier=ENH_TIERS[cl];if(!tier)return;
+        if(gold<tier.gold)return;
+        if(tier.mat&&(inv[tier.mat.id]||0)<tier.mat.q)return;
+        doEnh(sid);
+      });
+    },1500);
+    return()=>clearInterval(timer);
+  },[enhTarget,eq,enh,gold,inv,doEnh]);
 
   const doResearch=useCallback((node)=>{
     if(researched[node.id]||researchPts<node.cost)return;
@@ -4776,6 +4802,9 @@ function GameUI({account,onLogout}){
               const curMs=Object.entries(ENH_MILESTONES).filter(([t])=>selCl>=Number(t)).pop();
               const nextMs=Object.entries(ENH_MILESTONES).find(([t])=>Number(t)>selCl);
               const anim=enhAnim&&selSlot&&enhAnim.slot===selSlot.slot.id&&(Date.now()-enhAnim.ts)<1200?enhAnim:null;
+              const slotId=selSlot?.slot.id;
+              const autoTarget=slotId?enhTarget[slotId]:null;
+              const isAutoActive=autoTarget&&autoTarget>selCl&&selCl<20;
               return(
               <div style={{maxWidth:600}}>
                 {/* Header */}
@@ -4805,11 +4834,16 @@ function GameUI({account,onLogout}){
                         const it=ITEMS[iid];const cl=enh[iid]||0;
                         const isSel=(enhSel||enhSlots[0]?.slot.id)===slot.id;
                         const col=cl>=15?"#ffd60a":cl>=10?"#c084fc":cl>=5?C.ok:C.border;
+                        const slotAutoTarget=enhTarget[slot.id];
+                        const slotAutoActive=slotAutoTarget&&slotAutoTarget>cl&&cl<20;
                         return(
                           <div key={slot.id} onClick={()=>setEnhSel(slot.id)}
-                            style={{padding:"10px 12px",borderRadius:8,background:isSel?"linear-gradient(135deg,"+C.warn+"18,"+C.card+")":C.card,
-                            border:"2px solid "+(isSel?C.warn:col+"60"),marginBottom:6,cursor:"pointer",transition:"all 0.15s"}}>
-                            <div style={{fontSize:18,marginBottom:2}}>{it.i}</div>
+                            style={{padding:"10px 12px",borderRadius:8,background:isSel?"linear-gradient(135deg,"+C.warn+"18,"+C.card+")":slotAutoActive?"linear-gradient(135deg,"+C.ok+"10,"+C.card+")":C.card,
+                            border:"2px solid "+(isSel?C.warn:slotAutoActive?C.ok+"60":col+"60"),marginBottom:6,cursor:"pointer",transition:"all 0.15s"}}>
+                            <div style={{display:"flex",alignItems:"center",justifyContent:"space-between"}}>
+                              <div style={{fontSize:18,marginBottom:2}}>{it.i}</div>
+                              {slotAutoActive&&<div style={{fontSize:8,color:C.ok,fontWeight:700,fontFamily:FONT,animation:"pulse 1s ease-in-out infinite"}}>▶ +{slotAutoTarget}</div>}
+                            </div>
                             <div style={{fontSize:10,fontWeight:700,color:isSel?C.warn:C.white,fontFamily:FONT,lineHeight:1.2}}>{it.n}</div>
                             <div style={{fontSize:9,color:col,fontFamily:FONT,fontWeight:700,marginTop:2}}>+{cl}{cl>=20?" MAX":""}</div>
                           </div>
@@ -4904,14 +4938,55 @@ function GameUI({account,onLogout}){
                           ):(
                             <div style={{textAlign:"center",padding:"8px 0",fontSize:12,color:C.gold,fontWeight:700,fontFamily:FONT}}>⭐ MAXIMUM ENHANCEMENT ⭐</div>
                           )}
-                          <div onClick={()=>{if(canUpgrade&&selSlot)doEnh(selSlot.slot.id)}}
+
+                          {/* Target selector + auto-upgrade */}
+                          {selCl<20&&selSlot&&(
+                            <div style={{marginBottom:10,padding:"10px 12px",borderRadius:8,background:isAutoActive?"linear-gradient(135deg,"+C.ok+"08,"+C.card+")":C.bg,border:"1px solid "+(isAutoActive?C.ok+"50":C.border),transition:"all 0.2s"}}>
+                              <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",gap:8}}>
+                                <div style={{fontSize:9,color:C.td,fontFamily:FONT,letterSpacing:1}}>AUTO TARGET</div>
+                                <div style={{display:"flex",alignItems:"center",gap:4}}>
+                                  {[5,10,15,20].map(t=>{
+                                    const active=autoTarget===t;
+                                    const reachable=t>selCl;
+                                    const msCol=ENH_MILESTONES[t]?.color||C.acc;
+                                    return(
+                                      <div key={t} onClick={()=>{if(!reachable)return;setEnhTarget(p=>active?{...p,[slotId]:undefined}:{...p,[slotId]:t});}}
+                                        style={{padding:"4px 10px",borderRadius:6,fontSize:10,fontWeight:700,fontFamily:FONT,letterSpacing:0.5,cursor:reachable?"pointer":"default",
+                                        background:active?msCol+"25":C.card,border:"1px solid "+(active?msCol:C.border),color:active?msCol:reachable?C.ts:C.td,
+                                        opacity:reachable?1:0.3,transition:"all 0.15s"}}>
+                                        +{t}
+                                      </div>
+                                    );
+                                  })}
+                                </div>
+                                {isAutoActive&&(
+                                  <div onClick={()=>setEnhTarget(p=>{const n={...p};delete n[slotId];return n;})}
+                                    style={{padding:"4px 12px",borderRadius:6,background:C.bad+"20",border:"1px solid "+C.bad+"50",color:C.bad,fontSize:9,fontWeight:700,cursor:"pointer",fontFamily:FONT,letterSpacing:1}}>
+                                    ■ STOP
+                                  </div>
+                                )}
+                              </div>
+                              {isAutoActive&&(
+                                <div style={{marginTop:6,display:"flex",alignItems:"center",gap:6}}>
+                                  <div style={{fontSize:10,color:C.ok,fontFamily:FONT_BODY,animation:"pulse 1s ease-in-out infinite"}}>⚡ Auto-upgrading to +{autoTarget}...</div>
+                                  <div style={{flex:1,height:3,borderRadius:2,background:C.bg,overflow:"hidden"}}>
+                                    <div style={{width:((selCl/(autoTarget||1))*100)+"%",height:"100%",background:C.ok,borderRadius:2,transition:"width 0.3s"}}/>
+                                  </div>
+                                  <span style={{fontSize:9,color:C.ts,fontFamily:FONT}}>+{selCl}/+{autoTarget}</span>
+                                </div>
+                              )}
+                            </div>
+                          )}
+
+                          {/* Manual upgrade button */}
+                          <div onClick={()=>{if(canUpgrade&&selSlot&&!isAutoActive)doEnh(selSlot.slot.id)}}
                             style={{width:"100%",padding:"12px 0",borderRadius:8,textAlign:"center",fontFamily:FONT,fontSize:12,fontWeight:700,letterSpacing:1,
-                            background:canUpgrade?"linear-gradient(90deg,"+C.warn+"cc,"+C.gold+")":C.bg,
-                            color:canUpgrade?C.bg:C.td,cursor:canUpgrade?"pointer":"default",
+                            background:isAutoActive?C.ok+"20":canUpgrade?"linear-gradient(90deg,"+C.warn+"cc,"+C.gold+")":C.bg,
+                            color:isAutoActive?C.ok:canUpgrade?C.bg:C.td,cursor:canUpgrade&&!isAutoActive?"pointer":"default",
                             opacity:selCl>=20?0.4:1,
-                            boxShadow:canUpgrade?"0 0 16px "+C.gold+"55":"none",
-                            border:"1px solid "+(canUpgrade?C.gold+"80":C.border),transition:"all 0.15s"}}>
-                            {selCl>=20?"MAX LEVEL REACHED":canUpgrade?"⚡ UPGRADE TO +"+(selCl+1):"MISSING RESOURCES"}
+                            boxShadow:isAutoActive?"0 0 12px "+C.ok+"30":canUpgrade?"0 0 16px "+C.gold+"55":"none",
+                            border:"1px solid "+(isAutoActive?C.ok+"60":canUpgrade?C.gold+"80":C.border),transition:"all 0.15s"}}>
+                            {selCl>=20?"MAX LEVEL REACHED":isAutoActive?"⚡ AUTO-UPGRADING...":canUpgrade?"⚡ UPGRADE TO +"+(selCl+1):"MISSING RESOURCES"}
                           </div>
                         </div>
 

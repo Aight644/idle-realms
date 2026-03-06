@@ -5020,19 +5020,23 @@ function GameUI({account,onLogout}){
                             const it=ITEMS[id];
                             const rareColor=it.rarity==="rare"?C.gold:it.rarity==="uncommon"?C.purp:null;
                             const isEq=Object.values(eq).includes(id);
-                            const isTool=it.eq==="tool";
-                            const accentCol=isTool?"#f59e0b":C.acc;
+                            const hasEqSlot=!!it.eq;
+                            const tier=hasEqSlot?tierOf(id):null;
+                            const tintCol=tier?tier.color:null;
+                            const borderCol=isEq?(tintCol||C.acc):tintCol?tintCol+"50":rareColor?rareColor+"50":cat.equip?(tintCol||C.acc)+"30":C.border;
+                            const bgCol=isEq?(tintCol||C.acc)+"18":tintCol?tintCol+"10":rareColor?rareColor+"18":C.card;
                             return(
                               <div key={id} onClick={cat.equip?()=>setSelItem(id):ITEMS[id]?.v?()=>setSellModal({id,qty:1}):undefined} {...(!cat.equip&&!ITEMS[id]?.v?tipProps(id):{})}
                                 style={{position:"relative",width:52,height:52,borderRadius:6,
-                                  background:isEq?accentCol+"18":rareColor?rareColor+"18":C.card,
-                                  border:"1px solid "+(isEq?accentCol:rareColor?rareColor+"50":cat.equip?accentCol+"30":C.border),
+                                  background:bgCol,
+                                  border:"1px solid "+borderCol,
+                                  boxShadow:tintCol?"0 0 6px "+tintCol+"25":"none",
                                   display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:1,flexShrink:0,overflow:"hidden",
-                                  cursor:cat.equip?"pointer":"default"}}>
+                                  cursor:cat.equip||ITEMS[id]?.v?"pointer":"default"}}>
                                 <span style={{fontSize:22,lineHeight:1}}>{it.i||"📦"}</span>
-                                <span style={{fontSize:10,color:isEq?accentCol:rareColor||C.ts,fontWeight:700,fontFamily:FONT}}>{qty>=1e6?(qty/1e6).toFixed(1)+"M":qty>=1000?Math.floor(qty/1000)+"k":qty}</span>
-                                {rareColor&&<div style={{position:"absolute",top:0,left:0,right:0,height:2,background:rareColor}}/>}
-                                {isEq&&<div style={{position:"absolute",bottom:1,right:3,fontSize:7,color:accentCol,fontWeight:700,fontFamily:FONT}}>ON</div>}
+                                <span style={{fontSize:10,color:tintCol||isEq?tintCol||(C.acc):rareColor||C.ts,fontWeight:700,fontFamily:FONT}}>{qty>=1e6?(qty/1e6).toFixed(1)+"M":qty>=1000?Math.floor(qty/1000)+"k":qty}</span>
+                                {(tintCol||rareColor)&&<div style={{position:"absolute",top:0,left:0,right:0,height:2,background:tintCol||rareColor}}/>}
+                                {isEq&&<div style={{position:"absolute",bottom:1,right:3,fontSize:7,color:tintCol||C.acc,fontWeight:700,fontFamily:FONT}}>ON</div>}
                               </div>
                             );
                           })}
@@ -5051,15 +5055,16 @@ function GameUI({account,onLogout}){
                 <div style={{fontSize:11,fontWeight:700,color:C.td,letterSpacing:1,marginBottom:8,textTransform:"uppercase"}}>Equipped</div>
                 {ESLOTS.map(slot=>{
                   const iid=eq[slot.id];const it=iid?ITEMS[iid]:null;const el=iid?(enh[iid]||0):0;
+                  const tier=iid?tierOf(iid):null;
                   return(
-                    <div key={slot.id} {...(iid?tipProps(iid):{})} onClick={()=>it&&setPage("equipment")} style={{display:"flex",alignItems:"center",gap:10,padding:"7px 8px",borderRadius:8,background:it?"linear-gradient(90deg,"+C.acc+"10,"+C.card+")":C.card,border:"1px solid "+(it?C.acc+"40":C.border),marginBottom:6,cursor:it?"pointer":"default"}}>
-                      <div style={{width:40,height:40,borderRadius:6,background:C.bg,border:"1px solid "+C.border,display:"flex",alignItems:"center",justifyContent:"center",fontSize:20,flexShrink:0}}>
+                    <div key={slot.id} {...(iid?tipProps(iid):{})} onClick={()=>it&&setPage("equipment")} style={{display:"flex",alignItems:"center",gap:10,padding:"7px 8px",borderRadius:8,background:it?"linear-gradient(90deg,"+(tier?.color||C.acc)+"10,"+C.card+")":C.card,border:"1px solid "+(it?(tier?.color||C.acc)+"40":C.border),marginBottom:6,cursor:it?"pointer":"default",boxShadow:it?"0 0 8px "+(tier?.color||C.acc)+"20":"none"}}>
+                      <div style={{width:40,height:40,borderRadius:6,background:C.bg,border:"1px solid "+(it?(tier?.color||C.acc)+"30":C.border),display:"flex",alignItems:"center",justifyContent:"center",fontSize:20,flexShrink:0}}>
                         {it?it.i:slot.i}
                       </div>
                       <div style={{flex:1,minWidth:0}}>
                         <div style={{fontSize:11,color:C.td,fontFamily:FONT_BODY,marginBottom:2}}>{slot.n}</div>
                         {it
-                          ?<div style={{fontSize:12,color:C.white,fontWeight:600,fontFamily:FONT_BODY}}>{it.n}{el>0&&<span style={{color:C.gold}}> +{el}</span>}</div>
+                          ?<div style={{fontSize:12,color:tier?.color||C.white,fontWeight:600,fontFamily:FONT_BODY}}>{it.n}{el>0&&<span style={{color:C.gold}}> +{el}</span>}</div>
                           :<div style={{fontSize:12,color:C.td,fontFamily:FONT_BODY}}>— empty —</div>
                         }
                         {it?.st&&<div style={{fontSize:10,color:C.ts,fontFamily:FONT_BODY}}>{Object.entries(it.st||{}).map(([k,v])=>(k||"").toUpperCase()+":+"+(typeof v==="number"?Math.floor(v*(1+enhStatMult(el))):v)).join(" ")}</div>}

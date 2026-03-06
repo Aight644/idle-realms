@@ -1094,17 +1094,19 @@ const ESLOTS=[
   {id:"tool",n:"Tool",i:"🔧"},
 ];
 
-// Enhancement tier config
-const ENH_TIERS = Array.from({length:20},(_, lv) => {
-  const gold = Math.floor(50 * Math.pow(1.6, lv));
+// Enhancement tier config — costs scale with item tier
+const TIER_COST_MULT = {1:1, 2:1.5, 3:2.5, 4:4, 5:6};
+const getEnhTier = (lv, itemTier) => {
+  const m = TIER_COST_MULT[itemTier] || 1;
+  const gold = Math.floor(50 * Math.pow(1.6, lv) * m);
   let mat = null;
-  if(lv < 5)       mat = {id:"enhancement_stone", q: 1 + Math.floor(lv / 2)};
-  else if(lv < 10) mat = {id:"greater_enh_stone",  q: 1 + Math.floor((lv-5) / 2)};
-  else if(lv < 15) mat = {id:"superior_enh_stone", q: 1 + Math.floor((lv-10) / 3)};
-  else             mat = {id:"superior_enh_stone", q: 2 + Math.floor((lv-15) / 2)};
+  if(lv < 5)       mat = {id:"enhancement_stone", q: Math.ceil((1 + Math.floor(lv / 2)) * m)};
+  else if(lv < 10) mat = {id:"greater_enh_stone",  q: Math.ceil((1 + Math.floor((lv-5) / 2)) * m)};
+  else if(lv < 15) mat = {id:"superior_enh_stone", q: Math.ceil((1 + Math.floor((lv-10) / 3)) * m)};
+  else             mat = {id:"superior_enh_stone", q: Math.ceil((2 + Math.floor((lv-15) / 2)) * m)};
   const rate = Math.max(15, Math.floor((85 - lv * 3.5)));
   return {lv, gold, mat, rate};
-});
+};
 
 const ENH_MILESTONES = {
   5:  {label:"Reinforced",     color:"#00d4ff", bonus:"All stats +10%",  mult:0.10},
@@ -1301,6 +1303,7 @@ function GameUI({account,onLogout}){
   const[enhAnim,setEnhAnim]=useState(null);
   const[enhUseScroll,setEnhUseScroll]=useState({});
   const[enhTarget,setEnhTarget]=useState({}); // {slotId: targetLevel} — auto-upgrade target per slot
+  const[enhProg,setEnhProg]=useState(0); // 0-1 progress for current auto-upgrade attempt
   const[itemPopup,setItemPopup]=useState(null);
   const[enhSel,setEnhSel]=useState(null);
   const[selItem,setSelItem]=useState(null);
@@ -1772,7 +1775,7 @@ function GameUI({account,onLogout}){
   const doEnh=useCallback((sid)=>{
     const iid=eq[sid];if(!iid)return;
     const cl=enh[iid]||0;if(cl>=20)return;
-    const tier=ENH_TIERS[cl];if(!tier)return;
+    const tier=getEnhTier(cl, getItemTier(iid));if(!tier)return;
     if(gold<tier.gold)return;
     if(tier.mat&&(inv[tier.mat.id]||0)<tier.mat.q)return;
     setGold(g=>g-tier.gold);
@@ -1797,29 +1800,44 @@ function GameUI({account,onLogout}){
     }
   },[eq,enh,gold,inv,gainXp,remIt,enhUseScroll]);
 
-  // Auto-upgrade loop — attempts upgrade every 1.5s toward target level
+  // Auto-upgrade loop — fills progress bar over 2s, then attempts upgrade
   useEffect(()=>{
-    const activeSlots=Object.entries(enhTarget).filter(([sid,target])=>{
+    const activeSlot=Object.entries(enhTarget).find(([sid,target])=>{
       const iid=eq[sid];if(!iid)return false;
       const cl=enh[iid]||0;
       return target>cl&&cl<20;
     });
-    if(!activeSlots.length)return;
-    const timer=setInterval(()=>{
-      activeSlots.forEach(([sid,target])=>{
-        const iid=eq[sid];if(!iid)return;
-        const cl=enh[iid]||0;
-        if(cl>=target||cl>=20){
-          setEnhTarget(p=>{const n={...p};delete n[sid];return n;});
-          return;
+    if(!activeSlot){setEnhProg(0);return;}
+    const [sid,target]=activeSlot;
+    const iid=eq[sid];
+    const cl=enh[iid]||0;
+    // Check if we can afford before starting the bar
+    const tier=getEnhTier(cl, getItemTier(iid));
+    if(!tier||gold<tier.gold||(tier.mat&&(inv[tier.mat.id]||0)<tier.mat.q)){
+      // Can't afford — pause but don't clear target
+      setEnhProg(0);
+      return;
+    }
+    const dur=2000; // 2s per attempt
+    let start=Date.now();
+    setEnhProg(0);
+    const tick=setInterval(()=>{
+      const p=Math.min(1,(Date.now()-start)/dur);
+      setEnhProg(p);
+      if(p>=1){
+        // Check again if target still valid
+        const curCl=enh[iid]||0;
+        if(curCl>=target||curCl>=20){
+          setEnhTarget(p2=>{const n={...p2};delete n[sid];return n;});
+          setEnhProg(0);
+        }else{
+          doEnh(sid);
+          setEnhProg(0);
+          start=Date.now();
         }
-        const tier=ENH_TIERS[cl];if(!tier)return;
-        if(gold<tier.gold)return;
-        if(tier.mat&&(inv[tier.mat.id]||0)<tier.mat.q)return;
-        doEnh(sid);
-      });
-    },1500);
-    return()=>clearInterval(timer);
+      }
+    },50);
+    return()=>{clearInterval(tick);setEnhProg(0);};
   },[enhTarget,eq,enh,gold,inv,doEnh]);
 
   const doResearch=useCallback((node)=>{
@@ -4793,7 +4811,8 @@ function GameUI({account,onLogout}){
               const selIid=selSlot?.iid;
               const selIt=selIid?ITEMS[selIid]:null;
               const selCl=selIid?(enh[selIid]||0):0;
-              const selTier=selCl<20?ENH_TIERS[selCl]:null;
+              const selItemTier=selIid?getItemTier(selIid):1;
+              const selTier=selCl<20?getEnhTier(selCl, selItemTier):null;
               const canAffordGold=selTier?gold>=selTier.gold:false;
               const canAffordMat=selTier&&selTier.mat?(inv[selTier.mat.id]||0)>=selTier.mat.q:true;
               const canUpgrade=selIid&&!!(selTier)&&canAffordGold&&canAffordMat;
@@ -4861,7 +4880,10 @@ function GameUI({account,onLogout}){
                             <div style={{fontSize:36,filter:"drop-shadow(0 0 10px "+C.warn+")"}}>{selIt.i}</div>
                             <div>
                               <div style={{fontSize:14,fontWeight:700,color:C.warn,fontFamily:FONT}}>{selIt.n}</div>
-                              <div style={{fontSize:11,color:C.ts,fontFamily:FONT_BODY}}>{selSlot?.slot.label}</div>
+                              <div style={{display:"flex",alignItems:"center",gap:6,marginTop:2}}>
+                                {(()=>{const t=tierOf(selIid);return <span style={{fontSize:8,color:t.color,fontWeight:700,fontFamily:FONT,padding:"1px 6px",borderRadius:6,background:t.color+"15",border:"1px solid "+t.color+"30"}}>{t.label.toUpperCase()}</span>;})()}
+                                {selItemTier>1&&<span style={{fontSize:8,color:C.warn,fontFamily:FONT}}>×{TIER_COST_MULT[selItemTier]} cost</span>}
+                              </div>
                             </div>
                             <div style={{marginLeft:"auto",textAlign:"center"}}>
                               <div style={{fontSize:28,fontWeight:700,color:selCl>=15?"#ffd60a":selCl>=10?"#c084fc":selCl>=5?C.ok:C.white,fontFamily:FONT,lineHeight:1}}>+{selCl}</div>
@@ -4967,12 +4989,24 @@ function GameUI({account,onLogout}){
                                 )}
                               </div>
                               {isAutoActive&&(
-                                <div style={{marginTop:6,display:"flex",alignItems:"center",gap:6}}>
-                                  <div style={{fontSize:10,color:C.ok,fontFamily:FONT_BODY,animation:"pulse 1s ease-in-out infinite"}}>⚡ Auto-upgrading to +{autoTarget}...</div>
-                                  <div style={{flex:1,height:3,borderRadius:2,background:C.bg,overflow:"hidden"}}>
-                                    <div style={{width:((selCl/(autoTarget||1))*100)+"%",height:"100%",background:C.ok,borderRadius:2,transition:"width 0.3s"}}/>
+                                <div style={{marginTop:8}}>
+                                  {/* Per-attempt progress bar */}
+                                  <div style={{marginBottom:6}}>
+                                    <div style={{height:8,borderRadius:4,background:C.bg,overflow:"hidden",border:"1px solid "+C.border}}>
+                                      <div style={{width:(enhProg*100)+"%",height:"100%",borderRadius:4,background:"linear-gradient(90deg,"+C.warn+","+C.gold+")",transition:"width 0.05s linear",boxShadow:"0 0 8px "+C.gold+"60"}}/>
+                                    </div>
                                   </div>
-                                  <span style={{fontSize:9,color:C.ts,fontFamily:FONT}}>+{selCl}/+{autoTarget}</span>
+                                  {/* Overall progress */}
+                                  <div style={{display:"flex",alignItems:"center",justifyContent:"space-between"}}>
+                                    <div style={{fontSize:10,color:C.ok,fontFamily:FONT_BODY,animation:"pulse 1s ease-in-out infinite"}}>⚡ Upgrading to +{autoTarget}...</div>
+                                    <div style={{display:"flex",alignItems:"center",gap:6}}>
+                                      <div style={{width:80,height:3,borderRadius:2,background:C.bg,overflow:"hidden"}}>
+                                        <div style={{width:((selCl/(autoTarget||1))*100)+"%",height:"100%",background:C.ok,borderRadius:2,transition:"width 0.3s"}}/>
+                                      </div>
+                                      <span style={{fontSize:9,color:C.ts,fontFamily:FONT}}>+{selCl}/+{autoTarget}</span>
+                                    </div>
+                                  </div>
+                                  {!canUpgrade&&<div style={{fontSize:9,color:"#f87171",fontFamily:FONT_BODY,marginTop:4}}>⏸ Waiting for resources...</div>}
                                 </div>
                               )}
                             </div>

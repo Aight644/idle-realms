@@ -1255,10 +1255,6 @@ function GameUI({account,onLogout}){
     ALL_RESEARCH.forEach(r=>{if(researched[r.id]&&r.effect)Object.entries(r.effect).forEach(([k,v])=>{b[k]=(b[k]||0)+v})});
     // Structure bonuses (per level)
     STRUCTURES.forEach(st=>{const lv=structures[st.id]||0;if(lv>0){if(st.bonus)Object.entries(st.bonus).forEach(([k,v])=>{b[k]=(b[k]||0)+v*lv});if(st.bonusExtra)Object.entries(st.bonusExtra).forEach(([k,v])=>{b[k]=(b[k]||0)+v*lv})}});
-    // Utility skill passive bonuses (scale with skill level)
-    // Exploration skill passively boosts speed, rare chance, and yield (1/3 each)
-    {const lv=Math.floor((skills["exploration"]||0)/100);
-    if(lv>0){b.gather_speed=(b.gather_speed||0)+lv*0.015;b.rare_chance=(b.rare_chance||0)+lv*0.015;b.gather_yield=(b.gather_yield||0)+lv*0.015;}}
     // Equipment gather bonuses (tools + armor with gather stats)
     const gatherKeys=new Set(["gather_yield","gather_speed","cultiv_yield","mining_yield","fishing_yield","crystal_yield","trench_yield","rare_chance","xp_bonus"]);
     ESLOTS.forEach(slot=>{const iid=eq[slot.id];if(iid){const it=ITEMS[iid];if(it?.st)Object.entries(it.st).forEach(([k,v])=>{if(gatherKeys.has(k))b[k]=(b[k]||0)+v})}});
@@ -1434,7 +1430,7 @@ function GameUI({account,onLogout}){
     const sk=SKILLS.find(s=>s.id===curAct.sk);if(!sk)return;
     const act=sk.acts.find(a=>a.id===curAct.act);if(!act)return;
     const speedMult=sk.cat==="gather"?(1+(bonuses.gather_speed||0)):(1+(bonuses.prod_speed||0));
-    const dur=Math.max(2000,(act.t*1000)/speedMult); // min 2s so progress bar animation is always visible
+    const dur=Math.max(1500,(act.t*1000)/speedMult); // min 1.5s so progress bar is visible
     let start=Date.now();
     const tick=setInterval(()=>{
       const p=Math.min(1,(Date.now()-start)/dur);setActProg(p);

@@ -2429,6 +2429,7 @@ function GameUI({account,onLogout}){
               const MAX_XP=15792971;
               const maxSkills={};
               [...SKILLS,...CSUBS].forEach(s=>{maxSkills[s.id]=MAX_XP;});
+              maxSkills["enhancing"]=MAX_XP;
               setSkills(maxSkills);
               // Give all items x999 including equipment
               const allItems={};

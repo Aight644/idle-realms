@@ -4983,9 +4983,10 @@ function GameUI({account,onLogout}){
             {rightTab==="inventory"&&(()=>{
               const q=invFilter.toLowerCase();
               const allItems=Object.entries(inv).filter(([id,qty])=>qty>0&&ITEMS[id]&&(!q||ITEMS[id].n.toLowerCase().includes(q)));
+              const sortByTier=(items)=>[...items].sort((a,b)=>getItemTier(a[0])-getItemTier(b[0]));
               const cats=[
-                {label:"⚔️ Gear",      items:allItems.filter(([id])=>ITEMS[id].eq&&ITEMS[id].eq!=="tool"), equip:true},
-                {label:"🔧 Tools",     items:allItems.filter(([id])=>ITEMS[id].eq==="tool"), equip:true},
+                {label:"⚔️ Gear",      items:sortByTier(allItems.filter(([id])=>ITEMS[id].eq&&ITEMS[id].eq!=="tool")), equip:true},
+                {label:"🔧 Tools",     items:sortByTier(allItems.filter(([id])=>ITEMS[id].eq==="tool")), equip:true},
                 {label:"💉 Food",      items:allItems.filter(([id])=>ITEMS[id].food)},
                 {label:"✨ Rare Mats", items:allItems.filter(([id])=>ITEMS[id].rarity==="rare"||ITEMS[id].rarity==="uncommon")},
                 {label:"📦 Resources", items:allItems.filter(([id])=>{const it=ITEMS[id];return it.s&&!it.eq&&!it.food&&!it.rarity&&it.type!=="currency"&&id!=="gold";})},

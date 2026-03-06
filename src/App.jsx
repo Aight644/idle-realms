@@ -2253,7 +2253,7 @@ function GameUI({account,onLogout}){
                   const mx=MAX_SKILL_XP;
                   const allSk={};[...SKILLS.map(s=>s.id),...CSUBS.map(c=>c.id),"enhancing"].forEach(id=>{allSk[id]=mx});
                   setSkills(allSk);
-                  const allInv={};Object.keys(ITEMS).forEach(k=>{if(ITEMS[k].s)allInv[k]=999});
+                  const allInv={};Object.keys(ITEMS).forEach(k=>{allInv[k]=ITEMS[k].s?999:5});
                   setInv(p=>({...p,...allInv}));
                   setGold(g=>g+999999);setResearchPts(p=>p+9999);
                   Object.values(BLUEPRINTS).forEach(bp=>{if(!blueprints.includes(bp.id))setBlueprints(p=>[...p,bp.id])});

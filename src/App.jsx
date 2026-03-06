@@ -1433,7 +1433,7 @@ function GameUI({account,onLogout}){
     const sk=SKILLS.find(s=>s.id===curAct.sk);if(!sk)return;
     const act=sk.acts.find(a=>a.id===curAct.act);if(!act)return;
     const speedMult=sk.cat==="gather"?(1+(bonuses.gather_speed||0)):(1+(bonuses.prod_speed||0));
-    const dur=(act.t*1000)/speedMult;
+    const dur=Math.max(800,(act.t*1000)/speedMult); // min 0.8s so animation is always visible
     let start=Date.now();
     const tick=setInterval(()=>{
       const p=Math.min(1,(Date.now()-start)/dur);setActProg(p);

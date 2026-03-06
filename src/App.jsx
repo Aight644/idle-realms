@@ -306,7 +306,7 @@ const BLUEPRINTS = [
     id:"bp_void_kelp", skillId:"kelp_farming", icon:"🌀", rarity:"rare",
     name:"Void Kelp Cultivation",
     desc:"Ancient technique for cultivating void-infused kelp. Massive yield.",
-    act:{id:"kf5",name:"Void Kelp Grove",lv:80,xp:170,t:24,out:[{id:"kelp",q:12},{id:"void_essence",q:1}]},
+    act:{id:"bp_kf5",name:"Void Kelp Grove",lv:80,xp:170,t:24,out:[{id:"kelp",q:12},{id:"void_essence",q:1}]},
     source:"Ancient Submarine Wreck",
   },
   {
@@ -320,7 +320,7 @@ const BLUEPRINTS = [
     id:"bp_void_crystal", skillId:"crystal_diving", icon:"💎", rarity:"epic",
     name:"Void Crystal Resonance",
     desc:"Resonate with void crystals to yield pure essence.",
-    act:{id:"cd5",name:"Void Crystal Resonance",lv:95,xp:196,t:24,inp:[{id:"abyss_crystal",q:3}],out:[{id:"void_essence",q:2},{id:"abyss_crystal",q:5}]},
+    act:{id:"bp_cd5",name:"Void Crystal Resonance",lv:95,xp:196,t:24,inp:[{id:"abyss_crystal",q:3}],out:[{id:"void_essence",q:2},{id:"abyss_crystal",q:5}]},
     source:"Lost Research Facility",
   },
   {
@@ -1428,7 +1428,8 @@ function GameUI({account,onLogout}){
   useEffect(()=>{
     if(!curAct)return;
     const sk=SKILLS.find(s=>s.id===curAct.sk);if(!sk)return;
-    const act=sk.acts.find(a=>a.id===curAct.act);if(!act)return;
+    const allActs=[...sk.acts,...BLUEPRINTS.filter(bp=>bp.skillId===sk.id&&blueprints.includes(bp.id)).map(bp=>bp.act)];
+    const act=allActs.find(a=>a.id===curAct.act);if(!act)return;
     const speedMult=sk.cat==="gather"?(1+(bonuses.gather_speed||0)):(1+(bonuses.prod_speed||0));
     const dur=Math.max(1500,(act.t*1000)/speedMult); // min 1.5s so progress bar is visible
     let start=Date.now();

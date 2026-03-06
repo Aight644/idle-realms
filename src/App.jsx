@@ -1793,8 +1793,9 @@ function GameUI({account,onLogout}){
         setClog(p=>[...p.slice(-20),"📜 Protection Scroll saved "+ITEMS[iid].n+"! Stays at +"+cl]);
         setEnhAnim({slot:sid,result:"protected",ts:Date.now()});
       }else{
-        setEnh(p=>({...p,[iid]:0}));
-        setClog(p=>[...p.slice(-20),"💥 Upgrade failed! "+ITEMS[iid].n+" reset to +0"]);
+        const newLv=Math.max(0,cl-1);
+        setEnh(p=>({...p,[iid]:newLv}));
+        setClog(p=>[...p.slice(-20),"💥 Upgrade failed! "+ITEMS[iid].n+" dropped to +"+(newLv)]);
         setEnhAnim({slot:sid,result:"fail",ts:Date.now()});
       }
     }
@@ -4839,7 +4840,7 @@ function GameUI({account,onLogout}){
                     </div>
                     {!sl("enhancing").mastered&&<div style={{fontSize:10,color:C.warn,fontFamily:FONT,fontWeight:700}}>{fmt(sl("enhancing").xp)}/{fmt(sl("enhancing").need)}</div>}
                   </div>
-                  <div style={{fontSize:10,color:"#f87171",fontFamily:FONT_BODY}}>⚠ Failed upgrades reset to +0. Higher levels have lower success rates.</div>
+                  <div style={{fontSize:10,color:"#f87171",fontFamily:FONT_BODY}}>⚠ Failed upgrades drop by 1 level. Use 📜 Protection Scrolls to prevent loss.</div>
                 </div>
 
                 {enhSlots.length===0?(

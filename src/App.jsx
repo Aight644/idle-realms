@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo, useRef } from "react";
+import React, { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { auth, db } from './firebase.js';
 import {
   signInWithEmailAndPassword,
@@ -1152,6 +1152,7 @@ function GameUI({account,onLogout}){
   const[actSkill,setActSkill]=useState("kelp_farming");
   const[gearCat,setGearCat]=useState("combat");
   const[tooltip,setTooltip]=useState(null);// {iid, x, y}
+  const[itemPopup,setItemPopup]=useState(null);// {iid, x, y} — click popup for sell/equip
   const[npcCat,setNpcCat]=useState("all");
   const[npcLog,setNpcLog]=useState([]);
   // Top bar
@@ -2183,6 +2184,38 @@ function GameUI({account,onLogout}){
     <div style={{width:"100%",height:"100vh",display:"flex",flexDirection:"column",fontFamily:FONT,background:C.bg,color:C.text,overflow:"hidden"}}>
       {renderTooltip()}
 
+      {/* Item click popup — sell / equip / info */}
+      {itemPopup&&(()=>{
+        const it=ITEMS[itemPopup.iid];if(!it)return null;
+        const qty=inv[itemPopup.iid]||0;
+        const canEquip=!!it.eq&&qty>0;
+        const canSell=!!it.v&&qty>0;
+        const sellOne=()=>{if(!it.v||qty<1)return;remIt(itemPopup.iid,1);setGold(g=>g+it.v);};
+        const sellAll=()=>{if(!it.v||qty<1)return;setGold(g=>g+it.v*qty);remIt(itemPopup.iid,qty);setItemPopup(null);};
+        const doEquip=()=>{equipIt(itemPopup.iid);setItemPopup(null);};
+        return(
+          <React.Fragment>
+            <div onClick={()=>setItemPopup(null)} style={{position:"fixed",inset:0,zIndex:9998,background:"transparent"}}/>
+            <div style={{position:"fixed",left:Math.min(itemPopup.x,window.innerWidth-180),top:Math.max(8,itemPopup.y),transform:"translate(-50%,-100%)",
+              background:C.panel,border:"1px solid "+C.acc+"60",borderRadius:10,padding:"10px 12px",zIndex:9999,minWidth:160,boxShadow:"0 8px 32px #000a"}}>
+              <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:8}}>
+                <span style={{fontSize:18}}>{it.i}</span>
+                <div>
+                  <div style={{fontSize:12,fontWeight:700,color:C.white,fontFamily:FONT}}>{it.n}</div>
+                  <div style={{fontSize:9,color:C.ts,fontFamily:FONT_BODY}}>×{qty}{it.v?" · ◈"+it.v+" ea":""}</div>
+                </div>
+              </div>
+              <div style={{display:"flex",flexDirection:"column",gap:4}}>
+                {canEquip&&<div onClick={doEquip} style={{padding:"6px 0",borderRadius:6,background:"linear-gradient(90deg,"+C.accD+","+C.acc+")",color:C.bg,fontSize:10,fontWeight:700,cursor:"pointer",textAlign:"center",letterSpacing:1,fontFamily:FONT}}>🗡️ EQUIP</div>}
+                {canSell&&<div onClick={sellOne} style={{padding:"6px 0",borderRadius:6,background:C.card,border:"1px solid "+C.warn+"50",color:C.warn,fontSize:10,fontWeight:700,cursor:"pointer",textAlign:"center",letterSpacing:1,fontFamily:FONT}}>SELL 1 · ◈{it.v}</div>}
+                {canSell&&qty>1&&<div onClick={sellAll} style={{padding:"6px 0",borderRadius:6,background:C.warn+"20",border:"1px solid "+C.warn+"50",color:C.gold,fontSize:10,fontWeight:700,cursor:"pointer",textAlign:"center",letterSpacing:1,fontFamily:FONT}}>SELL ALL ({qty}) · ◈{it.v*qty}</div>}
+                <div onClick={()=>setItemPopup(null)} style={{padding:"4px 0",fontSize:9,color:C.td,cursor:"pointer",textAlign:"center",fontFamily:FONT_BODY}}>CLOSE</div>
+              </div>
+            </div>
+          </React.Fragment>
+        );
+      })()}
+
       {showTutorial&&(()=>{
         const step=TUTORIAL_STEPS[tutorialStep];
         const isLast=tutorialStep===TUTORIAL_STEPS.length-1;
@@ -2853,7 +2886,7 @@ function GameUI({account,onLogout}){
                 </div>
               );})}
               {/* Page nav icons */}
-              {[{id:"combat",i:"⚔️"},{id:"research",i:"🔬"},{id:"structures",i:"🏗️"},{id:"drones",i:"🤖"},{id:"market",i:"🏪"},{id:"npc_shop",i:"🐙"},{id:"achievements",i:"🏆"},{id:"blueprints",i:"📘"},{id:"equipment",i:"🗡️"},{id:"inventory",i:"🎒"},{id:"social",i:"💬"}].map(n=>(
+              {[{id:"combat",i:"⚔️"},{id:"research",i:"🔬"},{id:"structures",i:"🏗️"},{id:"drones",i:"🤖"},{id:"market",i:"🏪"},{id:"npc_shop",i:"🐙"},{id:"achievements",i:"🏆"},{id:"blueprints",i:"📘"},{id:"equipment",i:"🗡️"},{id:"social",i:"💬"}].map(n=>(
                 <div key={n.id} onClick={()=>setPage(n.id)} title={n.id} style={{width:36,height:36,borderRadius:6,display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",background:page===n.id?C.acc+"25":C.card,border:"1px solid "+(page===n.id?C.acc+"60":C.border),fontSize:16}}>
                   {n.i}
                 </div>
@@ -2922,7 +2955,6 @@ function GameUI({account,onLogout}){
                 <NavItem id="stats"        icon="📊" label="Stats & Profile"/>
                 <NavItem id="social"       icon="💬" label="Social"        badge={friendReqs.length>0?friendReqs.length:null}/>
                 <NavItem id="equipment"    icon="🗡️" label="Equipment"/>
-                <NavItem id="inventory"    icon="🎒" label="Inventory"/>
               </div>
           <div style={{flex:1}}/>
           <div onClick={()=>setShowLogoutConfirm(true)} style={{padding:"10px 12px",borderTop:"1px solid "+C.border,fontSize:10,color:C.td,cursor:"pointer",fontFamily:FONT_BODY,letterSpacing:1,display:"flex",alignItems:"center",gap:6}}>◉ LOGOUT</div>
@@ -4464,80 +4496,6 @@ function GameUI({account,onLogout}){
             )}
 
             {/* INVENTORY PAGE */}
-            {page==="inventory"&&(
-              <div style={{maxWidth:760}}>
-                <div style={{fontSize:14,fontWeight:700,color:C.white,marginBottom:16,letterSpacing:2}}>CARGO HOLD</div>
-                {Object.entries(inv).length===0&&<div style={{fontSize:12,color:C.td,fontFamily:FONT_BODY}}>Cargo hold is empty. Begin gathering operations!</div>}
-
-                {/* Rare items section */}
-                {Object.entries(inv).some(([id])=>ITEMS[id]&&ITEMS[id].rare)&&(
-                  <div style={{marginBottom:16}}>
-                    <div style={{fontSize:11,fontWeight:700,color:C.gold,letterSpacing:2,marginBottom:8}}>✨ RARE MATERIALS</div>
-                    <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr 1fr",gap:6}}>
-                      {Object.entries(inv).filter(([id])=>ITEMS[id]&&ITEMS[id].rare).map(([id,qty])=>{const it=ITEMS[id];return(
-                        <div key={id} {...tipProps(id)} style={{padding:"10px 12px",borderRadius:8,background:"linear-gradient(135deg,"+C.gold+"18,"+C.card+")",border:"2px solid "+C.gold+"50",boxShadow:"0 0 10px "+C.gold+"25",textAlign:"center"}}>
-                          <div style={{fontSize:20,marginBottom:4,filter:"drop-shadow(0 0 6px "+C.gold+")"}}>{it.i}</div>
-                          <div style={{fontSize:9,fontWeight:700,color:C.gold,fontFamily:FONT,letterSpacing:0.5}}>{it.n}</div>
-                          <div style={{fontSize:11,color:C.text,fontWeight:700,fontFamily:FONT,marginTop:2}}>×{qty}</div>
-                        </div>
-                      );})}
-                    </div>
-                  </div>
-                )}
-
-                {/* Equipment section */}
-                {Object.entries(inv).some(([id])=>ITEMS[id]&&ITEMS[id].eq)&&(
-                  <div style={{marginBottom:16}}>
-                    <div style={{fontSize:11,fontWeight:700,color:C.acc,letterSpacing:2,marginBottom:8}}>🗡️ EQUIPMENT</div>
-                    <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:6}}>
-                      {Object.entries(inv).filter(([id])=>ITEMS[id]&&ITEMS[id].eq).map(([id,qty])=>{const it=ITEMS[id];
-                        const setData=it.set?Object.values(SET_BONUSES).find(s=>s.pieces.includes(id)):null;
-                        return(
-                        <div key={id} onMouseEnter={e=>showTip(e,id)} onMouseLeave={hideTip}
-                          style={{padding:"10px 12px",borderRadius:6,background:C.card,border:"1px solid "+(setData?setData.color+"50":C.acc+"30"),boxShadow:GLOW_STYLE,position:"relative",cursor:"pointer"}}>
-                          <div style={{fontSize:12,fontWeight:700,color:setData?setData.color:C.white,fontFamily:FONT}}>{it.i} {it.n}</div>
-                          <div style={{fontSize:9,color:C.ts,fontFamily:FONT_BODY,marginTop:2}}>×{qty}</div>
-                          {it.st&&<div style={{fontSize:9,color:C.td,marginTop:2,fontFamily:FONT_BODY,lineHeight:1.5}}>{Object.entries(it.st).map(([k,v])=><span key={k} style={{display:"block"}}>{fmtStat(k,v)}</span>)}</div>}
-                          {setData&&<div style={{fontSize:8,color:setData.color,marginTop:3,fontFamily:FONT,letterSpacing:0.5}}>◈ {setData.name}</div>}
-                          <div onClick={()=>equipIt(id)} style={{marginTop:6,padding:"4px 0",borderRadius:4,background:"linear-gradient(90deg,"+C.accD+","+C.acc+")",color:C.bg,fontSize:9,fontWeight:700,cursor:"pointer",textAlign:"center",letterSpacing:1,fontFamily:FONT}}>EQUIP</div>
-                        </div>
-                      );})}
-                    </div>
-                  </div>
-                )}
-
-                {/* Consumables */}
-                {Object.entries(inv).some(([id])=>ITEMS[id]&&ITEMS[id].food)&&(
-                  <div style={{marginBottom:16}}>
-                    <div style={{fontSize:11,fontWeight:700,color:C.ok,letterSpacing:2,marginBottom:8}}>💉 CONSUMABLES</div>
-                    <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:6}}>
-                      {Object.entries(inv).filter(([id])=>ITEMS[id]&&ITEMS[id].food).map(([id,qty])=>{const it=ITEMS[id];return(
-                        <div key={id} {...tipProps(id)} style={{padding:"10px 12px",borderRadius:6,background:C.card,border:"1px solid "+C.ok+"30"}}>
-                          <div style={{fontSize:12,fontWeight:700,color:C.white,fontFamily:FONT}}>{it.i} {it.n}</div>
-                          <div style={{fontSize:9,color:C.ok,fontFamily:FONT_BODY,marginTop:2}}>×{qty} · Heals {it.heal} HP</div>
-                        </div>
-                      );})}
-                    </div>
-                  </div>
-                )}
-
-                {/* Materials */}
-                <div>
-                  <div style={{fontSize:11,fontWeight:700,color:C.ts,letterSpacing:2,marginBottom:8}}>🪨 MATERIALS</div>
-                  <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:6}}>
-                    {Object.entries(inv).filter(([id,qty])=>ITEMS[id]&&ITEMS[id].s&&!ITEMS[id].rare&&!ITEMS[id].eq&&!ITEMS[id].food&&qty>0).map(([id,qty])=>{const it=ITEMS[id];return(
-                      <div key={id} {...tipProps(id)} style={{padding:"8px 12px",borderRadius:6,background:C.card,border:"1px solid "+C.border,display:"flex",alignItems:"center",gap:8}}>
-                        <span style={{fontSize:14}}>{it.i}</span>
-                        <div style={{flex:1}}>
-                          <div style={{fontSize:10,color:C.text,fontFamily:FONT_BODY}}>{it.n}</div>
-                          <div style={{fontSize:10,fontWeight:700,color:C.acc,fontFamily:FONT}}>×{fmt(qty)}</div>
-                        </div>
-                      </div>
-                    );})}
-                  </div>
-                </div>
-              </div>
-            )}
 
           </div>
         </div>
@@ -4614,7 +4572,9 @@ function GameUI({account,onLogout}){
                             const it=ITEMS[id];
                             const rareColor=it.rarity==="rare"?C.gold:it.rarity==="uncommon"?C.purp:null;
                             return(
-                              <div key={id} {...tipProps(id)} style={{position:"relative",width:52,height:52,borderRadius:6,background:rareColor?rareColor+"18":C.card,border:"1px solid "+(rareColor?rareColor+"50":C.border),display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:1,flexShrink:0,overflow:"hidden"}}>
+                              <div key={id} onMouseEnter={e=>showTip(e,id)} onMouseLeave={hideTip}
+                                onClick={e=>{const r=e.currentTarget.getBoundingClientRect();setItemPopup({iid:id,x:r.left+r.width/2,y:r.top});hideTip();}}
+                                style={{position:"relative",width:52,height:52,borderRadius:6,background:rareColor?rareColor+"18":C.card,border:"1px solid "+(rareColor?rareColor+"50":C.border),display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:1,flexShrink:0,overflow:"hidden",cursor:"pointer"}}>
                                 <span style={{fontSize:22,lineHeight:1}}>{it.i||"📦"}</span>
                                 <span style={{fontSize:10,color:rareColor||C.ts,fontWeight:700,fontFamily:FONT}}>{qty>=1e6?(qty/1e6).toFixed(1)+"M":qty>=1000?Math.floor(qty/1000)+"k":qty}</span>
                                 {rareColor&&<div style={{position:"absolute",top:0,left:0,right:0,height:2,background:rareColor}}/>}
@@ -4647,7 +4607,7 @@ function GameUI({account,onLogout}){
                           ?<div style={{fontSize:12,color:C.white,fontWeight:600,fontFamily:FONT_BODY}}>{it.n}{el>0&&<span style={{color:C.gold}}> +{el}</span>}</div>
                           :<div style={{fontSize:12,color:C.td,fontFamily:FONT_BODY}}>— empty —</div>
                         }
-                        {it?.st&&<div style={{fontSize:10,color:C.ts,fontFamily:FONT_BODY}}>{Object.entries(it.st).map(([k,v])=>k.toUpperCase()+":+"+Math.floor(v*(1+el*0.08))).join(" ")}</div>}
+                        {it?.st&&<div style={{fontSize:10,color:C.ts,fontFamily:FONT_BODY}}>{Object.entries(it.st).map(([k,v])=>k.toUpperCase()+":+"+Math.floor(v*(1+enhStatMult(el)))).join(" ")}</div>}
                       </div>
                     </div>
                   );
